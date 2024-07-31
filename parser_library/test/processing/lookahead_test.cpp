@@ -265,11 +265,8 @@ TEST(attribute_lookahead, lookup_not_triggered)
     evaluation_context eval_ctx { a.hlasm_ctx(), library_info_transitional::empty, diags };
 
     // define symbol with undefined length
-    auto tmp = a.hlasm_ctx().ord_ctx.create_symbol(id_index("X"),
-        symbol_value(),
-        symbol_attributes(symbol_origin::DAT, 200),
-        {},
-        library_info_transitional::empty);
+    auto tmp = a.hlasm_ctx().ord_ctx.create_symbol(
+        id_index("X"), symbol_value(), symbol_attributes(symbol_origin::DAT, 200), library_info_transitional::empty);
     ASSERT_TRUE(tmp);
 
     // although length is undefined the actual symbol is defined so no lookup should happen

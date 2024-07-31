@@ -483,41 +483,6 @@ processing_stack_t hlasm_context::processing_stack()
     return result;
 }
 
-processing_frame hlasm_context::processing_stack_top(bool consider_macros)
-{
-    // this is an inverted version of the loop from processing_stack()
-    // terminating after finding the first (originally last) element
-
-    assert(!source_stack_.empty());
-
-    if (consider_macros && source_stack_.size() == 1 && scope_stack_.size() > 1)
-    {
-        if (const auto& nest = scope_stack_.back().this_macro->get_current_copy_nest(); !nest.empty())
-        {
-            const auto& last_copy = nest.back();
-            return processing_frame(last_copy.loc.pos,
-                shared_resource_location(last_copy.loc.resource_loc),
-                last_copy.member_name,
-                nest.size() == 1 ? file_processing_type::MACRO : file_processing_type::COPY);
-        }
-    }
-
-    const auto& last_source = source_stack_.back();
-    if (!last_source.copy_stack.empty())
-    {
-        const auto& last_member = last_source.copy_stack.back();
-        return processing_frame(last_member.current_statement_position(),
-            shared_resource_location(last_member.definition_location()->resource_loc),
-            last_member.name(),
-            file_processing_type::COPY);
-    }
-
-    return processing_frame(last_source.current_instruction.pos,
-        shared_resource_location(last_source.current_instruction.resource_loc),
-        id_index(),
-        file_processing_type::OPENCODE);
-}
-
 processing_stack_details_t hlasm_context::processing_stack_details()
 {
     std::vector<processing_frame_details> res;
@@ -560,38 +525,45 @@ processing_stack_details_t hlasm_context::processing_stack_details()
     return res;
 }
 
-location hlasm_context::current_statement_location(bool consider_macros) const
+position hlasm_context::current_statement_position(bool consider_macros)
 {
-    if (!consider_macros || source_stack_.size() > 1 || scope_stack_.size() == 1)
-    {
-        if (source_stack_.back().copy_stack.size())
-        {
-            const auto& member = source_stack_.back().copy_stack.back();
+    if (consider_macros && source_stack_.size() == 1 && scope_stack_.size() > 1)
+        return scope_stack_.back().this_macro->get_current_copy_nest().back().loc.pos;
+    else if (!source_stack_.back().copy_stack.empty())
+        return source_stack_.back().copy_stack.back().current_statement_position();
+    else
+        return source_stack_.back().current_instruction.pos;
+}
 
-            return location(member.current_statement_position(), member.definition_location()->resource_loc);
-        }
-        else
-            return source_stack_.back().current_instruction;
+location hlasm_context::current_statement_location(bool consider_macros)
+{
+    if (consider_macros && source_stack_.size() == 1 && scope_stack_.size() > 1)
+    {
+        const auto& [p, r] = scope_stack_.back().this_macro->get_current_copy_nest().back().loc;
+        return location(p, *shared_resource_location(r));
+    }
+    else if (!source_stack_.back().copy_stack.empty())
+    {
+        const auto& member = source_stack_.back().copy_stack.back();
+        return location(
+            member.current_statement_position(), *shared_resource_location(member.definition_location()->resource_loc));
     }
     else
     {
-        return scope_stack_.back().this_macro->get_current_copy_nest().back().loc;
+        const auto& [p, r] = source_stack_.back().current_instruction;
+        return location(p, *shared_resource_location(r));
     }
 }
 
-const utils::resource::resource_location& hlasm_context::current_statement_source(bool consider_macros) const
+const utils::resource::resource_location& hlasm_context::current_statement_source(bool consider_macros)
 {
-    if (!consider_macros || source_stack_.size() > 1 || scope_stack_.size() == 1)
-    {
-        if (source_stack_.back().copy_stack.size())
-            return source_stack_.back().copy_stack.back().definition_location()->resource_loc;
-        else
-            return source_stack_.back().current_instruction.resource_loc;
-    }
+    if (consider_macros && source_stack_.size() == 1 && scope_stack_.size() > 1)
+        return *shared_resource_location(
+            scope_stack_.back().this_macro->get_current_copy_nest().back().loc.resource_loc);
+    else if (source_stack_.back().copy_stack.size())
+        return *shared_resource_location(source_stack_.back().copy_stack.back().definition_location()->resource_loc);
     else
-    {
-        return scope_stack_.back().this_macro->get_current_copy_nest().back().loc.resource_loc;
-    }
+        return *shared_resource_location(source_stack_.back().current_instruction.resource_loc);
 }
 
 const std::deque<code_scope>& hlasm_context::scope_stack() const { return scope_stack_; }

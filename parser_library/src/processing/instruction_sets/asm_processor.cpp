@@ -104,11 +104,8 @@ void asm_processor::process_sect(const context::section_kind kind, rebuilt_state
         add_diagnostic(diagnostic_op::error_E031("symbol", stmt.label_ref().field_range));
     }
     else
-    {
-        auto sym_loc = hlasm_ctx.processing_stack_top().get_location();
-        sym_loc.pos.column = 0;
-        hlasm_ctx.ord_ctx.set_section(sect_name, kind, std::move(sym_loc), lib_info);
-    }
+        hlasm_ctx.ord_ctx.set_section(sect_name, kind, lib_info);
+
     context::ordinary_assembly_dependency_solver dep_solver(hlasm_ctx.ord_ctx, lib_info);
     hlasm_ctx.ord_ctx.symbol_dependencies().add_postponed_statement(
         std::make_unique<postponed_statement_impl>(std::move(stmt), hlasm_ctx.processing_stack()),
@@ -123,15 +120,10 @@ void asm_processor::process_LOCTR(rebuilt_statement&& stmt)
         add_diagnostic(diagnostic_op::error_E053(stmt.label_ref().field_range));
 
     if (hlasm_ctx.ord_ctx.symbol_defined(loctr_name) && !hlasm_ctx.ord_ctx.counter_defined(loctr_name))
-    {
         add_diagnostic(diagnostic_op::error_E031("symbol", stmt.label_ref().field_range));
-    }
     else
-    {
-        auto sym_loc = hlasm_ctx.processing_stack_top().get_location();
-        sym_loc.pos.column = 0;
-        hlasm_ctx.ord_ctx.set_location_counter(loctr_name, std::move(sym_loc), lib_info);
-    }
+        hlasm_ctx.ord_ctx.set_location_counter(loctr_name, lib_info);
+
     context::ordinary_assembly_dependency_solver dep_solver(hlasm_ctx.ord_ctx, lib_info);
     hlasm_ctx.ord_ctx.symbol_dependencies().add_postponed_statement(
         std::make_unique<postponed_statement_impl>(std::move(stmt), hlasm_ctx.processing_stack()),
@@ -498,8 +490,7 @@ void asm_processor::process_external(rebuilt_statement&& stmt, external_type t)
         if (hlasm_ctx.ord_ctx.symbol_defined(name))
             add_diagnostic(diagnostic_op::error_E031("external symbol", op_range));
         else
-            hlasm_ctx.ord_ctx.create_external_section(
-                name, s_kind, hlasm_ctx.current_statement_location(), hlasm_ctx.processing_stack());
+            hlasm_ctx.ord_ctx.create_external_section(name, s_kind);
     };
     for (const auto& op : stmt.operands_ref().value)
     {
@@ -1006,9 +997,7 @@ void asm_processor::process_START(rebuilt_statement&& stmt)
         return;
     }
 
-    auto sym_loc = hlasm_ctx.processing_stack_top().get_location();
-    sym_loc.pos.column = 0;
-    const auto* section = hlasm_ctx.ord_ctx.set_section(sect_name, EXECUTABLE, std::move(sym_loc), lib_info);
+    const auto* section = hlasm_ctx.ord_ctx.set_section(sect_name, EXECUTABLE, lib_info);
 
     const auto& ops = stmt.operands_ref().value;
     if (ops.size() != 1)
@@ -1541,10 +1530,7 @@ void asm_processor::handle_cattr_ops(context::id_index class_name,
     }
     else
     {
-        auto sym_loc = hlasm_ctx.processing_stack_top().get_location();
-        sym_loc.pos.column = 0;
-        class_name_sect = hlasm_ctx.ord_ctx.create_and_set_class(
-            class_name, std::move(sym_loc), lib_info, nullptr, !part_name.empty());
+        class_name_sect = hlasm_ctx.ord_ctx.create_and_set_class(class_name, lib_info, nullptr, !part_name.empty());
 
         // TODO: sectalign? part
     }
@@ -1552,9 +1538,7 @@ void asm_processor::handle_cattr_ops(context::id_index class_name,
     if (part_name.empty())
         return;
 
-    auto sym_loc = hlasm_ctx.processing_stack_top().get_location();
-    sym_loc.pos.column = 0;
-    hlasm_ctx.ord_ctx.create_and_set_class(part_name, std::move(sym_loc), lib_info, class_name_sect, false);
+    hlasm_ctx.ord_ctx.create_and_set_class(part_name, lib_info, class_name_sect, false);
 }
 
 void asm_processor::process_CATTR(rebuilt_statement&& stmt)

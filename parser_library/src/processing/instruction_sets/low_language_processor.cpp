@@ -77,10 +77,7 @@ context::id_index low_language_processor::find_using_label(const rebuilt_stateme
 bool low_language_processor::create_symbol(
     range err_range, context::id_index symbol_name, context::symbol_value value, context::symbol_attributes attributes)
 {
-    auto sym_loc = hlasm_ctx.processing_stack_top().get_location();
-    sym_loc.pos.column = 0;
-    bool ok = hlasm_ctx.ord_ctx.create_symbol(
-        symbol_name, std::move(value), std::move(attributes), std::move(sym_loc), lib_info);
+    bool ok = hlasm_ctx.ord_ctx.create_symbol(symbol_name, std::move(value), std::move(attributes), lib_info);
 
     if (!ok)
         add_diagnostic(diagnostic_op::error_E033(err_range));

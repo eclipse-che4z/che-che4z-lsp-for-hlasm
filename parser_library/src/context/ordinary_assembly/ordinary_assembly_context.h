@@ -96,11 +96,8 @@ public:
 
     // creates symbol
     // returns false if loctr cycle has occured
-    [[nodiscard]] bool create_symbol(id_index name,
-        symbol_value value,
-        symbol_attributes attributes,
-        location symbol_location,
-        const library_info& li);
+    [[nodiscard]] bool create_symbol(
+        id_index name, symbol_value value, symbol_attributes attributes, const library_info& li);
 
     void add_symbol_reference(symbol sym, const library_info& li);
     const symbol* get_symbol_reference(context::id_index name) const;
@@ -115,17 +112,15 @@ public:
     const section* current_section() const;
 
     // sets current section
-    section* set_section(id_index name, section_kind kind, location symbol_location, const library_info& li);
-    section* create_and_set_class(
-        id_index name, location symbol_location, const library_info& li, section* base, bool partitioned);
+    section* set_section(id_index name, section_kind kind, const library_info& li);
+    section* create_and_set_class(id_index name, const library_info& li, section* base, bool partitioned);
     section* set_section(section& s);
 
     // creates an external section
-    void create_external_section(
-        id_index name, section_kind kind, location symbol_location, processing_stack_t processing_stack);
+    void create_external_section(id_index name, section_kind kind);
 
     // sets current location counter of current section
-    void set_location_counter(id_index name, location symbol_location, const library_info& li);
+    void set_location_counter(id_index name, const library_info& li);
     void set_location_counter(location_counter& l);
 
     // sets value of the current location counter

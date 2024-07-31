@@ -63,14 +63,16 @@ location_counter& ordinary_assembly_context::loctr()
 }
 
 bool ordinary_assembly_context::create_symbol(
-    id_index name, symbol_value value, symbol_attributes attributes, location symbol_location, const library_info& li)
+    id_index name, symbol_value value, symbol_attributes attributes, const library_info& li)
 {
     assert(symbol_can_be_assigned(symbols_, name));
 
     const auto value_kind = value.value_kind();
 
-    symbols_.insert_or_assign(
-        name, symbol(name, std::move(value), attributes, std::move(symbol_location), hlasm_ctx_.processing_stack()));
+    auto loc = hlasm_ctx_.processing_stack();
+    auto sym_loc = loc.frame().get_location();
+    sym_loc.pos.column = 0;
+    symbols_.insert_or_assign(name, symbol(name, std::move(value), attributes, std::move(sym_loc), std::move(loc)));
 
     bool ok = true;
 
@@ -121,8 +123,7 @@ section* ordinary_assembly_context::get_section(id_index name)
 
 const section* ordinary_assembly_context::current_section() const { return curr_section_; }
 
-section* ordinary_assembly_context::set_section(
-    id_index name, section_kind kind, location symbol_location, const library_info& li)
+section* ordinary_assembly_context::set_section(id_index name, section_kind kind, const library_info& li)
 {
     auto tmp = std::ranges::find_if(
         sections_, [name, kind](const auto& sect) { return sect->name == name && sect->kind == kind; });
@@ -138,12 +139,15 @@ section* ordinary_assembly_context::set_section(
         if (!name.empty())
         {
             assert(symbol_can_be_assigned(symbols_, name));
+            auto loc = hlasm_ctx_.processing_stack();
+            auto sym_loc = loc.frame().get_location();
+            sym_loc.pos.column = 0;
             symbols_.insert_or_assign(name,
                 symbol(name,
                     s->current_location_counter().current_address(),
                     symbol_attributes::make_section_attrs(),
-                    std::move(symbol_location),
-                    hlasm_ctx_.processing_stack()));
+                    std::move(sym_loc),
+                    std::move(loc)));
             m_symbol_dependencies->add_defined(name, nullptr, li);
         }
     }
@@ -152,7 +156,7 @@ section* ordinary_assembly_context::set_section(
 }
 
 section* ordinary_assembly_context::create_and_set_class(
-    id_index name, location symbol_location, const library_info& li, section* base, bool partitioned)
+    id_index name, const library_info& li, section* base, bool partitioned)
 {
     assert(std::ranges::find(sections_, name, &section::name) == sections_.end());
     assert(symbol_can_be_assigned(symbols_, name));
@@ -164,12 +168,15 @@ section* ordinary_assembly_context::create_and_set_class(
             .parent = base,
             .partitioned = partitioned,
         }));
+    auto loc = hlasm_ctx_.processing_stack();
+    auto sym_loc = loc.frame().get_location();
+    sym_loc.pos.column = 0;
     symbols_.insert_or_assign(name,
         symbol(name,
             s->current_location_counter().current_address(),
             symbol_attributes::make_section_attrs(),
-            std::move(symbol_location),
-            hlasm_ctx_.processing_stack()));
+            std::move(sym_loc),
+            std::move(loc)));
     m_symbol_dependencies->add_defined(name, nullptr, li);
 
     return s;
@@ -189,8 +196,7 @@ section* ordinary_assembly_context::set_section(section& s)
     return &s;
 }
 
-void ordinary_assembly_context::create_external_section(
-    id_index name, section_kind kind, location symbol_location, processing_stack_t processing_stack)
+void ordinary_assembly_context::create_external_section(id_index name, section_kind kind)
 {
     const auto attrs = [kind]() {
         switch (kind)
@@ -206,15 +212,17 @@ void ordinary_assembly_context::create_external_section(
 
     assert(symbol_can_be_assigned(symbols_, name));
 
+    auto loc = hlasm_ctx_.processing_stack();
+    auto sym_loc = loc.frame().get_location();
     symbols_.insert_or_assign(name,
         symbol(name,
             create_section(name, kind)->current_location_counter().current_address(),
             attrs,
-            std::move(symbol_location),
-            std::move(processing_stack)));
+            std::move(sym_loc),
+            std::move(loc)));
 }
 
-void ordinary_assembly_context::set_location_counter(id_index name, location symbol_location, const library_info& li)
+void ordinary_assembly_context::set_location_counter(id_index name, const library_info& li)
 {
     ensure_current_section();
 
@@ -232,13 +240,16 @@ void ordinary_assembly_context::set_location_counter(id_index name, location sym
     if (!defined)
     {
         auto& l = curr_section_->set_location_counter(name);
+        auto loc = hlasm_ctx_.processing_stack();
+        auto sym_loc = loc.frame().get_location();
+        sym_loc.pos.column = 0;
         assert(symbol_can_be_assigned(symbols_, name));
         symbols_.insert_or_assign(name,
             symbol(name,
                 l.current_address(),
                 symbol_attributes::make_section_attrs(),
-                std::move(symbol_location),
-                hlasm_ctx_.processing_stack()));
+                std::move(sym_loc),
+                std::move(loc)));
 
         m_symbol_dependencies->add_defined(name, nullptr, li);
     }

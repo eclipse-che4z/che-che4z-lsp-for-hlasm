@@ -38,7 +38,7 @@ macrodef_processor::macrodef_processor(const analyzing_context& ctx,
     , finished_flag_(false)
     , table_(create_table())
 {
-    result_.definition_location = hlasm_ctx.processing_stack_top().get_location();
+    result_.definition_location = hlasm_ctx.current_statement_location();
     result_.external = start_.is_external;
     if (start_.is_external)
         result_.prototype.macro_name = start_.external_name;
@@ -97,7 +97,7 @@ void macrodef_processor::end_processing()
 {
     if (!finished_flag_)
         add_diagnostic(diagnostic_op::error_E046(
-            result_.prototype.macro_name.to_string_view(), range(hlasm_ctx.processing_stack_top().pos)));
+            result_.prototype.macro_name.to_string_view(), range(hlasm_ctx.current_statement_position())));
 
     hlasm_ctx.pop_statement_processing();
 
@@ -160,7 +160,7 @@ bool macrodef_processor::process_statement(const context::hlasm_statement& state
 
     if (expecting_MACRO_)
     {
-        result_.definition_location = hlasm_ctx.processing_stack_top().get_location();
+        result_.definition_location = hlasm_ctx.current_statement_location();
 
         if (!res_stmt || res_stmt->opcode_ref().value != context::id_storage::well_known::MACRO)
         {
