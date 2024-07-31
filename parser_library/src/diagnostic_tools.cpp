@@ -28,13 +28,13 @@ diagnostic add_stack_details(diagnostic_op d, context::processing_stack_t stack)
     if (stack.empty())
         return std::move(d).to_diagnostic();
 
-    auto diag = std::move(d).to_diagnostic(stack.frame().resource_loc->get_uri());
+    auto diag = std::move(d).to_diagnostic(stack.frame().resource_loc.get_uri());
 
     for (stack = stack.parent(); !stack.empty(); stack = stack.parent())
     {
         const auto& f = stack.frame();
-        diag.related.emplace_back(range_uri(f.resource_loc->get_uri(), range(f.pos)),
-            std::format("While compiling {}({})", f.resource_loc->to_presentable(), f.pos.line + 1));
+        diag.related.emplace_back(range_uri(f.resource_loc.get_uri(), range(f.pos)),
+            std::format("While compiling {}({})", f.resource_loc.to_presentable(), f.pos.line + 1));
     }
 
     return diag;

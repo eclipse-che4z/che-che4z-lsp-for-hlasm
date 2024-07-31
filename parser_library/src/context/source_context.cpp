@@ -39,12 +39,12 @@ source_snapshot source_context::create_snapshot() const
 }
 
 processing_frame_details::processing_frame_details(position pos,
-    const utils::resource::resource_location* resource_loc,
+    const utils::resource::resource_location& resource_loc,
     const code_scope& scope,
     file_processing_type proc_type,
     id_index member)
     : pos(pos)
-    , resource_loc(std::move(resource_loc))
+    , resource_loc(resource_loc)
     , scope(scope)
     , member_name(member)
     , proc_type(std::move(proc_type))
@@ -56,7 +56,7 @@ processing_frame_tree::processing_frame_tree()
 
 processing_frame_tree::node_pointer processing_frame_tree::step(node_pointer current,
     position pos,
-    const utils::resource::resource_location* resource_loc,
+    const utils::resource::resource_location& resource_loc,
     id_index member,
     file_processing_type proc_type)
 {

@@ -134,9 +134,6 @@ private:
     std::unordered_set<utils::resource::resource_location, utils::resource::resource_location_hasher>
         m_resource_locations;
 
-    const utils::resource::resource_location* shared_resource_location(const utils::resource::resource_location&);
-    const utils::resource::resource_location* shared_resource_location(utils::resource::resource_location&&);
-
     processing_frame_tree m_stack_tree;
 
     std::string m_title_name;

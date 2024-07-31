@@ -88,7 +88,7 @@ class debugger::impl final : public processing::statement_analyzer, output_handl
     // Specifies whether the debugger stops on the next statement call.
     bool stop_on_next_stmt_ = false;
     bool stop_on_stack_changes_ = false;
-    std::pair<context::processing_stack_t, const utils::resource::resource_location*> stop_on_stack_condition_;
+    std::pair<context::processing_stack_t, std::optional<utils::resource::resource_location>> stop_on_stack_condition_;
 
     // True, if disconnect request was received
     bool disconnected_ = false;
@@ -263,18 +263,18 @@ public:
         auto stack_node = ctx_->processing_stack();
         auto stack = ctx_->processing_stack_details();
 
-        for (const auto& bp : breakpoints(*stack.back().resource_loc))
+        for (const auto& bp : breakpoints(stack.back().resource_loc))
         {
             if (bp.line >= stmt_range.start.line && bp.line <= stmt_range.end.line)
                 breakpoint_hit = true;
         }
 
-        const auto stack_condition_violated = [cond = stop_on_stack_condition_](context::processing_stack_t cur) {
+        const auto stack_condition_violated = [&cond = stop_on_stack_condition_](context::processing_stack_t cur) {
             auto last = cur;
             for (cur = cur.parent(); !cur.empty(); last = cur, cur = cur.parent())
                 if (cur == cond.first)
                     break;
-            return cond.first != cur || (cond.second && cond.second != last.frame().resource_loc);
+            return cond.first != cur || (cond.second && *cond.second != last.frame().resource_loc);
         };
 
         // breakpoint check
@@ -291,7 +291,7 @@ public:
                 return false;
             stop_on_next_stmt_ = false;
             stop_on_stack_changes_ = false;
-            stop_on_stack_condition_ = std::make_pair(stack_node, nullptr);
+            stop_on_stack_condition_ = std::make_pair(stack_node, std::nullopt);
 
             continue_ = false;
 
@@ -366,7 +366,7 @@ public:
             return stack_frames_;
         for (size_t i = proc_stack_.size() - 1; i != (size_t)-1; --i)
         {
-            source source(proc_stack_[i].resource_loc->get_uri());
+            source source(proc_stack_[i].resource_loc.get_uri());
             std::string name;
             switch (proc_stack_[i].proc_type)
             {

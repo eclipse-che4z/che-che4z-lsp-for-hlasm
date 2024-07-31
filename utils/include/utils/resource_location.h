@@ -17,6 +17,7 @@
 
 #include <atomic>
 #include <compare>
+#include <functional>
 #include <memory>
 #include <string>
 #include <string_view>
@@ -113,5 +114,17 @@ struct resource_location_hasher
 };
 
 } // namespace hlasm_plugin::utils::resource
+
+namespace std {
+template<>
+class hash<::hlasm_plugin::utils::resource::resource_location>
+{
+public:
+    std::size_t operator()(const ::hlasm_plugin::utils::resource::resource_location& rl) const noexcept
+    {
+        return hlasm_plugin::utils::resource::resource_location_hasher()(rl);
+    }
+};
+} // namespace std
 
 #endif

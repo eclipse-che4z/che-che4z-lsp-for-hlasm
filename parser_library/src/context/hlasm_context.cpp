@@ -433,17 +433,6 @@ const id_storage& hlasm_context::ids() const { return *ids_; }
 
 std::shared_ptr<id_storage> hlasm_context::ids_ptr() { return ids_; }
 
-const utils::resource::resource_location* hlasm_context::shared_resource_location(
-    const utils::resource::resource_location& l)
-{
-    return std::to_address(m_resource_locations.emplace(l).first);
-}
-const utils::resource::resource_location* hlasm_context::shared_resource_location(
-    utils::resource::resource_location&& l)
-{
-    return std::to_address(m_resource_locations.emplace(std::move(l)).first);
-}
-
 processing_stack_t hlasm_context::processing_stack()
 {
     auto result = m_stack_tree.root();
@@ -452,14 +441,14 @@ processing_stack_t hlasm_context::processing_stack()
     {
         result = m_stack_tree.step(result,
             source.current_instruction.pos,
-            shared_resource_location(source.current_instruction.resource_loc),
+            source.current_instruction.resource_loc,
             id_index(),
             file_processing_type::OPENCODE);
         for (const auto& member : source.copy_stack)
         {
             result = m_stack_tree.step(result,
                 member.current_statement_position(),
-                shared_resource_location(member.definition_location()->resource_loc),
+                member.definition_location()->resource_loc,
                 member.name(),
                 file_processing_type::COPY);
         }
@@ -472,8 +461,7 @@ processing_stack_t hlasm_context::processing_stack()
                 for (auto type = file_processing_type::MACRO;
                      const auto& nest : scope_stack_[j].this_macro->get_current_copy_nest())
                 {
-                    result = m_stack_tree.step(
-                        result, nest.loc.pos, shared_resource_location(nest.loc.resource_loc), nest.member_name, type);
+                    result = m_stack_tree.step(result, nest.loc.pos, nest.loc.resource_loc, nest.member_name, type);
                     type = file_processing_type::COPY;
                 }
             }
@@ -490,14 +478,14 @@ processing_stack_details_t hlasm_context::processing_stack_details()
     for (bool first = true; const auto& source : source_stack_)
     {
         res.emplace_back(source.current_instruction.pos,
-            shared_resource_location(source.current_instruction.resource_loc),
+            source.current_instruction.resource_loc,
             scope_stack_.front(),
             file_processing_type::OPENCODE,
             id_index());
         for (const auto& member : source.copy_stack)
         {
             res.emplace_back(member.current_statement_position(),
-                shared_resource_location(member.definition_location()->resource_loc),
+                member.definition_location()->resource_loc,
                 scope_stack_.front(),
                 file_processing_type::COPY,
                 member.name());
@@ -511,11 +499,7 @@ processing_stack_details_t hlasm_context::processing_stack_details()
                 for (auto type = file_processing_type::MACRO;
                      const auto& nest : scope_stack_[j].this_macro->get_current_copy_nest())
                 {
-                    res.emplace_back(nest.loc.pos,
-                        shared_resource_location(nest.loc.resource_loc),
-                        scope_stack_[j],
-                        type,
-                        nest.member_name);
+                    res.emplace_back(nest.loc.pos, nest.loc.resource_loc, scope_stack_[j], type, nest.member_name);
                     type = file_processing_type::COPY;
                 }
             }
@@ -538,32 +522,24 @@ position hlasm_context::current_statement_position(bool consider_macros)
 location hlasm_context::current_statement_location(bool consider_macros)
 {
     if (consider_macros && source_stack_.size() == 1 && scope_stack_.size() > 1)
-    {
-        const auto& [p, r] = scope_stack_.back().this_macro->get_current_copy_nest().back().loc;
-        return location(p, *shared_resource_location(r));
-    }
+        return scope_stack_.back().this_macro->get_current_copy_nest().back().loc;
     else if (!source_stack_.back().copy_stack.empty())
     {
         const auto& member = source_stack_.back().copy_stack.back();
-        return location(
-            member.current_statement_position(), *shared_resource_location(member.definition_location()->resource_loc));
+        return location(member.current_statement_position(), member.definition_location()->resource_loc);
     }
     else
-    {
-        const auto& [p, r] = source_stack_.back().current_instruction;
-        return location(p, *shared_resource_location(r));
-    }
+        return source_stack_.back().current_instruction;
 }
 
 const utils::resource::resource_location& hlasm_context::current_statement_source(bool consider_macros)
 {
     if (consider_macros && source_stack_.size() == 1 && scope_stack_.size() > 1)
-        return *shared_resource_location(
-            scope_stack_.back().this_macro->get_current_copy_nest().back().loc.resource_loc);
+        return scope_stack_.back().this_macro->get_current_copy_nest().back().loc.resource_loc;
     else if (source_stack_.back().copy_stack.size())
-        return *shared_resource_location(source_stack_.back().copy_stack.back().definition_location()->resource_loc);
+        return source_stack_.back().copy_stack.back().definition_location()->resource_loc;
     else
-        return *shared_resource_location(source_stack_.back().current_instruction.resource_loc);
+        return source_stack_.back().current_instruction.resource_loc;
 }
 
 const std::deque<code_scope>& hlasm_context::scope_stack() const { return scope_stack_; }

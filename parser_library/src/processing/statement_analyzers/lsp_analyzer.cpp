@@ -636,7 +636,7 @@ void lsp_analyzer::collect_branch_info(
             continue;
 
         const auto loc = get_opencode_stackframe(stmt->location_stack);
-        if (loc.empty() && *loc.frame().resource_loc != opencode_loc)
+        if (loc.empty() && loc.frame().resource_loc != opencode_loc)
             continue;
 
         const auto& [target, condition] = *transfer;

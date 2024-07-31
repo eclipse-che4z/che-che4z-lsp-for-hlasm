@@ -57,8 +57,8 @@ struct code_scope;
 
 struct processing_frame
 {
-    constexpr processing_frame(position pos,
-        const utils::resource::resource_location* resource_loc,
+    processing_frame(position pos,
+        const utils::resource::resource_location& resource_loc,
         id_index member,
         file_processing_type proc_type)
         : pos(pos)
@@ -68,25 +68,25 @@ struct processing_frame
     {}
 
     position pos;
-    const utils::resource::resource_location* resource_loc;
+    utils::resource::resource_location resource_loc;
     id_index member_name;
     file_processing_type proc_type;
 
     bool operator==(const processing_frame&) const = default;
 
-    location get_location() const { return location(pos, *resource_loc); }
+    location get_location() const { return location(pos, resource_loc); }
 };
 
 struct processing_frame_details
 {
     processing_frame_details(position pos,
-        const utils::resource::resource_location* resource_loc,
+        const utils::resource::resource_location& resource_loc,
         const code_scope& scope,
         file_processing_type proc_type,
         id_index member);
 
     position pos;
-    const utils::resource::resource_location* resource_loc;
+    utils::resource::resource_location resource_loc;
     const code_scope& scope;
     id_index member_name;
     file_processing_type proc_type;
@@ -104,17 +104,17 @@ class processing_frame_tree
 
         bool operator==(const processing_frame_node&) const = default;
 
-        constexpr processing_frame_node(const processing_frame_node* parent,
+        processing_frame_node(const processing_frame_node* parent,
             position pos,
-            const utils::resource::resource_location* resource_loc,
+            const utils::resource::resource_location& resource_loc,
             id_index member,
             file_processing_type proc_type)
             : m_parent(parent)
             , frame(pos, resource_loc, member, proc_type)
         {}
-        explicit constexpr processing_frame_node()
+        explicit processing_frame_node()
             : m_parent(nullptr)
-            , frame({}, nullptr, id_index(), file_processing_type::NONE)
+            , frame({}, utils::resource::resource_location(), id_index(), file_processing_type::NONE)
         {}
     };
 
@@ -166,7 +166,7 @@ public:
 
     node_pointer step(node_pointer current,
         position pos,
-        const utils::resource::resource_location* resource_loc,
+        const utils::resource::resource_location& resource_loc,
         id_index member,
         file_processing_type proc_type);
 };
