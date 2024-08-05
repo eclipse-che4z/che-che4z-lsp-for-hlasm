@@ -877,8 +877,10 @@ public:
         {
             // Just append a dir and return
             auto new_loc = resource_location::join(location, "inf");
-            return hlasm_plugin::utils::value_task<list_directory_result>::from_value(
-                { { { new_loc.get_uri(), new_loc } }, hlasm_plugin::utils::path::list_directory_rc::done });
+            return hlasm_plugin::utils::value_task<list_directory_result>::from_value({
+                { { std::string(new_loc.get_uri()), new_loc } },
+                hlasm_plugin::utils::path::list_directory_rc::done,
+            });
         }
 
         if (location.get_uri().ends_with("/inf0/") || location.get_uri().ends_with("/inf1")
@@ -893,11 +895,11 @@ public:
             auto inf5 = resource_location::join(location, "inf5");
             return hlasm_plugin::utils::value_task<list_directory_result>::from_value({
                 {
-                    { inf1.get_uri(), inf1 },
-                    { inf2.get_uri(), inf2 },
-                    { inf3.get_uri(), inf3 },
-                    { inf4.get_uri(), inf4 },
-                    { inf5.get_uri(), inf5 },
+                    { std::string(inf1.get_uri()), inf1 },
+                    { std::string(inf2.get_uri()), inf2 },
+                    { std::string(inf3.get_uri()), inf3 },
+                    { std::string(inf4.get_uri()), inf4 },
+                    { std::string(inf5.get_uri()), inf5 },
                 },
                 hlasm_plugin::utils::path::list_directory_rc::done,
             });

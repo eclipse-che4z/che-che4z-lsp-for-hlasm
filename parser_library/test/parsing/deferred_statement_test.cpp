@@ -134,7 +134,7 @@ TEST(deferred_statement, navigation_for_nonexecuted)
 
     EXPECT_TRUE(a.diags().empty());
 
-    EXPECT_EQ(a.context().lsp_ctx->definition(opencode, position(4, 10)).get_uri(), "INNER");
+    EXPECT_EQ(a.context().lsp_ctx->definition(opencode, position(4, 10)).resource_loc.get_uri(), "INNER");
     EXPECT_EQ(a.context().lsp_ctx->hover(opencode, position(4, 10)),
         "Statement not executed, macro with matching name available");
     EXPECT_NE(a.context().lsp_ctx->hover(opencode, position(5, 10)).find("Set Addressing Mode"), std::string::npos);

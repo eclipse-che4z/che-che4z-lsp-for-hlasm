@@ -110,9 +110,7 @@ std::vector<std::pair<std::string, size_t>> processor_group::suggest(std::string
     }
 }
 
-bool processor_group::refresh_needed(
-    const std::unordered_set<utils::resource::resource_location, utils::resource::resource_location_hasher>&
-        no_filename_rls,
+bool processor_group::refresh_needed(const std::unordered_set<utils::resource::resource_location>& no_filename_rls,
     const std::vector<utils::resource::resource_location>& original_rls) const
 {
     if (std::ranges::any_of(

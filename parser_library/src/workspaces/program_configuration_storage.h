@@ -93,8 +93,7 @@ private:
     std::map<utils::resource::resource_location, program_properties> m_exact_match;
     std::vector<std::pair<program_properties, std::regex>> m_regex_pgm_conf;
     std::vector<std::pair<program_properties, std::regex>> m_regex_b4g_json;
-    std::unordered_map<utils::resource::resource_location, name_set, utils::resource::resource_location_hasher>
-        m_missing_proc_grps;
+    std::unordered_map<utils::resource::resource_location, name_set> m_missing_proc_grps;
 
     missing_pgroup_details new_missing_pgroup_helper(
         std::string missing_pgroup_name, utils::resource::resource_location config_rl);

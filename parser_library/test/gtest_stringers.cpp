@@ -35,7 +35,7 @@ std::ostream& operator<<(std::ostream& stream, range item)
 
 std::ostream& operator<<(std::ostream& stream, const location& item)
 {
-    return stream << "{ file: " << item.get_uri() << "\n position: " << item.pos << " }";
+    return stream << "{ file: " << item.resource_loc.get_uri() << "\n position: " << item.pos << " }";
 }
 
 std::ostream& operator<<(std::ostream& stream, const performance_metrics& item)

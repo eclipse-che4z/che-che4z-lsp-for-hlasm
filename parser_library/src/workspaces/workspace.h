@@ -73,7 +73,6 @@ class workspace
 {
 public:
     using resource_location = utils::resource::resource_location;
-    using resource_location_hasher = utils::resource::resource_location_hasher;
 
     workspace(file_manager& file_manager, configuration_provider& configuration);
 
@@ -126,9 +125,7 @@ public:
 
     void external_configuration_invalidated(const resource_location& url);
 
-    std::unordered_map<utils::resource::resource_location,
-        std::vector<utils::resource::resource_location>,
-        utils::resource::resource_location_hasher>
+    std::unordered_map<utils::resource::resource_location, std::vector<utils::resource::resource_location>>
     report_used_configuration_files() const;
 
 private:
@@ -185,8 +182,8 @@ private:
         [[nodiscard]] utils::task update_source_if_needed(file_manager& fm);
     };
 
-    std::unordered_map<resource_location, processor_file_compoments, resource_location_hasher> m_processor_files;
-    std::unordered_set<resource_location, resource_location_hasher> m_parsing_pending;
+    std::unordered_map<resource_location, processor_file_compoments> m_processor_files;
+    std::unordered_set<resource_location> m_parsing_pending;
 
     [[nodiscard]] utils::value_task<processor_file_compoments&> add_processor_file_impl(std::shared_ptr<file> f);
     const processor_file_compoments* find_processor_file_impl(const resource_location& file) const;

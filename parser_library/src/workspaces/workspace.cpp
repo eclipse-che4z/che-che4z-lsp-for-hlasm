@@ -45,7 +45,6 @@
 #include "utils/transform_inserter.h"
 
 using hlasm_plugin::utils::resource::resource_location;
-using hlasm_plugin::utils::resource::resource_location_hasher;
 
 namespace hlasm_plugin::parser_library::workspaces {
 
@@ -129,8 +128,7 @@ struct workspace_parse_lib_provider final : public parse_lib_provider
         std::less<>>
         next_dependencies;
     std::map<std::string, resource_location, std::less<>> next_member_map;
-    std::unordered_map<resource_location, std::shared_ptr<file>, resource_location_hasher, std::equal_to<>>
-        current_file_map;
+    std::unordered_map<resource_location, std::shared_ptr<file>> current_file_map;
 
     workspace_parse_lib_provider(file_manager& fm,
         workspace& ws,
@@ -294,15 +292,10 @@ workspace::workspace(file_manager& file_manager, configuration_provider& configu
 
 workspace::~workspace() = default;
 
-std::unordered_map<utils::resource::resource_location,
-    std::vector<utils::resource::resource_location>,
-    utils::resource::resource_location_hasher>
+std::unordered_map<utils::resource::resource_location, std::vector<utils::resource::resource_location>>
 workspace::report_used_configuration_files() const
 {
-    std::unordered_map<utils::resource::resource_location,
-        std::vector<utils::resource::resource_location>,
-        utils::resource::resource_location_hasher>
-        result;
+    std::unordered_map<utils::resource::resource_location, std::vector<utils::resource::resource_location>> result;
 
     for (const auto& [processor_file_rl, component] : m_processor_files)
     {
@@ -337,7 +330,7 @@ struct mac_cpybook_definition_details
 };
 
 using mac_cpy_definitions_map = std::map<size_t, mac_cpybook_definition_details, std::greater<size_t>>;
-using rl_mac_cpy_map = std::unordered_map<resource_location, mac_cpy_definitions_map, resource_location_hasher>;
+using rl_mac_cpy_map = std::unordered_map<resource_location, mac_cpy_definitions_map>;
 
 void generate_merged_fade_messages(const resource_location& rl,
     const processing::hit_count_entry& hc_entry,
@@ -381,8 +374,6 @@ void generate_merged_fade_messages(const resource_location& rl,
         return e.contains_statement && e.count == 0;
     };
 
-    const auto& uri = rl.get_uri();
-
     const auto it_b =
         std::ranges::find_if(line_details_it_b, line_details_it_e, &processing::line_detail::contains_statement);
     auto faded_line_it = std::find_if(it_b, line_details_it_e, faded_line_predicate);
@@ -390,7 +381,7 @@ void generate_merged_fade_messages(const resource_location& rl,
     while (faded_line_it != line_details_it_e)
     {
         auto active_line = std::find_if_not(std::next(faded_line_it), line_details_it_e, faded_line_predicate);
-        fms.emplace_back(fade_message::inactive_statement(uri,
+        fms.emplace_back(fade_message::inactive_statement(rl.get_uri(),
             range {
                 position(std::ranges::distance(line_details_it_b, faded_line_it), 0),
                 position(std::ranges::distance(line_details_it_b, std::prev(active_line)), 80),
@@ -482,8 +473,7 @@ void workspace::retrieve_fade_messages(std::vector<fade_message>& fms) const
     processing::hit_count_map hc_map;
     rl_mac_cpy_map active_rl_mac_cpy_map;
 
-    std::unordered_map<std::string, const resource_location*, utils::hashers::string_hasher, std::equal_to<>>
-        opened_files_uris;
+    std::unordered_map<std::string_view, const resource_location*> opened_files_uris;
 
     for (const auto& [rl, component] : m_processor_files)
         if (component.m_opened)
@@ -548,7 +538,7 @@ void workspace::delete_diags(processor_file_compoments& pfc)
         }
     }
 
-    pfc.m_last_results->opencode_diagnostics.push_back(info_SUP(pfc.m_file->get_location()));
+    pfc.m_last_results->opencode_diagnostics.push_back(info_SUP(std::string(pfc.m_file->get_location().get_uri())));
 }
 
 void workspace::show_message(std::string_view message)

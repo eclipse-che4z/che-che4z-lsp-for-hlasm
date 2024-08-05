@@ -281,7 +281,7 @@ std::string file_manager_impl::canonical(const utils::resource::resource_locatio
 {
     // TODO: this should probably return resource_location
     if (utils::platform::is_web() || !res_loc.is_local()) // TODO: not supported yet
-        return res_loc.lexically_normal().get_uri();
+        return std::string(res_loc.lexically_normal().get_uri());
     return utils::resource::canonical(res_loc, ec);
 }
 

@@ -65,12 +65,9 @@ resource_location::resource_location(const char* uri)
     : resource_location(std::string(uri))
 {}
 
-const std::string empty_resource_location_uri;
-const std::string& resource_location::get_uri() const { return m_data ? m_data->uri : empty_resource_location_uri; }
-
 std::string resource_location::get_path() const
 {
-    return m_data ? utils::path::uri_to_path(m_data->uri) : empty_resource_location_uri;
+    return m_data ? utils::path::uri_to_path(m_data->uri) : std::string();
 }
 
 std::string resource_location::to_presentable(bool debug) const
@@ -290,7 +287,7 @@ void normalize_windows_like_uri(utils::path::dissected_uri& dis_uri)
 
 resource_location resource_location::lexically_normal() const
 {
-    auto uri = get_uri();
+    std::string uri(get_uri());
 
     std::ranges::replace(uri, '\\', '/');
 
@@ -390,7 +387,7 @@ resource_location resource_location::join(resource_location rl, std::string_view
     }
     else
     {
-        std::string uri = rl.get_uri();
+        std::string uri(rl.get_uri());
         uri_append(uri, other);
         return resource_location(std::move(uri));
     }
@@ -405,7 +402,7 @@ resource_location resource_location::replace_filename(resource_location rl, std:
 {
     if (!utils::path::is_uri(rl.get_uri()))
     {
-        auto uri = rl.get_uri();
+        std::string uri(rl.get_uri());
         uri.erase(uri.find_last_of("/\\") + 1);
         uri.append(other);
 
@@ -424,9 +421,9 @@ resource_location resource_location::replace_filename(resource_location rl, std:
 
 std::string resource_location::filename() const
 {
-    const auto& uri = get_uri();
+    const auto uri = get_uri();
     if (!utils::path::is_uri(uri))
-        return uri.substr(uri.find_last_of("/\\") + 1);
+        return std::string(uri.substr(uri.find_last_of("/\\") + 1));
 
     auto dis_uri = utils::path::dissect_uri(uri);
 
@@ -454,7 +451,10 @@ resource_location resource_location::parent() const
     return resource_location(utils::path::reconstruct_uri(dis_uri));
 }
 
-std::string resource_location::get_local_path_or_uri() const { return is_local() ? get_path() : get_uri(); }
+std::string resource_location::get_local_path_or_uri() const
+{
+    return is_local() ? get_path() : std::string(get_uri());
+}
 
 namespace {
 utils::path::dissected_uri::authority relative_reference_process_new_auth(
@@ -559,7 +559,7 @@ resource_location resource_location::relative_reference_resolution(resource_loca
 
         if (dis_uri.scheme.empty() && dis_uri.path.empty())
         {
-            auto uri = rl.get_uri();
+            std::string uri(rl.get_uri());
             uri_append(uri, other);
             return resource_location(
                 std::move(uri)); // This is a regular path and not a uri. Let's proceed in a regular way

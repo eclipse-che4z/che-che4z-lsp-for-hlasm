@@ -438,15 +438,15 @@ utils::task workspace_configuration::process_processor_group_library(const confi
     auto rl = transform_to_resource_location(*lib_path, root);
     rl.join(""); // Ensure that this is a directory
 
-    if (auto first_wild_card = rl.get_uri().find_first_of("*?"); first_wild_card == std::string::npos)
+    const auto uri = rl.get_uri();
+    if (auto first_wild_card = uri.find_first_of("*?"); first_wild_card == std::string::npos)
     {
         prc_grp.add_library(get_local_library(rl, lib_local_opts));
         return {};
     }
     else
     {
-        utils::resource::resource_location search_root(
-            rl.get_uri().substr(0, rl.get_uri().find_last_of("/", first_wild_card) + 1));
+        utils::resource::resource_location search_root(uri.substr(0, uri.find_last_of("/", first_wild_card) + 1));
         return find_and_add_libs(std::move(search_root), std::move(rl), prc_grp, std::move(lib_local_opts), diags);
     }
 }
@@ -828,7 +828,7 @@ utils::task workspace_configuration::find_and_add_libs(utils::resource::resource
         if (!processed_canonical_paths.insert(std::move(canonical_path)).second)
             continue;
 
-        if (std::regex_match(dir.get_uri(), path_validator))
+        if (const auto dir_uri = dir.get_uri(); std::regex_match(dir_uri.begin(), dir_uri.end(), path_validator))
             prc_grp.add_library(get_local_library(dir, opts));
 
         auto [subdir_list, return_code] = co_await m_file_manager.list_directory_subdirs_and_symlinks(dir);
@@ -874,9 +874,8 @@ void workspace_configuration::add_missing_diags(std::vector<diagnostic>& target,
 }
 
 void workspace_configuration::produce_diagnostics(std::vector<diagnostic>& target,
-    const std::unordered_map<utils::resource::resource_location,
-        std::vector<utils::resource::resource_location>,
-        utils::resource::resource_location_hasher>& used_configs_opened_files_map,
+    const std::unordered_map<utils::resource::resource_location, std::vector<utils::resource::resource_location>>&
+        used_configs_opened_files_map,
     bool include_advisory_cfg_diags) const
 {
     for (auto& [key, value] : m_proc_grps)
@@ -923,7 +922,7 @@ workspace_configuration::refresh_libraries(const std::vector<utils::resource::re
 {
     using return_type = std::optional<std::vector<index_t<processor_group, unsigned long long>>>;
     return_type result;
-    std::unordered_set<utils::resource::resource_location, utils::resource::resource_location_hasher> no_filename_rls;
+    std::unordered_set<utils::resource::resource_location> no_filename_rls;
 
     for (const auto& file_loc : file_locations)
         no_filename_rls.insert(utils::resource::resource_location::replace_filename(file_loc, ""));

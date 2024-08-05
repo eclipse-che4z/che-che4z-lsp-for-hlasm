@@ -65,9 +65,7 @@ public:
 
     std::vector<std::pair<std::string, size_t>> suggest(std::string_view s, bool extended);
 
-    bool refresh_needed(
-        const std::unordered_set<utils::resource::resource_location, utils::resource::resource_location_hasher>&
-            no_filename_rls,
+    bool refresh_needed(const std::unordered_set<utils::resource::resource_location>& no_filename_rls,
         const std::vector<utils::resource::resource_location>& original_rls) const;
 
 private:

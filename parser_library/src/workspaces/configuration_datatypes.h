@@ -49,7 +49,7 @@ struct b4g_conf
 
     size_t hash() const noexcept
     {
-        return std::hash<std::string_view>()(name) ^ utils::resource::resource_location_hasher()(bridge_json_uri);
+        return std::hash<std::string_view>()(name) ^ std::hash<utils::resource::resource_location>()(bridge_json_uri);
     }
 };
 

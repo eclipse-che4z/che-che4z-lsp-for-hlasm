@@ -16,7 +16,6 @@
 #define HLASMPLUGIN_PARSERLIBRARY_LOCATION_H
 
 #include <compare>
-#include <string>
 
 #include "range.h"
 #include "utils/resource_location.h"
@@ -31,7 +30,6 @@ struct location
         , resource_loc(std::move(file))
     {}
 
-    const std::string& get_uri() const { return resource_loc.get_uri(); }
     auto operator<=>(const location& oth) const noexcept = default;
 
     position pos;

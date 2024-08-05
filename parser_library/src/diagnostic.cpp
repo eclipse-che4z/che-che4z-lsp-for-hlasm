@@ -34,7 +34,7 @@ std::string get_not_defined_proc_group_msg(std::string_view config_file, std::st
 
 diagnostic error_W0001(const utils::resource::resource_location& file_name)
 {
-    return diagnostic(file_name.get_uri(),
+    return diagnostic(std::string(file_name.get_uri()),
         {},
         diagnostic_severity::error,
         "W0001",
@@ -45,7 +45,7 @@ diagnostic error_W0001(const utils::resource::resource_location& file_name)
 
 diagnostic error_W0002(const utils::resource::resource_location& ws_uri)
 {
-    return diagnostic(ws_uri.get_uri(),
+    return diagnostic(std::string(ws_uri.get_uri()),
         {},
         diagnostic_severity::error,
         "W0002",
@@ -56,7 +56,7 @@ diagnostic error_W0002(const utils::resource::resource_location& ws_uri)
 
 diagnostic error_W0003(const utils::resource::resource_location& file_name)
 {
-    return diagnostic(file_name.get_uri(),
+    return diagnostic(std::string(file_name.get_uri()),
         {},
         diagnostic_severity::error,
         "W0003",
@@ -67,7 +67,7 @@ diagnostic error_W0003(const utils::resource::resource_location& file_name)
 
 diagnostic error_W0004(const utils::resource::resource_location& file_name, std::string_view pgroup)
 {
-    return diagnostic(file_name.get_uri(),
+    return diagnostic(std::string(file_name.get_uri()),
         {},
         diagnostic_severity::error,
         "W0004",
@@ -79,7 +79,7 @@ diagnostic error_W0004(const utils::resource::resource_location& file_name, std:
 diagnostic error_W0005(
     const utils::resource::resource_location& file_name, std::string_view name, std::string_view type)
 {
-    return diagnostic(file_name.get_uri(),
+    return diagnostic(std::string(file_name.get_uri()),
         {},
         diagnostic_severity::warning,
         "W0005",
@@ -92,7 +92,7 @@ diagnostic error_W0005(
 diagnostic error_W0006(
     const utils::resource::resource_location& file_name, std::string_view proc_group, std::string_view type)
 {
-    return diagnostic(file_name.get_uri(),
+    return diagnostic(std::string(file_name.get_uri()),
         {},
         diagnostic_severity::warning,
         "W0006",
@@ -109,7 +109,7 @@ diagnostic error_W0006(
 
 diagnostic warn_W0007(const utils::resource::resource_location& file_name, std::string_view substitution)
 {
-    return diagnostic(file_name.get_uri(),
+    return diagnostic(std::string(file_name.get_uri()),
         {},
         diagnostic_severity::warning,
         "W0007",
@@ -120,7 +120,7 @@ diagnostic warn_W0007(const utils::resource::resource_location& file_name, std::
 
 diagnostic warn_W0008(const utils::resource::resource_location& file_name, std::string_view pgroup)
 {
-    return diagnostic(file_name.get_uri(),
+    return diagnostic(std::string(file_name.get_uri()),
         {},
         diagnostic_severity::warning,
         "W0008",
@@ -131,7 +131,7 @@ diagnostic warn_W0008(const utils::resource::resource_location& file_name, std::
 
 diagnostic error_B4G001(const utils::resource::resource_location& file_name)
 {
-    return diagnostic(file_name.get_uri(),
+    return diagnostic(std::string(file_name.get_uri()),
         {},
         diagnostic_severity::warning,
         "B4G001",
@@ -142,7 +142,7 @@ diagnostic error_B4G001(const utils::resource::resource_location& file_name)
 
 diagnostic error_B4G002(const utils::resource::resource_location& file_name, std::string_view grp_name)
 {
-    return diagnostic(file_name.get_uri(),
+    return diagnostic(std::string(file_name.get_uri()),
         {},
         diagnostic_severity::error,
         "B4G002",
@@ -153,7 +153,7 @@ diagnostic error_B4G002(const utils::resource::resource_location& file_name, std
 
 diagnostic warn_B4G003(const utils::resource::resource_location& file_name, std::string_view grp_name)
 {
-    return diagnostic(file_name.get_uri(),
+    return diagnostic(std::string(file_name.get_uri()),
         {},
         diagnostic_severity::warning,
         "B4G003",
@@ -162,9 +162,9 @@ diagnostic warn_B4G003(const utils::resource::resource_location& file_name, std:
         diagnostic_tag::none);
 }
 
-diagnostic info_SUP(const utils::resource::resource_location& file_name)
+diagnostic info_SUP(std::string file_name)
 {
-    return diagnostic(file_name.get_uri(),
+    return diagnostic(std::move(file_name),
         range(position(), position(0, position::max_value)),
         diagnostic_severity::hint,
         "SUP",
@@ -176,14 +176,16 @@ diagnostic info_SUP(const utils::resource::resource_location& file_name)
 diagnostic error_L0001(
     const utils::resource::resource_location& config_loc, const utils::resource::resource_location& lib_loc)
 {
-    return diagnostic(
-        config_loc.get_uri(), {}, "L0001", concat("Unable to load library: ", lib_loc.to_presentable(), "."));
+    return diagnostic(std::string(config_loc.get_uri()),
+        {},
+        "L0001",
+        concat("Unable to load library: ", lib_loc.to_presentable(), "."));
 }
 
 diagnostic error_L0002(
     const utils::resource::resource_location& config_loc, const utils::resource::resource_location& lib_loc)
 {
-    return diagnostic(config_loc.get_uri(),
+    return diagnostic(std::string(config_loc.get_uri()),
         {},
         "L0002",
         concat("Unable to load library: ", lib_loc.to_presentable(), ". Error: The path does not point to directory."));
@@ -194,7 +196,7 @@ diagnostic warning_L0004(const utils::resource::resource_location& config_loc,
     std::string_view macro_name,
     bool has_extensions)
 {
-    return diagnostic(config_loc.get_uri(),
+    return diagnostic(std::string(config_loc.get_uri()),
         {},
         diagnostic_severity::warning,
         "L0004",
@@ -211,7 +213,7 @@ diagnostic warning_L0004(const utils::resource::resource_location& config_loc,
 
 diagnostic warning_L0005(const utils::resource::resource_location& config_loc, std::string_view pattern, size_t limit)
 {
-    return diagnostic(config_loc.get_uri(),
+    return diagnostic(std::string(config_loc.get_uri()),
         {},
         diagnostic_severity::warning,
         "L0005",
@@ -222,7 +224,7 @@ diagnostic warning_L0005(const utils::resource::resource_location& config_loc, s
 
 diagnostic warning_L0006(const utils::resource::resource_location& config_loc, std::string_view path)
 {
-    return diagnostic(config_loc.get_uri(),
+    return diagnostic(std::string(config_loc.get_uri()),
         {},
         diagnostic_severity::warning,
         "L0006",

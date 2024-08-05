@@ -556,10 +556,8 @@ completion_list_source lsp_context::complete_instr(const file_info& fi, position
 }
 
 template<typename T>
-bool files_present(const std::unordered_map<utils::resource::resource_location,
-                       file_info_ptr,
-                       utils::resource::resource_location_hasher>& files,
-    const std::unordered_map<utils::resource::resource_location, T, utils::resource::resource_location_hasher>& scopes)
+bool files_present(const std::unordered_map<utils::resource::resource_location, file_info_ptr>& files,
+    const std::unordered_map<utils::resource::resource_location, T>& scopes)
 {
     bool present = true;
     for (const auto& [file, _] : scopes)

@@ -789,7 +789,7 @@ class workspace_manager_impl final : public workspace_manager,
         for (auto it = suppress_files.begin(); it != suppress_files.end();)
         {
             auto node = suppress_files.extract(it++);
-            m_diagnostics.emplace_back(info_SUP(utils::resource::resource_location(std::move(node.value()))));
+            m_diagnostics.emplace_back(info_SUP(std::move(node.value())));
         }
 
         const auto usage = m_ws.report_used_configuration_files();
@@ -970,7 +970,7 @@ class workspace_manager_impl final : public workspace_manager,
     workspace_manager_external_file_requests* m_external_file_requests = nullptr;
     workspaces::file_manager_impl m_file_manager;
 
-    std::unordered_map<resource_location, opened_workspace, utils::resource::resource_location_hasher> m_workspaces;
+    std::unordered_map<resource_location, opened_workspace> m_workspaces;
     opened_workspace m_implicit_workspace;
     workspaces::workspace m_ws;
     bool m_vscode_extensions;

@@ -131,9 +131,6 @@ private:
 
     long long m_statements_remaining;
 
-    std::unordered_set<utils::resource::resource_location, utils::resource::resource_location_hasher>
-        m_resource_locations;
-
     processing_frame_tree m_stack_tree;
 
     std::string m_title_name;

@@ -108,10 +108,7 @@ class debugger::impl final : public processing::statement_analyzer, output_handl
     size_t next_var_ref_ = 1;
     context::processing_stack_details_t proc_stack_;
 
-    std::unordered_map<utils::resource::resource_location,
-        std::vector<breakpoint>,
-        utils::resource::resource_location_hasher>
-        breakpoints_;
+    std::unordered_map<utils::resource::resource_location, std::vector<breakpoint>> breakpoints_;
 
     std::unordered_set<std::string, utils::hashers::string_hasher, std::equal_to<>> function_breakpoints_;
 
@@ -358,6 +355,21 @@ public:
 
     void pause() { stop_on_next_stmt_ = true; }
 
+    static std::string fpt_to_string(context::file_processing_type fpt)
+    {
+        switch (fpt)
+        {
+            case context::file_processing_type::OPENCODE:
+                return "OPENCODE";
+            case context::file_processing_type::MACRO:
+                return "MACRO";
+            case context::file_processing_type::COPY:
+                return "COPY";
+            default:
+                return "";
+        }
+    }
+
     // Retrieval of current context.
     const std::vector<stack_frame>& stack_frames()
     {
@@ -366,26 +378,13 @@ public:
             return stack_frames_;
         for (size_t i = proc_stack_.size() - 1; i != (size_t)-1; --i)
         {
-            source source(proc_stack_[i].resource_loc.get_uri());
-            std::string name;
-            switch (proc_stack_[i].proc_type)
-            {
-                case context::file_processing_type::OPENCODE:
-                    name = "OPENCODE";
-                    break;
-                case context::file_processing_type::MACRO:
-                    name = "MACRO";
-                    break;
-                case context::file_processing_type::COPY:
-                    name = "COPY";
-                    break;
-                default:
-                    name = "";
-                    break;
-            }
+            const auto& frame = proc_stack_[i];
 
-            stack_frames_.emplace_back(
-                proc_stack_[i].pos.line, proc_stack_[i].pos.line, (uint32_t)i, std::move(name), std::move(source));
+            stack_frames_.emplace_back(frame.pos.line,
+                frame.pos.line,
+                (uint32_t)i,
+                fpt_to_string(frame.proc_type),
+                source(frame.resource_loc.get_uri()));
         }
 
 

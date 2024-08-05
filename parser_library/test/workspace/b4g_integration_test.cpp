@@ -59,10 +59,11 @@ std::string macro_template(R"(        MACRO
         MEND
 )");
 
-std::string get_macro_content(std::string mac_template, std::string mac_id, std::string mac_path)
+std::string get_macro_content(std::string mac_template, std::string mac_id, const resource_location& mac_path)
 {
-    return std::regex_replace(
-        std::regex_replace(mac_template, std::regex("\\$x"), mac_id), std::regex("\\$y"), mac_path);
+    return std::regex_replace(std::regex_replace(mac_template, std::regex("\\$x"), mac_id),
+        std::regex("\\$y"),
+        std::string(mac_path.get_uri()));
 }
 
 std::vector<diagnostic> change_config_and_reparse(file_manager& fm,
@@ -128,7 +129,7 @@ struct file_manager_impl_test : public file_manager_impl
             if (auto n = first_filename.find('/'); n != std::string::npos)
                 continue;
 
-            result.first.push_back(std::make_pair(first_filename, resource_location::join(directory, first_filename)));
+            result.first.emplace_back(first_filename, resource_location::join(directory, first_filename));
         }
 
         result.second = hlasm_plugin::utils::path::list_directory_rc::done;
@@ -148,11 +149,10 @@ struct file_manager_impl_test : public file_manager_impl
                 continue;
             auto first_filename = rel_path.get_uri();
             if (auto n = first_filename.find('/'); n != std::string::npos)
-                first_filename.erase(n);
-            else
-                continue;
-
-            result.first.push_back(std::make_pair(first_filename, resource_location::join(directory, first_filename)));
+            {
+                first_filename = first_filename.substr(0, n);
+                result.first.emplace_back(first_filename, resource_location::join(directory, first_filename));
+            }
         }
 
         result.second = hlasm_plugin::utils::path::list_directory_rc::done;
@@ -219,12 +219,12 @@ TEST(b4g_integration_test, basic_pgm_conf_retrieval)
     fm.did_open_file(b4g_conf_rl,
         1,
         R"({"elements":{"A":{"processorGroup":"P1"},"$$$":{"processorGroup":"P3"}},"defaultProcessorGroup":"P2","fileExtension":""})");
-    fm.did_open_file(sys_sub_p1_mac1, 1, get_macro_content(macro_template, "1", sys_sub_p1_mac1.get_uri()));
-    fm.did_open_file(sys_sub_p2_mac1, 1, get_macro_content(macro_template, "1", sys_sub_p2_mac1.get_uri()));
-    fm.did_open_file(sys_sub_p3_mac1, 1, get_macro_content(macro_template, "1", sys_sub_p3_mac1.get_uri()));
-    fm.did_open_file(p1_mac2, 1, get_macro_content(macro_template, "2", p1_mac2.get_uri()));
-    fm.did_open_file(p2_mac2, 1, get_macro_content(macro_template, "2", p2_mac2.get_uri()));
-    fm.did_open_file(p3_mac2, 1, get_macro_content(macro_template, "2", p3_mac2.get_uri()));
+    fm.did_open_file(sys_sub_p1_mac1, 1, get_macro_content(macro_template, "1", sys_sub_p1_mac1));
+    fm.did_open_file(sys_sub_p2_mac1, 1, get_macro_content(macro_template, "1", sys_sub_p2_mac1));
+    fm.did_open_file(sys_sub_p3_mac1, 1, get_macro_content(macro_template, "1", sys_sub_p3_mac1));
+    fm.did_open_file(p1_mac2, 1, get_macro_content(macro_template, "2", p1_mac2));
+    fm.did_open_file(p2_mac2, 1, get_macro_content(macro_template, "2", p2_mac2));
+    fm.did_open_file(p3_mac2, 1, get_macro_content(macro_template, "2", p3_mac2));
 
     std::string pgm_template(R"(
         MAC1
@@ -237,7 +237,8 @@ TEST(b4g_integration_test, basic_pgm_conf_retrieval)
 
     workspace_test ws(fm);
 
-    const auto check_mnote = [&ws](const resource_location& pgm, std::initializer_list<std::string> mnote_locations) {
+    const auto check_mnote = [&ws](const resource_location& pgm,
+                                 std::initializer_list<std::string_view> mnote_locations) {
         auto diags = open_parse_and_recollect_diags(ws.ws, ws.ws_cfg, { pgm });
 
         auto match = matches_message_text(diags, mnote_locations);
@@ -265,9 +266,9 @@ public:
 
     pgm_conf_preference_helper()
     {
-        fm.did_open_file(sys_sub_p1_mac1, 1, get_macro_content(macro_template, "1", sys_sub_p1_mac1.get_uri()));
-        fm.did_open_file(sys_sub_p2_mac1, 1, get_macro_content(macro_template, "1", sys_sub_p2_mac1.get_uri()));
-        fm.did_open_file(sys_sub_p3_mac1, 1, get_macro_content(macro_template, "1", sys_sub_p3_mac1.get_uri()));
+        fm.did_open_file(sys_sub_p1_mac1, 1, get_macro_content(macro_template, "1", sys_sub_p1_mac1));
+        fm.did_open_file(sys_sub_p2_mac1, 1, get_macro_content(macro_template, "1", sys_sub_p2_mac1));
+        fm.did_open_file(sys_sub_p3_mac1, 1, get_macro_content(macro_template, "1", sys_sub_p3_mac1));
 
         fm.did_open_file(proc_grps_rl,
             1,
@@ -463,7 +464,7 @@ TEST(b4g_integration_test, bridge_config_changed)
         proc_grps_rl, 1, R"({"pgroups":[{"name":"P1","libs":[{"path":"ASMMACP1","prefer_alternate_root":true}]}]})");
     fm.did_open_file(b4g_conf_rl, 1, empty_b4g_conf);
     fm.did_open_file(pgm_a, 1, " MAC1");
-    fm.did_open_file(sys_sub_p1_mac1, 1, get_macro_content(macro_template, "1", sys_sub_p1_mac1.get_uri()));
+    fm.did_open_file(sys_sub_p1_mac1, 1, get_macro_content(macro_template, "1", sys_sub_p1_mac1));
 
     workspace_test ws(fm);
 
@@ -489,7 +490,7 @@ TEST(b4g_integration_test, proc_config_changed)
     fm.did_open_file(proc_grps_rl, 1, empty_proc_grps);
     fm.did_open_file(b4g_conf_rl, 1, R"({"elements":{},"defaultProcessorGroup":"P1","fileExtension":""})");
     fm.did_open_file(pgm_a, 1, " MAC1");
-    fm.did_open_file(sys_sub_p1_mac1, 1, get_macro_content(macro_template, "1", sys_sub_p1_mac1.get_uri()));
+    fm.did_open_file(sys_sub_p1_mac1, 1, get_macro_content(macro_template, "1", sys_sub_p1_mac1));
 
     workspace_test ws(fm);
 

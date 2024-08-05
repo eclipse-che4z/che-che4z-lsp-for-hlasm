@@ -32,7 +32,7 @@ public:
     explicit resource_location(std::string_view uri);
     explicit resource_location(const char* uri);
 
-    const std::string& get_uri() const;
+    std::string_view get_uri() const { return m_data ? m_data->uri : std::string_view(); }
     std::string get_path() const;
     std::string to_presentable(bool debug = false) const;
 
@@ -88,6 +88,8 @@ public:
         return l <=> r;
     }
 
+    size_t hash() const noexcept { return m_data ? m_data->get_hash() : 0; }
+
 private:
     struct data
     {
@@ -104,13 +106,6 @@ private:
         size_t update_hash() const noexcept;
     };
     std::shared_ptr<const data> m_data;
-
-    friend struct resource_location_hasher;
-};
-
-struct resource_location_hasher
-{
-    std::size_t operator()(const resource_location& rl) const noexcept { return rl.m_data ? rl.m_data->get_hash() : 0; }
 };
 
 } // namespace hlasm_plugin::utils::resource
@@ -122,7 +117,7 @@ class hash<::hlasm_plugin::utils::resource::resource_location>
 public:
     std::size_t operator()(const ::hlasm_plugin::utils::resource::resource_location& rl) const noexcept
     {
-        return hlasm_plugin::utils::resource::resource_location_hasher()(rl);
+        return rl.hash();
     }
 };
 } // namespace std

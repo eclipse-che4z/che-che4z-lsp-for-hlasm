@@ -69,8 +69,8 @@ struct function_breakpoint
 
 struct source
 {
-    explicit source(std::string uri)
-        : uri(std::move(uri))
+    explicit source(std::string_view uri)
+        : uri(uri)
     {}
     std::string uri;
     bool operator==(const source& oth) const noexcept = default;

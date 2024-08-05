@@ -95,7 +95,7 @@ void program_configuration_storage::add_regex_conf(
     using enum cfg_affiliation;
     auto affiliation = alternative_cfg_rl.empty() ? regex_pgm : regex_b4g;
     auto& container = alternative_cfg_rl.empty() ? m_regex_pgm_conf : m_regex_b4g_json;
-    auto r = wildcard2regex(pgm.prog_id.get_uri());
+    auto r = wildcard2regex(std::string(pgm.prog_id.get_uri()));
 
     if (auto pgroup_name = std::visit(proc_group_name, pgm.pgroup);
         !m_proc_grps.contains(pgm.pgroup) && pgroup_name != NOPROC_GROUP_ID)
@@ -213,9 +213,10 @@ const program_configuration_storage::program_properties* program_configuration_s
             return pgm_props_exact_match;
     }
 
+    const auto uri = file_location.get_uri();
     for (const auto& [pgm_props, pattern] : m_regex_pgm_conf)
     {
-        if (std::regex_match(file_location.get_uri(), pattern))
+        if (std::regex_match(uri.begin(), uri.end(), pattern))
             return &pgm_props;
     }
 
@@ -224,7 +225,7 @@ const program_configuration_storage::program_properties* program_configuration_s
 
     for (const auto& [pgm_props, pattern] : m_regex_b4g_json)
     {
-        if (std::regex_match(file_location.get_uri(), pattern))
+        if (std::regex_match(uri.begin(), uri.end(), pattern))
             return &pgm_props;
     }
 

@@ -46,8 +46,7 @@ namespace hlasm_plugin::parser_library::debugging {
 // parsing that do not collide with LSP.
 class debug_lib_provider final : public parse_lib_provider
 {
-    std::unordered_map<utils::resource::resource_location, std::string, utils::resource::resource_location_hasher>
-        m_files;
+    std::unordered_map<utils::resource::resource_location, std::string> m_files;
     std::vector<std::shared_ptr<workspaces::library>> m_libraries;
     workspaces::file_manager& m_file_manager;
 

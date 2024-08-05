@@ -100,8 +100,7 @@ struct macro_cache_key
     }
 };
 
-using version_stamp =
-    std::unordered_map<utils::resource::resource_location, version_t, utils::resource::resource_location_hasher>;
+using version_stamp = std::unordered_map<utils::resource::resource_location, version_t>;
 
 // Pair of version stamp and analyzer that parsed the version of file(s)
 struct macro_cache_data

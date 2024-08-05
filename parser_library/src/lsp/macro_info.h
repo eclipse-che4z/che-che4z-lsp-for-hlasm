@@ -107,9 +107,7 @@ struct macro_slice_t
     {}
 };
 
-using file_scopes_t = std::unordered_map<utils::resource::resource_location,
-    std::vector<lsp::macro_slice_t>,
-    utils::resource::resource_location_hasher>;
+using file_scopes_t = std::unordered_map<utils::resource::resource_location, std::vector<lsp::macro_slice_t>>;
 
 struct line_occurence_details
 {
@@ -130,8 +128,7 @@ struct file_occur_value
     std::vector<line_occurence_details> line_details;
 };
 
-using file_occurrences_t =
-    std::unordered_map<utils::resource::resource_location, file_occur_value, utils::resource::resource_location_hasher>;
+using file_occurrences_t = std::unordered_map<utils::resource::resource_location, file_occur_value>;
 
 class lsp_context;
 

@@ -189,8 +189,7 @@ class workspace_configuration : public configuration_provider
         std::vector<diagnostic> diags;
     };
 
-    std::unordered_map<utils::resource::resource_location, b4g_config, utils::resource::resource_location_hasher>
-        m_b4g_config_cache;
+    std::unordered_map<utils::resource::resource_location, b4g_config> m_b4g_config_cache;
 
     global_settings_map m_utilized_settings_values;
 
@@ -303,9 +302,8 @@ public:
     refresh_libraries(const std::vector<utils::resource::resource_location>& file_locations);
 
     void produce_diagnostics(std::vector<diagnostic>& target,
-        const std::unordered_map<utils::resource::resource_location,
-            std::vector<utils::resource::resource_location>,
-            utils::resource::resource_location_hasher>& used_configs_opened_files_map,
+        const std::unordered_map<utils::resource::resource_location, std::vector<utils::resource::resource_location>>&
+            used_configs_opened_files_map,
         bool include_advisory_cfg_diags) const;
 
     const processor_group& get_proc_grp(const proc_grp_id& p) const; // test only

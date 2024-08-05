@@ -144,19 +144,19 @@ inline bool contains_diagnosed_line_ranges(CMsg&& d, const C& c)
         d, c, [](const auto& d) { return std::make_pair(d.diag_range.start.line, d.diag_range.end.line); });
 }
 
-template<typename CMsg, typename C = std::initializer_list<std::string>>
+template<typename CMsg, typename C = std::initializer_list<std::string_view>>
 inline bool matches_message_text(CMsg&& d, const C& c)
 {
     return matches_message_properties(d, c, &std::decay_t<CMsg>::value_type::message);
 }
 
-template<typename CMsg, typename C = std::initializer_list<std::string>>
+template<typename CMsg, typename C = std::initializer_list<std::string_view>>
 inline bool contains_message_text(CMsg&& d, const C& c)
 {
     return contains_message_properties(d, c, &std::decay_t<CMsg>::value_type::message);
 }
 
-template<typename CMsg, typename C = std::initializer_list<std::string>>
+template<typename CMsg, typename C = std::initializer_list<std::string_view>>
 inline bool matches_partial_message_text(CMsg&& d, const C& c)
 {
     return matches_message_properties(

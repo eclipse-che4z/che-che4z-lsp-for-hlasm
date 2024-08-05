@@ -48,22 +48,22 @@ namespace {
 
 struct expected_stack_frame
 {
-    expected_stack_frame(size_t begin_line, size_t end_line, uint32_t id, std::string name, std::string source)
+    expected_stack_frame(size_t begin_line, size_t end_line, uint32_t id, std::string name, std::string_view source)
         : begin_line(begin_line)
         , end_line(end_line)
         , id(id)
         , name(std::move(name))
-        , frame_source(std::move(source))
+        , frame_source(std::string(source))
     {}
     expected_stack_frame(size_t begin_line,
         size_t end_line,
         uint32_t id,
-        std::string name,
+        std::string_view name,
         std::function<bool(std::string_view)> source_matcher)
         : begin_line(begin_line)
         , end_line(end_line)
         , id(id)
-        , name(std::move(name))
+        , name(std::string(name))
         , frame_source(std::move(source_matcher))
     {}
     size_t begin_line;

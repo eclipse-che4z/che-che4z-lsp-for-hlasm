@@ -670,8 +670,8 @@ private:
     lib_config m_global_config;
     workspace_configuration m_cfg = workspace_configuration(m_fm, ws_loc, m_global_settings, m_global_config, nullptr);
 
-    void cache_content(const resource_location& pgm_location,
-        const std::unordered_set<resource_location, resource_location_hasher>& lib_locations_to_cache)
+    void cache_content(
+        const resource_location& pgm_location, const std::unordered_set<resource_location>& lib_locations_to_cache)
     {
         for (const auto& lib : m_cfg.get_proc_grp_by_program(*m_cfg.get_program(pgm_location))->libraries())
         {

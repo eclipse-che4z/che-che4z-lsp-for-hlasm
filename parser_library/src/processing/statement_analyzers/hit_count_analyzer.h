@@ -150,8 +150,7 @@ struct hit_count_entry
     }
 };
 
-using hit_count_map =
-    std::unordered_map<utils::resource::resource_location, hit_count_entry, utils::resource::resource_location_hasher>;
+using hit_count_map = std::unordered_map<utils::resource::resource_location, hit_count_entry>;
 
 class hit_count_analyzer final : public statement_analyzer
 {
