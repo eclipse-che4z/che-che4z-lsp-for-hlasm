@@ -514,13 +514,25 @@ export function replaceVariables(obj: any, resolver: (configKey: string) => (str
     return obj;
 }
 
+async function getWorkspaceProcGrps(w: vscode.WorkspaceFolder): Promise<{ workspace: vscode.WorkspaceFolder, config: any } | null> {
+    let config;
+    try {
+        config = await vscode.workspace.openTextDocument(vscode.Uri.joinPath(w.uri, hlasmplugin_folder, proc_grps_file)).then(doc => JSON.parse(doc.getText()));
+    }
+    catch (_) {
+        config = vscode.workspace.getConfiguration('hlasm', w).get<object>('proc_grps');
+    }
+    if (!config) return null;
+    return { workspace: w, config };
+}
+
+function notNull<T>(t: T | null): t is T {
+    return !!t;
+}
+
 async function gatherAvailableConfigs() {
     if (vscode.workspace.workspaceFolders === undefined) return [];
-    const availableConfigs = (await Promise.all(vscode.workspace.workspaceFolders.map(x => {
-        return new Promise<{ workspace: vscode.WorkspaceFolder, config: any } | null>((resolve) => {
-            vscode.workspace.openTextDocument(vscode.Uri.joinPath(x.uri, hlasmplugin_folder, proc_grps_file)).then((doc) => resolve({ workspace: x, config: JSON.parse(doc.getText()) }), _ => resolve(null))
-        })
-    }))).filter(x => !!x).map(x => x!);
+    const availableConfigs = (await Promise.all(vscode.workspace.workspaceFolders.map(getWorkspaceProcGrps))).filter(notNull);
 
     const varResolver = (workspace: vscode.WorkspaceFolder) => {
         const config = vscode.workspace.getConfiguration(undefined, workspace);
@@ -531,7 +543,7 @@ async function gatherAvailableConfigs() {
 }
 
 export function extractDsn(d: string | undefined, workspaceUri: vscode.Uri): { dsn: string, path: string } | null {
-    const guessDsnRegex = /(?:.*[\\/])?((?:[A-Za-z0-9@#$]{1,8})(?:\.[A-Za-z0-9@#$]{1,8})+)[\\/]*/;
+    const guessDsnRegex = /(?:.*[\\/])?((?:[A-Za-z0-9@#$]{1,8})(?:\.[A-Za-z0-9@#$]{1,8})+)[\\/]*(?=[/\\]?$)/;
 
     if (!d || d.length === 0)
         return null;
