@@ -92,34 +92,36 @@ async function registerTestImplementations(): Promise<vscode.Disposable[]> {
 }
 
 export async function run(): Promise<void> {
+    const toDispose = await registerTestImplementations();
+
     const mocha = Mocha.setup({ ui: 'tdd', color: false, reporter: null });
 
-    await import('./asyncMutex.test.js');
-    await import('./codeActions.test.js');
-    await import('./commentEditorCommands.test.js');
-    await import('./completionList.test.js');
-    await import('./configurationsHandler.test.js');
-    await import('./connectionPool.test.js');
-    await import('./continuationHandler.test.js');
-    await import('./conversions.test.js');
-    await import('./customEditorCommands.test.js');
-    await import('./debugProvider.test.js');
-    await import('./debugging.test.js');
-    await import('./eventsHandler.test.js');
-    //await import('./fbUtils.test.js');
-    //await import('./ftpUtils.test.js');
-    //await import('./hlasmDownloadCommands.test.js');
-    await import('./hlasmExternalConfigurationProvider.test.js');
-    await import('./hlasmExternalFiles.test.js');
-    await import('./hlasmExternalFilesEndevor.test.js');
-    //await import('./hlasmExternalFilesFtp.test.js');
-    await import('./hlasmLanguageDetection.test.js');
-    await import('./hlasmListingServices.test.js');
-    await import('./hlasmOutputContentProvider.test.js');
-    await import('./integration.test.js');
-    await import('./utils.test.js');
-
-    const toDispose = await registerTestImplementations();
+    await Promise.all([
+        import('./asyncMutex.test.js'),
+        import('./codeActions.test.js'),
+        import('./commentEditorCommands.test.js'),
+        import('./completionList.test.js'),
+        import('./configurationsHandler.test.js'),
+        import('./connectionPool.test.js'),
+        import('./continuationHandler.test.js'),
+        import('./conversions.test.js'),
+        import('./customEditorCommands.test.js'),
+        import('./debugProvider.test.js'),
+        import('./debugging.test.js'),
+        import('./eventsHandler.test.js'),
+        // import('./fbUtils.test.js'),
+        // import('./ftpUtils.test.js'),
+        // import('./hlasmDownloadCommands.test.js'),
+        import('./hlasmExternalConfigurationProvider.test.js'),
+        import('./hlasmExternalFiles.test.js'),
+        import('./hlasmExternalFilesEndevor.test.js'),
+        // import('./hlasmExternalFilesFtp.test.js'),
+        import('./hlasmLanguageDetection.test.js'),
+        import('./hlasmListingServices.test.js'),
+        import('./hlasmOutputContentProvider.test.js'),
+        import('./integration.test.js'),
+        import('./utils.test.js'),
+    ]);
 
     await new Promise((resolve, reject) => {
         // Run the mocha test

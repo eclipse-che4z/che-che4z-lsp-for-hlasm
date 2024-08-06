@@ -97,6 +97,8 @@ async function registerTestImplementations(): Promise<vscode.Disposable[]> {
 export async function run(): Promise<void> {
     const is_theia = 'THEIA_PARENT_PID' in process.env;
 
+    const toDispose = await registerTestImplementations();
+
     // Create the mocha test
     const mocha = new Mocha({ ui: 'tdd', color: true });
     const testsPath = path.join(__dirname, '..');
@@ -112,8 +114,6 @@ export async function run(): Promise<void> {
 
     // Add files to the test suite
     files.forEach(file => mocha.addFile(path.resolve(testsPath, file)));
-
-    const toDispose = await registerTestImplementations();
 
     await new Promise((resolve, reject) => {
         // Run the mocha test
