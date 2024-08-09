@@ -78,24 +78,21 @@ statement_fields_parser::parse_result statement_fields_parser::parse_operand_fie
     {
         switch (format.form)
         {
-            case processing::processing_form::MAC:
-                line = h.op_rem_body_mac_r();
+            case processing::processing_form::MAC: {
+                auto reparse_data = h.op_rem_body_mac_r();
                 literals = h.parser->get_collector().take_literals();
 
-                if (h.error_handler->error_reported())
+                line.remarks = std::move(reparse_data.remarks);
+                if (!h.error_handler->error_reported() && !reparse_data.text.empty())
                 {
-                    line.operands.clear();
-                }
-                else if (line.operands.size())
-                {
-                    auto [to_parse, ranges, r] = join_operands(line.operands);
-
                     const auto& h_second = *m_parser_singleline;
-                    h_second.prepare_parser(to_parse,
+                    h_second.prepare_parser(reparse_data.text,
                         m_hlasm_ctx,
                         &add_diag_subst,
-                        semantics::range_provider(
-                            r, std::move(ranges), semantics::adjusting_state::MACRO_REPARSE, h.lex->get_line_limits()),
+                        semantics::range_provider(reparse_data.total_op_range,
+                            std::move(reparse_data.text_ranges),
+                            semantics::adjusting_state::MACRO_REPARSE,
+                            h.lex->get_line_limits()),
                         original_range,
                         logical_column,
                         status,
@@ -105,6 +102,7 @@ statement_fields_parser::parse_result statement_fields_parser::parse_operand_fie
                     literals = h.parser->get_collector().take_literals();
                 }
                 break;
+            }
             case processing::processing_form::ASM:
                 line = h.op_rem_body_asm_r();
                 literals = h.parser->get_collector().take_literals();

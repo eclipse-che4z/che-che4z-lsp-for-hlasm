@@ -168,6 +168,7 @@ protected:
         semantics::vs_ptr s, semantics::concat_chain& chain, std::string& buffer, bool& has_variables) const;
 
     std::string get_context_text(const antlr4::ParserRuleContext* ctx) const;
+    void append_context_text(std::string& s, const antlr4::ParserRuleContext* ctx) const;
 
     bool goff() const noexcept;
 
@@ -207,7 +208,7 @@ struct parser_holder
     virtual void lookahead_operands_and_remarks_asm() const = 0;
     virtual void lookahead_operands_and_remarks_dat() const = 0;
 
-    virtual semantics::op_rem op_rem_body_mac_r() const = 0;
+    virtual semantics::macop_preprocess_results op_rem_body_mac_r() const = 0;
     virtual semantics::operand_list macro_ops() const = 0;
     virtual semantics::op_rem op_rem_body_asm_r() const = 0;
     virtual semantics::op_rem op_rem_body_mach_r() const = 0;
@@ -226,7 +227,7 @@ struct parser_holder
 
     struct mac_op_data
     {
-        semantics::op_rem operands;
+        semantics::macop_preprocess_results operands;
         range op_range;
         size_t op_logical_column;
     };

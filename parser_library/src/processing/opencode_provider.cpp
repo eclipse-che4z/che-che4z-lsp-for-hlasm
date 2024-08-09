@@ -422,29 +422,26 @@ std::shared_ptr<const context::hlasm_statement> opencode_provider::process_ordin
                     h.op_rem_body_dat();
                     break;
                 default: {
-                    auto [line, line_range, line_logical_column] = h.op_rem_body_mac();
+                    auto [reparse_data, line_range, line_logical_column] = h.op_rem_body_mac();
 
-                    if (h.error_handler->error_reported())
+                    semantics::operand_list op_list;
+                    if (!h.error_handler->error_reported() && !reparse_data.text.empty())
                     {
-                        line.operands.clear();
-                    }
-                    else if (line.operands.size())
-                    {
-                        auto [to_parse, ranges, r] = join_operands(line.operands);
+                        semantics::range_provider tmp_provider(reparse_data.total_op_range,
+                            std::move(reparse_data.text_ranges),
+                            semantics::adjusting_state::MACRO_REPARSE,
+                            h.lex->get_line_limits());
 
-                        semantics::range_provider tmp_provider(
-                            r, ranges, semantics::adjusting_state::MACRO_REPARSE, h.lex->get_line_limits());
-
-                        const auto& h_second = prepare_operand_parser(to_parse,
+                        const auto& h_second = prepare_operand_parser(reparse_data.text,
                             *m_ctx.hlasm_ctx,
                             format.form == processing_form::UNKNOWN ? &diags_filter : diags,
                             std::move(tmp_provider),
-                            r,
+                            reparse_data.total_op_range,
                             line_logical_column,
                             proc_status,
                             true);
 
-                        line.operands = h_second.macro_ops();
+                        op_list = h_second.macro_ops();
 
                         auto& c = h.parser->get_collector();
                         auto& c_s = h_second.parser->get_collector();
@@ -456,7 +453,7 @@ std::shared_ptr<const context::hlasm_statement> opencode_provider::process_ordin
                     }
 
                     h.parser->get_collector().set_operand_remark_field(
-                        std::move(line.operands), std::move(line.remarks), line_range);
+                        std::move(op_list), std::move(reparse_data.remarks), line_range);
 
                     break;
                 }

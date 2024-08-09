@@ -267,7 +267,7 @@ void macrodef_processor::process_prototype_operand(
             continue;
         }
 
-        auto tmp = op->access_mac()->access_chain();
+        auto tmp = op->access_mac();
         assert(tmp);
 
         auto& tmp_chain = tmp->chain;

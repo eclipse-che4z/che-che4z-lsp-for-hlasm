@@ -99,7 +99,10 @@ struct parser_holder_impl final : parser_holder
     void lookahead_operands_and_remarks_asm() const override { get_parser().lookahead_operands_and_remarks_asm(); }
     void lookahead_operands_and_remarks_dat() const override { get_parser().lookahead_operands_and_remarks_dat(); }
 
-    semantics::op_rem op_rem_body_mac_r() const override { return std::move(get_parser().op_rem_body_mac_r()->line); }
+    semantics::macop_preprocess_results op_rem_body_mac_r() const override
+    {
+        return std::move(get_parser().op_rem_body_mac_r()->results);
+    }
     semantics::operand_list macro_ops() const override { return std::move(get_parser().macro_ops()->list); }
     semantics::op_rem op_rem_body_asm_r() const override { return std::move(get_parser().op_rem_body_asm_r()->line); }
     semantics::op_rem op_rem_body_mach_r() const override { return std::move(get_parser().op_rem_body_mach_r()->line); }
@@ -117,7 +120,7 @@ struct parser_holder_impl final : parser_holder
     mac_op_data op_rem_body_mac() const override
     {
         auto rule = get_parser().op_rem_body_mac();
-        return { std::move(rule->line), rule->line_range, rule->line_logical_column };
+        return { std::move(rule->results), rule->line_range, rule->line_logical_column };
     }
 
     operand_ptr ca_op_expr() const override { return std::move(get_parser().ca_op_expr()->op); }
@@ -419,6 +422,13 @@ void parser_impl::add_label_component(
 
 std::string parser_impl::get_context_text(const antlr4::ParserRuleContext* ctx) const
 {
+    std::string result;
+    append_context_text(result, ctx);
+    return result;
+}
+
+void parser_impl::append_context_text(std::string& s, const antlr4::ParserRuleContext* ctx) const
+{
     auto start = ctx->start;
     auto stop = ctx->stop;
 
@@ -428,14 +438,10 @@ std::string parser_impl::get_context_text(const antlr4::ParserRuleContext* ctx) 
     auto startId = start->getTokenIndex();
     auto stopId = stop->getTokenIndex();
 
-    std::string result;
-
     for (auto id = startId; id <= stopId; ++id)
         if (auto token = input.get(id);
             token->getChannel() == lexing::lexer::Channels::DEFAULT_CHANNEL && token->getType() != antlr4::Token::EOF)
-            result.append(token->getText());
-
-    return result;
+            s.append(token->getText());
 }
 
 bool parser_impl::goff() const noexcept { return hlasm_ctx->goff(); }

@@ -55,8 +55,7 @@ public:
     void visit(const semantics::expr_ca_operand& op) override;
     void visit(const semantics::seq_ca_operand& op) override;
     void visit(const semantics::branch_ca_operand& op) override;
-    void visit(const semantics::macro_operand_chain& op) override;
-    void visit(const semantics::macro_operand_string& op) override;
+    void visit(const semantics::macro_operand& op) override;
 
     void get_occurrence(const semantics::variable_symbol& var);
     void get_occurrence(const semantics::seq_sym& seq);

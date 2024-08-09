@@ -128,9 +128,8 @@ bool statement_provider::process_operands(std::vector<context::id_index>& symbol
                     symbols, op->access_model()->chain, eval_ctx);
                 break;
             case semantics::operand_type::MAC:
-                if (op->access_mac()->kind == semantics::mac_kind::CHAIN)
-                    result |= semantics::concatenation_point::get_undefined_attributed_symbols(
-                        symbols, op->access_mac()->access_chain()->chain, eval_ctx);
+                result |= semantics::concatenation_point::get_undefined_attributed_symbols(
+                    symbols, op->access_mac()->chain, eval_ctx);
                 break;
             case semantics::operand_type::CA:
                 result |= op->access_ca()->get_undefined_attributed_symbols(symbols, eval_ctx);

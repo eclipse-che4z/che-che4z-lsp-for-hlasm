@@ -479,8 +479,7 @@ struct AREAD_operand_visitor final : public semantics::operand_visitor
     }
     void visit(const semantics::seq_ca_operand&) override {}
     void visit(const semantics::branch_ca_operand&) override {}
-    void visit(const semantics::macro_operand_chain&) override {}
-    void visit(const semantics::macro_operand_string&) override {}
+    void visit(const semantics::macro_operand&) override {}
 };
 } // namespace
 

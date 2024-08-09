@@ -650,14 +650,12 @@ bool branch_ca_operand::get_undefined_attributed_symbols(
 
 void branch_ca_operand::apply(operand_visitor& visitor) const { visitor.visit(*this); }
 
-
-
-macro_operand_chain::macro_operand_chain(concat_chain chain, range operand_range)
-    : macro_operand(mac_kind::CHAIN, std::move(operand_range))
+macro_operand::macro_operand(concat_chain chain, range operand_range)
+    : operand(operand_type::MAC, std::move(operand_range))
     , chain(std::move(chain))
 {}
 
-void macro_operand_chain::apply(operand_visitor& visitor) const { visitor.visit(*this); }
+void macro_operand::apply(operand_visitor& visitor) const { visitor.visit(*this); }
 
 data_def_operand::data_def_operand(std::shared_ptr<const expressions::data_definition> dd_ptr, range operand_range)
     : evaluable_operand(operand_type::DAT, std::move(operand_range))
@@ -773,57 +771,6 @@ std::unique_ptr<checking::operand> string_assembler_operand::get_operand_value(
 
 void string_assembler_operand::apply(operand_visitor& visitor) const { visitor.visit(*this); }
 void string_assembler_operand::apply_mach_visitor(expressions::mach_expr_visitor&) const {}
-
-macro_operand_string::macro_operand_string(std::string value, const range operand_range)
-    : macro_operand(mac_kind::STRING, operand_range)
-    , value(std::move(value))
-{}
-
-void macro_operand_string::apply(operand_visitor& visitor) const { visitor.visit(*this); }
-
-macro_operand_chain* macro_operand::access_chain()
-{
-    return kind == mac_kind::CHAIN ? static_cast<macro_operand_chain*>(this) : nullptr;
-}
-
-macro_operand_string* macro_operand::access_string()
-{
-    return kind == mac_kind::STRING ? static_cast<macro_operand_string*>(this) : nullptr;
-}
-
-macro_operand::macro_operand(mac_kind kind, range operand_range)
-    : operand(operand_type::MAC, std::move(operand_range))
-    , kind(kind)
-{}
-
-
-join_operands_result join_operands(const operand_list& operands)
-{
-    if (operands.empty())
-        return {};
-
-    join_operands_result result;
-    size_t string_size = operands.size();
-
-    for (const auto& op : operands)
-        if (auto m_op = dynamic_cast<semantics::macro_operand_string*>(op.get()))
-            string_size += m_op->value.size();
-
-    result.text.reserve(string_size);
-
-    for (const auto& op : operands)
-    {
-        if (auto m_op = dynamic_cast<semantics::macro_operand_string*>(op.get()))
-            result.text.append(m_op->value);
-        else
-            result.text.push_back(',');
-
-        result.ranges.push_back(op->operand_range);
-    }
-    result.total_range = union_range(operands.front()->operand_range, operands.back()->operand_range);
-
-    return result;
-}
 
 struct request_halfword_alignment final : public expressions::mach_expr_visitor
 {

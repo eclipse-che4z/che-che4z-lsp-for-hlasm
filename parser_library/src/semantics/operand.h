@@ -55,6 +55,14 @@ struct op_rem
     std::vector<range> remarks;
 };
 
+struct macop_preprocess_results
+{
+    std::string text;
+    std::vector<range> text_ranges;
+    range total_op_range;
+    std::vector<range> remarks;
+};
+
 // sequence symbol structure
 struct seq_sym
 {
@@ -91,14 +99,6 @@ struct operand
     virtual ~operand() = default;
 };
 
-struct join_operands_result
-{
-    std::string text;
-    std::vector<range> ranges;
-    range total_range;
-};
-
-join_operands_result join_operands(const operand_list&);
 void transform_reloc_imm_operands(semantics::operand_list& op_list, context::id_index instruction);
 
 } // namespace hlasm_plugin::parser_library::semantics

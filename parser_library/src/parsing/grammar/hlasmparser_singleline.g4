@@ -456,33 +456,46 @@ op_rem_body_ca_var_def locals [bool pending_empty_op = true, std::vector<range> 
 
 //////////////////////////////////////// mac
 
-op_rem_body_mac returns [op_rem line, range line_range, size_t line_logical_column = 0]
+op_rem_body_mac returns [macop_preprocess_results results, range line_range, size_t line_logical_column = 0]
     :
     SPACE* EOF {$line_range = provider.get_range($ctx->getStart(), _input->LT(-1));}
     |
-    SPACE+ op_rem_body_alt_mac
+    SPACE+ op_rem_body_alt_mac[&$results]
     {
-        $line = std::move($op_rem_body_alt_mac.line);
+        if ($results.text_ranges.empty())
+            $results.total_op_range = provider.get_empty_range($op_rem_body_alt_mac.start);
+        else
+            $results.total_op_range = union_range($results.text_ranges.front(), $results.text_ranges.back());
         $line_range = provider.get_range($op_rem_body_alt_mac.ctx);
         $line_logical_column = static_cast<hlasm_plugin::parser_library::lexing::token*>($op_rem_body_alt_mac.start)->get_logical_column();
     } EOF;
 
-op_rem_body_alt_mac returns [op_rem line]
+op_rem_body_alt_mac [macop_preprocess_results* results]
     :
     (
-        mac_op? COMMA
+        mac_preproc
         {
-            if ($mac_op.ctx && $mac_op.op)
-                $line.operands.push_back(std::move($mac_op.op));
-            $line.operands.push_back(std::make_unique<semantics::empty_operand>(provider.get_range($COMMA)));
+            append_context_text($results->text, $mac_preproc.ctx);
+            $results->text_ranges.push_back(provider.get_range($mac_preproc.ctx));
         }
-    )*
+    )?
     (
-        last_mac_op=mac_op? last_remark=remark_o
+        COMMA
         {
-            if ($last_mac_op.ctx && $last_mac_op.op)
-                $line.operands.push_back(std::move($last_mac_op.op));
-            if ($last_remark.value)
-                $line.remarks.push_back(std::move(*$last_remark.value));
+            $results->text.push_back(',');
+            $results->text_ranges.push_back(provider.get_range($COMMA));
         }
-    );
+        (
+        mac_preproc
+        {
+            append_context_text($results->text, $mac_preproc.ctx);
+            $results->text_ranges.push_back(provider.get_range($mac_preproc.ctx));
+        }
+        )?
+    )*
+    last_remark=remark_o
+    {
+        if ($last_remark.value)
+            $results->remarks.push_back(std::move(*$last_remark.value));
+    }
+    ;
