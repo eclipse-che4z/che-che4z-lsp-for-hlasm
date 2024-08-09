@@ -338,7 +338,7 @@ TEST(arithmetic_expressions, multiple_operand_with_spaces)
     analyzer a(input);
     a.analyze();
 
-    EXPECT_TRUE(matches_message_codes(a.diags(), { "S0002", "S0002", "S0002", "CE012", "CE012" }));
+    EXPECT_TRUE(matches_message_codes(a.diags(), { "S0002", "S0002", "S0012", "CE012", "CE012" }));
 }
 
 TEST(arithmetic_expressions, conversion_from_binary)

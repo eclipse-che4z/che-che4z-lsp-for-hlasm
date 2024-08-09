@@ -208,7 +208,7 @@ TEST(parser, invalid_macro_param_alternative)
 
     std::vector<diagnostic_op>& diags = diag_container.diags;
 
-    EXPECT_TRUE(matches_message_codes(diags, { "S0003" }));
+    EXPECT_TRUE(matches_message_codes(diags, { "S0011" }));
     EXPECT_TRUE(matches_message_properties(diags, { range({ 1, 16 }, { 1, 16 }) }, &diagnostic_op::diag_range));
 }
 

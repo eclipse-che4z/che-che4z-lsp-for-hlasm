@@ -79,5 +79,5 @@ TEST(ca_var_sym, invalid_definitions)
     analyzer a(input);
     a.analyze();
 
-    EXPECT_TRUE(matches_message_codes(a.diags(), { "S0002", "S0002" }));
+    EXPECT_TRUE(matches_message_codes(a.diags(), { "S0011", "S0011" }));
 }

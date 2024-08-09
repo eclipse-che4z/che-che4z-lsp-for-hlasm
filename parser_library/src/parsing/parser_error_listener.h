@@ -24,6 +24,10 @@
 // Override antlr Error listener for more polished output
 // parser. Provides more readable syntax errors.
 
+namespace hlasm_plugin::parser_library::lexing {
+class token_stream;
+}
+
 namespace hlasm_plugin::parser_library::parsing {
 
 class parser_error_listener_base : public antlr4::ANTLRErrorListener
@@ -60,6 +64,14 @@ public:
 
 protected:
     virtual void add_parser_diagnostic(diagnostic_op (&diag_op)(const range&), range r) = 0;
+
+    void handle_error(lexing::token_stream* input_stream,
+        int start_index,
+        int end_index,
+        size_t line,
+        size_t char_pos_in_line,
+        const antlr4::Token* start_token,
+        const antlr4::misc::IntervalSet& expected_tokens);
 };
 
 class parser_error_listener final : public parser_error_listener_base

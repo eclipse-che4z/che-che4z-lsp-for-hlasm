@@ -304,7 +304,7 @@ TEST_P(parser_data_attribute_fixture, missing_apostrophe)
 
     auto a = analyze(input, GetParam().name);
 
-    if (GetParam().is_attribute)
+    if (GetParam().is_consuming)
         EXPECT_TRUE(matches_message_codes(a->diags(), { "S0003" }));
     else
         EXPECT_TRUE(matches_message_codes(a->diags(), { "S0005" }));
@@ -419,10 +419,7 @@ TEST_P(parser_data_attribute_fixture, number)
 
     auto a = analyze(input, GetParam().name);
 
-    if (GetParam().is_attribute)
-        EXPECT_TRUE(matches_message_codes(a->diags(), { "S0003", "S0005" }));
-    else
-        EXPECT_TRUE(matches_message_codes(a->diags(), { "S0005", "S0005" }));
+    EXPECT_TRUE(matches_message_codes(a->diags(), { "S0005", "S0005" }));
 
     EXPECT_TRUE(matches_diagnosed_line_ranges(a->diags(), { { 2, 2 }, { 4, 4 } }));
 
@@ -457,10 +454,7 @@ TEST_P(parser_data_attribute_fixture, negative_number)
 
     auto a = analyze(input, GetParam().name);
 
-    if (GetParam().is_attribute)
-        EXPECT_TRUE(matches_message_codes(a->diags(), { "S0003", "S0005" }));
-    else
-        EXPECT_TRUE(matches_message_codes(a->diags(), { "S0005", "S0005" }));
+    EXPECT_TRUE(matches_message_codes(a->diags(), { "S0005", "S0005" }));
 
     EXPECT_TRUE(matches_diagnosed_line_ranges(a->diags(), { { 2, 2 }, { 4, 4 } }));
 
@@ -894,7 +888,7 @@ TEST_P(parser_data_attribute_fixture, list_1_elem_number)
 
     if (GetParam().is_attribute)
     {
-        EXPECT_TRUE(contains_message_codes(a->diags(), { "S0005", "S0003", "S0005", "S0003" }));
+        EXPECT_TRUE(contains_message_codes(a->diags(), { "S0005", "S0005", "S0005", "S0005" }));
         EXPECT_TRUE(contains_diagnosed_line_ranges(a->diags(), { { 2, 2 }, { 4, 4 }, { 5, 5 } }));
     }
     else
@@ -922,7 +916,7 @@ TEST_P(parser_data_attribute_fixture, list_1_elem_negative_number)
 
     if (GetParam().is_attribute)
     {
-        EXPECT_TRUE(contains_message_codes(a->diags(), { "S0005", "S0003", "S0005", "S0003" }));
+        EXPECT_TRUE(contains_message_codes(a->diags(), { "S0005", "S0005", "S0005", "S0005" }));
         EXPECT_TRUE(contains_diagnosed_line_ranges(a->diags(), { { 2, 2 }, { 4, 4 }, { 5, 5 } }));
     }
     else
