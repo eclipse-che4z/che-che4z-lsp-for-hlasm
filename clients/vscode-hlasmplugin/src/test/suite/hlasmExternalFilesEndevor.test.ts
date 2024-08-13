@@ -16,7 +16,7 @@
 import * as assert from 'assert';
 import { E4E, HLASMExternalFilesEndevor, makeEndevorConfigurationProvider, processChangeNotification } from '../../hlasmExternalFilesEndevor';
 import * as vscode from 'vscode';
-import { ExternalRequestType } from '../../hlasmExternalFiles';
+import { ExternalRequestType, SuspendError } from '../../hlasmExternalFiles';
 
 const dummyProfile = { profile: 'profile', instance: 'instance' };
 const profileOnly = {
@@ -225,5 +225,48 @@ suite('External files (Endevor)', () => {
                 ],
             },
         });
+    });
+
+    test('Invalid credentials', async () => {
+        const client = HLASMExternalFilesEndevor({
+            listMembers: async (_p: unknown, _t: unknown) => {
+                return new class extends Error { public readonly credentialsError = true; constructor() { super(""); } };
+            }
+        } as any as E4E, dummyEvent);
+
+        try {
+            await client.listMembers({ normalizedPath: () => '/PATH' } as any, dummyProfile);
+            assert.ok(false);
+        }
+        catch (e) {
+            assert.ok(e instanceof SuspendError);
+        }
+    });
+
+    test('Invalid credentials legacy', async () => {
+        const client = HLASMExternalFilesEndevor({
+            listMembers: async (_p: unknown, _t: unknown) => Error('Unable to obtain credentials for Endevor connection xyz')
+        } as any as E4E, dummyEvent);
+
+        try {
+            await client.listMembers({ normalizedPath: () => '/PATH' } as any, dummyProfile);
+            assert.ok(false);
+        }
+        catch (e) {
+            assert.ok(e instanceof SuspendError);
+        }
+    });
+
+    test('Common error', async () => {
+        const error = Error('Something went wrong');
+        const client = HLASMExternalFilesEndevor({ listMembers: async (_p: unknown, _t: unknown) => error } as any as E4E, dummyEvent);
+
+        try {
+            await client.listMembers({ normalizedPath: () => '/PATH' } as any, dummyProfile);
+            assert.ok(false);
+        }
+        catch (e) {
+            assert.strictEqual(e, error);
+        }
     });
 });

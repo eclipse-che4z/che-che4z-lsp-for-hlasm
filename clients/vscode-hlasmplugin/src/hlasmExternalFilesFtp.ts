@@ -14,7 +14,7 @@
 
 import * as vscode from 'vscode';
 import * as ftp from 'basic-ftp';
-import { ClientInterface, ClientUriDetails, ExternalRequestType } from './hlasmExternalFiles';
+import { ClientInterface, ClientUriDetails, ExternalRequestType, SuspendError } from './hlasmExternalFiles';
 import { ConnectionInfo, gatherConnectionInfo, getLastRunConfig, translateConnectionInfo, updateLastRunConfig } from './ftpCreds';
 import { FBWritable } from './FBWritable';
 import { ConnectionPool } from './connectionPool';
@@ -72,7 +72,7 @@ export function HLASMExternalFilesFtp(context: vscode.ExtensionContext): ClientI
             return mutex.locked(async () => {
                 const info = activeConnectionInfo ?? (pool.closeClients(), await getConnInfo());
                 activeConnectionInfo = undefined;
-                await client.access(translateConnectionInfo(info));
+                await client.access(translateConnectionInfo(info)).catch(e => { throw e instanceof ftp.FTPError && (e.code === 430 || e.code == 530) ? new SuspendError(e) : e; });
                 activeConnectionInfo = info;
 
                 return client;
@@ -102,8 +102,7 @@ export function HLASMExternalFilesFtp(context: vscode.ExtensionContext): ClientI
         listMembers: async (args: DatasetUriDetails): Promise<string[] | null> => pool.withClient(async (client) => {
             try {
                 await checkedCommand(client, 'TYPE A');
-                checkResponse(await client.cd(`'${args.dataset}'`));
-                const list = await client.list();
+                const list = await client.list(`'${args.dataset}(*)'`);
                 return list.map(x => `/${args.dataset}/${x.name}.hlasm`);
             }
             catch (e) {

@@ -32,7 +32,7 @@ import { HLASMCodeActionsProvider } from './hlasmCodeActionsProvider';
 import { hlasmplugin_folder_filter, bridge_json_filter, schemeExternalFiles, continuationColumn, initialBlanks, languageIdHlasm, debugTypeHlasm, schemeVirtualFiles } from './constants';
 import { ConfigurationsHandler } from './configurationsHandler';
 import { HlasmPluginMiddleware, getLanguageClientMiddleware } from './languageClientMiddleware';
-import { HLASMExternalFiles } from './hlasmExternalFiles';
+import { HLASMExternalFiles, SuspendError } from './hlasmExternalFiles';
 import { HLASMExternalFilesFtp } from './hlasmExternalFilesFtp';
 import { HLASMExternalConfigurationProvider, HLASMExternalConfigurationProviderHandler } from './hlasmExternalConfigurationProvider';
 import { HlasmExtension } from './extension.interface';
@@ -134,6 +134,9 @@ export async function activate(context: vscode.ExtensionContext): Promise<HlasmE
         },
         registerExternalConfigurationProvider(h: HLASMExternalConfigurationProviderHandler) {
             return extConfProvider.addHandler(h);
+        },
+        makeSuspendError(e) {
+            return new SuspendError(e);
         },
     };
 
@@ -292,7 +295,7 @@ async function registerExternalFileSupport(context: vscode.ExtensionContext, cli
         extFiles.setClient('DATASET', datasetClient);
 
     context.subscriptions.push(vscode.commands.registerCommand('extension.hlasm-plugin.resumeRemoteActivity', () => extFiles.resumeAll()));
-    context.subscriptions.push(vscode.commands.registerCommand('extension.hlasm-plugin.suspendRemoteActivity', () => extFiles.suspendAll()));
+    context.subscriptions.push(vscode.commands.registerCommand('extension.hlasm-plugin.suspendRemoteActivity', () => extFiles.suspendAll("user")));
     context.subscriptions.push(vscode.commands.registerCommand('extension.hlasm-plugin.clearRemoteActivityCache', () => extFiles.clearCache()));
     context.subscriptions.push(vscode.commands.registerCommand('extension.hlasm-plugin.clearRemoteActivityCacheForService', () =>
         pickUser('Select service', extFiles.currentlyAvailableServices().map(x => { return { label: x, value: x }; })).then(x => extFiles.clearCache(x), () => { })

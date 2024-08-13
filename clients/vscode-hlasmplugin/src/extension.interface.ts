@@ -19,6 +19,7 @@ import { ClientInterface, ClientUriDetails, ExternalFilesInvalidationdata, Exter
 export interface HlasmExtension {
     registerExternalFileClient<ConnectArgs, ReadArgs extends ClientUriDetails, ListArgs extends ClientUriDetails>(service: string, client: Readonly<ClientInterface<ConnectArgs, ReadArgs, ListArgs>>): vscode.Disposable;
     registerExternalConfigurationProvider(h: HLASMExternalConfigurationProviderHandler): ConfigurationProviderRegistration;
+    makeSuspendError(e: Error): Error;
 };
 
 export { ExternalRequestType, ExternalFilesInvalidationdata };

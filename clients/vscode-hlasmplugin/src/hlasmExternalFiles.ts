@@ -158,6 +158,10 @@ type ChannelType = {
     sendNotification(method: string, params: any): Promise<void>;
 };
 
+export class SuspendError extends Error {
+    constructor(public error: Error) { super(error.message); }
+}
+
 export class HLASMExternalFiles {
     private memberLists = new Map<string, CacheEntry<string[]>>();
     private memberContent = new Map<string, CacheEntry<string>>();
@@ -354,7 +358,7 @@ export class HLASMExternalFiles {
         };
     }
 
-    public suspendAll() {
+    public suspendAll(reason: "creds" | "cancel" | "user") {
         let oneSuspended = false;
         this.clients.forEach(client => {
             if (client.suspended) return;
@@ -368,7 +372,11 @@ export class HLASMExternalFiles {
                 this.activeProgress.done();
                 this.activeProgress = null;
             }
-            vscode.window.showInformationMessage("Retrieval of remote files has been suspended.");
+            const msg = "Retrieval of remote files has been suspended.";
+            if (reason === "cancel" || reason === "user")
+                vscode.window.showInformationMessage(msg);
+            else if (reason === "creds")
+                vscode.window.showWarningMessage(msg);
         }
     }
 
@@ -380,6 +388,8 @@ export class HLASMExternalFiles {
             this.notifyAllWorkspaces(service, false);
         });
     }
+
+    public listClients() { return [...this.clients].map(([name, c]) => ({ name, suspended: c.suspended })); }
 
     public getTextDocumentContentProvider(): vscode.TextDocumentContentProvider {
         const me = this;
@@ -475,9 +485,15 @@ export class HLASMExternalFiles {
     }
 
     private handleError(x: unknown) {
-        const e = asError(x);
-        this.suspendAll();
-        if (!isCancellationError(e))
+        const isSuspendError = x instanceof SuspendError;
+        const e = isSuspendError ? x.error : asError(x);
+        const isCancel = isCancellationError(e);
+        if (isSuspendError)
+            this.suspendAll("creds");
+        else if (isCancel)
+            this.suspendAll("cancel");
+
+        if (!isCancel)
             vscode.window.showErrorMessage(e.message);
 
         return { message: e.message };

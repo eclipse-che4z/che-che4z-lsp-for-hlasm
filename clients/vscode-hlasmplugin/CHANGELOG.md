@@ -9,6 +9,7 @@
 - Evaluate relative paths specified in settings with respect to the root folder
 - PRINT instruction should tolerate null operands
 - Download dependencies command supports reading processor groups from settings
+- Retrieval of dependencies is suspended by an arbitrary error
 
 ## [1.14.0](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/compare/1.13.0...1.14.0) (2024-07-16)
 

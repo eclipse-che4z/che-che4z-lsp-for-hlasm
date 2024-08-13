@@ -15,6 +15,7 @@
 import * as vscode from 'vscode';
 import { ExternalRequestType, HlasmExtension, ExternalFilesInvalidationdata } from './extension.interface';
 import { AsmOptions, ConfigurationProviderRegistration, Preprocessor } from './hlasmExternalConfigurationProvider';
+import { SuspendError } from './hlasmExternalFiles';
 
 interface EndevorType {
     use_map: string,
@@ -367,6 +368,15 @@ function profileAsString(profile: ResolvedProfile) {
     return `${profile.instance}@${profile.profile}`;
 }
 
+const EndevorCredentialsErrorLegacyString = 'Unable to obtain credentials for Endevor connection';
+async function translateError(e: Error): Promise<never> {
+    if ('credentialsError' in e && e.credentialsError === true)
+        throw new SuspendError(e);
+    if (e.message.startsWith(EndevorCredentialsErrorLegacyString))
+        throw new SuspendError(e);
+    throw e;
+}
+
 function listEndevorElements(e4e: E4E, type_spec: EndevorType, profile: ResolvedProfile) {
     return e4e.listElements(profile, {
         use_map: type_spec.use_map === "map",
@@ -376,7 +386,7 @@ function listEndevorElements(e4e: E4E, type_spec: EndevorType, profile: Resolved
         subsystem: type_spec.subsystem,
         type: type_spec.type
     }).then(
-        r => r instanceof Error ? Promise.reject(r) : r?.map(([file, fingerprint]) => `/${encodeURIComponent(profileAsString(profile))}${type_spec.normalizedPath()}/${encodeURIComponent(file)}.hlasm?${fingerprint.toString()}`) ?? null
+        r => r instanceof Error ? translateError(r) : r?.map(([file, fingerprint]) => `/${encodeURIComponent(profileAsString(profile))}${type_spec.normalizedPath()}/${encodeURIComponent(file)}.hlasm?${fingerprint.toString()}`) ?? null
     );
 }
 
@@ -390,14 +400,14 @@ function readEndevorElement(e4e: E4E, file_spec: EndevorElement, profile: Resolv
         type: file_spec.type,
         element: file_spec.element,
         fingerprint: file_spec.fingerprint,
-    }).then(r => r instanceof Error ? Promise.reject(r) : r[0]);
+    }).then(r => r instanceof Error ? translateError(r) : r[0]);
 }
 
 function listEndevorMembers(e4e: E4E, type_spec: EndevorDataset, profile: ResolvedProfile) {
     return e4e.listMembers(profile, {
         dataset: type_spec.dataset
     }).then(
-        r => r instanceof Error ? Promise.reject(r) : r?.map((member) => `/${encodeURIComponent(profileAsString(profile))}${type_spec.normalizedPath()}/${encodeURIComponent(member)}.hlasm`) ?? null
+        r => r instanceof Error ? translateError(r) : r?.map((member) => `/${encodeURIComponent(profileAsString(profile))}${type_spec.normalizedPath()}/${encodeURIComponent(member)}.hlasm`) ?? null
     );
 }
 
@@ -405,7 +415,7 @@ function readEndevorMember(e4e: E4E, file_spec: EndevorMember, profile: Resolved
     return e4e.getMember(profile, {
         dataset: file_spec.dataset,
         member: file_spec.member,
-    }).then(r => r instanceof Error ? Promise.reject(r) : r);
+    }).then(r => r instanceof Error ? translateError(r) : r);
 }
 
 function whitespaceAsUndefined(s: string) {

@@ -15,7 +15,7 @@
 
 import * as assert from 'assert';
 import * as tools from '../../tools';
-import { ClientUriDetails, ExternalFilesInvalidationdata, ExternalRequestType, HLASMExternalFiles } from '../../hlasmExternalFiles';
+import { ClientUriDetails, ExternalFilesInvalidationdata, ExternalRequestType, HLASMExternalFiles, SuspendError } from '../../hlasmExternalFiles';
 import { EventEmitter, FileSystem, Uri } from 'vscode';
 import { FileType } from 'vscode';
 
@@ -317,5 +317,35 @@ suite('External files', () => {
         await deletePromise;
 
         attached.dispose();
+    });
+
+    test('Credentials error', async () => {
+        const ext = new HLASMExternalFiles('test', {} as any as FileSystem);
+
+        ext.setClient('TEST', {
+            parseArgs: async () => {
+                return {
+                    details: {
+                        normalizedPath: () => '/DIR',
+                    },
+                    server: undefined,
+                };
+            },
+
+            listMembers: (_: ClientUriDetails) => Promise.reject(new Error("creds")),
+            readMember: (_: ClientUriDetails) => Promise.reject(new SuspendError(new Error("creds"))),
+        });
+
+        assert.strictEqual(ext.listClients().reduce((s, x) => s || x.suspended, false), false);
+
+        const r1 = await ext.handleRawMessage({ id: 0, op: 'list_directory', url: 'test:/TEST/DIR' });
+
+        assert.ok(r1 && 'error' in r1);
+        assert.strictEqual(ext.listClients().reduce((s, x) => s || x.suspended, false), false);
+
+        const r2 = await ext.handleRawMessage({ id: 0, op: 'read_file', url: 'test:/TEST/DIR' });
+
+        assert.ok(r2 && 'error' in r2);
+        assert.strictEqual(ext.listClients().reduce((s, x) => s || x.suspended, false), true);
     });
 });
