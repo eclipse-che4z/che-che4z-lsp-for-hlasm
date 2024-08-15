@@ -16,7 +16,7 @@ import * as vscode from 'vscode';
 import { hlasmplugin_folder, proc_grps_file, pgm_conf_file } from './constants';
 import { retrieveConfigurationNodes } from './configurationNodes';
 import { generateConfigurationFilesCodeActions } from './code_actions/configurationFilesActions';
-import { textDecode } from './tools.common';
+import { stripJsonComments, textDecode } from './tools.common';
 
 /**
  * Handles changes in configurations files.
@@ -61,7 +61,7 @@ export class ConfigurationsHandler {
         //clear expressions
         const definedExpressions: RegExp[] = [];
         // get user-defined wildcards
-        let content = JSON.parse(textDecode(await vscode.workspace.fs.readFile(pgmConf)));
+        let content = JSON.parse(stripJsonComments(textDecode(await vscode.workspace.fs.readFile(pgmConf))));
 
         // convert each pgm to regex
         if (content.pgms) {
@@ -81,7 +81,7 @@ export class ConfigurationsHandler {
             });
         }
 
-        content = JSON.parse(textDecode(await vscode.workspace.fs.readFile(procGrps)));
+        content = JSON.parse(stripJsonComments(textDecode(await vscode.workspace.fs.readFile(procGrps))));
         // convert each pgroup library path to regex
         if (content.pgroups) {
             (content.pgroups as any[]).forEach(pgroup => {

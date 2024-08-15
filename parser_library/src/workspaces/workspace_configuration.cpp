@@ -519,7 +519,7 @@ lib_config load_from_pgm_config(const config::pgm_conf& config)
 
     try
     {
-        co_return nlohmann::json::parse(text.value());
+        co_return nlohmann::json::parse(text.value(), nullptr, true, true);
     }
     catch (const nlohmann::json::exception&)
     {

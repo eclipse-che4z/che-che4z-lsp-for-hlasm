@@ -4,6 +4,7 @@
 
 #### Added
 - Support CATTR, XATTR and R-type constants
+- Support comments in configuration files
 
 #### Fixed
 - Evaluate relative paths specified in settings with respect to the root folder

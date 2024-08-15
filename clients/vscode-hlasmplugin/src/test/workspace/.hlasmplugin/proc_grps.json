@@ -1,5 +1,7 @@
 {
+  // comment
   "pgroups": [
+    /* comment */
     {
       "name": "P1",
       "asm_options": {

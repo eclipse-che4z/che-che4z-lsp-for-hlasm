@@ -25,6 +25,7 @@ import { connectionSecurityLevel, gatherConnectionInfo, getLastRunConfig, transl
 import { isCancellationError } from './helpers';
 import { unterseFile } from "terse.js";
 import { FBStreamingConvertor } from './FBStreamingConvertor';
+import { stripJsonComments } from './tools.common';
 
 export type JobId = string;
 export interface JobDescription {
@@ -517,7 +518,7 @@ export function replaceVariables(obj: any, resolver: (configKey: string) => (str
 async function getWorkspaceProcGrps(w: vscode.WorkspaceFolder): Promise<{ workspace: vscode.WorkspaceFolder, config: any } | null> {
     let config;
     try {
-        config = await vscode.workspace.openTextDocument(vscode.Uri.joinPath(w.uri, hlasmplugin_folder, proc_grps_file)).then(doc => JSON.parse(doc.getText()));
+        config = await vscode.workspace.openTextDocument(vscode.Uri.joinPath(w.uri, hlasmplugin_folder, proc_grps_file)).then(doc => JSON.parse(stripJsonComments(doc.getText())));
     }
     catch (_) {
         config = vscode.workspace.getConfiguration('hlasm', w).get<object>('proc_grps');

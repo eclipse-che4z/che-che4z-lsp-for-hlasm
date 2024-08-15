@@ -264,7 +264,7 @@ private:
 
         try
         {
-            json::parse(cfg_o.value()).get_to(configuration);
+            json::parse(cfg_o.value(), nullptr, true, true).get_to(configuration);
         }
         catch (...)
         {

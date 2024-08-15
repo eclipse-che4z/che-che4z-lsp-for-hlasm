@@ -300,6 +300,10 @@
       },
       "[hlasmListing]": {
         "editor.guides.indentation": false
+      },
+      "files.associations": {
+        "**/.hlasmplugin/proc_grps.json": "jsonc",
+        "**/.hlasmplugin/pgm_conf.json": "jsonc"
       }
     },
     "commands": [

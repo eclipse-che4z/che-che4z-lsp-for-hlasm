@@ -20,8 +20,8 @@ export const bridge_json_file = '.bridge.json';
 export const hlasmplugin_folder = '.hlasmplugin';
 export const ebg_folder = '.ebg';
 
-export const hlasmplugin_folder_filter: vscode.DocumentFilter = { language: 'json', pattern: '**/.hlasmplugin/*' };
-export const bridge_json_filter: vscode.DocumentFilter = { language: 'json', pattern: '**/.bridge.json' };
+export const hlasmplugin_folder_filter: vscode.DocumentFilter = { pattern: '**/.hlasmplugin/*.json' };
+export const bridge_json_filter: vscode.DocumentFilter = { pattern: '**/.bridge.json' };
 
 export const EXTENSION_ID = "broadcommfd.hlasm-language-support";
 

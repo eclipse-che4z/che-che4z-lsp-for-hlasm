@@ -27,3 +27,55 @@ export function textDecodeStrict(input: Uint8Array): string {
 export function textEncode(input: string): Uint8Array {
     return encoder.encode(input);
 }
+
+export function stripJsonComments(input: string): string {
+    const ar = input.split('');
+
+    let state = 0;
+    // 0 - normal
+    // 1 - string
+    // 2 - /*-comment
+    // 3 - //-comment
+    for (let i = 0; i < ar.length; ++i) {
+        const c = ar[i];
+        switch (state) {
+            case 0:
+                if (c === '"') {
+                    state = 1;
+                }
+                else if (c === '/' && ar[i + 1] === '*') {
+                    ar[i + 1] = ' '; // pre-clear to handle /*/
+                    state = 2;
+                }
+                else if (c === '/' && ar[i + 1] === '/') {
+                    state = 3;
+                }
+                break;
+            case 1:
+                if (c === '\\' && (ar[i + 1] === '"' || ar[i + 1] === '\\')) {
+                    ++i;
+                }
+                else if (c === '"') {
+                    state = 0;
+                }
+                break;
+            case 2:
+                if (c === '*' && ar[i + 1] === '/') {
+                    ar[i] = ' ';
+                    ar[i + 1] = ' ';
+                    ++i;
+                    state = 0;
+                }
+                break;
+            case 3:
+                if (c === '\n' || c === '\r') {
+                    state = 0;
+                }
+                break;
+        }
+        if (state >= 2)
+            ar[i] = ' ';
+    }
+
+    return ar.join('');
+}
