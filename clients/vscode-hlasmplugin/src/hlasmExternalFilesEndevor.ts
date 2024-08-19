@@ -403,11 +403,15 @@ function readEndevorElement(e4e: E4E, file_spec: EndevorElement, profile: Resolv
     }).then(r => r instanceof Error ? translateError(r) : r[0]);
 }
 
+function endevorDatasetNotFound(e: Error) {
+    return e.message.includes('IKJ56228I') || e.message.includes('IKJ56232I');
+}
+
 function listEndevorMembers(e4e: E4E, type_spec: EndevorDataset, profile: ResolvedProfile) {
     return e4e.listMembers(profile, {
         dataset: type_spec.dataset
     }).then(
-        r => r instanceof Error ? translateError(r) : r?.map((member) => `/${encodeURIComponent(profileAsString(profile))}${type_spec.normalizedPath()}/${encodeURIComponent(member)}.hlasm`) ?? null
+        r => r instanceof Error ? endevorDatasetNotFound(r) ? null : translateError(r) : r?.map((member) => `/${encodeURIComponent(profileAsString(profile))}${type_spec.normalizedPath()}/${encodeURIComponent(member)}.hlasm`) ?? null
     );
 }
 
