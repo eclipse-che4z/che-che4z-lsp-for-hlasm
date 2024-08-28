@@ -16,6 +16,7 @@
 #define HLASMPLUGIN_PARSERLIBRARY_LSP_COMPLETION_LIST_SOURCE_H
 
 #include <memory>
+#include <string>
 #include <string_view>
 #include <unordered_map>
 #include <variant>
