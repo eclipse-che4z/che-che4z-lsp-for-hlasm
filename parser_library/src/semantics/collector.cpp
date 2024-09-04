@@ -130,7 +130,7 @@ void collector::set_operand_remark_field(range symbol_range)
     if (op_ || rem_ || def_)
         throw std::runtime_error("field already assigned");
     op_.emplace(symbol_range, operand_list());
-    rem_.emplace(symbol_range, std::vector<range>());
+    rem_.emplace(std::vector<range>());
     def_.emplace(symbol_range, 0, "", std::vector<vs_ptr>());
 
     add_operand_remark_hl_symbols();
@@ -142,7 +142,7 @@ void collector::set_operand_remark_field(
     if (op_ || rem_ || def_)
         throw std::runtime_error("field already assigned");
     def_.emplace(symbol_range, logical_column, std::move(deferred), std::move(vars));
-    rem_.emplace(symbol_range, std::move(remarks));
+    rem_.emplace(std::move(remarks));
 
     add_operand_remark_hl_symbols();
 }
@@ -154,7 +154,7 @@ void collector::set_operand_remark_field(operand_list operands, remark_list rema
     if (operands.size() == 1 && (!operands.front() || operands.front()->type == semantics::operand_type::EMPTY))
         operands.clear();
     op_.emplace(symbol_range, std::move(operands));
-    rem_.emplace(symbol_range, std::move(remarks));
+    rem_.emplace(std::move(remarks));
 
     add_operand_remark_hl_symbols();
 }
@@ -243,7 +243,7 @@ context::shared_stmt_ptr collector::extract_statement(processing::processing_sta
     if (!instr_)
         instr_.emplace(statement_range);
     if (!rem_)
-        rem_.emplace(statement_range, remark_list {});
+        rem_.emplace(remark_list {});
 
     bool deferred_hint = status.first.form == processing::processing_form::DEFERRED;
 

@@ -136,12 +136,10 @@ statement_fields_parser::parse_result statement_fields_parser::parse_operand_fie
     range op_range = line.operands.empty()
         ? original_range
         : union_range(line.operands.front()->operand_range, line.operands.back()->operand_range);
-    range rem_range =
-        line.remarks.empty() ? range(op_range.end) : union_range(line.remarks.front(), line.remarks.back());
 
     return parse_result {
         semantics::operands_si(op_range, std::move(line.operands)),
-        semantics::remarks_si(rem_range, std::move(line.remarks)),
+        semantics::remarks_si(std::move(line.remarks)),
         std::move(literals),
     };
 }

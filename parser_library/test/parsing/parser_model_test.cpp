@@ -54,7 +54,6 @@ TEST(parser, parse_model)
         EXPECT_TRUE(lit.empty());
 
         EXPECT_EQ(op.field_range, r);
-        EXPECT_EQ(rem.field_range, range(position(0, 10)));
         EXPECT_TRUE(op.value[0]->access_model());
     }
     {
@@ -66,7 +65,6 @@ TEST(parser, parse_model)
         EXPECT_TRUE(lit.empty());
 
         EXPECT_EQ(op.field_range, r);
-        EXPECT_EQ(rem.field_range, range(position(0, 8)));
         EXPECT_TRUE(op.value[0]->access_model());
     }
 }
@@ -81,7 +79,6 @@ TEST(parser, parse_model_with_remark_alone)
     EXPECT_TRUE(lit.empty());
 
     EXPECT_EQ(op.field_range, range(position(0, 4), position(0, 8)));
-    EXPECT_EQ(rem.field_range, range(position(0, 9), position(0, 18)));
     EXPECT_TRUE(op.value[0]->access_model());
 }
 
@@ -95,7 +92,6 @@ TEST(parser, parse_model_with_remark_before)
     EXPECT_TRUE(lit.empty());
 
     EXPECT_EQ(op.field_range, range(position(0, 4), position(0, 10)));
-    EXPECT_EQ(rem.field_range, range(position(0, 11), position(0, 20)));
     EXPECT_TRUE(op.value[0]->access_model());
 }
 
@@ -109,7 +105,6 @@ TEST(parser, parse_model_with_remark_after)
     EXPECT_TRUE(lit.empty());
 
     EXPECT_EQ(op.field_range, range(position(0, 4), position(0, 10)));
-    EXPECT_EQ(rem.field_range, range(position(0, 11), position(0, 20)));
     EXPECT_TRUE(op.value[0]->access_model());
 }
 
@@ -123,7 +118,6 @@ TEST(parser, parse_model_with_remark_before_after)
     EXPECT_TRUE(lit.empty());
 
     EXPECT_EQ(op.field_range, range(position(0, 4), position(0, 16)));
-    EXPECT_EQ(rem.field_range, range(position(0, 17), position(0, 26)));
     EXPECT_TRUE(op.value[0]->access_model());
 }
 
@@ -137,7 +131,6 @@ TEST(parser, parse_model_with_remark_string)
     EXPECT_TRUE(lit.empty());
 
     EXPECT_EQ(op.field_range, range(position(0, 4), position(0, 16)));
-    EXPECT_EQ(rem.field_range, range(position(0, 17), position(0, 26)));
     EXPECT_TRUE(op.value[0]->access_model());
 }
 

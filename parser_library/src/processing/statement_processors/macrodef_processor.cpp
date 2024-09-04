@@ -389,7 +389,7 @@ struct empty_statement_t final : public resolved_statement
         : label(r)
         , instruction(r)
         , operands(r, {})
-        , remarks(r, {})
+        , remarks({})
     {}
 
     static const processing_status status;

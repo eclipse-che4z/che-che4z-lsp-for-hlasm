@@ -59,6 +59,41 @@ TEST(highlighting, simple)
     EXPECT_EQ(tokens, expected);
 }
 
+TEST(highlighting, mach_noop)
+{
+    const std::string contents = " SAM31 remark";
+    analyzer a(contents, analyzer_options { source_file_loc, collect_highlighting_info::yes });
+    a.analyze();
+    const auto& tokens = a.take_semantic_tokens();
+    semantics::lines_info expected = {
+        token_info({ { 0, 1 }, { 0, 6 } }, hl_scopes::instruction),
+        token_info({ { 0, 7 }, { 0, 13 } }, hl_scopes::remark),
+    };
+
+    EXPECT_EQ(tokens, expected);
+}
+
+TEST(highlighting, mach_noop_multiline)
+{
+    const std::string contents = R"(
+    SAM31 remark                                                       X
+               remark2
+)";
+    analyzer a(contents, analyzer_options { source_file_loc, collect_highlighting_info::yes });
+    a.analyze();
+    const auto& tokens = a.take_semantic_tokens();
+    semantics::lines_info expected = {
+        token_info({ { 1, 4 }, { 1, 9 } }, hl_scopes::instruction),
+        token_info({ { 1, 10 }, { 1, 71 } }, hl_scopes::remark),
+        token_info({ { 1, 71 }, { 1, 72 } }, hl_scopes::continuation),
+        token_info({ { 1, 72 }, { 1, 73 } }, hl_scopes::ignored),
+        token_info({ { 2, 0 }, { 2, 15 } }, hl_scopes::ignored),
+        token_info({ { 2, 15 }, { 2, 22 } }, hl_scopes::remark),
+    };
+
+    EXPECT_EQ(tokens, expected);
+}
+
 TEST(highlighting, mach_expr)
 {
     const std::string contents = " LR 1*1+X,L'X";

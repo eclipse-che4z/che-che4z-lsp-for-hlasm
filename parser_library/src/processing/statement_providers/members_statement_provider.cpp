@@ -141,7 +141,7 @@ const context::statement_cache::cached_statement_t& members_statement_provider::
         || status.first.form == processing_form::IGNORED)
     {
         semantics::operands_si op(def_ops.field_range, semantics::operand_list());
-        semantics::remarks_si rem(def_ops.field_range, {});
+        semantics::remarks_si rem({});
 
         reparsed_stmt.stmt = std::make_shared<statement_si_defer_done>(
             std::move(def_stmt), std::move(op), std::move(rem), std::vector<semantics::literal_si>());
