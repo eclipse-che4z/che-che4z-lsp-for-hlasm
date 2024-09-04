@@ -1216,3 +1216,26 @@ A    EQU                                                               X
     EXPECT_TRUE(a.diags().empty());
     EXPECT_EQ(get_symbol_abs(a.hlasm_ctx(), "A"), 1);
 }
+
+TEST(macro, comma_after_continuation)
+{
+    std::string input = R"(
+     MACRO
+     MAC
+     MNOTE  '&SYSLIST(2)'
+     MEND
+
+     MACRO
+     MAC2   &C
+     mac                                                               X
+                  ,&C
+     MEND
+
+     MAC2   TEST
+)";
+
+    analyzer a(input);
+    a.analyze();
+
+    EXPECT_TRUE(matches_message_text(a.diags(), { "TEST" }));
+}
