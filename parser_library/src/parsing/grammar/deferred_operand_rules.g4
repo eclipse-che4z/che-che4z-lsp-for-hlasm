@@ -133,7 +133,7 @@ deferred_entry returns [std::vector<vs_ptr> vs]
         LPAR
         |
         AMPERSAND
-    )?
+    )
     ;
     finally
     {enable_ca_string();}
