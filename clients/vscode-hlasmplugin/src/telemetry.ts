@@ -34,7 +34,9 @@ export function createTelemetry(): Telemetry {
             return {
                 reportEvent: reporter.sendTelemetryEvent.bind(reporter),
                 reportErrorEvent: reporter.sendTelemetryErrorEvent.bind(reporter),
-                reportException: reporter.sendTelemetryException.bind(reporter),
+                reportException: (error: Error, properties?: TelemetryEventProperties, measurements?: TelemetryEventMeasurements) => {
+                    reporter.sendTelemetryErrorEvent(error.name, { ...properties, errorMessage: error.message, errorStack: error.stack }, measurements);
+                },
                 dispose: reporter.dispose.bind(reporter),
             };
         }

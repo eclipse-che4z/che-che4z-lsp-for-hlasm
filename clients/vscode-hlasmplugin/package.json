@@ -47,7 +47,7 @@
     "@types/glob": "^5.0.35",
     "@types/mocha": "^7.0.2",
     "@types/node": "^16.4.13",
-    "@types/vscode": "1.67.0",
+    "@types/vscode": "^1.75.0",
     "@vscode/test-electron": "^2.3.8",
     "@vscode/test-web": "^0.0.56",
     "@vscode/vsce": "^2.19.0",
@@ -63,7 +63,7 @@
     "vscode-tmgrammar-test": "^0.1.1"
   },
   "dependencies": {
-    "@vscode/extension-telemetry": "^0.7.5",
+    "@vscode/extension-telemetry": "^0.9.7",
     "basic-ftp": "^5.0.0",
     "terse.js": "file:./terse/terse.js-1.0.0.tgz",
     "vscode-languageclient": "^8.1.0"
