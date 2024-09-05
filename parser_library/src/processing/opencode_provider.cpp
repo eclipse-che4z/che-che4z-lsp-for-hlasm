@@ -48,12 +48,12 @@ opencode_provider::opencode_provider(std::string_view text,
     : statement_provider(statement_provider_kind::OPEN)
     , m_input_document(text)
     , m_virtual_files(std::make_shared<std::unordered_map<context::id_index, std::string>>())
-    , m_singleline { parsing::parser_holder::create(&src_proc, ctx.hlasm_ctx.get(), &diag_consumer, false),
-        parsing::parser_holder::create(nullptr, ctx.hlasm_ctx.get(), nullptr, false),
-        parsing::parser_holder::create(nullptr, ctx.hlasm_ctx.get(), nullptr, false) }
-    , m_multiline { parsing::parser_holder::create(&src_proc, ctx.hlasm_ctx.get(), &diag_consumer, true),
-        parsing::parser_holder::create(nullptr, ctx.hlasm_ctx.get(), nullptr, true),
-        parsing::parser_holder::create(nullptr, ctx.hlasm_ctx.get(), nullptr, true) }
+    , m_singleline { parsing::parser_holder::create(ctx.hlasm_ctx.get(), &diag_consumer, false),
+        parsing::parser_holder::create(ctx.hlasm_ctx.get(), nullptr, false),
+        parsing::parser_holder::create(ctx.hlasm_ctx.get(), nullptr, false) }
+    , m_multiline { parsing::parser_holder::create(ctx.hlasm_ctx.get(), &diag_consumer, true),
+        parsing::parser_holder::create(ctx.hlasm_ctx.get(), nullptr, true),
+        parsing::parser_holder::create(ctx.hlasm_ctx.get(), nullptr, true) }
     , m_ctx(ctx)
     , m_lib_provider(&lib_provider)
     , m_state_listener(&state_listener)
@@ -193,22 +193,48 @@ void opencode_provider::ainsert(const std::string& rec, ainsert_destination dest
     suspend_copy_processing(remove_empty::no);
 }
 
-void opencode_provider::feed_line(const parsing::parser_holder& p, bool is_process)
+namespace {
+void produce_hl_symbols(
+    const lexing::logical_line<utils::utf8_iterator<std::string_view::iterator, utils::utf8_utf16_counter>>& ll,
+    size_t lineno,
+    semantics::source_info_processor& sip)
+{
+    static constexpr auto ll_range = [](size_t lno, const auto& b, const auto& m, const auto& e) {
+        return range({ lno, lexing::logical_distance(b, m) }, { lno, lexing::logical_distance(b, e) });
+    };
+
+    for (size_t offset = 0; const auto& l : ll.segments)
+    {
+        const auto ln = lineno + offset++;
+        if (l.begin != l.code)
+            sip.add_hl_symbol({ ll_range(ln, l.begin, l.begin, l.code), hl_scopes::ignored });
+
+        if (l.continuation != l.ignore)
+            sip.add_hl_symbol({ ll_range(ln, l.begin, l.continuation, l.ignore), hl_scopes::continuation });
+
+        if (l.ignore != l.end)
+            sip.add_hl_symbol({ ll_range(ln, l.begin, l.ignore, l.end), hl_scopes::ignored });
+    }
+}
+} // namespace
+
+void opencode_provider::feed_line(const parsing::parser_holder& p, bool is_process, bool produce_source_info)
 {
     m_line_fed = true;
+
+    const auto lineno = m_current_logical_line_source.begin_line;
+    if (produce_source_info)
+        produce_hl_symbols(m_current_logical_line, lineno, *m_src_proc);
 
     const auto& subs = p.input->new_input(m_current_logical_line);
 
     if (subs.server && !std::exchange(m_encoding_warning_issued.server, true))
-        m_diagnoser->add_diagnostic(
-            diagnostic_op::warning_W017(range(position(m_current_logical_line_source.begin_line, 0))));
+        m_diagnoser->add_diagnostic(diagnostic_op::warning_W017(range(position(lineno, 0))));
 
     if (subs.client && !std::exchange(m_encoding_warning_issued.client, true))
-        m_diagnoser->add_diagnostic(
-            diagnostic_op::warning_W018(range(position(m_current_logical_line_source.begin_line, 0))));
+        m_diagnoser->add_diagnostic(diagnostic_op::warning_W018(range(position(lineno, 0))));
 
-    p.lex->set_file_offset(
-        { m_current_logical_line_source.begin_line, 0 /*lexing::default_ictl.begin-1 really*/ }, 0, is_process);
+    p.lex->set_file_offset({ lineno, 0 /*lexing::default_ictl.begin-1 really*/ }, 0, is_process);
     p.lex->set_unlimited_line(false);
     p.lex->reset();
 
@@ -663,7 +689,7 @@ context::shared_stmt_ptr opencode_provider::get_next(const statement_processor& 
 
     auto& ph = lookahead ? (multiline ? *m_multiline.m_lookahead_parser : *m_singleline.m_lookahead_parser)
                          : (multiline ? *m_multiline.m_parser : *m_singleline.m_parser);
-    feed_line(ph, is_process);
+    feed_line(ph, is_process, !lookahead);
 
     auto& collector = ph.parser->get_collector();
     auto* diag_target = nested ? collector.diag_collector() : static_cast<diagnostic_op_consumer*>(m_diagnoser);
@@ -757,7 +783,7 @@ parsing::hlasmparser_multiline& opencode_provider::parser()
     if (!m_line_fed)
     {
         auto ll_res = extract_next_logical_line();
-        feed_line(*m_multiline.m_parser, ll_res == extract_next_logical_line_result::process);
+        feed_line(*m_multiline.m_parser, ll_res == extract_next_logical_line_result::process, true);
     }
     assert(m_line_fed);
     return static_cast<parsing::hlasmparser_multiline&>(*m_multiline.m_parser->parser);

@@ -698,7 +698,7 @@ public:
         std::string error_msg;
         error_collector diags(error_msg);
 
-        auto p = parsing::parser_holder::create(nullptr, ctx_, nullptr, false);
+        auto p = parsing::parser_holder::create(ctx_, nullptr, false);
         p->prepare_parser(expr, ctx_, &diags, semantics::range_provider(), range(), 1, status, true);
 
         semantics::operand_ptr op =

@@ -461,7 +461,7 @@ semantics::literal_si ca_symbol_attribute::reparse_substituted_literal(
         diag.message = diagnostic_decorate_message(text, diag.message);
         eval_ctx.diags.add_diagnostic(std::move(diag));
     });
-    auto h = parsing::parser_holder::create(nullptr, &eval_ctx.hlasm_ctx, &add_diag_subst, false);
+    auto h = parsing::parser_holder::create(&eval_ctx.hlasm_ctx, &add_diag_subst, false);
 
     h->prepare_parser(text,
         &eval_ctx.hlasm_ctx,

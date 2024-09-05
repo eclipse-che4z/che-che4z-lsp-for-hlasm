@@ -19,7 +19,6 @@
 #include <vector>
 
 #include "range.h"
-#include "semantics/source_info_processor.h"
 #include "token.h"
 
 namespace hlasm_plugin::parser_library::lexing {
@@ -34,7 +33,7 @@ public:
         size_t line;
         size_t offset;
     };
-    lexer(input_source*, semantics::source_info_processor* lsp_proc);
+    explicit lexer(input_source*);
 
     lexer(const lexer&) = delete;
     lexer(lexer&&) = delete;
@@ -107,7 +106,6 @@ private:
     size_t continue_ = 15;
 
     input_source* input_;
-    semantics::source_info_processor* src_proc_;
 
     struct input_state
     {

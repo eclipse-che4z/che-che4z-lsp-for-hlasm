@@ -86,7 +86,6 @@ TEST(highlighting, mach_noop_multiline)
         token_info({ { 1, 4 }, { 1, 9 } }, hl_scopes::instruction),
         token_info({ { 1, 10 }, { 1, 71 } }, hl_scopes::remark),
         token_info({ { 1, 71 }, { 1, 72 } }, hl_scopes::continuation),
-        token_info({ { 1, 72 }, { 1, 73 } }, hl_scopes::ignored),
         token_info({ { 2, 0 }, { 2, 15 } }, hl_scopes::ignored),
         token_info({ { 2, 15 }, { 2, 22 } }, hl_scopes::remark),
     };
@@ -220,7 +219,7 @@ IgnoredIgnoredI1 remark)";
         token_info({ { 0, 2 }, { 0, 5 } }, hl_scopes::instruction),
         token_info({ { 0, 70 }, { 0, 71 } }, hl_scopes::number),
         token_info({ { 0, 71 }, { 0, 72 } }, hl_scopes::continuation),
-        token_info({ { 0, 72 }, { 0, 80 } }, hl_scopes::ignored),
+        token_info({ { 0, 72 }, { 0, 79 } }, hl_scopes::ignored),
         token_info({ { 1, 0 }, { 1, 15 } }, hl_scopes::ignored),
         token_info({ { 1, 15 }, { 1, 16 } }, hl_scopes::number),
         token_info({ { 1, 17 }, { 1, 23 } }, hl_scopes::remark) };
@@ -247,7 +246,6 @@ TEST(highlighting, macro_alternative_continuation)
         token_info({ { 4, 8 }, { 4, 9 } }, hl_scopes::operator_symbol),
         token_info({ { 4, 10 }, { 4, 71 } }, hl_scopes::remark),
         token_info({ { 4, 71 }, { 4, 72 } }, hl_scopes::continuation),
-        token_info({ { 4, 72 }, { 4, 73 } }, hl_scopes::ignored),
         token_info({ { 5, 0 }, { 5, 15 } }, hl_scopes::ignored),
         token_info({ { 5, 15 }, { 5, 18 } }, hl_scopes::operand),
         token_info({ { 5, 19 }, { 5, 26 } }, hl_scopes::remark) };
@@ -402,7 +400,6 @@ TEST(highlighting, multiline_macro_param)
         token_info({ { 5, 39 }, { 5, 71 } }, hl_scopes::remark),
 
         token_info({ { 5, 71 }, { 5, 72 } }, hl_scopes::continuation),
-        token_info({ { 5, 72 }, { 5, 73 } }, hl_scopes::ignored),
         token_info({ { 6, 0 }, { 6, 15 } }, hl_scopes::ignored),
 
         token_info({ { 6, 15 }, { 6, 17 } }, hl_scopes::operand),
@@ -410,7 +407,6 @@ TEST(highlighting, multiline_macro_param)
         token_info({ { 6, 39 }, { 6, 71 } }, hl_scopes::remark),
 
         token_info({ { 6, 71 }, { 6, 72 } }, hl_scopes::continuation),
-        token_info({ { 6, 72 }, { 6, 73 } }, hl_scopes::ignored),
         token_info({ { 7, 0 }, { 7, 15 } }, hl_scopes::ignored),
 
         token_info({ { 7, 15 }, { 7, 17 } }, hl_scopes::operand),
@@ -418,7 +414,6 @@ TEST(highlighting, multiline_macro_param)
         token_info({ { 7, 39 }, { 7, 71 } }, hl_scopes::remark),
 
         token_info({ { 7, 71 }, { 7, 72 } }, hl_scopes::continuation),
-        token_info({ { 7, 72 }, { 7, 73 } }, hl_scopes::ignored),
         token_info({ { 8, 0 }, { 8, 15 } }, hl_scopes::ignored),
 
         token_info({ { 8, 15 }, { 8, 17 } }, hl_scopes::operand),
@@ -457,21 +452,18 @@ INSTANTIATE_TEST_SUITE_P(highlighting,
                 token_info({ { 1, 17 }, { 1, 18 } }, hl_scopes::operator_symbol),
                 token_info({ { 1, 39 }, { 1, 71 } }, hl_scopes::remark),
                 token_info({ { 1, 71 }, { 1, 72 } }, hl_scopes::continuation),
-                token_info({ { 1, 72 }, { 1, 73 } }, hl_scopes::ignored),
 
                 token_info({ { 2, 0 }, { 2, 15 } }, hl_scopes::ignored),
                 token_info({ { 2, 15 }, { 2, 17 } }, hl_scopes::operand),
                 token_info({ { 2, 17 }, { 2, 18 } }, hl_scopes::operator_symbol),
                 token_info({ { 2, 39 }, { 2, 71 } }, hl_scopes::remark),
                 token_info({ { 2, 71 }, { 2, 72 } }, hl_scopes::continuation),
-                token_info({ { 2, 72 }, { 2, 73 } }, hl_scopes::ignored),
 
                 token_info({ { 3, 0 }, { 3, 15 } }, hl_scopes::ignored),
                 token_info({ { 3, 15 }, { 3, 17 } }, hl_scopes::operand),
                 token_info({ { 3, 17 }, { 3, 18 } }, hl_scopes::operator_symbol),
                 token_info({ { 3, 39 }, { 3, 71 } }, hl_scopes::remark),
                 token_info({ { 3, 71 }, { 3, 72 } }, hl_scopes::continuation),
-                token_info({ { 3, 72 }, { 3, 73 } }, hl_scopes::ignored),
 
                 token_info({ { 4, 0 }, { 4, 15 } }, hl_scopes::ignored),
                 token_info({ { 4, 15 }, { 4, 17 } }, hl_scopes::operand),
@@ -490,7 +482,6 @@ INSTANTIATE_TEST_SUITE_P(highlighting,
                 token_info({ { 1, 14 }, { 1, 15 } }, hl_scopes::operator_symbol),
                 token_info({ { 1, 15 }, { 1, 16 } }, hl_scopes::operand),
                 token_info({ { 1, 71 }, { 1, 72 } }, hl_scopes::continuation),
-                token_info({ { 1, 72 }, { 1, 73 } }, hl_scopes::ignored),
 
                 token_info({ { 2, 0 }, { 2, 15 } }, hl_scopes::ignored),
                 token_info({ { 2, 15 }, { 2, 18 } }, hl_scopes::remark),

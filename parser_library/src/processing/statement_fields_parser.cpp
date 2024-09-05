@@ -23,8 +23,8 @@
 namespace hlasm_plugin::parser_library::processing {
 
 statement_fields_parser::statement_fields_parser(context::hlasm_context* hlasm_ctx)
-    : m_parser_singleline(parsing::parser_holder::create(nullptr, hlasm_ctx, nullptr, false))
-    , m_parser_multiline(parsing::parser_holder::create(nullptr, hlasm_ctx, nullptr, true))
+    : m_parser_singleline(parsing::parser_holder::create(hlasm_ctx, nullptr, false))
+    , m_parser_multiline(parsing::parser_holder::create(hlasm_ctx, nullptr, true))
     , m_hlasm_ctx(hlasm_ctx)
 {}
 

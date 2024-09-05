@@ -69,12 +69,11 @@ template<bool multiline>
 struct parser_holder_impl final : parser_holder
 {
     using parser_t = std::conditional_t<multiline, hlasmparser_multiline, hlasmparser_singleline>;
-    parser_holder_impl(
-        semantics::source_info_processor* lsp_proc, context::hlasm_context* hl_ctx, diagnostic_op_consumer* d)
+    parser_holder_impl(context::hlasm_context* hl_ctx, diagnostic_op_consumer* d)
     {
         error_handler = std::make_shared<parsing::error_strategy>();
         input = std::make_unique<lexing::input_source>();
-        lex = std::make_unique<lexing::lexer>(input.get(), lsp_proc);
+        lex = std::make_unique<lexing::lexer>(input.get());
         stream = std::make_unique<lexing::token_stream>(lex.get());
         parser = std::make_unique<parser_t>(stream.get());
         parser->setErrorHandler(error_handler);
@@ -129,15 +128,13 @@ struct parser_holder_impl final : parser_holder
     semantics::literal_si literal_reparse() const override { return std::move(get_parser().literal_reparse()->value); }
 };
 
-std::unique_ptr<parser_holder> parser_holder::create(semantics::source_info_processor* lsp_proc,
-    context::hlasm_context* hl_ctx,
-    diagnostic_op_consumer* d,
-    bool multiline)
+std::unique_ptr<parser_holder> parser_holder::create(
+    context::hlasm_context* hl_ctx, diagnostic_op_consumer* d, bool multiline)
 {
     if (multiline)
-        return std::make_unique<parser_holder_impl<true>>(lsp_proc, hl_ctx, d);
+        return std::make_unique<parser_holder_impl<true>>(hl_ctx, d);
     else
-        return std::make_unique<parser_holder_impl<false>>(lsp_proc, hl_ctx, d);
+        return std::make_unique<parser_holder_impl<false>>(hl_ctx, d);
 }
 
 void parser_impl::enable_lookahead_recovery()

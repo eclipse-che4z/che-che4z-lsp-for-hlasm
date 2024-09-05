@@ -30,9 +30,8 @@ using namespace hlasm_plugin;
 using namespace parser_library;
 using namespace lexing;
 
-lexer::lexer(input_source* input, semantics::source_info_processor* lsp_proc)
+lexer::lexer(input_source* input)
     : input_(input)
-    , src_proc_(lsp_proc)
 {
     file_input_state_.input = input;
 
@@ -100,24 +99,6 @@ void lexer::create_token(size_t ttype, size_t channel)
         end.char_position_in_line_utf16);
 
     ++last_token_id_;
-
-    if (src_proc_)
-        switch (ttype)
-        {
-            case CONTINUATION:
-                src_proc_->add_hl_symbol(
-                    token_info(range(position(token_start_state_.line, token_start_state_.char_position_in_line_utf16),
-                                   position(input_state_->line, end.char_position_in_line_utf16)),
-                        hl_scopes::continuation));
-                break;
-            case IGNORED:
-                src_proc_->add_hl_symbol(
-                    token_info(range(position(token_start_state_.line, token_start_state_.char_position_in_line_utf16),
-                                   position(token_start_state_.line, end.char_position_in_line_utf16)),
-                        hl_scopes::ignored));
-                break;
-                // case COMMENT: Line comments are already handled in opencode_provider::process_comment()
-        }
 }
 
 void lexer::consume()

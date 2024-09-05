@@ -20,7 +20,6 @@
 #include "Parser.h"
 #include "parser_error_listener.h"
 #include "semantics/collector.h"
-#include "semantics/source_info_processor.h"
 
 namespace hlasm_plugin::parser_library::context {
 class hlasm_context;
@@ -245,10 +244,8 @@ struct parser_holder
         const processing::processing_status& proc_status,
         bool unlimited_line) const;
 
-    static std::unique_ptr<parser_holder> create(semantics::source_info_processor* lsp_proc,
-        context::hlasm_context* hl_ctx,
-        diagnostic_op_consumer* d,
-        bool multiline);
+    static std::unique_ptr<parser_holder> create(
+        context::hlasm_context* hl_ctx, diagnostic_op_consumer* d, bool multiline);
 };
 
 } // namespace hlasm_plugin::parser_library::parsing

@@ -45,9 +45,8 @@ ORDSYMBOL
 EOF
 )";
 
-    semantics::source_info_processor src_proc(false);
     lexing::input_source input("TEST TEST \r\n TEST1 TEST2");
-    lexing::lexer l(&input, &src_proc);
+    lexing::lexer l(&input);
     lexing::token_stream tokens(&l);
     parser parser(&tokens);
 
@@ -109,9 +108,8 @@ ORDSYMBOL
 EOF
 )";
 
-    semantics::source_info_processor src_proc(false);
     lexing::input_source input(in);
-    lexing::lexer l(&input, &src_proc);
+    lexing::lexer l(&input);
     lexing::token_stream tokens(&l);
     parser parser(&tokens);
     l.set_unlimited_line(true);
@@ -130,8 +128,7 @@ TEST(lexer_test, special_spaces)
 {
     std::string in = "A\v\f\t LR";
     lexing::input_source input(in);
-    semantics::source_info_processor src_proc(false);
-    lexing::lexer l(&input, &src_proc);
+    lexing::lexer l(&input);
 
     while (l.more_tokens())
         ;
@@ -151,9 +148,8 @@ TEST(lexer_test, attribute_in_continuation)
                'SYMBOL
 )";
 
-    semantics::source_info_processor src_proc(false);
     lexing::input_source input(in);
-    lexing::lexer l(&input, &src_proc);
+    lexing::lexer l(&input);
 
     while (l.more_tokens())
         ;
