@@ -439,6 +439,19 @@ X CATTR PART()
     EXPECT_TRUE(matches_message_codes(a.diags(), { "A207" }));
 }
 
+TEST(diagnostics, cattr_incorrect_part_param2)
+{
+    std::string input(
+        R"(
+  START
+X CATTR PART(1)
+)");
+    analyzer a(input);
+    a.analyze();
+    EXPECT_EQ(get_syntax_errors(a), (size_t)0);
+    EXPECT_TRUE(matches_message_codes(a.diags(), { "A207" }));
+}
+
 TEST(diagnostics, cattr_empty_op)
 {
     std::string input(
@@ -936,6 +949,17 @@ R   EQU Q
     analyzer a(input, analyzer_options(asm_option { .sysopt_xobject = true }));
     a.analyze();
     EXPECT_TRUE(matches_message_codes(a.diags(), { "A173" }));
+}
+
+TEST(diagnostics, xattr_psect_invalid_ref2)
+{
+    std::string input = R"(
+C   CSECT
+C   XATTR PSECT(1)
+)";
+    analyzer a(input, analyzer_options(asm_option { .sysopt_xobject = true }));
+    a.analyze();
+    EXPECT_TRUE(matches_message_codes(a.diags(), { "A248" }));
 }
 
 TEST(diagnostics, xattr_psect_incompatible)

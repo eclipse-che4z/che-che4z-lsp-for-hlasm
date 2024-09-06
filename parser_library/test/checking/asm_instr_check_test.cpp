@@ -114,7 +114,7 @@ public:
         cattr_operand_fill = complex_operand("FILL", std::move(cattr_fill_vector));
 
         auto cattr_part_vector = std::vector<std::unique_ptr<asm_operand>> {};
-        cattr_part_vector.push_back(std::make_unique<one_operand>("test string"));
+        cattr_part_vector.push_back(std::make_unique<one_operand>("test_name"));
         cattr_operand_part = complex_operand("PART", std::move(cattr_part_vector));
 
         auto cattr_priority_vector = std::vector<std::unique_ptr<asm_operand>> {};

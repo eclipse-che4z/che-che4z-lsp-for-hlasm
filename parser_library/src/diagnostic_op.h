@@ -432,6 +432,8 @@ struct diagnostic_op
 
     static diagnostic_op error_A247_must_be_rel_abs_expr(std::string_view instr_name, const range& range);
 
+    static diagnostic_op error_A248_PSECT_param_format(std::string_view instr_name, const range& range);
+
     static diagnostic_op warning_A248_END_lang_char_sequence(const range& range);
 
     static diagnostic_op warning_A249_sequence_symbol_expected(const range& range);

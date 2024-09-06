@@ -1475,6 +1475,8 @@ asm_processor::cattr_ops_result asm_processor::cattr_ops(const semantics::operan
             continue;
         const auto* str = dynamic_cast<const semantics::complex_assembler_operand::string_value_t*>(
             complex->value.values.front().get());
+        if (!str)
+            continue;
         auto [_, result] = hlasm_ctx.try_get_symbol_name(str->value);
 
         return { ops.value.size() - 1, result, complex->operand_range };
@@ -1584,6 +1586,8 @@ void asm_processor::process_XATTR(rebuilt_statement&& stmt)
                 continue;
             const auto* str = dynamic_cast<const semantics::complex_assembler_operand::string_value_t*>(
                 complex->value.values.front().get());
+            if (!str)
+                continue;
 
             auto [valid, psect] = hlasm_ctx.try_get_symbol_name(str->value);
             if (!valid)

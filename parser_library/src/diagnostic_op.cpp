@@ -1287,6 +1287,16 @@ diagnostic_op diagnostic_op::error_A247_must_be_rel_abs_expr(std::string_view in
         range);
 }
 
+diagnostic_op diagnostic_op::error_A248_PSECT_param_format(std::string_view instr_name, const range& range)
+{
+    return diagnostic_op(diagnostic_severity::error,
+        "A248",
+        concat("Error at ",
+            instr_name,
+            " instruction: PSECT operand parameter value must be a symbol name of maximum 63 characters"),
+        range);
+}
+
 diagnostic_op diagnostic_op::warning_A248_END_lang_char_sequence(const range& range)
 {
     return diagnostic_op(

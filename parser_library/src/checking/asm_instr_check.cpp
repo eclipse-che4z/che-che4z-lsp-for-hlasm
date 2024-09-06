@@ -88,6 +88,15 @@ bool xattr::check(std::span<const asm_operand* const> to_check,
                     return false;
                 }
             }
+            else if (current_operand->operand_identifier == "PSECT")
+            {
+                if (param == nullptr || !lexing::is_valid_symbol_name(param->operand_identifier))
+                {
+                    add_diagnostic(diagnostic_op::error_A248_PSECT_param_format(
+                        name_of_instruction, current_operand->operand_parameters[0]->operand_range));
+                    return false;
+                }
+            }
         }
         else if (current_operand->operand_identifier == "REFERENCE" || current_operand->operand_identifier == "REF")
         {
@@ -1065,8 +1074,7 @@ bool cattr::check(std::span<const asm_operand* const> to_check,
             }
             else if (complex_op->operand_identifier == "PART")
             {
-                if (parameter == nullptr || parameter->operand_identifier.empty()
-                    || parameter->operand_identifier.length() > 63)
+                if (parameter == nullptr || !lexing::is_valid_symbol_name(parameter->operand_identifier))
                 {
                     add_diagnostic(diagnostic_op::error_A207_PART_param_format(
                         name_of_instruction, complex_op->operand_parameters[0]->operand_range));
