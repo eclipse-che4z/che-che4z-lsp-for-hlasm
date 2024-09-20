@@ -1,3 +1,38 @@
+## [1.15.0](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/compare/1.14.0...1.15.0) (2024-09-20)
+
+
+### Features
+
+* Support CATTR, XATTR and R-type constants ([85f51dc](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/85f51dc2efcf26de2062ccc515b4ddeeb42493cb))
+* Support comments in configuration files ([6bb7283](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/6bb7283f7c7391746b3bfc7665727530d24e1d88))
+
+
+### Other changes
+
+* Clean up WASM glue code ([bc04cd9](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/bc04cd9ff246dc856ebad3aedf1ff53cf127a13c))
+* More resource_location cleanup ([23b5909](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/23b5909b0736a1d3d0e25b22dc99f144aa90c61e))
+* Remove highlighting symbol production from lexer ([92d1915](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/92d19153f3ee6c4a2938cd4022d069d2617a9a4f))
+* Remove redundant arguments ([bad80a8](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/bad80a84fe1b6bc24cb4ea9ca389ae2cdb9eefa8))
+* Remove resource_location deduplication ([19e29fa](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/19e29faf7cf2613bb70cdc8a3b2676d4aaa5b1a1))
+* Remove unused field ([24e38f0](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/24e38f0203a517289d5b71c8e0432aa4750367f5))
+* Start extension before adding tests ([84d24f7](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/84d24f714be5e6f45c04df9ec500183c7fd7111b))
+* Support Linux on SystemZ ([4a19fe4](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/4a19fe4b35b37696795b6eb408c2445ef5948bd4))
+
+
+### Fixes
+
+* Avoid allocation in stack frame tree ([ff3ad99](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/ff3ad999a6834d904a13a142992d75958540441c))
+* Deferred operands ([7994a21](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/7994a212d654fc99f51dcba1358db997cbefca7a))
+* Download dependencies command supports reading processor groups from settings ([afc14a7](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/afc14a7198004e06f096d4f96f91e14feac1bdbe))
+* Evaluate relative paths specified in settings with respect to root folder ([962da20](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/962da205188892c40823550122570d20b385f607))
+* Identify error states indicating a data set does not exist ([70dc8ca](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/70dc8ca38425ce78d719ac3e9e0f57de765bd4a0))
+* Macro operand parsing ([dbbe8ac](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/dbbe8ac92dab9a9049948f348993d57572423504))
+* PRINT instruction should tolerate null operands ([642ec23](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/642ec23ac30724b58033433bf062fa1722e67735))
+* Retrieval of dependencies is suspended by an arbitrary error ([1ac9985](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/1ac9985786a94cde4fac805507062c85f3c14e03))
+* Simplify macro operand preprocessing ([88be6eb](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/88be6ebffe72d7cebe60762df3b9c75316858d81))
+* The language server crashes due to an invalid CATTR or XATTR instruction operand ([9bcb14f](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/9bcb14fbc860aebfc718f4c70d2ba4ceeec4d81e))
+* Unify error handling ([911d6a3](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/911d6a33eda6672654d36c0115db305e7af60d36))
+
 ## [1.14.0](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/compare/1.13.0...1.14.0) (2024-07-16)
 
 
