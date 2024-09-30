@@ -1239,3 +1239,19 @@ TEST(macro, comma_after_continuation)
 
     EXPECT_TRUE(matches_message_text(a.diags(), { "TEST" }));
 }
+
+TEST(macro, no_operand_instruction)
+{
+    std::string input = R"(
+         MACRO
+         MAC
+D        DSECT                                                  000'0.0
+         MEND
+
+         MAC
+)";
+    analyzer a(input);
+    a.analyze();
+
+    EXPECT_TRUE(a.diags().empty());
+}

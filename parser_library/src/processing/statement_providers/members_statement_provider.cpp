@@ -134,11 +134,16 @@ const context::statement_cache::cached_statement_t& members_statement_provider::
     std::shared_ptr<const semantics::deferred_statement> def_stmt,
     const processing_status& status)
 {
-    context::statement_cache::cached_statement_t reparsed_stmt { {}, filter_cached_diagnostics(*def_stmt) };
+    const bool no_operands = status.first.occurrence == operand_occurrence::ABSENT
+        || status.first.form == processing_form::UNKNOWN || status.first.form == processing_form::IGNORED;
+
+    context::statement_cache::cached_statement_t reparsed_stmt {
+        {},
+        filter_cached_diagnostics(*def_stmt, no_operands),
+    };
     const auto& def_ops = def_stmt->deferred_operands;
 
-    if (status.first.occurrence == operand_occurrence::ABSENT || status.first.form == processing_form::UNKNOWN
-        || status.first.form == processing_form::IGNORED)
+    if (no_operands)
     {
         semantics::operands_si op(def_ops.field_range, semantics::operand_list());
         semantics::remarks_si rem({});

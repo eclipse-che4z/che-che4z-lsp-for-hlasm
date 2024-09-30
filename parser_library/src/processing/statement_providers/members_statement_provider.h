@@ -63,7 +63,8 @@ protected:
     std::optional<std::optional<context::id_index>> m_resolved_instruction;
 
     virtual std::pair<context::statement_cache*, std::optional<std::optional<context::id_index>>> get_next() = 0;
-    virtual std::vector<diagnostic_op> filter_cached_diagnostics(const semantics::deferred_statement& stmt) const = 0;
+    virtual std::vector<diagnostic_op> filter_cached_diagnostics(
+        const semantics::deferred_statement& stmt, bool no_operands) const = 0;
     void go_back(std::optional<context::id_index> ri) { m_resolved_instruction.emplace(std::move(ri)); }
 
 private:

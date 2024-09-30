@@ -49,7 +49,7 @@ copy_statement_provider::get_next()
 }
 
 std::vector<diagnostic_op> copy_statement_provider::filter_cached_diagnostics(
-    const semantics::deferred_statement& stmt) const
+    const semantics::deferred_statement& stmt, bool) const
 {
     auto diags = stmt.diagnostics_without_operands();
     return std::vector<diagnostic_op>(diags.begin(), diags.end());

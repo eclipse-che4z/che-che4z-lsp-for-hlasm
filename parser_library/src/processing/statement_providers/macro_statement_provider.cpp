@@ -46,9 +46,9 @@ macro_statement_provider::get_next()
 }
 
 std::vector<diagnostic_op> macro_statement_provider::filter_cached_diagnostics(
-    const semantics::deferred_statement& stmt) const
+    const semantics::deferred_statement& stmt, bool no_operands) const
 {
-    auto diags = stmt.diagnostics();
+    auto diags = no_operands ? stmt.diagnostics_without_operands() : stmt.diagnostics();
     return std::vector<diagnostic_op>(diags.begin(), diags.end());
 }
 
