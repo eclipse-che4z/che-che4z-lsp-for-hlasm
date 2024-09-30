@@ -102,7 +102,7 @@ TEST(diagnostics, ictl_empty_op)
     analyzer a(input);
     a.analyze();
     EXPECT_EQ(get_syntax_errors(a), (size_t)0);
-    EXPECT_TRUE(matches_message_codes(a.diags(), { "A021" }));
+    EXPECT_TRUE(matches_message_codes(a.diags(), { "A010" }));
 }
 
 TEST(diagnostics, ictl_undefined_op)
@@ -797,7 +797,7 @@ TEST(diagnostics, acontrol_empty_op)
     analyzer a(input);
     a.analyze();
     EXPECT_EQ(get_syntax_errors(a), (size_t)0);
-    EXPECT_TRUE(matches_message_codes(a.diags(), { "A021" }));
+    EXPECT_TRUE(matches_message_codes(a.diags(), { "A010" }));
 }
 
 
@@ -810,7 +810,7 @@ TEST(diagnostics, extrn_empty_op)
     analyzer a(input);
     a.analyze();
     EXPECT_EQ(get_syntax_errors(a), (size_t)0);
-    EXPECT_TRUE(matches_message_codes(a.diags(), { "A021" }));
+    EXPECT_TRUE(matches_message_codes(a.diags(), { "A010" }));
 }
 
 TEST(diagnostics, xattr_scope_value)
@@ -1328,6 +1328,17 @@ TEST(print, complex_op)
     a.analyze();
 
     EXPECT_TRUE(matches_message_codes(a.diags(), { "A109" }));
+}
+
+TEST(print, error_on_empty)
+{
+    std::string input = " PRINT ,";
+
+    analyzer a(input);
+
+    a.analyze();
+
+    EXPECT_TRUE(matches_message_codes(a.diags(), { "A010" }));
 }
 
 TEST(print, tolerate_null)

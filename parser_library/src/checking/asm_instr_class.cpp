@@ -35,10 +35,16 @@ bool assembler_instruction::operands_size_corresponding(std::span<const asm_oper
     const range& stmt_range,
     const diagnostic_collector& add_diagnostic) const
 {
-    if ((int)to_check.size() >= min_operands && ((int)to_check.size() <= max_operands || max_operands == -1))
+    if (has_one_comma(to_check))
+    {
+        // handles classic "    instr , comment" pattern
+        if (min_operands == 0)
+            return true;
+        add_diagnostic(diagnostic_op::error_A010_minimum(name_of_instruction, min_operands, stmt_range));
+        return false;
+    }
+    if (to_check.size() >= (size_t)min_operands && (max_operands < 0 || to_check.size() <= (size_t)max_operands))
         return true;
-    if (min_operands == 0 && has_one_comma(to_check))
-        return true; // handles classic "    instr , comment" pattern
     if (max_operands == -1)
         add_diagnostic(diagnostic_op::error_A010_minimum(name_of_instruction, min_operands, stmt_range));
     else if (min_operands == max_operands)
