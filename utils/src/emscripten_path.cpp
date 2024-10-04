@@ -174,6 +174,18 @@ public:
                     const fs = require('fs');
                     const path = require('path');
 
+                    function linksToFile(de)
+                    {
+                        try
+                        {
+                            return fs.statSync(path.resolve(de.parentPath, de.name)).isFile();
+                        }
+                        catch (_)
+                        {
+                            return false;
+                        }
+                    }
+
                     fs.accessSync(dir_name);
 
                     rc = 1;
@@ -185,7 +197,7 @@ public:
                     let de = null;
                     while (de = dir.readSync())
                     {
-                        if (de.isFile())
+                        if (de.isFile() || de.isSymbolicLink() && linksToFile(de))
                         {
                             const file_name = path.join(dir_name, de.name);
                             const buf_len = lengthBytesUTF8(file_name);
