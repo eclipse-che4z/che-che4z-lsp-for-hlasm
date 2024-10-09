@@ -17,18 +17,17 @@
 
 #include <string>
 
-#include "CharStream.h"
-#include "TokenSource.h"
 #include "WritableToken.h" // "Token.h" on windows conflicts with this file
 
 namespace hlasm_plugin::parser_library::lexing {
+class lexer;
 
 class token final : public antlr4::Token
 {
 public:
-    token(antlr4::CharStream* input,
-        size_t type,
-        size_t channel,
+    token(lexer* input,
+        int type,
+        unsigned channel,
         size_t start,
         size_t stop,
         size_t line,
@@ -62,11 +61,11 @@ public:
 
     size_t getStartIndex() const override { return start_; }
 
-    size_t getStopIndex() const override { return stop_; }
+    size_t getStopIndex() const override { return stop_ - 1; }
 
     antlr4::TokenSource* getTokenSource() const override { return nullptr; }
 
-    antlr4::CharStream* getInputStream() const override { return input_; }
+    antlr4::CharStream* getInputStream() const override { return nullptr; }
 
     std::string toString() const override;
 
@@ -77,9 +76,9 @@ public:
     size_t get_logical_column() const { return char_position_in_line_; }
 
 private:
-    antlr4::CharStream* input_ {};
-    size_t type_;
-    size_t channel_;
+    lexer* input_ {};
+    int type_;
+    unsigned channel_;
     size_t start_;
     size_t stop_;
     size_t line_;

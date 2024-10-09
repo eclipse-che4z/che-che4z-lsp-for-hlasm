@@ -25,7 +25,6 @@
 #include "expressions/conditional_assembly/terms/ca_constant.h"
 #include "hlasmparser_multiline.h"
 #include "hlasmparser_singleline.h"
-#include "lexing/input_source.h"
 #include "lexing/token_stream.h"
 #include "processing/op_code.h"
 #include "semantics/operand.h"
@@ -72,8 +71,7 @@ struct parser_holder_impl final : parser_holder
     parser_holder_impl(context::hlasm_context* hl_ctx, diagnostic_op_consumer* d)
     {
         error_handler = std::make_shared<parsing::error_strategy>();
-        input = std::make_unique<lexing::input_source>();
-        lex = std::make_unique<lexing::lexer>(input.get());
+        lex = std::make_unique<lexing::lexer>();
         stream = std::make_unique<lexing::token_stream>(lex.get());
         parser = std::make_unique<parser_t>(stream.get());
         parser->setErrorHandler(error_handler);
@@ -454,11 +452,7 @@ void parser_holder::prepare_parser(std::string_view text,
     const processing::processing_status& proc_status,
     bool unlimited_line) const
 {
-    input->new_input(text);
-
-    lex->reset();
-    lex->set_file_offset(text_range.start, logical_column);
-    lex->set_unlimited_line(unlimited_line);
+    lex->reset(text, unlimited_line, text_range.start, logical_column);
 
     stream->reset();
 

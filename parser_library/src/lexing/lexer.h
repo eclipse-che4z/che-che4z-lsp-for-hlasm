@@ -18,22 +18,37 @@
 #include <string>
 #include <vector>
 
+#include "logical_line.h"
 #include "range.h"
 #include "token.h"
 
 namespace hlasm_plugin::parser_library::lexing {
-class input_source;
 using char_t = char32_t;
 
 class lexer final
 {
+    static constexpr char_t EOF_SYMBOL = -1;
+    void reset(bool unlimited_lines, position file_offset, size_t logical_column, bool process_allowed);
+
 public:
     struct stream_position
     {
         size_t line;
         size_t offset;
     };
-    explicit lexer(input_source*);
+    struct char_substitution
+    {
+        uint8_t server : 1;
+        uint8_t client : 1;
+
+        char_substitution& operator|=(const char_substitution& other)
+        {
+            server |= other.server;
+            client |= other.client;
+            return *this;
+        }
+    };
+    explicit lexer();
 
     lexer(const lexer&) = delete;
     lexer(lexer&&) = delete;
@@ -41,19 +56,30 @@ public:
     lexer& operator=(lexer&&) = delete;
 
     // resets lexer's state, goes to the source beginning
-    void reset();
+    char_substitution reset(std::string_view str,
+        bool unlimited_lines,
+        position file_offset,
+        size_t logical_column,
+        bool process_allowed = false);
+    char_substitution reset(
+        const logical_line<utils::utf8_iterator<std::string_view::iterator, utils::utf8_utf16_counter>>& l,
+        bool unlimited_lines,
+        position file_offset,
+        size_t logical_column,
+        bool process_allowed = false);
 
     // generates more tokens, main lexer logic
     bool more_tokens();
     size_t token_count() const noexcept { return tokens.size(); }
     token* get_token(size_t i) noexcept { return &tokens[i]; }
+    std::string get_text(size_t start, size_t stop) const;
 
-    enum Tokens
+    enum Tokens : int
     {
 #include "parsing/grammar/lex.tokens"
     };
 
-    enum Channels
+    enum Channels : unsigned
     {
         DEFAULT_CHANNEL = 0,
         HIDDEN_CHANNEL = 1
@@ -72,16 +98,11 @@ public:
     static bool ord_char(char_t c) noexcept;
     static bool ord_symbol(std::string_view symbol) noexcept;
 
-    // is next input char an ord char?
-    void set_unlimited_line(bool unlimited_lines);
-    // set lexer's input state to file position
-    void set_file_offset(position file_offset, size_t logical_column, bool process_allowed = false);
-
     const std::vector<size_t>& get_line_limits() const { return line_limits; }
 
 protected:
     // creates token and inserts to input stream
-    void create_token(size_t ttype, size_t channel = Channels::DEFAULT_CHANNEL);
+    void create_token(int ttype, unsigned channel = Channels::DEFAULT_CHANNEL);
     // consumes char from input & updates lexer state
     void consume();
 
@@ -105,20 +126,17 @@ private:
     size_t end_ = 71;
     size_t continue_ = 15;
 
-    input_source* input_;
+    std::u32string input_;
 
     struct input_state
     {
-        input_source* input = nullptr;
-        char_t c = 0;
+        const char_t* next;
         size_t line = 0;
-        size_t char_position = 0;
         size_t char_position_in_line = 0;
         size_t char_position_in_line_utf16 = 0;
     };
 
-    input_state file_input_state_;
-    input_state* input_state_ = &file_input_state_;
+    input_state input_state_;
 
     // captures lexer state at the beginning of a token
     input_state token_start_state_;

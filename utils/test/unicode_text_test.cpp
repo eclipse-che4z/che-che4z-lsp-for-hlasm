@@ -164,3 +164,50 @@ TEST(utf8, iterator)
     EXPECT_EQ(it.counter<1>(), 0);
     EXPECT_EQ(it.counter<2>(), 0);
 }
+
+const std::string_view unicode_utf8 = (const char*)u8"\U00010000\U0000a123\U00000140\U00000041";
+const std::u32string_view unicode_utf32 = U"\U00010000\U0000a123\U00000140\U00000041";
+
+TEST(replace_non_utf8_chars, no_change)
+{
+    EXPECT_EQ(unicode_utf8, hlasm_plugin::utils::replace_non_utf8_chars(unicode_utf8));
+}
+
+TEST(replace_non_utf8_chars, last_char)
+{
+    std::string common_str = "this is some common string";
+    std::string u8 = common_str;
+    u8.push_back((uint8_t)0xAF);
+
+    std::string res = hlasm_plugin::utils::replace_non_utf8_chars(u8);
+
+    EXPECT_NE(u8, res);
+    EXPECT_EQ(res.size(), u8.size() + 2);
+    EXPECT_EQ(res[res.size() - 3], '\xEF');
+    EXPECT_EQ(res[res.size() - 2], '\xBF');
+    EXPECT_EQ(res[res.size() - 1], '\xBD');
+    EXPECT_EQ(res.substr(0, common_str.size()), common_str);
+}
+
+TEST(replace_non_utf8_chars, middle_char)
+{
+    std::string begin = "begin";
+    std::string end = "end";
+    std::string u8 = begin + '\xF0' + end;
+
+    std::string res = hlasm_plugin::utils::replace_non_utf8_chars(u8);
+
+    EXPECT_NE(u8, res);
+    EXPECT_EQ(res.size(), u8.size() + 2);
+    EXPECT_EQ(res[begin.size()], '\xEF');
+    EXPECT_EQ(res[begin.size() + 1], '\xBF');
+    EXPECT_EQ(res[begin.size() + 2], '\xBD');
+    EXPECT_EQ(res.substr(0, begin.size()), begin);
+    EXPECT_EQ(res.substr(begin.size() + 3), end);
+}
+
+TEST(input_source, utf8conv)
+{
+    const auto result = hlasm_plugin::utils::utf32_to_utf8(unicode_utf32);
+    EXPECT_EQ(result, unicode_utf8);
+}

@@ -19,7 +19,6 @@
 
 #include "analyzer.h"
 #include "hlasmparser_multiline.h"
-#include "lexing/input_source.h"
 #include "lexing/token_stream.h"
 #include "library_info_transitional.h"
 #include "lsp/lsp_context.h"
@@ -226,17 +225,14 @@ void opencode_provider::feed_line(const parsing::parser_holder& p, bool is_proce
     if (produce_source_info)
         produce_hl_symbols(m_current_logical_line, lineno, *m_src_proc);
 
-    const auto& subs = p.input->new_input(m_current_logical_line);
+    const auto& subs = p.lex->reset(
+        m_current_logical_line, false, { lineno, 0 /*lexing::default_ictl.begin-1 really*/ }, 0, is_process);
 
     if (subs.server && !std::exchange(m_encoding_warning_issued.server, true))
         m_diagnoser->add_diagnostic(diagnostic_op::warning_W017(range(position(lineno, 0))));
 
     if (subs.client && !std::exchange(m_encoding_warning_issued.client, true))
         m_diagnoser->add_diagnostic(diagnostic_op::warning_W018(range(position(lineno, 0))));
-
-    p.lex->set_file_offset({ lineno, 0 /*lexing::default_ictl.begin-1 really*/ }, 0, is_process);
-    p.lex->set_unlimited_line(false);
-    p.lex->reset();
 
     p.stream->reset();
 

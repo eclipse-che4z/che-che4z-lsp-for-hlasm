@@ -21,7 +21,6 @@
 #include "../common_testing.h"
 #include "analyzer.h"
 #include "hlasmparser_multiline.h"
-#include "lexing/input_source.h"
 #include "lexing/lexer.h"
 #include "lexing/token_stream.h"
 
@@ -45,8 +44,8 @@ ORDSYMBOL
 EOF
 )";
 
-    lexing::input_source input("TEST TEST \r\n TEST1 TEST2");
-    lexing::lexer l(&input);
+    lexing::lexer l;
+    l.reset("TEST TEST \r\n TEST1 TEST2", false, {}, 0);
     lexing::token_stream tokens(&l);
     parser parser(&tokens);
 
@@ -108,11 +107,10 @@ ORDSYMBOL
 EOF
 )";
 
-    lexing::input_source input(in);
-    lexing::lexer l(&input);
+    lexing::lexer l;
+    l.reset(in, true, {}, 0);
     lexing::token_stream tokens(&l);
     parser parser(&tokens);
-    l.set_unlimited_line(true);
 
     tokens.fill();
 
@@ -126,9 +124,8 @@ EOF
 
 TEST(lexer_test, special_spaces)
 {
-    std::string in = "A\v\f\t LR";
-    lexing::input_source input(in);
-    lexing::lexer l(&input);
+    lexing::lexer l;
+    l.reset("A\v\f\t LR", false, {}, 0);
 
     while (l.more_tokens())
         ;
@@ -148,8 +145,8 @@ TEST(lexer_test, attribute_in_continuation)
                'SYMBOL
 )";
 
-    lexing::input_source input(in);
-    lexing::lexer l(&input);
+    lexing::lexer l;
+    l.reset(in, false, {}, 0);
 
     while (l.more_tokens())
         ;

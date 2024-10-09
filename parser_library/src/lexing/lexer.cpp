@@ -22,53 +22,145 @@
 #include <utility>
 
 #include "CommonTokenFactory.h"
-#include "input_source.h"
 #include "token.h"
 #include "utils/string_operations.h"
+#include "utils/unicode_text.h"
 
 using namespace hlasm_plugin;
 using namespace parser_library;
 using namespace lexing;
 
-lexer::lexer(input_source* input)
-    : input_(input)
+lexer::lexer() { reset(false, {}, 0, false); }
+
+namespace {
+lexer::char_substitution append_utf8_to_utf32(std::u32string& t, std::string_view s)
 {
-    file_input_state_.input = input;
+    lexer::char_substitution subs {};
 
-    // initialize IS with first character from input
-    input_state_->c = static_cast<char_t>(input_->LA(1));
+    while (!s.empty())
+    {
+        unsigned char c = s.front();
+        if (c < 0x80)
+        {
+            t.push_back(c);
+            s.remove_prefix(1);
+            continue;
+        }
+        const auto cs = utils::utf8_prefix_sizes[c];
+        if (cs.utf8 && cs.utf8 <= s.size())
+        {
+            char32_t v = c & 0b0111'1111u >> cs.utf8;
+            for (int i = 1; i < cs.utf8; ++i)
+                v = v << 6 | (s[i] & 0b0011'1111u);
+
+            if (v == utils::substitute_character)
+                subs.client = true;
+
+            t.push_back(v);
+            s.remove_prefix(cs.utf8);
+        }
+        else
+        {
+            subs.server = true;
+            t.push_back(utils::substitute_character);
+            s.remove_prefix(1);
+        }
+    }
+
+    return subs;
 }
+} // namespace
 
-void lexer::set_unlimited_line(bool unlimited_lines) { unlimited_line_ = unlimited_lines; }
-void lexer::set_file_offset(position file_offset, size_t logical_column, bool process_allowed)
-{
-    input_state_->line = (size_t)file_offset.line;
-    input_state_->char_position_in_line = logical_column;
-    input_state_->char_position_in_line_utf16 = (size_t)file_offset.column;
-    process_allowed_ = process_allowed;
-}
-
-void lexer::reset()
+void lexer::reset(bool unlimited_lines, position file_offset, size_t logical_column, bool process_allowed)
 {
     tokens.clear();
     retired_tokens.clear();
     last_token_id_ = 0;
-    input_state_->char_position = 0;
     line_limits.clear();
-    file_input_state_.c = static_cast<char_t>(input_->LA(1));
+
+    unlimited_line_ = unlimited_lines;
+    process_allowed_ = process_allowed;
+
+    input_.push_back(EOF_SYMBOL);
+    input_state_.next = input_.data();
+    input_state_.line = (size_t)file_offset.line;
+    input_state_.char_position_in_line = logical_column;
+    input_state_.char_position_in_line_utf16 = (size_t)file_offset.column;
+
+    token_start_state_ = input_state_;
+
+    last_line = input_state_;
+    last_line.line = -1;
 }
 
-void lexer::create_token(size_t ttype, size_t channel)
+lexer::char_substitution lexer::reset(
+    std::string_view str, bool unlimited_lines, position file_offset, size_t logical_column, bool process_allowed)
+{
+    input_.clear();
+    auto result = append_utf8_to_utf32(input_, str);
+
+    reset(unlimited_lines, file_offset, logical_column, process_allowed);
+
+    return result;
+}
+
+lexer::char_substitution lexer::reset(
+    const logical_line<utils::utf8_iterator<std::string_view::iterator, utils::utf8_utf16_counter>>& l,
+    bool unlimited_lines,
+    position file_offset,
+    size_t logical_column,
+    bool process_allowed)
+{
+    char_substitution subs {};
+
+    input_.clear();
+
+    for (size_t i = 0; i < l.segments.size(); ++i)
+    {
+        const auto& s = l.segments[i];
+        if (i > 0)
+            input_.append(std::ranges::distance(s.begin, s.code), s.continuation_error ? 'X' : ' ');
+
+        subs |= append_utf8_to_utf32(input_, std::string_view(s.code.base(), s.end.base()));
+
+        if (i + 1 < l.segments.size())
+        {
+            // do not add the last EOL
+            using enum hlasm_plugin::parser_library::lexing::logical_line_segment_eol;
+            switch (s.eol)
+            {
+                case none:
+                    break;
+                case lf:
+                    input_.push_back('\n');
+                    break;
+                case crlf:
+                    input_.push_back('\r');
+                    input_.push_back('\n');
+                    break;
+                case cr:
+                    input_.push_back('\r');
+                    break;
+            }
+        }
+    }
+
+    reset(unlimited_lines, file_offset, logical_column, process_allowed);
+
+    return subs;
+}
+
+void lexer::create_token(int ttype, unsigned channel)
 {
     /* do not generate empty tokens (except EOF) */
-    if (token_start_state_.char_position == token_start_state_.input->index() && ttype != antlr4::Token::EOF)
+    if (input_state_.next == token_start_state_.next && (size_t)ttype != antlr4::Token::EOF)
         return;
 
     creating_var_symbol_ = ttype == AMPERSAND;
     if (creating_attr_ref_)
         creating_attr_ref_ = ttype == IGNORED || ttype == CONTINUATION;
 
-    const auto& end = token_start_state_.line == input_state_->line ? *input_state_ : last_line;
+    const auto& end = token_start_state_.line == input_state_.line ? input_state_ : last_line;
 
     if (tokens.size() == tokens.capacity())
     {
@@ -87,11 +179,11 @@ void lexer::create_token(size_t ttype, size_t channel)
         }
     }
 
-    tokens.emplace_back(token_start_state_.input,
+    tokens.emplace_back(this,
         ttype,
         channel,
-        token_start_state_.char_position,
-        end.char_position - 1,
+        token_start_state_.next - input_.data(),
+        input_state_.next - input_.data(),
         token_start_state_.line,
         token_start_state_.char_position_in_line,
         last_token_id_,
@@ -103,34 +195,32 @@ void lexer::create_token(size_t ttype, size_t channel)
 
 void lexer::consume()
 {
-    if (input_state_->c == static_cast<char_t>(-1))
+    const auto next = *input_state_.next;
+    if (next == EOF_SYMBOL)
         return;
 
-    if (input_state_->c == '\n')
+    if (next == '\n')
     {
-        last_line = *input_state_;
-        ++last_line.char_position;
+        last_line = input_state_;
         ++last_line.char_position_in_line;
         ++last_line.char_position_in_line_utf16;
-        input_state_->line++;
-        input_state_->char_position_in_line = 0;
-        input_state_->char_position_in_line_utf16 = 0;
+        input_state_.line++;
+        input_state_.char_position_in_line = 0;
+        input_state_.char_position_in_line_utf16 = 0;
     }
     else
     {
-        input_state_->char_position_in_line++;
-        input_state_->char_position_in_line_utf16 += 1 + (input_state_->c > 0xFFFF);
+        input_state_.char_position_in_line++;
+        input_state_.char_position_in_line_utf16 += 1 + (next > 0xFFFF);
     }
 
-    input_state_->char_position++;
-    input_state_->input->consume();
-    input_state_->c = static_cast<char_t>(input_state_->input->LA(1));
+    ++input_state_.next;
 }
 
-bool lexer::eof() const { return input_state_->c == static_cast<char_t>(-1); }
+bool lexer::eof() const { return *input_state_.next == EOF_SYMBOL; }
 
 /* set start token info */
-void lexer::start_token() { token_start_state_ = *input_state_; }
+void lexer::start_token() { token_start_state_ = input_state_; }
 
 /*
 main logic
@@ -145,22 +235,22 @@ bool lexer::more_tokens()
 
     if (eof())
     {
-        create_token(antlr4::Token::EOF);
+        create_token((int)antlr4::Token::EOF);
         return false;
     }
 
     else if (double_byte_enabled_)
         check_continuation();
 
-    else if (!unlimited_line_ && input_state_->char_position_in_line == end_ && input_state_->c != ' '
+    else if (!unlimited_line_ && input_state_.char_position_in_line == end_ && *input_state_.next != ' '
         && continuation_enabled_)
         lex_continuation();
 
-    else if ((unlimited_line_ && (input_state_->c == '\r' || input_state_->c == '\n'))
-        || (!unlimited_line_ && input_state_->char_position_in_line >= end_))
+    else if ((unlimited_line_ && (*input_state_.next == '\r' || *input_state_.next == '\n'))
+        || (!unlimited_line_ && input_state_.char_position_in_line >= end_))
         lex_end();
 
-    else if (input_state_->char_position_in_line < begin_)
+    else if (input_state_.char_position_in_line < begin_)
         lex_begin();
 
     else
@@ -172,10 +262,10 @@ bool lexer::more_tokens()
 
 void lexer::lex_tokens()
 {
-    switch (input_state_->c)
+    switch (*input_state_.next)
     {
         case '*':
-            if (input_state_->char_position_in_line == begin_ && is_process())
+            if (input_state_.char_position_in_line == begin_ && is_process())
             {
                 lex_process();
                 break;
@@ -258,7 +348,7 @@ void lexer::lex_tokens()
 
         case '\r':
             consume();
-            if (input_state_->c == '\n')
+            if (*input_state_.next == '\n')
                 consume();
             break;
         case '\n':
@@ -279,7 +369,7 @@ void lexer::lex_tokens()
 void lexer::lex_begin()
 {
     start_token();
-    while (input_state_->char_position_in_line < begin_ && !eof() && input_state_->c != '\n')
+    while (input_state_.char_position_in_line < begin_ && !eof() && *input_state_.next != '\n')
         consume();
     create_token(IGNORED, HIDDEN_CHANNEL);
 }
@@ -287,7 +377,7 @@ void lexer::lex_begin()
 void lexer::lex_end()
 {
     start_token();
-    while (input_state_->c != '\n' && !eof() && input_state_->c != (char_t)-1)
+    while (*input_state_.next != '\n' && !eof())
         consume();
 
     if (!eof())
@@ -306,7 +396,7 @@ void lexer::lex_continuation()
     line_limits.push_back(token_start_state_.char_position_in_line_utf16);
 
     /* lex continuation */
-    while (input_state_->char_position_in_line <= end_default_ && !eof())
+    while (input_state_.char_position_in_line <= end_default_ && !eof())
         consume();
 
     /* reset END */
@@ -319,7 +409,7 @@ void lexer::lex_continuation()
 
     /* lex continuation */
     start_token();
-    while (input_state_->char_position_in_line < continue_ && !eof() && input_state_->c != '\n')
+    while (input_state_.char_position_in_line < continue_ && !eof() && *input_state_.next != '\n')
         consume();
     create_token(IGNORED, HIDDEN_CHANNEL);
 }
@@ -327,31 +417,35 @@ void lexer::lex_continuation()
 /* if DOUBLE_BYTE_ENABLED check start of continuation for current line */
 void lexer::check_continuation()
 {
+    // TODO: This is really inefficient if it works at all
     end_ = end_default_;
 
-    auto cc = input_->LA(end_default_ + 1);
-    if (cc != antlr4::CharStream::EOF && static_cast<char_t>(cc) != ' ')
+    const size_t relative = end_ - input_state_.char_position_in_line;
+    const size_t avaliable = std::to_address(input_.end()) - input_state_.next;
+    if (relative >= avaliable)
+        return;
+    const auto cc = input_state_.next[relative];
+    if (cc == EOF_SYMBOL || cc == ' ')
+        return;
+    do
     {
-        do
-        {
-            if (input_->LA(end_) != cc)
-                break;
-            end_--;
-        } while (end_ > begin_);
-    }
+        if (input_state_.next[end_ - 1] != cc)
+            break;
+        end_--;
+    } while (end_ > begin_);
 }
 
 void lexer::lex_space()
 {
-    while (input_state_->c == ' ' && before_end())
+    while (*input_state_.next == ' ' && before_end())
         consume();
     create_token(SPACE, DEFAULT_CHANNEL);
 }
 
 bool lexer::before_end() const
 {
-    return input_state_->char_position_in_line < end_
-        || (unlimited_line_ && input_state_->c != '\r' && input_state_->c != '\n');
+    return input_state_.char_position_in_line < end_
+        || (unlimited_line_ && *input_state_.next != '\r' && *input_state_.next != '\n');
 }
 
 enum class character_type : unsigned char
@@ -430,7 +524,7 @@ void lexer::lex_word()
     using enum character_type;
 
     bool last_char_data_attr = false;
-    auto ci = get_char_info(input_state_->c);
+    auto ci = get_char_info(*input_state_.next);
 
     bool ord = (ci & first_ord_char) != none;
     bool num = (ci & number) != none;
@@ -446,7 +540,7 @@ void lexer::lex_word()
         last_part_ord_len = curr_ord ? last_part_ord_len + 1 : 0;
         ord &= curr_ord;
 
-        num &= (input_state_->c >= '0' && input_state_->c <= '9');
+        num &= (*input_state_.next >= '0' && *input_state_.next <= '9');
         last_char_data_attr = (ci & data_attr) != none && w_len == 0;
 
         if (creating_var_symbol_ && !ord && w_len > 0 && w_len <= 63)
@@ -456,7 +550,7 @@ void lexer::lex_word()
         }
 
         consume();
-        ci = get_char_info(input_state_->c);
+        ci = get_char_info(*input_state_.next);
 
         ++w_len;
         last_ord = curr_ord;
@@ -474,15 +568,15 @@ void lexer::lex_word()
     // We generate the ATTR token even when we created identifier, but it ends with exactly one ordinary symbol which is
     // also data attr symbol. That is because macro parameter "L'ORD must generate ATTR as string cannot start
     // with the apostrophe
-    if (input_state_->c == '\'' && last_char_data_attr && !var_sym_tmp && last_part_ord_len == 1
-        && (unlimited_line_ || input_state_->char_position_in_line != end_))
+    if (*input_state_.next == '\'' && last_char_data_attr && !var_sym_tmp && last_part_ord_len == 1
+        && (unlimited_line_ || input_state_.char_position_in_line != end_))
     {
         start_token();
         consume();
         create_token(ATTR);
     }
 
-    creating_attr_ref_ = !unlimited_line_ && input_state_->char_position_in_line == end_ && last_char_data_attr
+    creating_attr_ref_ = !unlimited_line_ && input_state_.char_position_in_line == end_ && last_char_data_attr
         && !var_sym_tmp && w_len == 1;
 }
 
@@ -523,13 +617,15 @@ void lexer::set_continuation_enabled(bool enabled) { continuation_enabled_ = ena
 
 bool lexer::is_process() const
 {
-    return process_allowed_ && toupper(static_cast<int>(input_state_->input->LA(2))) == 'P'
-        && toupper(static_cast<int>(input_state_->input->LA(3))) == 'R'
-        && toupper(static_cast<int>(input_state_->input->LA(4))) == 'O'
-        && toupper(static_cast<int>(input_state_->input->LA(5))) == 'C'
-        && toupper(static_cast<int>(input_state_->input->LA(6))) == 'E'
-        && toupper(static_cast<int>(input_state_->input->LA(7))) == 'S'
-        && toupper(static_cast<int>(input_state_->input->LA(8))) == 'S';
+    if (!process_allowed_)
+        return false;
+    for (const auto* p = input_state_.next; unsigned char c : std::string_view("*PROCESS"))
+    {
+        char_t next = *p++;
+        if (next > (unsigned char)-1 || next == EOF_SYMBOL || c != (unsigned char)toupper(next))
+            return false;
+    }
+    return true;
 }
 
 void lexer::set_ictl() { ictl_ = true; }
@@ -547,12 +643,20 @@ void lexer::lex_process()
 
     size_t apostrophes = 0;
     end_++; /* including END column */
-    while (!eof() && before_end() && input_state_->c != '\n' && input_state_->c != '\r'
-        && (apostrophes % 2 == 1 || (apostrophes % 2 == 0 && input_state_->c != ' ')))
+    while (!eof() && before_end() && *input_state_.next != '\n' && *input_state_.next != '\r'
+        && (apostrophes % 2 == 1 || (apostrophes % 2 == 0 && *input_state_.next != ' ')))
     {
         start_token();
         lex_tokens();
     }
     end_--;
     lex_end();
+}
+
+
+std::string lexer::get_text(size_t start, size_t stop) const
+{
+    if (stop >= input_.size())
+        return {};
+    return utils::utf32_to_utf8(std::u32string_view(input_.data() + start, stop - start));
 }

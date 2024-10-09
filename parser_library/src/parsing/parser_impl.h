@@ -26,7 +26,6 @@ class hlasm_context;
 } // namespace hlasm_plugin::parser_library::context
 
 namespace hlasm_plugin::parser_library::lexing {
-class input_source;
 class lexer;
 class token_stream;
 } // namespace hlasm_plugin::parser_library::lexing
@@ -184,7 +183,6 @@ private:
 struct parser_holder
 {
     std::shared_ptr<parsing::error_strategy> error_handler;
-    std::unique_ptr<lexing::input_source> input;
     std::unique_ptr<lexing::lexer> lex;
     std::unique_ptr<lexing::token_stream> stream;
     std::unique_ptr<parser_impl> parser;

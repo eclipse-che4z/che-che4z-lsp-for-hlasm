@@ -261,4 +261,41 @@ size_t length_utf32_no_validation(std::string_view text)
     return char_count;
 }
 
+std::string utf32_to_utf8(std::u32string_view s)
+{
+    static constexpr auto low6 = 0b111111u;
+    std::string n;
+    n.reserve(s.size());
+    for (const auto ch : s)
+    {
+        if (ch <= 0x007F) // U+0000 - U+007F
+        {
+            n.push_back(ch);
+        }
+        else if (ch <= 0x7FF) // U+0080 - U+07FF
+        {
+            n.push_back(0xc0 | ch >> 6);
+            n.push_back(0x80 | ch & low6);
+        }
+        else if (ch <= 0xFFFF) // U+0800 - U+FFFF
+        {
+            n.push_back(0xe0 | ch >> 12);
+            n.push_back(0x80 | ch >> 6 & low6);
+            n.push_back(0x80 | ch & low6);
+        }
+        else if (ch <= 0x10FFFF) // U+10000 - U+10FFFF
+        {
+            n.push_back(0xf0 | ch >> 18);
+            n.push_back(0x80 | ch >> 12 & low6);
+            n.push_back(0x80 | ch >> 6 & low6);
+            n.push_back(0x80 | ch & low6);
+        }
+        else
+        {
+            assert(false);
+        }
+    }
+    return n;
+}
+
 } // namespace hlasm_plugin::utils

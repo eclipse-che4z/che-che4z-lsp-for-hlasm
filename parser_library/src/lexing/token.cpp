@@ -14,26 +14,18 @@
 
 #include "token.h"
 
-#include <CharStream.h>
 #include <format>
 
-#include <misc/Interval.h>
+#include "lexer.h"
 
 using namespace hlasm_plugin::parser_library::lexing;
 
 std::string token::getText() const
 {
-    antlr4::CharStream* input = getInputStream();
-    if (input == nullptr)
-    {
-        return "";
-    }
-    size_t n = input->size();
-    if (start_ < n && stop_ < n)
-    {
-        return input->getText(antlr4::misc::Interval(start_, stop_));
-    }
-    return "<EOF>";
+    if (!input_ || start_ >= stop_)
+        return {};
+
+    return input_->get_text(start_, stop_);
 }
 
 void replace_all(std::string& str, std::string const& from, std::string const& to)
