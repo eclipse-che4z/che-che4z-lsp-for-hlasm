@@ -14,14 +14,11 @@
 
 #include "lexer.h"
 
-#include <algorithm>
 #include <array>
 #include <assert.h>
-#include <cctype>
 #include <string>
 #include <utility>
 
-#include "CommonTokenFactory.h"
 #include "token.h"
 #include "utils/string_operations.h"
 #include "utils/unicode_text.h"
@@ -33,7 +30,7 @@ using namespace lexing;
 lexer::lexer() { reset(false, {}, 0, false); }
 
 namespace {
-lexer::char_substitution append_utf8_to_utf32(std::u32string& t, std::string_view s)
+lexer::char_substitution append_utf8_to_utf32(std::vector<char_t>& t, std::string_view s)
 {
     lexer::char_substitution subs {};
 
@@ -119,7 +116,7 @@ lexer::char_substitution lexer::reset(
     {
         const auto& s = l.segments[i];
         if (i > 0)
-            input_.append(std::ranges::distance(s.begin, s.code), s.continuation_error ? 'X' : ' ');
+            input_.insert(input_.end(), std::ranges::distance(s.begin, s.code), s.continuation_error ? 'X' : ' ');
 
         subs |= append_utf8_to_utf32(input_, std::string_view(s.code.base(), s.end.base()));
 
@@ -268,7 +265,6 @@ void lexer::lex_tokens()
             if (input_state_.char_position_in_line == begin_ && is_process())
             {
                 lex_process();
-                break;
             }
             else
             {
@@ -622,7 +618,7 @@ bool lexer::is_process() const
     for (const auto* p = input_state_.next; unsigned char c : std::string_view("*PROCESS"))
     {
         char_t next = *p++;
-        if (next > (unsigned char)-1 || next == EOF_SYMBOL || c != (unsigned char)toupper(next))
+        if (next > (unsigned char)-1 || next == EOF_SYMBOL || c != utils::upper_cased[next])
             return false;
     }
     return true;
@@ -656,7 +652,7 @@ void lexer::lex_process()
 
 std::string lexer::get_text(size_t start, size_t stop) const
 {
-    if (stop >= input_.size())
+    if (stop >= input_.size()) // EOF_SYMBOL
         return {};
     return utils::utf32_to_utf8(std::u32string_view(input_.data() + start, stop - start));
 }

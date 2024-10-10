@@ -126,7 +126,7 @@ private:
     size_t end_ = 71;
     size_t continue_ = 15;
 
-    std::u32string input_;
+    std::vector<char_t> input_;
 
     struct input_state
     {
