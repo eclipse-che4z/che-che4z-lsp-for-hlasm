@@ -6,6 +6,7 @@
 - Single comma operand should be treated as no operands during validation
 - Operand parsing errors reported for operandless instructions used in macros
 - Language server does not recognize symbolic links as available macros (WASM)
+- The language server crashes while processing an invalid prototype of a nested macro
 
 ## [1.15.0](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/compare/1.14.0...1.15.0) (2024-09-20)
 

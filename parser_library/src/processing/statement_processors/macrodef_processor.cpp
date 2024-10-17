@@ -267,6 +267,13 @@ void macrodef_processor::process_prototype_operand(
             continue;
         }
 
+        if (op->type != operand_type::MAC)
+        {
+            result_.prototype.symbolic_params.emplace_back(nullptr);
+            add_diagnostic(diagnostic_op::error_E043(op->operand_range));
+            continue;
+        }
+
         auto tmp = op->access_mac();
         assert(tmp);
 

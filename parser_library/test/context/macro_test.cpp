@@ -1255,3 +1255,23 @@ D        DSECT                                                  000'0.0
 
     EXPECT_TRUE(a.diags().empty());
 }
+
+TEST(macro, nested_invalid_prototype)
+{
+    std::string input = R"(
+         MACRO
+         MAC
+
+         MACRO
+         GBLC  ,C,,,
+         MEND
+
+         MEND
+
+         MAC
+)";
+    analyzer a(input);
+    a.analyze();
+
+    EXPECT_TRUE(matches_message_codes(a.diags(), { "E043" }));
+}
