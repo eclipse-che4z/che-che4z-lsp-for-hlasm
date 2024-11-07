@@ -20,6 +20,7 @@
 
 #include "context/id_storage.h"
 #include "expressions/data_definition.h"
+#include "lexing/string_with_newlines.h"
 #include "operand.h"
 #include "variable_symbol.h"
 
@@ -146,7 +147,8 @@ struct operands_si
 // struct holding semantic information (si) about deferred operand field
 struct deferred_operands_si
 {
-    deferred_operands_si(range field_range, size_t logical_column, std::string field, std::vector<vs_ptr> vars)
+    deferred_operands_si(
+        range field_range, size_t logical_column, lexing::u8string_with_newlines field, std::vector<vs_ptr> vars)
         : field_range(std::move(field_range))
         , logical_column(logical_column)
         , value(std::move(field))
@@ -156,7 +158,7 @@ struct deferred_operands_si
     range field_range;
     size_t logical_column;
 
-    std::string value;
+    lexing::u8string_with_newlines value;
     std::vector<vs_ptr> vars;
 };
 

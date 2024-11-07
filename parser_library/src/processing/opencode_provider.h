@@ -27,6 +27,7 @@
 
 #include "context/source_snapshot.h"
 #include "lexing/logical_line.h"
+#include "lexing/string_with_newlines.h"
 #include "preprocessor.h"
 #include "range.h"
 #include "statement_providers/statement_provider.h"
@@ -45,6 +46,9 @@ class analyzer_options;
 class diagnosable_ctx;
 class parse_lib_provider;
 } // namespace hlasm_plugin::parser_library
+namespace hlasm_plugin::parser_library::lexing {
+struct u8string_view_with_newlines;
+} // namespace hlasm_plugin::parser_library::lexing
 namespace hlasm_plugin::parser_library::parsing {
 class hlasmparser_multiline;
 class parser_error_listener;
@@ -136,7 +140,7 @@ class opencode_provider final : public statement_provider, virtual_file_monitor
 
     struct op_data
     {
-        std::optional<std::string> op_text;
+        std::optional<lexing::u8string_with_newlines> op_text;
         range op_range;
         size_t op_logical_column;
     };
@@ -204,14 +208,13 @@ private:
     extract_next_logical_line_result extract_next_logical_line_from_copy_buffer();
     extract_next_logical_line_result extract_next_logical_line();
 
-    const parsing::parser_holder& prepare_operand_parser(const std::string& text,
+    const parsing::parser_holder& prepare_operand_parser(lexing::u8string_view_with_newlines text,
         context::hlasm_context& hlasm_ctx,
         diagnostic_op_consumer* diag_collector,
         semantics::range_provider range_prov,
         range text_range,
         size_t logical_column,
-        const processing_status& proc_status,
-        bool unlimited_line);
+        const processing_status& proc_status);
 
     std::shared_ptr<const context::hlasm_statement> process_lookahead(
         const statement_processor& proc, semantics::collector& collector, op_data operands);

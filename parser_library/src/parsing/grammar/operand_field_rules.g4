@@ -125,7 +125,7 @@ op_rem_body_deferred
     | SPACE+ deferred_op_rem EOF
     {
         auto r = provider.get_range(_input->get($SPACE.index+1),_input->get(_input->size()-1));
-        collector.set_operand_remark_field(_input->getText(misc::Interval($SPACE.index+1,_input->size()-1)),std::move($deferred_op_rem.var_list),std::move($deferred_op_rem.remarks),r, static_cast<hlasm_plugin::parser_library::lexing::token*>(_input->get($SPACE.index+1))->get_logical_column());
+        collector.set_operand_remark_field(static_cast<lexing::token_stream*>(_input)->get_text_with_newlines(misc::Interval($SPACE.index+1,_input->size()-1)),std::move($deferred_op_rem.var_list),std::move($deferred_op_rem.remarks),r, static_cast<hlasm_plugin::parser_library::lexing::token*>(_input->get($SPACE.index+1))->get_logical_column());
     } EOF;
 
 op_rem_body_noop

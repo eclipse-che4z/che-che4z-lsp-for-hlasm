@@ -25,10 +25,12 @@
 namespace hlasm_plugin::parser_library::lexing {
 using char_t = char32_t;
 
+struct u8string_view_with_newlines;
+
 class lexer final
 {
-    static constexpr char_t EOF_SYMBOL = -1;
-    void reset(bool unlimited_lines, position file_offset, size_t logical_column, bool process_allowed);
+    static constexpr char_t EOF_SYMBOL = (char_t)-1;
+    void reset(position file_offset, size_t logical_column, bool process_allowed);
 
 public:
     struct stream_position
@@ -56,14 +58,10 @@ public:
     lexer& operator=(lexer&&) = delete;
 
     // resets lexer's state, goes to the source beginning
-    char_substitution reset(std::string_view str,
-        bool unlimited_lines,
-        position file_offset,
-        size_t logical_column,
-        bool process_allowed = false);
+    char_substitution reset(
+        u8string_view_with_newlines str, position file_offset, size_t logical_column, bool process_allowed = false);
     char_substitution reset(
         const logical_line<utils::utf8_iterator<std::string_view::iterator, utils::utf8_utf16_counter>>& l,
-        bool unlimited_lines,
         position file_offset,
         size_t logical_column,
         bool process_allowed = false);
@@ -85,13 +83,8 @@ public:
         HIDDEN_CHANNEL = 1
     };
 
-    // set begin column
-    bool set_begin(size_t begin);
-    // set end column
-    bool set_end(size_t end);
     // set continuation column
     bool set_continue(size_t cont);
-    void set_continuation_enabled(bool);
     // enable ictl
     void set_ictl();
 
@@ -117,20 +110,16 @@ private:
     std::vector<std::vector<token>> retired_tokens;
     std::vector<size_t> line_limits;
 
-    bool double_byte_enabled_ = false;
-    bool continuation_enabled_ = true;
-    bool unlimited_line_ = false;
-    bool ictl_ = false;
     size_t begin_ = 0;
-    size_t end_default_ = 71;
-    size_t end_ = 71;
     size_t continue_ = 15;
 
     std::vector<char_t> input_;
+    std::vector<size_t> newlines_;
 
     struct input_state
     {
         const char_t* next;
+        const size_t* nl;
         size_t line = 0;
         size_t char_position_in_line = 0;
         size_t char_position_in_line_utf16 = 0;
@@ -146,12 +135,6 @@ private:
 
     // captures lexer state at the beginning of a token
     void start_token();
-    // lex beginning of the line
-    void lex_begin();
-    // lex last part of line
-    void lex_end();
-    // lex continuation & everything until the EOL (which is lexed as IGNORED token)
-    void lex_continuation();
     // lex whitespace
     void lex_space();
     // check if before end_ and EOL
@@ -159,8 +142,6 @@ private:
 
     // lexes everything not lexed in lex_tokens()
     void lex_word();
-
-    void check_continuation();
 
     // lexes everything not lexed in nextToken()
     void lex_tokens();

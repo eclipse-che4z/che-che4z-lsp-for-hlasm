@@ -45,7 +45,7 @@ EOF
 )";
 
     lexing::lexer l;
-    l.reset("TEST TEST \r\n TEST1 TEST2", false, {}, 0);
+    l.reset(lexing::u8string_view_with_newlines("TEST TEST \r\n TEST1 TEST2"), {}, 0);
     lexing::token_stream tokens(&l);
     parser parser(&tokens);
 
@@ -83,14 +83,12 @@ SPACE
 ORDSYMBOL
 SPACE
 ORDSYMBOL
-IGNORED
 SPACE
 ORDSYMBOL
 SPACE
 NUM
 SPACE
 ORDSYMBOL
-IGNORED
 SPACE
 ORDSYMBOL
 SPACE
@@ -108,7 +106,7 @@ EOF
 )";
 
     lexing::lexer l;
-    l.reset(in, true, {}, 0);
+    l.reset(lexing::u8string_view_with_newlines(in), {}, 0);
     lexing::token_stream tokens(&l);
     parser parser(&tokens);
 
@@ -125,7 +123,7 @@ EOF
 TEST(lexer_test, special_spaces)
 {
     lexing::lexer l;
-    l.reset("A\v\f\t LR", false, {}, 0);
+    l.reset(lexing::u8string_view_with_newlines("A\v\f\t LR"), {}, 0);
 
     while (l.more_tokens())
         ;
@@ -140,17 +138,14 @@ TEST(lexer_test, special_spaces)
 
 TEST(lexer_test, attribute_in_continuation)
 {
-    std::string in =
-        R"(       LR                                                           1,Lx
-               'SYMBOL
-)";
+    std::string in = "       LR                                                           1,L\xff'SYMBOL";
 
     lexing::lexer l;
-    l.reset(in, false, {}, 0);
+    l.reset(lexing::u8string_view_with_newlines(in), {}, 0);
 
     while (l.more_tokens())
         ;
-    ASSERT_GE(l.token_count(), 11);
+    ASSERT_EQ(l.token_count(), 10);
 
     size_t i = 0;
 
@@ -161,8 +156,6 @@ TEST(lexer_test, attribute_in_continuation)
     EXPECT_EQ(l.get_token(i++)->getType(), lexing::lexer::COMMA);
     EXPECT_EQ(l.get_token(i++)->getType(), lexing::lexer::ORDSYMBOL);
     EXPECT_EQ(l.get_token(i++)->getType(), lexing::lexer::CONTINUATION);
-    EXPECT_EQ(l.get_token(i++)->getType(), lexing::lexer::IGNORED);
-    EXPECT_EQ(l.get_token(i++)->getType(), lexing::lexer::IGNORED);
     EXPECT_EQ(l.get_token(i++)->getType(), lexing::lexer::ATTR);
     EXPECT_EQ(l.get_token(i++)->getType(), lexing::lexer::ORDSYMBOL);
 }

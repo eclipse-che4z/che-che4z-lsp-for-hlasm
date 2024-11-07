@@ -27,6 +27,7 @@
 #include "expressions/conditional_assembly/ca_expr_visitor.h"
 #include "expressions/evaluation_context.h"
 #include "lexing/lexer.h"
+#include "lexing/string_with_newlines.h"
 #include "parsing/parser_impl.h"
 #include "processing/op_code.h"
 #include "semantics/range_provider.h"
@@ -463,7 +464,7 @@ semantics::literal_si ca_symbol_attribute::reparse_substituted_literal(
     });
     auto h = parsing::parser_holder::create(&eval_ctx.hlasm_ctx, &add_diag_subst, false);
 
-    h->prepare_parser(text,
+    h->prepare_parser(lexing::u8string_view_with_newlines(text),
         &eval_ctx.hlasm_ctx,
         &add_diag_subst,
         semantics::range_provider(var_range, semantics::adjusting_state::SUBSTITUTION),
@@ -472,8 +473,7 @@ semantics::literal_si ca_symbol_attribute::reparse_substituted_literal(
         processing::processing_status(processing::processing_format(processing::processing_kind::ORDINARY,
                                           processing::processing_form::CA,
                                           processing::operand_occurrence::ABSENT),
-            processing::op_code()),
-        true);
+            processing::op_code()));
 
     auto literal_value = h->literal_reparse();
 

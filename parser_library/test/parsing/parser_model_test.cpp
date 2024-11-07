@@ -12,7 +12,7 @@
  *   Broadcom, Inc. - initial API and implementation
  */
 
-#include <numeric>
+#include <algorithm>
 
 #include "gtest/gtest.h"
 
@@ -35,7 +35,7 @@ auto parse_model(std::string s,
     hlasm_context fallback_context;
     diagnostic_op_consumer_container fallback_container;
     return statement_fields_parser(context ? context : &fallback_context)
-        .parse_operand_field(std::move(s),
+        .parse_operand_field(lexing::u8string_view_with_newlines(s),
             after_substitution,
             range_provider(r, adjusting_state::NONE),
             r.start.column,
@@ -195,8 +195,8 @@ TEST(parser, invalid_macro_param_alternative)
     diagnostic_op_consumer_container diag_container;
 
     range r(position(0, 3), position(0, 16));
-    std::string input = R"(op1,   remark                                                       X
-               ()";
+    std::string input = "op1,   remark                                                       \xff"
+                        "(";
     auto [op, rem, lit] = parse_model(input, r, false, &diag_container, processing_form::MAC);
 
     std::vector<diagnostic_op>& diags = diag_container.diags;

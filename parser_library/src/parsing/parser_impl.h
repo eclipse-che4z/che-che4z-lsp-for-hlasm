@@ -28,6 +28,7 @@ class hlasm_context;
 namespace hlasm_plugin::parser_library::lexing {
 class lexer;
 class token_stream;
+struct u8string_view_with_newlines;
 } // namespace hlasm_plugin::parser_library::lexing
 
 namespace hlasm_plugin::parser_library::parsing {
@@ -37,6 +38,14 @@ using self_def_t = std::int32_t;
 class error_strategy;
 class hlasmparser_singleline;
 class hlasmparser_multiline;
+
+struct macop_preprocess_results
+{
+    std::string text;
+    std::vector<range> text_ranges;
+    range total_op_range;
+    std::vector<range> remarks;
+};
 
 // class providing methods helpful for parsing and methods modifying parsing process
 class parser_impl : public antlr4::Parser
@@ -191,7 +200,7 @@ struct parser_holder
 
     struct op_data
     {
-        std::optional<std::string> op_text;
+        std::optional<lexing::u8string_with_newlines> op_text;
         range op_range;
         size_t op_logical_column;
     };
@@ -205,7 +214,7 @@ struct parser_holder
     virtual void lookahead_operands_and_remarks_asm() const = 0;
     virtual void lookahead_operands_and_remarks_dat() const = 0;
 
-    virtual semantics::macop_preprocess_results op_rem_body_mac_r() const = 0;
+    virtual macop_preprocess_results op_rem_body_mac_r() const = 0;
     virtual semantics::operand_list macro_ops() const = 0;
     virtual semantics::op_rem op_rem_body_asm_r() const = 0;
     virtual semantics::op_rem op_rem_body_mach_r() const = 0;
@@ -224,7 +233,7 @@ struct parser_holder
 
     struct mac_op_data
     {
-        semantics::macop_preprocess_results operands;
+        macop_preprocess_results operands;
         range op_range;
         size_t op_logical_column;
     };
@@ -233,14 +242,13 @@ struct parser_holder
 
     virtual semantics::literal_si literal_reparse() const = 0;
 
-    void prepare_parser(std::string_view text,
+    void prepare_parser(lexing::u8string_view_with_newlines text,
         context::hlasm_context* hlasm_ctx,
         diagnostic_op_consumer* diags,
         semantics::range_provider range_prov,
         range text_range,
         size_t logical_column,
-        const processing::processing_status& proc_status,
-        bool unlimited_line) const;
+        const processing::processing_status& proc_status) const;
 
     static std::unique_ptr<parser_holder> create(
         context::hlasm_context* hl_ctx, diagnostic_op_consumer* d, bool multiline);

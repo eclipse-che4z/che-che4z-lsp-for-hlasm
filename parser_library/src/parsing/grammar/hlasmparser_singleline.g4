@@ -85,69 +85,9 @@ options {
     superClass = parser_impl;
 }
 
-/*
-program :  ictl? prcs*  program_block  EOF;
-
-ictl: { _input->LT(2)->getText() == "ICTL" }? SPACE ORDSYMBOL SPACE ictl_begin EOF{ analyzer.get_lexer()->set_ictl(); };
-
-ictl_begin: IDENTIFIER ictl_end?
-                {
-                    size_t idx = 0;
-                    auto val = std::stoi($IDENTIFIER.text, &idx);
-                    if(idx > 0 || !analyzer.get_lexer()->set_begin(val))
-                        throw RecognitionException("invalid ICTL parameter value", this, _input, _localctx, $IDENTIFIER);
-                    hl_info.lines.push_back(token_info(provider.get_range( $IDENTIFIER),hl_scopes::operand));
-                }
-            ;
-
-ictl_end: COMMA IDENTIFIER ictl_continue
-                {
-                    size_t idx = 0;
-                    auto val = std::stoi($IDENTIFIER.text, &idx);
-                    if(idx > 0 || !analyzer.get_lexer()->set_end(val))
-                        throw RecognitionException("invalid ICTL parameter value", this, _input, _localctx, $IDENTIFIER);
-                    hl_info.lines.push_back(token_info(provider.get_range( $COMMA),hl_scopes::operator_symbol));
-                    hl_info.lines.push_back(token_info(provider.get_range( $IDENTIFIER),hl_scopes::operand));
-                }
-            ;
-
-ictl_continue:  { analyzer.get_lexer()->set_continuation_enabled(false); }
-
-                | COMMA IDENTIFIER
-                    {
-                        size_t idx = 0;
-                        auto val = std::stoi($IDENTIFIER.text, &idx);
-                        if(idx > 0 || !analyzer.get_lexer()->set_continue(val))
-                            throw RecognitionException("invalid ICTL parameter value", this, _input, _ctx, $IDENTIFIER);
-
-                        hl_info.lines.push_back(token_info(provider.get_range( $COMMA),hl_scopes::operator_symbol));
-                        hl_info.lines.push_back(token_info(provider.get_range( $IDENTIFIER),hl_scopes::operand));
-                    }
-                ;
-
-
-prcs: PROCESS SPACE (assembler_options
-                                    | (ORDSYMBOL { $ORDSYMBOL.text == "OVERRIDE" }? LPAR assembler_options RPAR)) EOF;
-
-
-assembler_options: assembler_option (COMMA assembler_option)*;
-
-assembler_option: id (LPAR (list | codepage | machine | id)? RPAR)?;
-
-list: list_item (COMMA list_item)*;
-
-list_item: id (LPAR (id | string)+? RPAR)?;
-
-machine: id (MINUS id)? (COMMA id)?;
-
-codepage: id VERTICAL id string;
-
-*/
-
-
 program : EOF;
 
-lab_instr returns [std::optional<std::string> op_text, range op_range, size_t op_logical_column = 0]
+lab_instr returns [std::optional<lexing::u8string_with_newlines> op_text, range op_range, size_t op_logical_column = 0]
     : PROCESS (SPACE (~EOF)*)? EOF
     {
         collector.set_label_field(provider.get_range($PROCESS));
@@ -157,7 +97,7 @@ lab_instr returns [std::optional<std::string> op_text, range op_range, size_t op
         collector.add_hl_symbol(token_info(provider.get_range($PROCESS),hl_scopes::instruction));
 
         auto op_index = $PROCESS->getTokenIndex()+1;
-        $op_text = _input->getText(misc::Interval(op_index,_input->size()-1));
+        $op_text = static_cast<lexing::token_stream*>(_input)->get_text_with_newlines(misc::Interval(op_index,_input->size()-1));
         $op_range = provider.get_range(_input->get(op_index),_input->get(_input->size()-1));
         $op_logical_column = static_cast<hlasm_plugin::parser_library::lexing::token*>(_input->get(op_index))->get_logical_column();
     }
@@ -166,7 +106,7 @@ lab_instr returns [std::optional<std::string> op_text, range op_range, size_t op
         if (!$instruction.ctx->exception)
         {
             auto op_index = $instruction.stop->getTokenIndex()+1;
-            $op_text = _input->getText(misc::Interval(op_index,_input->size()-1));
+            $op_text = static_cast<lexing::token_stream*>(_input)->get_text_with_newlines(misc::Interval(op_index,_input->size()-1));
             $op_range = provider.get_range(_input->get(op_index),_input->get(_input->size()-1));
             $op_logical_column = static_cast<hlasm_plugin::parser_library::lexing::token*>(_input->get(op_index))->get_logical_column();
         }
@@ -179,7 +119,7 @@ lab_instr returns [std::optional<std::string> op_text, range op_range, size_t op
             if (!$instruction.ctx->exception)
             {
                 auto op_index = $instruction.stop->getTokenIndex()+1;
-                $op_text = _input->getText(misc::Interval(op_index,_input->size()-1));
+                $op_text = static_cast<lexing::token_stream*>(_input)->get_text_with_newlines(misc::Interval(op_index,_input->size()-1));
                 $op_range = provider.get_range(_input->get(op_index),_input->get(_input->size()-1));
                 $op_logical_column = static_cast<hlasm_plugin::parser_library::lexing::token*>(_input->get(op_index))->get_logical_column();
             }
@@ -235,9 +175,6 @@ vs_id returns [id_index name]
 
 remark
     : (DOT|ASTERISK|MINUS|PLUS|LT|GT|COMMA|LPAR|RPAR|SLASH|EQUALS|AMPERSAND|APOSTROPHE|IDENTIFIER|NUM|VERTICAL|ORDSYMBOL|SPACE|ATTR)*;
-
-remark_non_empty
-    : (DOT|ASTERISK|MINUS|PLUS|LT|GT|COMMA|LPAR|RPAR|SLASH|EQUALS|AMPERSAND|APOSTROPHE|IDENTIFIER|NUM|VERTICAL|ORDSYMBOL|SPACE|ATTR)+;
 
 remark_o returns [std::optional<range> value]
     : SPACE remark                            {$value = provider.get_range( $remark.ctx);}

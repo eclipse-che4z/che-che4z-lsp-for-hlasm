@@ -15,7 +15,8 @@
 #include "statement_fields_parser.h"
 
 #include "context/hlasm_context.h"
-#include "lexing/token_stream.h"
+#include "lexing/lexer.h"
+#include "lexing/string_with_newlines.h"
 #include "parsing/error_strategy.h"
 #include "parsing/parser_impl.h"
 #include "semantics/operand_impls.h"
@@ -30,18 +31,18 @@ statement_fields_parser::statement_fields_parser(context::hlasm_context* hlasm_c
 
 statement_fields_parser::~statement_fields_parser() = default;
 
-constexpr bool is_multiline(std::string_view v)
+constexpr bool is_multiline(lexing::u8string_view_with_newlines v)
 {
-    auto nl = v.find_first_of("\r\n");
+    auto nl = v.text.find(lexing::u8string_view_with_newlines::EOLc);
     if (nl == std::string_view::npos)
         return false;
-    v.remove_prefix(nl);
-    v.remove_prefix(1 + v.starts_with("\r\n"));
+    v.text.remove_prefix(nl + 1);
 
-    return !v.empty();
+    return !v.text.empty();
 }
 
-statement_fields_parser::parse_result statement_fields_parser::parse_operand_field(std::string_view field,
+statement_fields_parser::parse_result statement_fields_parser::parse_operand_field(
+    lexing::u8string_view_with_newlines field,
     bool after_substitution,
     semantics::range_provider field_range,
     size_t logical_column,
@@ -53,19 +54,13 @@ statement_fields_parser::parse_result statement_fields_parser::parse_operand_fie
     const auto original_range = field_range.original_range;
 
     diagnostic_consumer_transform add_diag_subst([&field, &add_diag, after_substitution](diagnostic_op diag) {
-        if (after_substitution)
-            diag.message = diagnostic_decorate_message(field, diag.message);
+        if (after_substitution) // field.text has not newlines
+            diag.message = diagnostic_decorate_message(field.text, diag.message);
         add_diag.add_diagnostic(std::move(diag));
     });
     const auto& h = is_multiline(field) ? *m_parser_multiline : *m_parser_singleline;
-    h.prepare_parser(field,
-        m_hlasm_ctx,
-        &add_diag_subst,
-        std::move(field_range),
-        original_range,
-        logical_column,
-        status,
-        after_substitution);
+    h.prepare_parser(
+        field, m_hlasm_ctx, &add_diag_subst, std::move(field_range), original_range, logical_column, status);
 
     semantics::op_rem line;
     std::vector<semantics::literal_si> literals;
@@ -86,7 +81,7 @@ statement_fields_parser::parse_result statement_fields_parser::parse_operand_fie
                 if (!h.error_handler->error_reported() && !reparse_data.text.empty())
                 {
                     const auto& h_second = *m_parser_singleline;
-                    h_second.prepare_parser(reparse_data.text,
+                    h_second.prepare_parser(lexing::u8string_view_with_newlines(reparse_data.text),
                         m_hlasm_ctx,
                         &add_diag_subst,
                         semantics::range_provider(reparse_data.total_op_range,
@@ -95,8 +90,7 @@ statement_fields_parser::parse_result statement_fields_parser::parse_operand_fie
                             h.lex->get_line_limits()),
                         original_range,
                         logical_column,
-                        status,
-                        true);
+                        status);
 
                     line.operands = h_second.macro_ops();
                     literals = h.parser->get_collector().take_literals();

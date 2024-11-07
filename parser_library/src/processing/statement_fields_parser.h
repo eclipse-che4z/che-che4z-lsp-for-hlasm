@@ -23,6 +23,10 @@ namespace hlasm_plugin::parser_library::context {
 class hlasm_context;
 } // namespace hlasm_plugin::parser_library::context
 
+namespace hlasm_plugin::parser_library::lexing {
+struct u8string_view_with_newlines;
+} // namespace hlasm_plugin::parser_library::lexing
+
 namespace hlasm_plugin::parser_library::parsing {
 class parser_error_listener_ctx;
 struct parser_holder;
@@ -49,7 +53,7 @@ public:
         std::vector<semantics::literal_si> literals;
     };
 
-    parse_result parse_operand_field(std::string_view field,
+    parse_result parse_operand_field(lexing::u8string_view_with_newlines field,
         bool after_substitution,
         semantics::range_provider field_range,
         size_t logical_column,
@@ -60,13 +64,6 @@ public:
     ~statement_fields_parser();
 
     void collect_diags() const override;
-
-private:
-    parse_result parse_operand_field_impl(std::string field,
-        bool after_substitution,
-        semantics::range_provider field_range,
-        processing::processing_status status,
-        diagnostic_op_consumer& add_diag);
 };
 
 } // namespace hlasm_plugin::parser_library::processing

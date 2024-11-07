@@ -15,6 +15,7 @@
 #include "token_stream.h"
 
 #include "RuleContext.h"
+#include "lexing/string_with_newlines.h"
 #include "misc/Interval.h"
 #include "token.h"
 
@@ -203,4 +204,36 @@ std::vector<antlr4::Token*> token_stream::get_tokens() const
     for (size_t i = 0; i < count; ++i)
         result.push_back(token_source->get_token(i));
     return result;
+}
+
+u8string_with_newlines token_stream::get_text_with_newlines(const antlr4::misc::Interval& interval)
+{
+    size_t start = interval.a;
+    size_t stop = interval.b;
+    if (start == INVALID_INDEX || stop == INVALID_INDEX)
+    {
+        return u8string_with_newlines();
+    }
+
+    if (const auto limit = token_source->token_count(); stop >= limit)
+    {
+        stop = limit - 1;
+    }
+
+    u8string_with_newlines ss;
+    for (size_t i = start; i <= stop; i++)
+    {
+        const auto* t = token_source->get_token(i);
+        if (auto id = t->getType(); id == Token::EOF)
+        {
+            break;
+        }
+        else if (id == lexer::CONTINUATION)
+        {
+            ss.text.push_back(u8string_view_with_newlines::EOLc);
+            continue;
+        }
+        ss.text.append(t->getText());
+    }
+    return ss;
 }

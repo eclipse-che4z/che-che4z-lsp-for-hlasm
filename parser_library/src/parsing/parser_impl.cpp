@@ -25,6 +25,7 @@
 #include "expressions/conditional_assembly/terms/ca_constant.h"
 #include "hlasmparser_multiline.h"
 #include "hlasmparser_singleline.h"
+#include "lexing/string_with_newlines.h"
 #include "lexing/token_stream.h"
 #include "processing/op_code.h"
 #include "semantics/operand.h"
@@ -96,7 +97,7 @@ struct parser_holder_impl final : parser_holder
     void lookahead_operands_and_remarks_asm() const override { get_parser().lookahead_operands_and_remarks_asm(); }
     void lookahead_operands_and_remarks_dat() const override { get_parser().lookahead_operands_and_remarks_dat(); }
 
-    semantics::macop_preprocess_results op_rem_body_mac_r() const override
+    macop_preprocess_results op_rem_body_mac_r() const override
     {
         return std::move(get_parser().op_rem_body_mac_r()->results);
     }
@@ -443,16 +444,15 @@ bool parser_impl::goff() const noexcept { return hlasm_ctx->goff(); }
 
 parser_holder::~parser_holder() = default;
 
-void parser_holder::prepare_parser(std::string_view text,
+void parser_holder::prepare_parser(lexing::u8string_view_with_newlines text,
     context::hlasm_context* hlasm_ctx,
     diagnostic_op_consumer* diags,
     semantics::range_provider range_prov,
     range text_range,
     size_t logical_column,
-    const processing::processing_status& proc_status,
-    bool unlimited_line) const
+    const processing::processing_status& proc_status) const
 {
-    lex->reset(text, unlimited_line, text_range.start, logical_column);
+    lex->reset(text, text_range.start, logical_column);
 
     stream->reset();
 

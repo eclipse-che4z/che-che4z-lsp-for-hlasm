@@ -35,6 +35,7 @@
 #include "diagnostic.h"
 #include "diagnostic_consumer.h"
 #include "expressions/evaluation_context.h"
+#include "lexing/string_with_newlines.h"
 #include "lexing/token_stream.h"
 #include "lexing/tools.h"
 #include "library_info_transitional.h"
@@ -698,7 +699,8 @@ public:
         error_collector diags(error_msg);
 
         auto p = parsing::parser_holder::create(ctx_, nullptr, false);
-        p->prepare_parser(expr, ctx_, &diags, semantics::range_provider(), range(), 1, status, true);
+        p->prepare_parser(
+            lexing::u8string_view_with_newlines(expr), ctx_, &diags, semantics::range_provider(), range(), 1, status);
 
         semantics::operand_ptr op =
             status.first.form == processing::processing_form::CA ? p->ca_op_expr() : p->operand_mach();

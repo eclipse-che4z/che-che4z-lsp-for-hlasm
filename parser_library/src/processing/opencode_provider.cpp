@@ -225,8 +225,8 @@ void opencode_provider::feed_line(const parsing::parser_holder& p, bool is_proce
     if (produce_source_info)
         produce_hl_symbols(m_current_logical_line, lineno, *m_src_proc);
 
-    const auto& subs = p.lex->reset(
-        m_current_logical_line, false, { lineno, 0 /*lexing::default_ictl.begin-1 really*/ }, 0, is_process);
+    const auto& subs =
+        p.lex->reset(m_current_logical_line, { lineno, 0 /*lexing::default_ictl.begin-1 really*/ }, 0, is_process);
 
     if (subs.server && !std::exchange(m_encoding_warning_issued.server, true))
         m_diagnoser->add_diagnostic(diagnostic_op::warning_W017(range(position(lineno, 0))));
@@ -318,14 +318,8 @@ std::shared_ptr<const context::hlasm_statement> opencode_provider::process_looka
     // optimization : if statement has no label and is not COPY, do not even parse operands)
     // optimization : only COPY, EQU and DC/DS/DXD statements actually need operands in lookahead mode
     {
-        const auto& h = prepare_operand_parser(*op_text,
-            *m_ctx.hlasm_ctx,
-            nullptr,
-            semantics::range_provider(),
-            op_range,
-            op_logical_column,
-            proc_status,
-            true);
+        const auto& h = prepare_operand_parser(
+            *op_text, *m_ctx.hlasm_ctx, nullptr, semantics::range_provider(), op_range, op_logical_column, proc_status);
 
         switch (proc_status.first.form)
         {
@@ -351,15 +345,14 @@ std::shared_ptr<const context::hlasm_statement> opencode_provider::process_looka
     return result;
 }
 
-constexpr bool is_multiline(std::string_view v)
+constexpr bool is_multiline(lexing::u8string_view_with_newlines v)
 {
-    auto nl = v.find_first_of("\r\n");
+    auto nl = v.text.find(lexing::u8string_view_with_newlines::EOLc);
     if (nl == std::string_view::npos)
         return false;
-    v.remove_prefix(nl);
-    v.remove_prefix(1 + v.starts_with("\r\n"));
+    v.text.remove_prefix(nl);
 
-    return !v.empty();
+    return !v.text.empty();
 }
 
 std::shared_ptr<const context::hlasm_statement> opencode_provider::process_ordinary(const statement_processor& proc,
@@ -402,8 +395,7 @@ std::shared_ptr<const context::hlasm_statement> opencode_provider::process_ordin
             semantics::range_provider(),
             op_range,
             op_logical_column,
-            proc_status,
-            false);
+            proc_status);
 
         if (format.occurrence == operand_occurrence::ABSENT)
             h.op_rem_body_noop();
@@ -454,14 +446,14 @@ std::shared_ptr<const context::hlasm_statement> opencode_provider::process_ordin
                             semantics::adjusting_state::MACRO_REPARSE,
                             h.lex->get_line_limits());
 
-                        const auto& h_second = prepare_operand_parser(reparse_data.text,
-                            *m_ctx.hlasm_ctx,
-                            format.form == processing_form::UNKNOWN ? &diags_filter : diags,
-                            std::move(tmp_provider),
-                            reparse_data.total_op_range,
-                            line_logical_column,
-                            proc_status,
-                            true);
+                        const auto& h_second =
+                            prepare_operand_parser(lexing::u8string_view_with_newlines(reparse_data.text),
+                                *m_ctx.hlasm_ctx,
+                                format.form == processing_form::UNKNOWN ? &diags_filter : diags,
+                                std::move(tmp_provider),
+                                reparse_data.total_op_range,
+                                line_logical_column,
+                                proc_status);
 
                         op_list = h_second.macro_ops();
 
@@ -961,19 +953,17 @@ extract_next_logical_line_result opencode_provider::extract_next_logical_line()
     return extract_next_logical_line_result::normal;
 }
 
-const parsing::parser_holder& opencode_provider::prepare_operand_parser(const std::string& text,
+const parsing::parser_holder& opencode_provider::prepare_operand_parser(lexing::u8string_view_with_newlines text,
     context::hlasm_context& hlasm_ctx,
     diagnostic_op_consumer* diags,
     semantics::range_provider range_prov,
     range text_range,
     size_t logical_column,
-    const processing_status& proc_status,
-    bool unlimited_line)
+    const processing_status& proc_status)
 {
     auto& h = is_multiline(text) ? *m_multiline.m_operand_parser : *m_singleline.m_operand_parser;
 
-    h.prepare_parser(
-        text, &hlasm_ctx, diags, std::move(range_prov), text_range, logical_column, proc_status, unlimited_line);
+    h.prepare_parser(text, &hlasm_ctx, diags, std::move(range_prov), text_range, logical_column, proc_status);
 
     return h;
 }

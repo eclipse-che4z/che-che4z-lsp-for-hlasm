@@ -22,6 +22,7 @@
 #include "lexer.h"
 
 namespace hlasm_plugin::parser_library::lexing {
+struct u8string_with_newlines;
 class token;
 
 // custom implementation of antlr token stream
@@ -44,6 +45,7 @@ public:
     void reset();
 
     auto get_line_limits() const { return token_source->get_line_limits(); }
+    u8string_with_newlines get_text_with_newlines(const antlr4::misc::Interval& interval);
 
     void fill();
     std::vector<antlr4::Token*> get_tokens() const;

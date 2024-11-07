@@ -55,14 +55,6 @@ struct op_rem
     std::vector<range> remarks;
 };
 
-struct macop_preprocess_results
-{
-    std::string text;
-    std::vector<range> text_ranges;
-    range total_op_range;
-    std::vector<range> remarks;
-};
-
 // sequence symbol structure
 struct seq_sym
 {

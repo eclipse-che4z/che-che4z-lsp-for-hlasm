@@ -15,6 +15,7 @@ target_sources(parser_library PRIVATE
     lexer.h
     logical_line.cpp
     logical_line.h
+    string_with_newlines.h
     token.cpp
     token.h
     token_stream.cpp

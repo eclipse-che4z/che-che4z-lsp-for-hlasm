@@ -55,8 +55,11 @@ public:
     void set_instruction_field(concat_chain instr, range symbol_range);
 
     void set_operand_remark_field(range symbol_range);
-    void set_operand_remark_field(
-        std::string deferred, std::vector<vs_ptr> vars, remark_list remarks, range symbol_range, size_t logical_column);
+    void set_operand_remark_field(lexing::u8string_with_newlines deferred,
+        std::vector<vs_ptr> vars,
+        remark_list remarks,
+        range symbol_range,
+        size_t logical_column);
     void set_operand_remark_field(operand_list operands, remark_list remarks, range symbol_range);
 
     void add_hl_symbol(token_info symbol);
