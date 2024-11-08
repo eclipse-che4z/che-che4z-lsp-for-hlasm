@@ -29,11 +29,12 @@ namespace hlasm_plugin::parser_library::lexing {
 lexer::lexer() { reset({}, 0, false); }
 
 namespace {
-lexer::char_substitution append_utf8_with_newlines_to_utf32(
-    std::vector<char_t>& t, std::vector<size_t>& nl, std::string_view s)
+std::pair<lexer::char_substitution, size_t> append_utf8_with_newlines_to_utf32(
+    std::vector<char_t>& t, std::vector<size_t>& nl, std::vector<size_t>& ll, std::string_view s)
 {
     lexer::char_substitution subs {};
 
+    size_t utf16_length = 0;
     while (!s.empty())
     {
         unsigned char c = s.front();
@@ -41,11 +42,13 @@ lexer::char_substitution append_utf8_with_newlines_to_utf32(
         {
             t.push_back(c);
             s.remove_prefix(1);
+            ++utf16_length;
             continue;
         }
         else if (c == u8string_view_with_newlines::EOLuc)
         {
             nl.push_back(t.size());
+            ll.push_back(std::exchange(utf16_length, 0));
             s.remove_prefix(1);
             continue;
         }
@@ -61,16 +64,18 @@ lexer::char_substitution append_utf8_with_newlines_to_utf32(
 
             t.push_back(v);
             s.remove_prefix(cs.utf8);
+            utf16_length += cs.utf16;
         }
         else
         {
             subs.server = true;
             t.push_back(utils::substitute_character);
             s.remove_prefix(1);
+            ++utf16_length;
         }
     }
 
-    return subs;
+    return { subs, utf16_length };
 }
 } // namespace
 
@@ -79,7 +84,6 @@ void lexer::reset(position file_offset, size_t logical_column, bool process_allo
     tokens.clear();
     retired_tokens.clear();
     last_token_id_ = 0;
-    line_limits.clear();
 
     process_allowed_ = process_allowed;
 
@@ -87,14 +91,20 @@ void lexer::reset(position file_offset, size_t logical_column, bool process_allo
     newlines_.push_back((size_t)-1);
     input_state_.next = input_.data();
     input_state_.nl = newlines_.data();
-    input_state_.line = (size_t)file_offset.line;
+    input_state_.line = file_offset.line;
     input_state_.char_position_in_line = logical_column;
-    input_state_.char_position_in_line_utf16 = (size_t)file_offset.column;
+    input_state_.char_position_in_line_utf16 = file_offset.column;
 
     last_line = input_state_;
     last_line.line = -1;
 
     token_start_state_ = input_state_;
+
+    for (auto bump_line = file_offset.column; auto& ll : line_limits)
+    {
+        ll += bump_line;
+        bump_line = continue_;
+    }
 }
 
 lexer::char_substitution lexer::reset(
@@ -102,11 +112,12 @@ lexer::char_substitution lexer::reset(
 {
     input_.clear();
     newlines_.clear();
-    auto result = append_utf8_with_newlines_to_utf32(input_, newlines_, str.text);
+    line_limits.clear();
+    auto [subs, _] = append_utf8_with_newlines_to_utf32(input_, newlines_, line_limits, str.text);
 
     reset(file_offset, logical_column, process_allowed);
 
-    return result;
+    return subs;
 }
 
 lexer::char_substitution lexer::reset(
@@ -119,16 +130,22 @@ lexer::char_substitution lexer::reset(
 
     input_.clear();
     newlines_.clear();
+    line_limits.clear();
 
     for (size_t i = 0; i < l.segments.size(); ++i)
     {
         const auto& s = l.segments[i];
 
-        subs |= append_utf8_with_newlines_to_utf32(
-            input_, newlines_, std::string_view(s.code_begin().base(), s.code_end().base()));
+        auto [subs_update, utf16_rem] = append_utf8_with_newlines_to_utf32(
+            input_, newlines_, line_limits, std::string_view(s.code_begin().base(), s.code_end().base()));
+
+        subs |= subs_update;
 
         if (i + 1 < l.segments.size())
+        {
             newlines_.push_back(input_.size());
+            line_limits.push_back(utf16_rem);
+        }
     }
 
     reset(file_offset, logical_column, process_allowed);
@@ -214,8 +231,6 @@ bool lexer::more_tokens()
 
     while (!before_end())
     {
-        line_limits.push_back(input_state_.char_position_in_line_utf16);
-
         last_line = input_state_;
         token_start_state_ = last_line;
 
