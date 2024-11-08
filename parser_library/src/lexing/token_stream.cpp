@@ -124,7 +124,7 @@ void token_stream::consume()
     size_t token_count = token_source->token_count();
     do
     {
-        if (pos + 1 >= token_count)
+        if (pos >= token_count)
         {
             if (fetched_eof)
                 break;
@@ -132,7 +132,7 @@ void token_stream::consume()
             token_count = token_source->token_count();
             continue;
         }
-    } while (!is_on_channel(token_source->get_token(++pos)));
+    } while (!is_on_channel(token_source->get_token(pos++)));
 }
 
 size_t token_stream::LA(ssize_t i) { return LT(i)->getType(); }

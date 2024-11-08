@@ -550,8 +550,8 @@ op_rem_body_alt_mac [macop_preprocess_results* results]
         }
     )?
     (
-        {enable_continuation();}
         COMMA
+        {enable_continuation();}
         {
             $results->text.push_back(',');
             $results->text_ranges.push_back(provider.get_range($COMMA));
