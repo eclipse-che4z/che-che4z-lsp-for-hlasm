@@ -168,3 +168,41 @@ TEST(deferred_statement, share_references_for_nonexecuted)
     std::ranges::sort(positions);
     EXPECT_EQ(positions, expected_positions);
 }
+
+TEST(deferred_statement, in_macro_def_with_multiline_remark)
+{
+    std::string input = R"(
+         MACRO
+         MAC
+FIELD    DS    XL8                                   remark that is on X
+               multiple lines 
+         MEND
+
+         MAC
+)";
+    analyzer a(input);
+    a.analyze();
+
+    EXPECT_TRUE(a.diags().empty());
+}
+
+TEST(deferred_statement, quote_miscategorization)
+{
+    std::string input = R"(
+         MACRO
+         INNER &C=
+         MEND
+         MACRO
+         MAC   &A,&B=
+         INNER 0+L'&B.A,                                               X
+               C=' COMMENT'
+         MEND
+
+
+         MAC   A,B=B
+)";
+    analyzer a(input);
+    a.analyze();
+
+    EXPECT_TRUE(a.diags().empty());
+}
