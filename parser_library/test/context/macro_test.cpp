@@ -1275,3 +1275,20 @@ TEST(macro, nested_invalid_prototype)
 
     EXPECT_TRUE(matches_message_codes(a.diags(), { "E043" }));
 }
+
+TEST(macro, nested_parenthesis_with_attributes)
+{
+    std::string input = R"(
+         MACRO
+         MAC
+         MEND
+
+         MAC     (XXXXXXX,L'XXXXXXXXXXXXXXXXXXXXX,(XXXXXXXXXXXXXXXXXXXX+
+               X,XXXXX),XXXXXXX),(XXXXX,L'XXXXXXXXXXXXXXXXXX,          +
+               (XXXXXXXXXXXXXXXXXX,XXXXX),XXXXXXX)                     
+)";
+    analyzer a(input);
+    a.analyze();
+
+    EXPECT_TRUE(a.diags().empty());
+}

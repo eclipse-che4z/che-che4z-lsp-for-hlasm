@@ -121,43 +121,35 @@ mac_entry_basic_tokens [concat_chain* chain]
         lpar
         {
             std::vector<concat_chain> sublist;
-            bool pending_empty = false;
+            bool pending_empty = true;
+            bool entered = false;
         }
-        (
-            comma
-            {
-                sublist.emplace_back();
-                pending_empty = true;
-            }
-        )*
         (
             mac_entry
             {
                 sublist.push_back(std::move($mac_entry.chain));
                 pending_empty = false;
+                entered = true;
+            }
+        )?
+        (
+            comma
+            {
+                entered = true;
+                if (pending_empty)
+                    sublist.emplace_back();
+                pending_empty = true;
             }
             (
-                comma
-                (
-                    comma
-                    {
-                        sublist.emplace_back();
-                    }
-                )*
+                mac_entry
                 {
-                    pending_empty = true;
+                    sublist.push_back(std::move($mac_entry.chain));
+                    pending_empty = false;
                 }
-                (
-                    mac_entry
-                    {
-                        sublist.push_back(std::move($mac_entry.chain));
-                        pending_empty = false;
-                    }
-                )?
-            )*
-        )?
+            )?
+        )*
         {
-            if (pending_empty)
+            if (entered && pending_empty)
             {
                 sublist.emplace_back();
             }
