@@ -1292,3 +1292,19 @@ TEST(macro, nested_parenthesis_with_attributes)
 
     EXPECT_TRUE(a.diags().empty());
 }
+
+TEST(macro, allowed_incomplete_literal)
+{
+    std::string input = R"(
+         MACRO
+         MAC
+         MEND
+
+         MAC   L'=
+         MAC   "L'=
+)";
+    analyzer a(input);
+    a.analyze();
+
+    EXPECT_TRUE(a.diags().empty());
+}

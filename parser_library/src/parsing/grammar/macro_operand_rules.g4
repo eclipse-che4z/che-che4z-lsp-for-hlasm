@@ -187,12 +187,11 @@ mac_entry returns [concat_chain chain]
                 collector.add_hl_symbol(token_info(provider.get_range($at),hl_scopes::operator_symbol));
             }
             (
-                (
-                    equals
-                    {
-                        $chain.emplace_back(equals_conc(provider.get_range($equals.ctx)));
-                    }
-                )?
+                equals
+                {
+                    $chain.emplace_back(equals_conc(provider.get_range($equals.ctx)));
+                }
+                |
                 ORDSYMBOL
                 {
                     auto r = provider.get_range($ORDSYMBOL);
