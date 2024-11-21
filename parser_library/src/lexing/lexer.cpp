@@ -85,6 +85,8 @@ void lexer::reset(position file_offset, size_t logical_column, bool process_allo
     retired_tokens.clear();
     last_token_id_ = 0;
 
+    creating_var_symbol_ = false;
+    creating_attr_ref_ = false;
     process_allowed_ = process_allowed;
 
     input_.push_back(EOF_SYMBOL);

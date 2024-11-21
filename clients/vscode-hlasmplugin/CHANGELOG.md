@@ -9,6 +9,7 @@
 - The language server crashes while processing an invalid prototype of a nested macro
 - Incorrect parsing of attributes in macro operands
 - Diagnostic issued for a valid flag parameter on the `*PROCESS` statement
+- Syntax error diagnostics issued due to inconsistent lexer initialization
 
 ## [1.15.0](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/compare/1.14.0...1.15.0) (2024-09-20)
 
