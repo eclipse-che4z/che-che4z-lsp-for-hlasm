@@ -1,3 +1,27 @@
+### [1.15.1](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/compare/1.15.0...1.15.1) (2024-11-22)
+
+
+### Other changes
+
+* Add extra tests for deferred statements ([9c908ac](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/9c908acf63e7427aaf9ed27043c276192512045e))
+* Line continuation handling in lexer ([3ac3088](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/3ac3088e96d00960798c298b4da05b6b281fb833))
+* Line limits collection ([4c6b11e](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/4c6b11eef0c4412df45c70efebeac81908d55708))
+* Minor lexer cleanup ([552035b](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/552035bf714ae78bb9b186aacf98bd308f85276d))
+* Remove input source ([cd0c460](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/cd0c460b262be4f2491a2cdd560eb81f32c56ddf))
+* Streamline macro operand grammar ([f82a055](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/f82a05580728052b92abf6b1b88c57701cbbb314))
+
+
+### Fixes
+
+* Consume does not work correctly while on a hidden token ([17cf881](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/17cf881e36c931ba866c9e8ba754c5f5b18e3c18))
+* Diagnostic issued for a valid flag parameter on the  statement ([820bf68](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/820bf684959808e8dc08988c5d68722cc00a6dfb))
+* Incorrect parsing of attributes in macro operands ([ef046d5](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/ef046d5e668fb6aefaf40651b0910a60695023c3))
+* Language server does not recognize symbolic links as available macros (WASM) ([e28d3dc](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/e28d3dc3748ace3fcea1b6af10bb396aa5f361fb))
+* Operand parsing errors reported for operandless instructions used in macros ([ad7cbd3](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/ad7cbd3f3d8783ae85db313b8d462adff58d0ab8))
+* Single comma operand should be treated as no operands during validation ([532e634](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/532e634a515b5a7b34de3a39c111071c71b84a58))
+* Syntax error diagnostics issued due to inconsistent lexer initialization ([eabeb1c](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/eabeb1c62db7866a9ccba16cc80b33cfc33c7424))
+* The language server crashes while processing an invalid prototype of a nested macro ([9e0cab3](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/9e0cab350c9875be33a25d9298e511c277895281))
+
 ## [1.15.0](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/compare/1.14.0...1.15.0) (2024-09-20)
 
 
