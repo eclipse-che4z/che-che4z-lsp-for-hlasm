@@ -14,6 +14,8 @@ target_sources(hlasm_language_server_base PRIVATE
     base_protocol_channel.cpp
     base_protocol_channel.h
     blocking_queue.h
+    encodings.cpp
+    encodings.h
     external_file_reader.cpp
     external_file_reader.h
     feature.cpp

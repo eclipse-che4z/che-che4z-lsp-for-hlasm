@@ -15,10 +15,32 @@
 #include "server_options.h"
 
 #include <charconv>
+#include <cstdlib>
+#include <unordered_map>
 
 #include "logger.h"
 
 namespace hlasm_plugin::language_server {
+
+std::string_view encodings_to_text(enum encodings e)
+{
+    using enum encodings;
+    switch (e)
+    {
+        case none:
+            return "none";
+        case iso8859_1:
+            return "iso8859-1";
+        default:
+            std::abort();
+    }
+}
+
+const std::unordered_map<std::string_view, encodings> supported_encodings = {
+    { "none", encodings::none },
+    { "utf8", encodings::none },
+    { "iso8859-1", encodings::iso8859_1 },
+};
 
 std::optional<server_options> parse_options(std::span<const char* const> args)
 {
@@ -45,6 +67,14 @@ std::optional<server_options> parse_options(std::span<const char* const> args)
             auto [ptr, err] = std::from_chars(std::to_address(arg.begin()), std::to_address(arg.end()), result.port);
             if (err != std::errc {} || ptr != std::to_address(arg.end()) || result.port == 0)
                 return std::nullopt;
+        }
+        else if (static constexpr std::string_view tt = "--translate-text="; arg.starts_with(tt))
+        {
+            arg.remove_prefix(tt.size());
+            if (auto t = supported_encodings.find(arg); t == supported_encodings.end())
+                return std::nullopt;
+            else
+                result.translate_text = t->second;
         }
         else
             return std::nullopt;

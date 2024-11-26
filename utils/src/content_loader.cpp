@@ -14,13 +14,17 @@
 
 #include "utils/content_loader.h"
 
-#include <memory>
-
 #include "utils/filesystem_content_loader.h"
+#include "utils/unicode_text.h"
 
 namespace hlasm_plugin::utils::resource {
 
-const content_loader& get_content_loader()
+void set_content_loader_translation(const translation_table* translation, content_loader& cl)
+{
+    cl.set_translation_table(translation);
+}
+
+content_loader& get_content_loader()
 {
     static auto fs_cl = filesystem_content_loader();
 
@@ -28,38 +32,30 @@ const content_loader& get_content_loader()
     return fs_cl;
 }
 
-std::optional<std::string> load_text(const resource_location& res_loc)
+std::optional<std::string> load_text(const resource_location& res_loc, const content_loader& cl)
 {
-    const auto& cl = get_content_loader();
-
     return cl.load_text(res_loc);
-};
+}
 
-list_directory_result list_directory_files(const utils::resource::resource_location& directory_loc)
+list_directory_result list_directory_files(
+    const utils::resource::resource_location& directory_loc, const content_loader& cl)
 {
-    const auto& cl = get_content_loader();
-
     return cl.list_directory_files(directory_loc);
 }
 
-list_directory_result list_directory_subdirs_and_symlinks(const utils::resource::resource_location& directory_loc)
+list_directory_result list_directory_subdirs_and_symlinks(
+    const utils::resource::resource_location& directory_loc, const content_loader& cl)
 {
-    const auto& cl = get_content_loader();
-
     return cl.list_directory_subdirs_and_symlinks(directory_loc);
 }
 
-std::string filename(const utils::resource::resource_location& res_loc)
+std::string filename(const utils::resource::resource_location& res_loc, const content_loader& cl)
 {
-    const auto& cl = get_content_loader();
-
     return cl.filename(res_loc);
 }
 
-std::string canonical(const utils::resource::resource_location& res_loc, std::error_code& ec)
+std::string canonical(const utils::resource::resource_location& res_loc, std::error_code& ec, const content_loader& cl)
 {
-    const auto& cl = get_content_loader();
-
     return cl.canonical(res_loc, ec);
 }
 

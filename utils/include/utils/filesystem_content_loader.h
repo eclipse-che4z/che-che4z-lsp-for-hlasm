@@ -24,6 +24,8 @@ namespace hlasm_plugin::utils::resource {
 
 class filesystem_content_loader : public content_loader
 {
+    const translation_table* m_translation = nullptr;
+
 public:
     filesystem_content_loader() = default;
     virtual ~filesystem_content_loader() = default;
@@ -34,6 +36,8 @@ public:
         const utils::resource::resource_location& directory_loc) const override;
     std::string filename(const utils::resource::resource_location& res_loc) const override;
     std::string canonical(const utils::resource::resource_location& res_loc, std::error_code& ec) const override;
+
+    void set_translation_table(const translation_table* t) override;
 };
 
 } // namespace hlasm_plugin::utils::resource

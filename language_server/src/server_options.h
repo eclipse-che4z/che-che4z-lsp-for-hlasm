@@ -18,13 +18,23 @@
 #include <cstdint>
 #include <optional>
 #include <span>
+#include <string_view>
 
 namespace hlasm_plugin::language_server {
+enum class encodings
+{
+    none,
+    iso8859_1,
+};
+
+std::string_view encodings_to_text(encodings e);
+
 struct server_options
 {
     uint16_t port = 0;
     bool enable_vscode_extension = false;
     signed char log_level = -1;
+    encodings translate_text = encodings::none;
 };
 std::optional<server_options> parse_options(std::span<const char* const> args);
 

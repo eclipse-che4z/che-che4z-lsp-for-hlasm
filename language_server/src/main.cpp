@@ -16,7 +16,9 @@
 #include <span>
 #include <thread>
 
+#include "encodings.h"
 #include "server_options.h"
+#include "utils/content_loader.h"
 #ifdef WIN32
 #    include <locale.h>
 #endif
@@ -182,7 +184,9 @@ void log_options(server_options opts)
         ", log-level=",
         std::to_string(opts.log_level),
         ", lsp-port=",
-        std::to_string(opts.port));
+        std::to_string(opts.port),
+        ", translate-text=",
+        encodings_to_text(opts.translate_text));
 }
 
 } // namespace
@@ -204,6 +208,9 @@ int main(int argc, char** argv)
         logger::instance.level(opts->log_level);
 
     log_options(*opts);
+
+    if (const auto* e = get_input_encoding(opts->translate_text); e)
+        hlasm_plugin::utils::resource::set_content_loader_translation(e);
 
     auto io_setup = server_streams::create(*opts);
     if (!io_setup)

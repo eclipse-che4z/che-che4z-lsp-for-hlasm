@@ -21,9 +21,26 @@
 
 namespace hlasm_plugin::utils::resource {
 
+std::optional<std::string> translate_text(std::optional<std::string> text, const translation_table& t)
+{
+    if (!text)
+        return std::nullopt;
+    std::string result;
+    result.reserve(text->size() + text->size() / 128);
+
+    for (unsigned char c : *text)
+        utils::append_utf32_to_utf8(result, t[c]);
+
+    return result;
+}
+
 std::optional<std::string> filesystem_content_loader::load_text(const resource_location& resource) const
 {
-    return platform::read_file(resource.get_path());
+    const auto t = m_translation;
+    if (!t)
+        return platform::read_file(resource.get_path());
+    else
+        return translate_text(platform::read_file(resource.get_path()), *t);
 }
 
 list_directory_result filesystem_content_loader::list_directory_files(
@@ -72,5 +89,7 @@ std::string filesystem_content_loader::canonical(
 {
     return utils::path::canonical(res_loc.get_path(), ec).string();
 }
+
+void filesystem_content_loader::set_translation_table(const translation_table* t) { m_translation = t; }
 
 } // namespace hlasm_plugin::utils::resource
