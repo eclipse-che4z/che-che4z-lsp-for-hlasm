@@ -329,9 +329,6 @@ jobs:
           - os: windows-2022
             native: win32_x64
             chmod: false
-          - os: macos-12
-            native: darwin_x64
-            chmod: true
           - os: macos-13
             native: darwin_x64
             chmod: true
