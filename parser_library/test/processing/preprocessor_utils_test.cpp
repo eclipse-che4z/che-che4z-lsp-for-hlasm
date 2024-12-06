@@ -160,3 +160,44 @@ TEST(preprocessor_utils, operand_parsing_multiple_multiline_continue)
 
     EXPECT_EQ(processing::get_operands_list(input, 0, get_range_provider(input.length(), 0, 15)), expected);
 }
+
+TEST(preprocessor_utils, invalid_operands)
+{
+    std::string_view input = "X,(',''";
+
+    std::vector<semantics::preproc_details::name_range> expected {
+        { "X", range(position(0, 0), position(0, 1)) },
+        { "(',''", range(position(0, 2), position(0, 7)) },
+    };
+
+    const auto result = processing::get_operands_list(input, 0, get_range_provider(input.length(), 0, 15));
+
+    EXPECT_EQ(result, expected);
+}
+
+TEST(preprocessor_utils, no_op_name)
+{
+    std::string_view input = "X,(Y)";
+
+    std::vector<semantics::preproc_details::name_range> expected {
+        { "X", range(position(0, 0), position(0, 1)) },
+        { "(Y)", range(position(0, 2), position(0, 5)) },
+    };
+
+    const auto result = processing::get_operands_list(input, 0, get_range_provider(input.length(), 0, 15));
+
+    EXPECT_EQ(result, expected);
+}
+
+TEST(preprocessor_utils, invalid_missing_rpar)
+{
+    std::string_view input = "X' (, '";
+
+    std::vector<semantics::preproc_details::name_range> expected {
+        { "X'(,'", range(position(0, 0), position(0, 7)) },
+    };
+
+    const auto result = processing::get_operands_list(input, 0, get_range_provider(input.length(), 0, 15));
+
+    EXPECT_EQ(result, expected);
+}

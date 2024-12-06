@@ -24,33 +24,34 @@
 
 namespace hlasm_plugin::parser_library::processing {
 namespace {
-size_t get_quoted_string_end(std::string_view s)
+size_t get_quoted_string_end(std::string_view s, size_t last_quote)
 {
-    auto closing_quote = std::string_view::npos;
-
-    s.remove_prefix(1);
-    while (closing_quote == std::string_view::npos)
+    do
     {
-        closing_quote = s.find_first_of("'");
+        last_quote = s.find_first_of("'", last_quote + 1);
 
-        if (closing_quote == std::string_view::npos || closing_quote == s.length() - 1
-            || s[closing_quote + 1] != '\'') // ignore double quotes
+        if (last_quote == std::string_view::npos || last_quote == s.length() - 1
+            || s[last_quote + 1] != '\'') // ignore double quotes
             break;
+        ++last_quote;
+    } while (last_quote != std::string_view::npos);
 
-        s = s.substr(closing_quote + 1);
-        closing_quote = std::string_view::npos;
-    }
-
-    return closing_quote;
+    return last_quote;
 }
 
 size_t get_argument_length(std::string_view s)
 {
     auto string_end_pos = std::string_view::npos;
     if (auto string_start_pos = s.find_first_of("'"); string_start_pos != std::string_view::npos)
-        string_end_pos = get_quoted_string_end(s);
+        string_end_pos = get_quoted_string_end(s, string_start_pos);
 
-    return string_end_pos == std::string_view::npos ? s.length() : s.find_first_of(")", string_end_pos) + 1;
+    if (string_end_pos == std::string_view::npos)
+        return s.length();
+
+    if (const auto rpar = s.find_first_of(")", string_end_pos); rpar != std::string_view::npos)
+        return rpar + 1;
+
+    return s.length();
 }
 
 std::string_view extract_operand_and_argument(std::string_view s)
@@ -66,8 +67,12 @@ std::string_view extract_operand_and_argument(std::string_view s)
         return s.substr(0, separator_pos);
 
     if (parenthesis > separator_pos)
+    {
+        if (separator_pos + 1 == parenthesis && s[separator_pos] == ',')
+            return s.substr(0, separator_pos);
         if (auto prev_char = s.find_last_not_of(separators, parenthesis - 1); prev_char > separator_pos)
             return s.substr(0, separator_pos);
+    }
 
     return s.substr(0, get_argument_length(s));
 }
