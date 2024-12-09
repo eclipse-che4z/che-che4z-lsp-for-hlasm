@@ -1309,3 +1309,18 @@ Y        DS    C
     EXPECT_EQ(outhere1, location(position(5, 0), opencode));
     EXPECT_EQ(outhere2, location(position(9, 0), opencode));
 }
+
+TEST(lookahead, incomplete_data_definition)
+{
+    std::string input(
+        R"(
+&A SETA L'X
+X  DS)");
+
+    analyzer a(input);
+    a.analyze();
+
+    EXPECT_EQ(get_var_value<A_t>(a.hlasm_ctx(), "A"), 1);
+
+    EXPECT_TRUE(matches_message_codes(a.diags(), { "A010", "W013" }));
+}

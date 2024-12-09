@@ -227,11 +227,9 @@ void lookahead_processor::assign_EQU_attributes(context::id_index symbol_name, c
 
 void lookahead_processor::assign_data_def_attributes(context::id_index symbol_name, const resolved_statement& statement)
 {
-    if (statement.operands_ref().value.empty())
-        return;
+    const auto& ops = statement.operands_ref().value;
 
-    auto data_op = statement.operands_ref().value.front()->access_data_def();
-
+    const auto data_op = ops.empty() ? nullptr : ops.front()->access_data_def();
     if (!data_op)
     {
         register_attr_ref(symbol_name,
