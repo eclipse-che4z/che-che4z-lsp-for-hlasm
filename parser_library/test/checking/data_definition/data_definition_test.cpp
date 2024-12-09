@@ -625,3 +625,16 @@ TEST EQU  *-X
     EXPECT_TRUE(a.diags().empty());
     EXPECT_EQ(get_symbol_abs(a.hlasm_ctx(), "TEST"), 120);
 }
+
+TEST(data_definition, dependency_redefinition)
+{
+    std::string input = R"(
+O2  DS  AL(O1)
+O2  DS  AL(O1)
+O1  EQU 1
+)";
+    analyzer a(input);
+    a.analyze();
+
+    EXPECT_TRUE(matches_message_codes(a.diags(), { "E031" }));
+}

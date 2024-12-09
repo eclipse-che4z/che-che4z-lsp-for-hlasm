@@ -303,6 +303,8 @@ void asm_processor::process_data_instruction(rebuilt_statement&& stmt)
         if (!hlasm_ctx.ord_ctx.symbol_defined(label))
         {
             auto data_op = stmt.operands_ref().value.front()->access_data_def();
+            l_dep = data_op->value->length.get();
+            s_dep = data_op->value->scale.get();
 
             context::symbol_attributes::type_attr type =
                 ebcdic_encoding::to_ebcdic((unsigned char)data_op->value->get_type_attribute());
@@ -314,11 +316,14 @@ void asm_processor::process_data_instruction(rebuilt_statement&& stmt)
                 || !has_deps(data_op->value->length->get_dependencies(dep_solver), length_has_self_reference))
             {
                 len = data_op->value->get_length_attribute(dep_solver, drop_diagnostic_op);
+                l_dep = nullptr;
             }
+
             if (data_op->value->scale
                 && !has_deps(data_op->value->scale->get_dependencies(dep_solver), scale_has_self_reference))
             {
                 scale = data_op->value->get_scale_attribute(dep_solver, drop_diagnostic_op);
+                s_dep = nullptr;
             }
             create_symbol(stmt.stmt_range_ref(),
                 label,
@@ -331,23 +336,21 @@ void asm_processor::process_data_instruction(rebuilt_statement&& stmt)
 
             if (length_has_self_reference
                 && !data_op->value->length->get_dependencies(dep_solver).contains_dependencies())
+            {
                 hlasm_ctx.ord_ctx.get_symbol(label)->set_length(
                     data_op->value->get_length_attribute(dep_solver, drop_diagnostic_op));
+                l_dep = nullptr;
+            }
             if (scale_has_self_reference
                 && !data_op->value->scale->get_dependencies(dep_solver).contains_dependencies())
+            {
                 hlasm_ctx.ord_ctx.get_symbol(label)->set_scale(
                     data_op->value->get_scale_attribute(dep_solver, drop_diagnostic_op));
+                s_dep = nullptr;
+            }
         }
         else
             add_diagnostic(diagnostic_op::error_E031("symbol", stmt.label_ref().field_range));
-
-        auto data_op = operands.front()->access_data_def();
-
-        if (data_op->value->length && data_op->value->length->get_dependencies(dep_solver).contains_dependencies())
-            l_dep = data_op->value->length.get();
-
-        if (data_op->value->scale && data_op->value->scale->get_dependencies(dep_solver).contains_dependencies())
-            s_dep = data_op->value->scale.get();
     }
 
     // TODO issue warning when alignment is bigger than section's alignment
