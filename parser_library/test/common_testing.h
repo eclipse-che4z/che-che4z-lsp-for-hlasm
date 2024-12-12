@@ -33,7 +33,6 @@
 #include "analyzer.h"
 #include "context/common_types.h"
 #include "diagnostic.h"
-#include "ebcdic_encoding.h"
 #include "utils/task.h"
 
 namespace hlasm_plugin::utils {

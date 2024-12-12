@@ -20,6 +20,7 @@
 #include "context/ordinary_assembly/location_counter.h"
 #include "context/ordinary_assembly/section.h"
 #include "context/variables/set_symbol.h"
+#include "ebcdic_encoding.h"
 
 // test for
 // symbol data attributes

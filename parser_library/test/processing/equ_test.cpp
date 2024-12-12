@@ -17,6 +17,7 @@
 #include "../common_testing.h"
 #include "context/hlasm_context.h"
 #include "context/ordinary_assembly/symbol.h"
+#include "ebcdic_encoding.h"
 
 // tests for EQU instruction
 
