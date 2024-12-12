@@ -7,6 +7,7 @@
 - Infinite loop on invalid preprocessor operands
 - The language server crashes when a redefined data constant has a dependency
 - Infinite loop when an incomplete data definition is found in the lookahead mode
+- Origin of macro statements is tracked incorrectly
 
 ## [1.15.1](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/compare/1.15.0...1.15.1) (2024-11-22)
 

@@ -100,7 +100,7 @@ public:
 
 private:
     void add_file(file_info file_i);
-    void distribute_macro_i(macro_info_ptr macro_i);
+    void distribute_macro_i(const macro_info_ptr& macro_i);
     void distribute_file_occurrences(const file_occurrences_t& occurrences);
 
     occurrence_scope_t find_occurrence_with_scope(

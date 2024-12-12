@@ -183,7 +183,7 @@ TEST(system_variable, sysstmt_copy)
 )";
 
     mock_parse_lib_provider lib_prov_instance { { copy1_filename, copy1_source }, { copy2_filename, copy2_source } };
-    analyzer a(input, analyzer_options { resource_location("ipnut"), &lib_prov_instance });
+    analyzer a(input, analyzer_options { resource_location("input"), &lib_prov_instance });
     a.analyze();
     EXPECT_EQ(a.diags().size(), (size_t)0);
 

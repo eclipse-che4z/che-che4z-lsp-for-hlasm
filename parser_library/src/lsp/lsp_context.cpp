@@ -565,12 +565,12 @@ bool files_present(const std::unordered_map<utils::resource::resource_location, 
     return present;
 }
 
-void lsp_context::distribute_macro_i(macro_info_ptr macro_i)
+void lsp_context::distribute_macro_i(const macro_info_ptr& macro_i)
 {
     assert(files_present(m_files, macro_i->file_scopes_));
 
     for (const auto& [file, slices] : macro_i->file_scopes_)
-        m_files[file]->update_slices(file_slice_t::transform_slices(slices, macro_i));
+        m_files[file]->update_slices(file_slice_t::transform_slices(slices, macro_i, file));
 
     distribute_file_occurrences(macro_i->file_occurrences_);
 }

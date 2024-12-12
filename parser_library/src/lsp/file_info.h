@@ -15,6 +15,7 @@
 #ifndef LSP_FILE_INFO_H
 #define LSP_FILE_INFO_H
 
+#include <compare>
 #include <functional>
 #include <map>
 #include <memory>
@@ -43,6 +44,8 @@ struct line_range
 {
     size_t begin;
     size_t end;
+
+    auto operator<=>(const line_range&) const noexcept = default;
 };
 
 struct macro_range
@@ -50,9 +53,6 @@ struct macro_range
     context::statement_id begin;
     context::statement_id end;
 };
-
-bool operator==(const line_range& lhs, const line_range& rhs);
-bool operator<(const line_range& lhs, const line_range& rhs);
 
 struct file_slice_t
 {
@@ -65,8 +65,11 @@ struct file_slice_t
     // range of slice within file
     line_range file_lines;
 
-    static file_slice_t transform_slice(const macro_slice_t& slice, macro_info_ptr macro_i);
-    static std::vector<file_slice_t> transform_slices(const std::vector<macro_slice_t>& slices, macro_info_ptr macro_i);
+    static file_slice_t transform_slice(
+        const macro_slice_t& slice, const macro_info_ptr& macro_i, const utils::resource::resource_location& f);
+    static std::vector<file_slice_t> transform_slices(const std::vector<macro_slice_t>& slices,
+        const macro_info_ptr& macro_i,
+        const utils::resource::resource_location& f);
 };
 
 enum class file_type

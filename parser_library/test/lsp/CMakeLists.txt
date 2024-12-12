@@ -21,6 +21,7 @@ target_sources(library_test PRIVATE
     lsp_context_instr_test.cpp
     lsp_context_macro_documentation_test.cpp
     lsp_context_macro_in_opencode_test.cpp
+    lsp_context_macro_map_test.cpp
     lsp_context_macro_operands_test.cpp
     lsp_context_nested_macro_test.cpp
     lsp_context_ord_sym_test.cpp
