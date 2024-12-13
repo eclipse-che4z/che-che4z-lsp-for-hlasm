@@ -52,10 +52,6 @@ export async function sha256(s: string): Promise<string> {
     return result;
 }
 
-export function decodeBase64(s: string): string {
-    return self.atob(s);
-}
-
 export function textFromHex(s: string): string {
     return textDecode(arrayFromHex(s));
 }

@@ -12,39 +12,22 @@
  *   Broadcom, Inc. - initial API and implementation
  */
 
-import TelemetryReporter, { TelemetryEventMeasurements, TelemetryEventProperties } from '@vscode/extension-telemetry';
-import { decodeBase64 } from './tools';
+type Strings = {
+    readonly [key: string]: string | undefined;
+}
 
-const TELEMETRY_DEFAULT_KEY: string = "NOT_TELEMETRY_KEY";
-
-// The following line is replaced by base64 encoded telemetry key in the CI
-const TELEMETRY_KEY_ENCODED = TELEMETRY_DEFAULT_KEY;
+type Numbers = {
+    readonly [key: string]: number | undefined;
+}
 
 export interface Telemetry {
-    reportEvent: (eventName: string, properties?: TelemetryEventProperties, measurements?: TelemetryEventMeasurements) => void,
-    reportErrorEvent: (eventName: string, properties?: TelemetryEventProperties, measurements?: TelemetryEventMeasurements) => void,
-    reportException: (error: Error, properties?: TelemetryEventProperties, measurements?: TelemetryEventMeasurements) => void,
+    reportEvent: (eventName: string, properties?: Strings, measurements?: Numbers) => void,
+    reportErrorEvent: (eventName: string, properties?: Strings, measurements?: Numbers) => void,
+    reportException: (error: Error, properties?: Strings, measurements?: Numbers) => void,
     dispose: () => void,
 }
 
-export function createTelemetry(): Telemetry {
-    try { // This is mainly to handle Theia's lack of support
-        if (TELEMETRY_KEY_ENCODED !== TELEMETRY_DEFAULT_KEY) {
-            const reporter = new TelemetryReporter(decodeBase64(TELEMETRY_KEY_ENCODED).trim());
-            return {
-                reportEvent: reporter.sendTelemetryEvent.bind(reporter),
-                reportErrorEvent: reporter.sendTelemetryErrorEvent.bind(reporter),
-                reportException: (error: Error, properties?: TelemetryEventProperties, measurements?: TelemetryEventMeasurements) => {
-                    reporter.sendTelemetryErrorEvent(error.name, { ...properties, errorMessage: error.message, errorStack: error.stack }, measurements);
-                },
-                dispose: reporter.dispose.bind(reporter),
-            };
-        }
-    }
-    catch (e) {
-        console.log('Error encountered while creating TelemetryReporter:', e);
-    }
-
+export function createDummyTelemetry(): Telemetry {
     return {
         reportEvent: () => { },
         reportErrorEvent: () => { },
@@ -52,4 +35,3 @@ export function createTelemetry(): Telemetry {
         dispose: () => { }
     };
 }
-

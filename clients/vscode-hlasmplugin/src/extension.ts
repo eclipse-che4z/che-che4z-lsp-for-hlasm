@@ -23,7 +23,7 @@ import { EventsHandler, getConfig } from './eventsHandler';
 import { ServerVariant } from './serverFactory.common';
 import { createLanguageServer } from './serverFactory';
 import { HLASMDebugAdapterFactory } from './hlasmDebugAdapterFactory';
-import { Telemetry, createTelemetry } from './telemetry';
+import { Telemetry, createDummyTelemetry } from './telemetry';
 import { LanguageClientErrorHandler } from './languageClientErrorHandler';
 import { HLASMVirtualFileContentProvider } from './hlasmVirtualFileContentProvider';
 import { downloadDependencies } from './hlasmDownloadCommands';
@@ -80,6 +80,8 @@ function whenString(x: any): string | undefined {
         return undefined;
 }
 
+declare var telemetryProvider: undefined | (() => Telemetry);
+
 /**
  * ACTIVATION
  * activates the extension
@@ -90,7 +92,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<HlasmE
     const serverVariant = getConfig<ServerVariant>('serverVariant', 'native');
     const version = whenString(context.extension.packageJSON?.version);
 
-    const telemetry = createTelemetry();
+    const telemetry = typeof telemetryProvider !== 'undefined' ? telemetryProvider() : createDummyTelemetry();
     context.subscriptions.push(telemetry);
 
     telemetry.reportEvent('hlasm.activated', {

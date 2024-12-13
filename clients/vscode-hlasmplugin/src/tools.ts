@@ -36,10 +36,6 @@ export async function sha256(s: string): Promise<string> {
     return crypto.createHash('sha256').update(s).digest().toString('hex')
 }
 
-export function decodeBase64(s: string): string {
-    return Buffer.from(s, "base64").toString();
-}
-
 export function textFromHex(s: string): string {
     return Buffer.from(s, 'hex').toString();
 }
