@@ -36,12 +36,14 @@ TEST(ca_constant, undefined_attributes)
     EXPECT_EQ(references.size(), 0U);
 }
 
-class collectable_mock : public diagnosable_op_impl
+class collectable_mock final : public diagnostic_op_consumer
 {
-    void collect_diags() const override {}
+    std::vector<diagnostic_op> m_diags;
 
 public:
-    void operator()(diagnostic_op d) { add_diagnostic(d); }
+    auto& diags() { return m_diags; }
+
+    void add_diagnostic(diagnostic_op d) override { m_diags.emplace_back(std::move(d)); }
 };
 
 TEST(ca_constant, self_def_term_invalid_input)

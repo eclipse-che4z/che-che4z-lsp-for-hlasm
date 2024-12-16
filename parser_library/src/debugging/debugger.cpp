@@ -481,7 +481,7 @@ public:
             : msg(msg)
         {}
 
-        void add_diagnostic(diagnostic_op d) const override
+        void add_diagnostic(diagnostic_op d) override
         {
             if (d.severity != diagnostic_severity::error)
                 return;

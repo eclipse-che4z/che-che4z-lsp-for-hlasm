@@ -20,7 +20,8 @@
 
 #include "context/common_types.h"
 #include "context/ordinary_assembly/dependable.h"
-#include "diagnosable_impl.h"
+#include "diagnostic_consumer.h"
+#include "range.h"
 
 namespace hlasm_plugin::parser_library::expressions {
 

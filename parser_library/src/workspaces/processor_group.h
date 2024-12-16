@@ -25,8 +25,6 @@
 #include <vector>
 
 #include "config/proc_grps.h"
-#include "diagnosable_impl.h"
-#include "file_manager.h"
 #include "library.h"
 #include "preprocessor_options.h"
 #include "utils/bk_tree.h"
@@ -41,14 +39,14 @@ struct preprocessor_options;
 namespace hlasm_plugin::parser_library::workspaces {
 
 // Represents a named set of libraries (processor_group)
-class processor_group : public diagnosable_impl
+class processor_group
 {
 public:
     processor_group(const std::string& pg_name,
         const config::assembler_options& asm_options,
         const std::vector<config::preprocessor_options>& pp);
 
-    void collect_diags() const override;
+    void copy_diagnostics(std::vector<diagnostic>&) const;
 
     void add_library(std::shared_ptr<library> library);
 
@@ -68,6 +66,8 @@ public:
     bool refresh_needed(const std::unordered_set<utils::resource::resource_location>& no_filename_rls,
         const std::vector<utils::resource::resource_location>& original_rls) const;
 
+    void add_external_diagnostic(diagnostic d);
+
 private:
     std::vector<std::shared_ptr<library>> m_libs;
     std::map<utils::resource::resource_location, size_t> m_lib_locations;
@@ -78,6 +78,8 @@ private:
     static constexpr size_t suggestion_limit = 32;
 
     std::optional<utils::bk_tree<std::string, utils::levenshtein_distance_t<suggestion_limit>>> m_suggestions;
+
+    std::vector<diagnostic> m_external_diags;
 };
 } // namespace hlasm_plugin::parser_library::workspaces
 #endif // !HLASMPLUGIN_PARSERLIBRARY_PROCESSOR_GROUP_H

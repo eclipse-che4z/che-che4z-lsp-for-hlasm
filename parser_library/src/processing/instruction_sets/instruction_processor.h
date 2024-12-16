@@ -27,11 +27,9 @@ class parser_library;
 
 // interface for processing instructions
 // processing is divided into classes for assembler, conditional assembly, machine, macro instruction processing
-class instruction_processor : public diagnosable_ctx
+class instruction_processor
 {
     virtual void process(std::shared_ptr<const processing::resolved_statement> stmt) = 0;
-
-    void collect_diags() const override {}
 
 protected:
     analyzing_context ctx;
@@ -40,20 +38,26 @@ protected:
     parse_lib_provider& lib_provider;
     library_info_transitional lib_info;
     expressions::evaluation_context eval_ctx;
+    diagnosable_ctx& diag_ctx;
 
-    instruction_processor(
-        const analyzing_context& ctx, branching_provider& branch_provider, parse_lib_provider& lib_provider)
-        : diagnosable_ctx(*ctx.hlasm_ctx)
-        , ctx(ctx)
+    instruction_processor(const analyzing_context& ctx,
+        branching_provider& branch_provider,
+        parse_lib_provider& lib_provider,
+        diagnosable_ctx& diag_ctx)
+        : ctx(ctx)
         , hlasm_ctx(*ctx.hlasm_ctx)
         , branch_provider(branch_provider)
         , lib_provider(lib_provider)
         , lib_info(lib_provider)
-        , eval_ctx { *ctx.hlasm_ctx, lib_info, *this }
+        , eval_ctx { *ctx.hlasm_ctx, lib_info, diag_ctx }
+        , diag_ctx(diag_ctx)
     {}
+    ~instruction_processor() = default;
 
     void register_literals(
         const processing::resolved_statement& stmt, context::alignment loctr_alignment, size_t unique_id);
+
+    void add_diagnostic(diagnostic_op d) const { diag_ctx.add_diagnostic(std::move(d)); }
 };
 
 } // namespace hlasm_plugin::parser_library::processing

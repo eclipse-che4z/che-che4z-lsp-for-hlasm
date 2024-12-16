@@ -31,7 +31,6 @@
 #include "config/b4g_config.h"
 #include "config/pgm_conf.h"
 #include "config/proc_grps.h"
-#include "diagnosable.h"
 #include "diagnostic.h"
 #include "lib_config.h"
 #include "processor_group.h"

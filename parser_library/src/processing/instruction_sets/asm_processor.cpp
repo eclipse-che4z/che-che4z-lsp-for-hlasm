@@ -185,7 +185,7 @@ void asm_processor::process_EQU(rebuilt_statement&& stmt)
         override_symbol_candidates dep_solver_override(dep_solver);
         if (expr_op && !expr_op->has_dependencies(dep_solver_override, nullptr))
         {
-            auto t_value = expr_op->expression->evaluate(dep_solver_override, *this);
+            auto t_value = expr_op->expression->evaluate(dep_solver_override, diag_ctx);
             if (t_value.value_kind() == context::symbol_value_kind::ABS && t_value.get_abs() >= 0
                 && t_value.get_abs() <= 255)
                 t_attr = (context::symbol_attributes::type_attr)t_value.get_abs();
@@ -206,7 +206,7 @@ void asm_processor::process_EQU(rebuilt_statement&& stmt)
         override_symbol_candidates dep_solver_override(dep_solver);
         if (expr_op && !expr_op->has_dependencies(dep_solver_override, nullptr))
         {
-            auto length_value = expr_op->expression->evaluate(dep_solver_override, *this);
+            auto length_value = expr_op->expression->evaluate(dep_solver_override, diag_ctx);
             if (length_value.value_kind() == context::symbol_value_kind::ABS && length_value.get_abs() >= 0
                 && length_value.get_abs() <= 65535)
                 length_attr = (context::symbol_attributes::len_attr)length_value.get_abs();
@@ -247,7 +247,7 @@ void asm_processor::process_EQU(rebuilt_statement&& stmt)
         auto stmt_range = stmt.stmt_range_ref();
 
         if (!holder.contains_dependencies())
-            create_symbol(stmt_range, symbol_name, expr_op->expression->evaluate(dep_solver, *this), attrs);
+            create_symbol(stmt_range, symbol_name, expr_op->expression->evaluate(dep_solver, diag_ctx), attrs);
         else if (holder.is_address() && holder.unresolved_spaces.empty())
             create_symbol(stmt_range, symbol_name, *holder.unresolved_address, attrs);
         else if (create_symbol(stmt_range, symbol_name, context::symbol_value(), attrs))
@@ -393,7 +393,7 @@ void asm_processor::process_data_instruction(rebuilt_statement&& stmt)
             has_length_dependencies |= data_op->get_length_dependencies(op_solver).contains_dependencies();
 
             // some types require operands that consist only of one symbol
-            (void)data_op->value->check_single_symbol_ok(diagnostic_collector(this));
+            (void)data_op->value->check_single_symbol_ok(diagnostic_collector(&diag_ctx));
         }
 
         const auto* const b = std::to_address(start);
@@ -449,15 +449,16 @@ void asm_processor::process_COPY(rebuilt_statement&& stmt)
     if (stmt.operands_ref().value.size() == 1 && stmt.operands_ref().value.front()->type == semantics::operand_type::ASM
         && stmt.operands_ref().value.front()->access_asm()->access_expr())
     {
-        if (auto extract = extract_copy_id(stmt, this); extract.has_value())
+        if (auto extract = extract_copy_id(stmt, &diag_ctx); extract.has_value())
         {
             if (ctx.hlasm_ctx->copy_members().contains(extract->name))
-                common_copy_postprocess(true, *extract, *ctx.hlasm_ctx, this);
+                common_copy_postprocess(true, *extract, *ctx.hlasm_ctx, &diag_ctx);
             else
             {
-                branch_provider.request_external_processing(extract->name,
-                    processing_kind::COPY,
-                    [extract, this](bool result) { common_copy_postprocess(result, *extract, *ctx.hlasm_ctx, this); });
+                branch_provider.request_external_processing(
+                    extract->name, processing_kind::COPY, [extract, this](bool result) {
+                        common_copy_postprocess(result, *extract, *ctx.hlasm_ctx, &diag_ctx);
+                    });
             }
         }
     }
@@ -713,8 +714,9 @@ asm_processor::asm_processor(const analyzing_context& ctx,
     statement_fields_parser& parser,
     opencode_provider& open_code,
     const processing_manager& proc_mgr,
-    output_handler* output)
-    : low_language_processor(ctx, branch_provider, lib_provider, parser, proc_mgr)
+    output_handler* output,
+    diagnosable_ctx& diag_ctx)
+    : low_language_processor(ctx, branch_provider, lib_provider, parser, proc_mgr, diag_ctx)
     , table_(create_table())
     , open_code_(&open_code)
     , output(output)
@@ -1097,7 +1099,7 @@ void asm_processor::process_LTORG(rebuilt_statement&& stmt)
                 context::symbol_attributes(context::symbol_origin::EQU, 'U'_ebcdic, 1));
     }
 
-    hlasm_ctx.ord_ctx.generate_pool(*this, hlasm_ctx.using_current(), lib_info);
+    hlasm_ctx.ord_ctx.generate_pool(diag_ctx, hlasm_ctx.using_current(), lib_info);
 
     context::ordinary_assembly_dependency_solver dep_solver(hlasm_ctx.ord_ctx, lib_info);
     hlasm_ctx.ord_ctx.symbol_dependencies().add_postponed_statement(

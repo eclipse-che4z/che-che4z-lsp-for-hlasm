@@ -39,7 +39,7 @@ using provider_ptr = std::unique_ptr<statement_provider>;
 
 // (re-)parsing of deferred statement fields
 
-class statement_fields_parser final : public diagnosable_impl
+class statement_fields_parser final
 {
     std::unique_ptr<parsing::parser_holder> m_parser_singleline;
     std::unique_ptr<parsing::parser_holder> m_parser_multiline;
@@ -62,8 +62,6 @@ public:
 
     explicit statement_fields_parser(context::hlasm_context* hlasm_ctx);
     ~statement_fields_parser();
-
-    void collect_diags() const override;
 };
 
 } // namespace hlasm_plugin::parser_library::processing

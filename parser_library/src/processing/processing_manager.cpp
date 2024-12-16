@@ -23,7 +23,6 @@
 #include "parsing/parser_impl.h"
 #include "statement_analyzers/lsp_analyzer.h"
 #include "statement_processors/copy_processor.h"
-#include "statement_processors/empty_processor.h"
 #include "statement_processors/lookahead_processor.h"
 #include "statement_processors/macrodef_processor.h"
 #include "statement_processors/ordinary_processor.h"
@@ -42,12 +41,13 @@ processing_manager::processing_manager(std::unique_ptr<opencode_provider> base_p
     parse_lib_provider& lib_provider,
     statement_fields_parser& parser,
     std::shared_ptr<std::vector<fade_message>> fade_msgs,
-    output_handler* output)
-    : diagnosable_ctx(*ctx.hlasm_ctx)
-    , ctx_(ctx)
+    output_handler* output,
+    diagnosable_ctx& diag_ctx)
+    : ctx_(ctx)
     , hlasm_ctx_(*ctx_.hlasm_ctx)
     , lib_provider_(lib_provider)
     , opencode_prov_(*base_provider)
+    , diag_ctx(diag_ctx)
     , lsp_analyzer_(*ctx_.hlasm_ctx, *ctx_.lsp_ctx, file_text)
     , stms_analyzers_({ &lsp_analyzer_ })
     , file_loc_(file_loc)
@@ -56,9 +56,10 @@ processing_manager::processing_manager(std::unique_ptr<opencode_provider> base_p
     switch (proc_kind)
     {
         case processing_kind::ORDINARY:
-            provs_.emplace_back(std::make_unique<macro_statement_provider>(ctx_, parser, lib_provider, *this, *this));
+            provs_.emplace_back(
+                std::make_unique<macro_statement_provider>(ctx_, parser, lib_provider, *this, diag_ctx));
             procs_.emplace_back(std::make_unique<ordinary_processor>(
-                ctx_, *this, lib_provider, *this, parser, opencode_prov_, *this, output));
+                ctx_, *this, lib_provider, *this, parser, opencode_prov_, *this, output, diag_ctx));
             break;
         case processing_kind::COPY:
             start_copy_member(copy_start_data { ctx.hlasm_ctx->ids().add(std::move(dep_name)), std::move(file_loc) });
@@ -71,7 +72,7 @@ processing_manager::processing_manager(std::unique_ptr<opencode_provider> base_p
             break;
     }
 
-    provs_.emplace_back(std::make_unique<copy_statement_provider>(ctx_, parser, lib_provider, *this, *this));
+    provs_.emplace_back(std::make_unique<copy_statement_provider>(ctx_, parser, lib_provider, *this, diag_ctx));
     provs_.emplace_back(std::move(base_provider));
 
     opencode_prov_.onetime_action();
@@ -198,7 +199,6 @@ statement_provider& processing_manager::find_provider() const
 void processing_manager::finish_processor()
 {
     procs_.back()->end_processing();
-    collect_diags_from_child(*procs_.back());
     procs_.pop_back();
 }
 
@@ -263,7 +263,8 @@ void processing_manager::start_lookahead(lookahead_start_data start)
         perform_opencode_jump(context::source_position(lookahead_stop_.end_index), lookahead_stop_);
 
     hlasm_ctx_.push_statement_processing(processing_kind::LOOKAHEAD);
-    procs_.emplace_back(std::make_unique<lookahead_processor>(ctx_, *this, *this, lib_provider_, std::move(start)));
+    procs_.emplace_back(
+        std::make_unique<lookahead_processor>(ctx_, *this, *this, lib_provider_, std::move(start), diag_ctx));
 }
 
 void processing_manager::finish_lookahead(lookahead_processing_result result)
@@ -288,7 +289,8 @@ void processing_manager::finish_lookahead(lookahead_processing_result result)
         {
             perform_opencode_jump(result.statement_position, std::move(result.snapshot));
 
-            add_diagnostic(diagnostic_op::error_E047(result.symbol_name.to_string_view(), result.symbol_range));
+            diag_ctx.add_diagnostic(
+                diagnostic_op::error_E047(result.symbol_name.to_string_view(), result.symbol_range));
         }
     }
     else
@@ -303,7 +305,7 @@ void processing_manager::finish_lookahead(lookahead_processing_result result)
 void processing_manager::start_copy_member(copy_start_data start)
 {
     hlasm_ctx_.push_statement_processing(processing_kind::COPY, std::move(start.member_loc));
-    procs_.emplace_back(std::make_unique<copy_processor>(ctx_, *this, std::move(start)));
+    procs_.emplace_back(std::make_unique<copy_processor>(ctx_, *this, std::move(start), diag_ctx));
 }
 
 void processing_manager::finish_copy_member(copy_processing_result result)
@@ -363,7 +365,7 @@ void processing_manager::start_macro_definition(
         hlasm_ctx_.push_statement_processing(processing_kind::MACRO);
 
     lsp_analyzer_.macrodef_started(start);
-    procs_.emplace_back(std::make_unique<macrodef_processor>(ctx_, *this, *this, std::move(start)));
+    procs_.emplace_back(std::make_unique<macrodef_processor>(ctx_, *this, *this, std::move(start), diag_ctx));
 }
 
 void processing_manager::jump_in_statements(context::id_index target, range symbol_range)
@@ -373,7 +375,7 @@ void processing_manager::jump_in_statements(context::id_index target, range symb
     {
         if (hlasm_ctx_.is_in_macro())
         {
-            add_diagnostic(diagnostic_op::error_E047(target.to_string_view(), symbol_range));
+            diag_ctx.add_diagnostic(diagnostic_op::error_E047(target.to_string_view(), symbol_range));
         }
         else
         {
@@ -396,7 +398,7 @@ void processing_manager::jump_in_statements(context::id_index target, range symb
                 && it->second.first != pending_seq_redifinition_state::lookahead_done)
             {
                 for (auto& d : it->second.second)
-                    diagnosable_impl::add_diagnostic(std::move(d));
+                    diag_ctx.add_raw_diagnostic(std::move(d));
                 it->second.second.clear();
             }
             else
@@ -428,7 +430,7 @@ void processing_manager::register_sequence_symbol(context::id_index target, rang
     else if (!(*symbol->access_opencode_symbol() == *new_symbol))
     {
         if (!lookahead_active())
-            add_diagnostic(diagnostic_op::error_E045(target.to_string_view(), symbol_range));
+            diag_ctx.add_diagnostic(diagnostic_op::error_E045(target.to_string_view(), symbol_range));
         else if (auto it = m_lookahead_seq_redifinitions.find(target); it == m_lookahead_seq_redifinitions.end()
                  || it->second.first != pending_seq_redifinition_state::lookahead_pending)
         {
@@ -460,12 +462,6 @@ void processing_manager::perform_opencode_jump(
     opencode_prov_.rewind_input(statement_position);
 
     hlasm_ctx_.apply_source_snapshot(std::move(snapshot));
-}
-
-void processing_manager::collect_diags() const
-{
-    for (auto& proc : procs_)
-        collect_diags_from_child(*proc);
 }
 
 parsing::hlasmparser_multiline& processing_manager::opencode_parser() // for testing only

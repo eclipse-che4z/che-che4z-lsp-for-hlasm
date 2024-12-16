@@ -19,17 +19,19 @@
 
 namespace hlasm_plugin::parser_library {
 
-void diagnosable_ctx::add_diagnostic(diagnostic diagnostic) const
+void diagnosable_ctx::add_raw_diagnostic(diagnostic d) { collected_diags.push_back(std::move(d)); }
+
+void diagnosable_ctx::add_diagnostic(diagnostic diagnostic)
 {
-    diagnosable_impl::add_diagnostic(add_stack_details(
+    collected_diags.push_back(add_stack_details(
         diagnostic_op(
             diagnostic.severity, std::move(diagnostic.code), std::move(diagnostic.message), diagnostic.diag_range),
         ctx_.processing_stack()));
 }
 
-void diagnosable_ctx::add_diagnostic(diagnostic_op diagnostic) const
+void diagnosable_ctx::add_diagnostic(diagnostic_op diagnostic)
 {
-    diagnosable_impl::add_diagnostic(add_stack_details(std::move(diagnostic), ctx_.processing_stack()));
+    collected_diags.push_back(add_stack_details(std::move(diagnostic), ctx_.processing_stack()));
 }
 
 } // namespace hlasm_plugin::parser_library

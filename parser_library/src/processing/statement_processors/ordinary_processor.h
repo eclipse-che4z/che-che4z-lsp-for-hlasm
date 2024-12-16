@@ -63,7 +63,8 @@ public:
         statement_fields_parser& parser,
         opencode_provider& open_code,
         processing_manager& proc_mgr,
-        output_handler* output);
+        output_handler* output,
+        diagnosable_ctx& diag_ctx);
 
     std::optional<processing_status> get_processing_status(
         const std::optional<context::id_index>& instruction, const range& r) const override;
@@ -75,8 +76,6 @@ public:
 
     static std::optional<processing_status> get_instruction_processing_status(
         context::id_index instruction, context::hlasm_context& hlasm_ctx);
-
-    void collect_diags() const override;
 
 private:
     void process_postponed_statements(const std::vector<

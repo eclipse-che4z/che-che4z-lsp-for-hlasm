@@ -26,7 +26,7 @@ class processing_state_listener;
 class opencode_provider;
 
 // processor of conditional assembly instructions
-class ca_processor : public instruction_processor
+class ca_processor final : public instruction_processor
 {
     using process_table_t =
         std::unordered_map<context::id_index, std::function<void(const processing::resolved_statement&)>>;
@@ -39,7 +39,8 @@ public:
         branching_provider& branch_provider,
         parse_lib_provider& lib_provider,
         processing_state_listener& listener,
-        opencode_provider& open_code);
+        opencode_provider& open_code,
+        diagnosable_ctx& diag_ctx);
 
     void process(std::shared_ptr<const processing::resolved_statement> stmt) override;
 

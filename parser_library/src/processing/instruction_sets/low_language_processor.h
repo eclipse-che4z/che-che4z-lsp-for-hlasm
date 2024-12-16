@@ -32,7 +32,9 @@ protected:
         branching_provider& branch_provider,
         parse_lib_provider& lib_provider,
         statement_fields_parser& parser,
-        const processing_manager& proc_mgr);
+        const processing_manager& proc_mgr,
+        diagnosable_ctx& diag_ctx);
+    ~low_language_processor() = default;
 
     rebuilt_statement preprocess(std::shared_ptr<const processing::resolved_statement> stmt);
 

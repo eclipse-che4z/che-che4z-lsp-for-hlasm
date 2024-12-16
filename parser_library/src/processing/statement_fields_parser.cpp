@@ -138,6 +138,4 @@ statement_fields_parser::parse_result statement_fields_parser::parse_operand_fie
     };
 }
 
-void statement_fields_parser::collect_diags() const {}
-
 } // namespace hlasm_plugin::parser_library::processing

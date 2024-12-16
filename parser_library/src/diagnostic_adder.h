@@ -15,11 +15,9 @@
 #ifndef HLASMPLUGIN_PARSERLIBRARY_DIAGNOSTIC_ADDER_H
 #define HLASMPLUGIN_PARSERLIBRARY_DIAGNOSTIC_ADDER_H
 
-#include <functional>
-#include <vector>
+#include <type_traits>
 
-#include "diagnosable.h"
-#include "protocol.h"
+#include "diagnostic_consumer.h"
 
 namespace hlasm_plugin::parser_library {
 
@@ -44,8 +42,8 @@ public:
 
     diagnostic_adder() = default;
 
-    template<typename F, typename = std::enable_if<std::is_invocable_r_v<diagnostic_op, F, range>>>
-    void operator()(F&& f)
+    template<typename F>
+    void operator()(F&& f) requires std::is_invocable_r_v<diagnostic_op, F, range>
     {
         diagnostics_present = true;
         if (op_diagnoser_)

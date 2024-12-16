@@ -19,8 +19,8 @@
 using namespace hlasm_plugin::parser_library;
 using namespace hlasm_plugin::parser_library::processing;
 
-empty_processor::empty_processor(const analyzing_context& ctx)
-    : statement_processor(processing_kind::ORDINARY, ctx)
+empty_processor::empty_processor(const analyzing_context& ctx, diagnosable_ctx& diag_ctx)
+    : statement_processor(processing_kind::ORDINARY, ctx, diag_ctx)
 {}
 
 std::optional<context::id_index> empty_processor::resolve_concatenation(
@@ -42,5 +42,3 @@ void empty_processor::end_processing() {}
 bool empty_processor::terminal_condition(const statement_provider_kind) const { return true; }
 
 bool empty_processor::finished() { return true; }
-
-void empty_processor::collect_diags() const {}

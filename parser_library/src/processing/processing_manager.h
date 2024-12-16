@@ -46,7 +46,7 @@ namespace hlasm_plugin::parser_library::processing {
 // is constructed with base statement provider and has stack of statement processors which take statements from
 // providers and go through the code creating other providers and processors it holds those providers and processors and
 // manages the whole processing
-class processing_manager final : public processing_state_listener, public branching_provider, public diagnosable_ctx
+class processing_manager final : public processing_state_listener, public branching_provider
 {
 public:
     processing_manager(std::unique_ptr<opencode_provider> base_provider,
@@ -58,7 +58,8 @@ public:
         parse_lib_provider& lib_provider,
         statement_fields_parser& parser,
         std::shared_ptr<std::vector<fade_message>> fade_msgs,
-        output_handler* output);
+        output_handler* output,
+        diagnosable_ctx& diag_ctx);
 
     [[nodiscard]] utils::task co_step();
 
@@ -72,8 +73,6 @@ public:
 
     void aread_cb(size_t line, std::string_view text) const;
 
-    void collect_diags() const override;
-
     void process_postponed_statements(const std::vector<
         std::pair<std::unique_ptr<context::postponed_statement>, context::dependency_evaluation_context>>& stmts);
 
@@ -84,6 +83,7 @@ private:
     context::hlasm_context& hlasm_ctx_;
     parse_lib_provider& lib_provider_;
     opencode_provider& opencode_prov_;
+    diagnosable_ctx& diag_ctx;
 
     std::vector<processor_ptr> procs_;
     std::vector<provider_ptr> provs_;

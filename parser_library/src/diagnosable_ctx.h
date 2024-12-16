@@ -15,7 +15,7 @@
 #ifndef HLASMPLUGIN_PARSERLIBRARY_DIAGNOSABLE_CTX_H
 #define HLASMPLUGIN_PARSERLIBRARY_DIAGNOSABLE_CTX_H
 
-#include "diagnosable_impl.h"
+#include "diagnostic_consumer.h"
 
 namespace hlasm_plugin::parser_library {
 
@@ -25,20 +25,22 @@ class hlasm_context;
 
 // abstract diagnosable class that enhances collected diagnostics
 // adds a stack of nested file positions that indicate where the diagnostic occured
-class diagnosable_ctx : public diagnosable_impl, public diagnostic_op_consumer
+class diagnosable_ctx final : public diagnostic_consumer, public diagnostic_op_consumer
 {
+    std::vector<diagnostic> collected_diags;
     context::hlasm_context& ctx_;
 
 public:
-    void add_diagnostic(diagnostic diagnostic) const override;
-    void add_diagnostic(diagnostic_op diagnostic) const override;
+    void add_raw_diagnostic(diagnostic diagnostic);
 
-protected:
+    void add_diagnostic(diagnostic diagnostic) final;
+    void add_diagnostic(diagnostic_op diagnostic) final;
+
+    std::vector<diagnostic>& diags() { return collected_diags; }
+
     diagnosable_ctx(context::hlasm_context& ctx)
         : ctx_(ctx)
     {}
-
-    virtual ~diagnosable_ctx() = default;
 
     friend class diagnostic_collector;
 };

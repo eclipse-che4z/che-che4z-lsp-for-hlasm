@@ -30,7 +30,7 @@ class using_label_checker final : public expressions::mach_expr_visitor, diagnos
     context::dependency_solver& solver;
     diagnostic_consumer_t<diagnostic_op>& diags;
 
-    void add_diagnostic(diagnostic_op) const override;
+    void add_diagnostic(diagnostic_op) override;
 
 public:
     using_label_checker(context::dependency_solver& solver, diagnostic_consumer_t<diagnostic_op>& diags)

@@ -48,7 +48,8 @@ public:
     macrodef_processor(const analyzing_context& ctx,
         processing_state_listener& listener,
         branching_provider& branching_provider_,
-        macrodef_start_data start);
+        macrodef_start_data start,
+        diagnosable_ctx& diag_ctx);
 
     std::optional<processing_status> get_processing_status(
         const std::optional<context::id_index>& instruction, const range& r) const override;
@@ -59,8 +60,6 @@ public:
 
     static processing_status get_macro_processing_status(
         const std::optional<context::id_index>& instruction, context::hlasm_context& hlasm_ctx);
-
-    void collect_diags() const override;
 
 private:
     bool process_statement(const context::hlasm_statement& statement);

@@ -32,10 +32,8 @@ struct diagnostic_op;
 template<typename T>
 class diagnostic_consumer_t
 {
-    // TODO The reason why this function is const is that all current implementations have mutable containers where
-    // the diagnostics are stored and large parts of the project depend on that constness of the function
 public:
-    virtual void add_diagnostic(T diagnostic) const = 0;
+    virtual void add_diagnostic(T diagnostic) = 0;
 
 protected:
     ~diagnostic_consumer_t() = default;
@@ -61,14 +59,14 @@ public:
     explicit diagnostic_consumer_transform(F f)
         : consumer(std::move(f))
     {}
-    void add_diagnostic(T diagnostic) const override { consumer(std::move(diagnostic)); };
+    void add_diagnostic(T diagnostic) override { consumer(std::move(diagnostic)); };
 };
 
 template<typename T>
 class drop_diagnostics_t final : public diagnostic_consumer_t<T>
 {
 public:
-    void add_diagnostic(T) const override { /* drop the diagnostic */ };
+    void add_diagnostic(T) override { /* drop the diagnostic */ };
 };
 
 inline constinit drop_diagnostics_t<diagnostic_op> drop_diagnostic_op;
@@ -78,8 +76,8 @@ template<typename T>
 class diagnostic_consumer_container final : public diagnostic_consumer_t<T>
 {
 public:
-    mutable std::vector<T> diags;
-    void add_diagnostic(T diagnostic) const override { diags.push_back(std::move(diagnostic)); };
+    std::vector<T> diags;
+    void add_diagnostic(T diagnostic) override { diags.push_back(std::move(diagnostic)); };
 };
 
 using diagnostic_op_consumer_container = diagnostic_consumer_container<diagnostic_op>;

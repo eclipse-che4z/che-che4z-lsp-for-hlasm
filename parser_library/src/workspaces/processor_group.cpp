@@ -18,6 +18,8 @@
 #include <span>
 #include <variant>
 
+#include "diagnostic.h"
+
 namespace hlasm_plugin::parser_library::workspaces {
 
 namespace {
@@ -136,10 +138,11 @@ bool processor_group::refresh_needed(const std::unordered_set<utils::resource::r
         });
 }
 
-void processor_group::collect_diags() const
+void processor_group::copy_diagnostics(std::vector<diagnostic>& diags) const
 {
     for (auto&& lib : m_libs)
-        lib->copy_diagnostics(diags());
+        lib->copy_diagnostics(diags);
+    std::ranges::copy(m_external_diags, std::back_inserter(diags));
 }
 
 void processor_group::add_library(std::shared_ptr<library> library)
@@ -148,5 +151,7 @@ void processor_group::add_library(std::shared_ptr<library> library)
     const auto& lib = m_libs.emplace_back(std::move(library));
     m_lib_locations[lib->get_location()] = next_id;
 }
+
+void processor_group::add_external_diagnostic(diagnostic d) { m_external_diags.push_back(std::move(d)); }
 
 } // namespace hlasm_plugin::parser_library::workspaces

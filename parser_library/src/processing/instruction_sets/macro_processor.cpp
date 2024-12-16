@@ -25,9 +25,11 @@
 
 namespace hlasm_plugin::parser_library::processing {
 
-macro_processor::macro_processor(
-    const analyzing_context& ctx, branching_provider& branch_provider, parse_lib_provider& lib_provider)
-    : instruction_processor(ctx, branch_provider, lib_provider)
+macro_processor::macro_processor(const analyzing_context& ctx,
+    branching_provider& branch_provider,
+    parse_lib_provider& lib_provider,
+    diagnosable_ctx& diag_ctx)
+    : instruction_processor(ctx, branch_provider, lib_provider, diag_ctx)
 {}
 
 void macro_processor::process(std::shared_ptr<const processing::resolved_statement> stmt)

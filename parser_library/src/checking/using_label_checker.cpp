@@ -19,7 +19,7 @@
 
 namespace hlasm_plugin::parser_library::checking {
 
-void using_label_checker::add_diagnostic(diagnostic_op) const {}
+void using_label_checker::add_diagnostic(diagnostic_op) {}
 
 void using_label_checker::visit(const expressions::mach_expr_constant&) {}
 void using_label_checker::visit(const expressions::mach_expr_data_attr& attr)

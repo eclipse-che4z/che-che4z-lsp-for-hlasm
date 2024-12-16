@@ -18,6 +18,7 @@
 #include <locale>
 #include <utility>
 
+#include "diagnostic_op.h"
 #include "file_manager.h"
 #include "utils/platform.h"
 #include "utils/projectors.h"

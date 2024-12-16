@@ -31,8 +31,9 @@ low_language_processor::low_language_processor(const analyzing_context& ctx,
     branching_provider& branch_provider,
     parse_lib_provider& lib_provider,
     statement_fields_parser& parser,
-    const processing_manager& proc_mgr)
-    : instruction_processor(ctx, branch_provider, lib_provider)
+    const processing_manager& proc_mgr,
+    diagnosable_ctx& diag_ctx)
+    : instruction_processor(ctx, branch_provider, lib_provider, diag_ctx)
     , parser(parser)
     , proc_mgr(proc_mgr)
 {}
@@ -138,7 +139,7 @@ low_language_processor::preprocessed_part low_language_processor::preprocess_inn
             range_provider(std::move(map), model->line_limits),
             0,
             processing_status(stmt.format_ref(), stmt.opcode_ref()),
-            *this);
+            diag_ctx);
         result.operands.emplace(std::move(operands));
         result.literals.emplace(std::move(literals));
         result.was_model = true;

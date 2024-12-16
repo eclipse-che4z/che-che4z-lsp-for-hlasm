@@ -28,11 +28,13 @@ struct macro_arguments
 };
 
 // processor of macro instructions
-class macro_processor : public instruction_processor
+class macro_processor final : public instruction_processor
 {
 public:
-    macro_processor(
-        const analyzing_context& ctx, branching_provider& branch_provider, parse_lib_provider& lib_provider);
+    macro_processor(const analyzing_context& ctx,
+        branching_provider& branch_provider,
+        parse_lib_provider& lib_provider,
+        diagnosable_ctx& diag_ctx);
 
     void process(std::shared_ptr<const processing::resolved_statement> stmt) override;
 

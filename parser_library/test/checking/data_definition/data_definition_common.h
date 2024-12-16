@@ -27,18 +27,19 @@
 using namespace hlasm_plugin::parser_library::checking;
 using namespace hlasm_plugin::parser_library;
 
-#define ADD_DIAG(col) diagnostic_collector(&col)
+#define ADD_DIAG(col) diagnostic_collector(&col.diag_ctx)
 
-class diag_collector : public diagnosable_ctx
+class diag_collector
 {
 public:
     diag_collector()
-        : diagnosable_ctx(ctx)
+        : diag_ctx(ctx)
     {}
-    // Inherited via diagnosable_ctx
-    void collect_diags() const override {};
 
     context::hlasm_context ctx;
+    diagnosable_ctx diag_ctx;
+
+    auto& diags() noexcept { return diag_ctx.diags(); }
 };
 
 inline data_definition_operand setup_data_def_op(char type, char extension)

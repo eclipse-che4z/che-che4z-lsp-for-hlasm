@@ -19,8 +19,9 @@
 using namespace hlasm_plugin::parser_library;
 using namespace hlasm_plugin::parser_library::processing;
 
-copy_processor::copy_processor(const analyzing_context& ctx, processing_state_listener& listener, copy_start_data start)
-    : statement_processor(processing_kind::COPY, ctx)
+copy_processor::copy_processor(
+    const analyzing_context& ctx, processing_state_listener& listener, copy_start_data start, diagnosable_ctx& diag_ctx)
+    : statement_processor(processing_kind::COPY, ctx, diag_ctx)
     , listener_(listener)
     , start_(std::move(start))
     , macro_nest_(0)
@@ -87,8 +88,6 @@ bool copy_processor::terminal_condition(const statement_provider_kind prov_kind)
 }
 
 bool copy_processor::finished() { return false; }
-
-void copy_processor::collect_diags() const {}
 
 void copy_processor::process_MACRO() { ++macro_nest_; }
 

@@ -48,7 +48,7 @@ struct resolved_statement;
 namespace hlasm_plugin::parser_library::processing {
 
 // processor of assembler instructions
-class asm_processor : public low_language_processor
+class asm_processor final : public low_language_processor
 {
     using process_table_t = std::unordered_map<context::id_index, std::function<void(rebuilt_statement&&)>>;
 
@@ -61,7 +61,8 @@ public:
         statement_fields_parser& parser,
         opencode_provider& open_code,
         const processing_manager& proc_mgr,
-        output_handler* output);
+        output_handler* output,
+        diagnosable_ctx& diag_ctx);
 
     void process(std::shared_ptr<const processing::resolved_statement> stmt) override;
     struct extract_copy_id_result

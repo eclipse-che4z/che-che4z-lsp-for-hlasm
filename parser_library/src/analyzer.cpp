@@ -107,10 +107,10 @@ std::unique_ptr<processing::preprocessor> analyzer_options::get_preprocessor(pro
     return std::make_unique<combined_preprocessor>(std::move(tmp));
 }
 
-struct analyzer::impl : public diagnosable_ctx
+struct analyzer::impl final
 {
     impl(std::string_view text, analyzer_options&& opts)
-        : diagnosable_ctx(opts.get_hlasm_context())
+        : diag_ctx(opts.get_hlasm_context())
         , ctx(std::move(opts.get_context()))
         , src_proc(opts.collect_hl_info == collect_highlighting_info::yes)
         , field_parser(ctx.hlasm_ctx.get())
@@ -120,9 +120,9 @@ struct analyzer::impl : public diagnosable_ctx
                    mngr,
                    mngr,
                    src_proc,
-                   *this,
+                   diag_ctx,
                    opts.get_preprocessor(
-                       std::bind_front(&parse_lib_provider::get_library, &opts.get_lib_provider()), *this, src_proc),
+                       std::bind_front(&parse_lib_provider::get_library, &opts.get_lib_provider()), diag_ctx, src_proc),
                    opts.parsing_opencode == file_is_opencode::yes ? processing::opencode_provider_options { true, 10 }
                                                                   : processing::opencode_provider_options {},
                    opts.vf_monitor,
@@ -135,8 +135,11 @@ struct analyzer::impl : public diagnosable_ctx
               opts.get_lib_provider(),
               field_parser,
               std::move(opts.fade_messages),
-              opts.output)
+              opts.output,
+              diag_ctx)
     {}
+
+    diagnosable_ctx diag_ctx;
 
     analyzing_context ctx;
 
@@ -148,11 +151,7 @@ struct analyzer::impl : public diagnosable_ctx
 
     processing::processing_manager mngr;
 
-    void collect_diags() const override
-    {
-        collect_diags_from_child(mngr);
-        collect_diags_from_child(field_parser);
-    }
+    auto& diags() noexcept { return diag_ctx.diags(); }
 };
 
 analyzer::analyzer(std::string_view text, analyzer_options opts)
@@ -181,8 +180,6 @@ hlasm_plugin::utils::task analyzer::co_analyze() &
     co_await m_impl->mngr.co_step();
 
     m_impl->src_proc.finish();
-
-    m_impl->collect_diags();
 }
 
 const performance_metrics& analyzer::get_metrics() const { return m_impl->ctx.hlasm_ctx->metrics; }

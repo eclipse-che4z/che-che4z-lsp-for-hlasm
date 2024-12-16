@@ -30,6 +30,7 @@
 #include <unordered_set>
 
 #include "compiler_options.h"
+#include "diagnostic_op.h"
 #include "external_configuration_requests.h"
 #include "file_manager.h"
 #include "library_local.h"
@@ -882,11 +883,8 @@ void workspace_configuration::produce_diagnostics(std::vector<diagnostic>& targe
     {
         if (const auto* e = std::get_if<external_conf>(&key); e && e->definition.use_count() <= 1)
             continue;
-        auto& [pg, _] = value;
-        pg.collect_diags();
-        for (const auto& d : pg.diags())
-            target.push_back(d);
-        pg.diags().clear();
+        const auto& [pg, _] = value;
+        pg.copy_diagnostics(target);
     }
 
     for (const auto& diag : m_config_diags)
@@ -1048,7 +1046,7 @@ workspace_configuration::make_external_proc_group(
     m_utilized_settings_values.merge(std::move(utilized_settings_values));
 
     for (auto&& d : diags)
-        prc_grp.add_diagnostic(std::move(d));
+        prc_grp.add_external_diagnostic(std::move(d));
 
     co_return m_proc_grps
         .try_emplace(external_conf { std::make_shared<std::string>(std::move(group_json)) },

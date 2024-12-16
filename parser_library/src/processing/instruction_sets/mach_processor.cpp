@@ -26,8 +26,9 @@ mach_processor::mach_processor(const analyzing_context& ctx,
     branching_provider& branch_provider,
     parse_lib_provider& lib_provider,
     statement_fields_parser& parser,
-    const processing_manager& proc_mgr)
-    : low_language_processor(ctx, branch_provider, lib_provider, parser, proc_mgr)
+    const processing_manager& proc_mgr,
+    diagnosable_ctx& diag_ctx)
+    : low_language_processor(ctx, branch_provider, lib_provider, parser, proc_mgr, diag_ctx)
 {}
 
 void mach_processor::process(std::shared_ptr<const processing::resolved_statement> stmt)

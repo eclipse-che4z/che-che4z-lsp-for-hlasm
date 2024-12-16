@@ -20,14 +20,15 @@
 namespace hlasm_plugin::parser_library::processing {
 
 // processor of machine instructions
-class mach_processor : public low_language_processor
+class mach_processor final : public low_language_processor
 {
 public:
     mach_processor(const analyzing_context& ctx,
         branching_provider& branch_provider,
         parse_lib_provider& lib_provider,
         statement_fields_parser& parser,
-        const processing_manager& proc_mgr);
+        const processing_manager& proc_mgr,
+        diagnosable_ctx& diag_ctx);
 
     void process(std::shared_ptr<const processing::resolved_statement> stmt) override;
 };

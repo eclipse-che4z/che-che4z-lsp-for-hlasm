@@ -29,18 +29,18 @@ class diagnosable_ctx;
 // used to unify diagnostics collecting for checking objects
 class diagnostic_collector
 {
-    const diagnosable_ctx* diagnoser_;
+    diagnosable_ctx* diagnoser_;
     context::processing_stack_t location_stack_;
     range diag_range_;
 
 public:
     // constructor with explicit location stack
     // used for outputting diagnostic of postponed statements
-    diagnostic_collector(const diagnosable_ctx* diagnoser, context::processing_stack_t location_stack);
+    diagnostic_collector(diagnosable_ctx* diagnoser, context::processing_stack_t location_stack);
 
     // constructor with implicit location stack (acquired from the diagnoser)
     // used for default statement checking
-    explicit diagnostic_collector(const diagnosable_ctx* diagnoser);
+    explicit diagnostic_collector(diagnosable_ctx* diagnoser);
 
     // constructor for collector that silences diagnostics
     diagnostic_collector();

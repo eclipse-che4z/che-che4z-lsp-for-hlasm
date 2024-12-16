@@ -15,10 +15,8 @@ target_sources(parser_library PRIVATE
     aread_time.h
     analyzer.cpp
     compiler_options.cpp
-    diagnosable.h
     diagnosable_ctx.cpp
     diagnosable_ctx.h
-    diagnosable_impl.h
     diagnostic.cpp
     diagnostic_adder.h
     diagnostic_consumer.h

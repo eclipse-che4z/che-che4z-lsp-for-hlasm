@@ -31,7 +31,6 @@
 #include "branch_info.h"
 #include "configuration_provider.h"
 #include "debugging/debugger_configuration.h"
-#include "diagnosable_impl.h"
 #include "file_manager_vfm.h"
 #include "folding_range.h"
 #include "lib_config.h"

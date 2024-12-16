@@ -42,15 +42,16 @@ ordinary_processor::ordinary_processor(const analyzing_context& ctx,
     statement_fields_parser& parser,
     opencode_provider& open_code,
     processing_manager& proc_mgr,
-    output_handler* output)
-    : statement_processor(processing_kind::ORDINARY, ctx)
+    output_handler* output,
+    diagnosable_ctx& diag_ctx)
+    : statement_processor(processing_kind::ORDINARY, ctx, diag_ctx)
     , branch_provider_(branch_provider)
     , lib_info(lib_provider)
-    , eval_ctx { *ctx.hlasm_ctx, lib_info, *this }
-    , ca_proc_(ctx, branch_provider, lib_provider, state_listener, open_code)
-    , mac_proc_(ctx, branch_provider, lib_provider)
-    , asm_proc_(ctx, branch_provider, lib_provider, parser, open_code, proc_mgr, output)
-    , mach_proc_(ctx, branch_provider, lib_provider, parser, proc_mgr)
+    , eval_ctx { *ctx.hlasm_ctx, lib_info, diag_ctx }
+    , ca_proc_(ctx, branch_provider, lib_provider, state_listener, open_code, diag_ctx)
+    , mac_proc_(ctx, branch_provider, lib_provider, diag_ctx)
+    , asm_proc_(ctx, branch_provider, lib_provider, parser, open_code, proc_mgr, output, diag_ctx)
+    , mach_proc_(ctx, branch_provider, lib_provider, parser, proc_mgr, diag_ctx)
     , finished_flag_(false)
     , listener_(state_listener)
     , proc_mgr(proc_mgr)
@@ -154,7 +155,7 @@ void ordinary_processor::end_processing()
         hlasm_ctx.ord_ctx.set_location_counter(hlasm_ctx.ord_ctx.implicit_ltorg_target());
         hlasm_ctx.ord_ctx.set_available_location_counter_value(lib_info);
 
-        hlasm_ctx.ord_ctx.generate_pool(*this, hlasm_ctx.using_current(), lib_info);
+        hlasm_ctx.ord_ctx.generate_pool(diag_ctx, hlasm_ctx.using_current(), lib_info);
     }
 
     hlasm_ctx.ord_ctx.start_reporting_label_candidates();
@@ -162,14 +163,14 @@ void ordinary_processor::end_processing()
     if (!hlasm_ctx.ord_ctx.symbol_dependencies().check_loctr_cycle(lib_info))
         add_diagnostic(diagnostic_op::error_E033(range())); // TODO: at least we say something
 
-    hlasm_ctx.ord_ctx.symbol_dependencies().add_defined(context::id_index(), &asm_proc_, lib_info);
+    hlasm_ctx.ord_ctx.symbol_dependencies().add_defined(context::id_index(), &diag_ctx, lib_info);
 
-    hlasm_ctx.ord_ctx.finish_module_layout(&asm_proc_, lib_info);
+    hlasm_ctx.ord_ctx.finish_module_layout(&diag_ctx, lib_info);
 
     hlasm_ctx.ord_ctx.symbol_dependencies().resolve_all_as_default();
 
     // do not replace stack trace in the messages - it is already provided
-    diagnostic_consumer_transform raw_diags([this](diagnostic d) { diagnosable_impl::add_diagnostic(std::move(d)); });
+    diagnostic_consumer_transform raw_diags([this](diagnostic d) { diag_ctx.add_raw_diagnostic(std::move(d)); });
 
     hlasm_ctx.using_resolve(raw_diags, lib_info);
     hlasm_ctx.validate_psect_registrations(raw_diags);
@@ -257,14 +258,6 @@ std::optional<processing_status> ordinary_processor::get_instruction_processing_
     }
 
     return std::visit(processing_status_visitor { code.opcode, hlasm_ctx }, code.opcode_detail);
-}
-
-void ordinary_processor::collect_diags() const
-{
-    collect_diags_from_child(ca_proc_);
-    collect_diags_from_child(asm_proc_);
-    collect_diags_from_child(mac_proc_);
-    collect_diags_from_child(mach_proc_);
 }
 
 namespace {
@@ -491,7 +484,7 @@ void ordinary_processor::check_postponed_statements(
         context::ordinary_assembly_dependency_solver dep_solver(hlasm_ctx.ord_ctx, dep_ctx, lib_info);
 
         const auto* rs = stmt->resolved_stmt;
-        diagnostic_collector collector(this, stmt->location_stack);
+        diagnostic_collector collector(&diag_ctx, stmt->location_stack);
 
         operand_vector.clear();
 

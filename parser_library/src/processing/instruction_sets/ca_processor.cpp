@@ -37,8 +37,9 @@ ca_processor::ca_processor(const analyzing_context& ctx,
     branching_provider& branch_provider,
     parse_lib_provider& lib_provider,
     processing_state_listener& listener,
-    opencode_provider& open_code)
-    : instruction_processor(ctx, branch_provider, lib_provider)
+    opencode_provider& open_code,
+    diagnosable_ctx& diag_ctx)
+    : instruction_processor(ctx, branch_provider, lib_provider, diag_ctx)
     , table_(create_table())
     , listener_(listener)
     , open_code_(&open_code)

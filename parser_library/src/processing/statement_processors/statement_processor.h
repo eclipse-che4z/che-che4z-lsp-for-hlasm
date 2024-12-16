@@ -33,14 +33,14 @@ using processor_ptr = std::unique_ptr<statement_processor>;
 // they are provided statements which they process in different fashion
 // their processing can be interrupted by changing the provider (with 'terminal_condition') and they can end their
 // processing when their need for statements is satisfied
-class statement_processor : public diagnosable_ctx
+class statement_processor
 {
 public:
-    statement_processor(const processing_kind kind, const analyzing_context& ctx)
-        : diagnosable_ctx(*ctx.hlasm_ctx)
-        , kind(kind)
+    statement_processor(const processing_kind kind, const analyzing_context& ctx, diagnosable_ctx& diag_ctx)
+        : kind(kind)
         , ctx(ctx)
         , hlasm_ctx(*ctx.hlasm_ctx)
+        , diag_ctx(diag_ctx)
     {}
 
     // infers processing status of rest of the statement from instruction field
@@ -61,6 +61,9 @@ public:
 protected:
     analyzing_context ctx;
     context::hlasm_context& hlasm_ctx;
+    diagnosable_ctx& diag_ctx;
+
+    void add_diagnostic(diagnostic_op d) const { diag_ctx.add_diagnostic(std::move(d)); }
 
 private:
     virtual std::optional<context::id_index> resolve_concatenation(

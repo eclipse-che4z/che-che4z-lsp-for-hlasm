@@ -26,8 +26,9 @@ namespace hlasm_plugin::parser_library::processing {
 macrodef_processor::macrodef_processor(const analyzing_context& ctx,
     processing_state_listener& listener,
     branching_provider& branching_provider_,
-    macrodef_start_data start)
-    : statement_processor(processing_kind::MACRO, ctx)
+    macrodef_start_data start,
+    diagnosable_ctx& diag_ctx)
+    : statement_processor(processing_kind::MACRO, ctx, diag_ctx)
     , listener_(listener)
     , branching_provider_(branching_provider_)
     , start_(std::move(start))
@@ -149,8 +150,6 @@ processing_status macrodef_processor::get_macro_processing_status(
     processing_format format(processing_kind::MACRO, processing_form::DEFERRED);
     return std::make_pair(format, op_code());
 }
-
-void macrodef_processor::collect_diags() const {}
 
 bool macrodef_processor::process_statement(const context::hlasm_statement& statement)
 {
@@ -305,7 +304,7 @@ void macrodef_processor::process_prototype_operand(
 
                     param_names.push_back(var_id);
 
-                    diagnostic_adder add_diags(*this, op->operand_range);
+                    diagnostic_adder add_diags(diag_ctx, op->operand_range);
 
                     result_.prototype.symbolic_params.emplace_back(
                         macro_processor::create_macro_data(tmp_chain.begin() + 2, tmp_chain.end(), add_diags), var_id);
@@ -431,7 +430,7 @@ bool macrodef_processor::process_COPY(const resolved_statement& statement)
     {
         if (ctx.hlasm_ctx->copy_members().contains(extract->name))
         {
-            if (asm_processor::common_copy_postprocess(true, *extract, *ctx.hlasm_ctx, this))
+            if (asm_processor::common_copy_postprocess(true, *extract, *ctx.hlasm_ctx, &diag_ctx))
             {
                 result_.used_copy_members.insert(ctx.hlasm_ctx->current_copy_stack().back().copy_member_definition);
             }
@@ -440,7 +439,7 @@ bool macrodef_processor::process_COPY(const resolved_statement& statement)
         {
             branching_provider_.request_external_processing(
                 extract->name, processing_kind::COPY, [extract, this](bool result) {
-                    asm_processor::common_copy_postprocess(result, *extract, *ctx.hlasm_ctx, this);
+                    asm_processor::common_copy_postprocess(result, *extract, *ctx.hlasm_ctx, &diag_ctx);
                 });
         }
     }

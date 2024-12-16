@@ -105,14 +105,13 @@ bool lookahead_processor::terminal_condition(const statement_provider_kind prov_
 
 bool lookahead_processor::finished() { return finished_flag_; }
 
-void lookahead_processor::collect_diags() const {}
-
 lookahead_processor::lookahead_processor(const analyzing_context& ctx,
     branching_provider& branch_provider,
     processing_state_listener& listener,
     parse_lib_provider& lib_provider,
-    lookahead_start_data start)
-    : statement_processor(processing_kind::LOOKAHEAD, ctx)
+    lookahead_start_data start,
+    diagnosable_ctx& diag_ctx)
+    : statement_processor(processing_kind::LOOKAHEAD, ctx, diag_ctx)
     , finished_flag_(start.action == lookahead_action::ORD && start.targets.empty())
     , result_(std::move(start))
     , macro_nest_(0)
@@ -137,7 +136,7 @@ void lookahead_processor::process_COPY(const resolved_statement& statement)
         {
             branch_provider_.request_external_processing(
                 extract->name, processing_kind::COPY, [extract, this](bool result) {
-                    asm_processor::common_copy_postprocess(result, *extract, *ctx.hlasm_ctx, this);
+                    asm_processor::common_copy_postprocess(result, *extract, *ctx.hlasm_ctx, &diag_ctx);
                 });
         }
     }

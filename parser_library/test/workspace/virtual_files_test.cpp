@@ -18,7 +18,6 @@
 #include "../common_testing.h"
 #include "../workspace_manager_response_mock.h"
 #include "consume_diagnostics_mock.h"
-#include "diagnosable_impl.h"
 #include "file_manager_mock.h"
 #include "preprocessor_options.h"
 #include "utils/resource_location.h"

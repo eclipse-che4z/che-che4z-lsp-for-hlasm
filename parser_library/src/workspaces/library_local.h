@@ -24,7 +24,6 @@
 #include <utility>
 #include <vector>
 
-#include "diagnosable_impl.h"
 #include "library.h"
 #include "utils/general_hashers.h"
 #include "utils/resource_location.h"

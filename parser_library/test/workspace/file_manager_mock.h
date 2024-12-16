@@ -15,23 +15,17 @@
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
-#include "diagnosable_impl.h"
 #include "workspaces/file_manager.h"
 
 namespace {
 
-class file_manager_mock : public hlasm_plugin::parser_library::workspaces::file_manager,
-                          public hlasm_plugin::parser_library::diagnosable_impl
+class file_manager_mock : public hlasm_plugin::parser_library::workspaces::file_manager
 {
     using resource_location = hlasm_plugin::utils::resource::resource_location;
     template<typename T>
     using value_task = hlasm_plugin::utils::value_task<T>;
 
 public:
-    void collect_diags() const override
-    {
-        // nothing to do
-    }
     MOCK_METHOD(value_task<std::shared_ptr<hlasm_plugin::parser_library::workspaces::file>>,
         add_file,
         (const resource_location&),

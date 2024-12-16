@@ -19,7 +19,7 @@
 #include <string>
 
 #include "context/ordinary_assembly/dependable.h"
-#include "diagnosable_impl.h"
+#include "diagnostic_consumer.h"
 
 
 namespace hlasm_plugin::parser_library::expressions {

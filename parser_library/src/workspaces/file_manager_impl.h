@@ -21,7 +21,6 @@
 #include <unordered_map>
 #include <vector>
 
-#include "diagnosable_impl.h"
 #include "fade_messages.h"
 #include "file_manager.h"
 #include "utils/resource_location.h"
