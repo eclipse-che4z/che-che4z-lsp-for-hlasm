@@ -12,11 +12,13 @@
  *   Broadcom, Inc. - initial API and implementation
  */
 
+#include <algorithm>
 #include <array>
 #include <bitset>
 #include <cassert>
 #include <charconv>
 #include <cstring>
+#include <iostream>
 #include <optional>
 #include <string>
 #include <string_view>
@@ -140,7 +142,48 @@ std::string get_content(const uint8_t* data, size_t size, fuzzer_lib_provider& l
 
 const hlasm_plugin::utils::resource::resource_location empty_location;
 
+unsigned diag_limit = 1000u;
+unsigned stmt_limit = 10000u;
+
 } // namespace
+
+extern "C" int LLVMFuzzerInitialize(int* argc_, char*** argv_)
+{
+    static constexpr std::pair<std::string_view, unsigned*> args[] = {
+        { "--hlasm_fuzzer_diag_limit=", &diag_limit },
+        { "--hlasm_fuzzer_stmt_limit=", &stmt_limit },
+    };
+
+    auto& argc = *argc_;
+    auto& argv = *argv_;
+
+    for (int i = 0; i < argc; ++i)
+    {
+        std::string_view arg(argv[i]);
+        const auto it = std::ranges::find_if(args, [arg](const auto& p) { return arg.starts_with(p.first); });
+        if (it == std::end(args))
+            continue;
+
+        std::rotate(argv + i, argv + i + 1, argv + argc);
+        --i;
+        --argc;
+
+        arg.remove_prefix(it->first.size());
+
+        unsigned result = 0;
+        const auto p = std::to_address(arg.begin());
+        const auto pe = std::to_address(arg.end());
+
+        if (const auto [ptr, err] = std::from_chars(p, pe, result); err != std::errc {} || ptr != pe)
+            continue;
+
+        std::cerr << "INFO: Using " << it->first << result << '\n';
+
+        *it->second = result;
+    }
+
+    return 0;
+}
 
 extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size)
 {
@@ -149,7 +192,13 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size)
 
     fuzzer_lib_provider lib;
     auto source = get_content(data + 2, size - 2, lib);
-    analyzer a(source, analyzer_options(&lib, get_preprocessor_options(std::bitset<3>(data[0]))));
+    analyzer a(source,
+        analyzer_options {
+            &lib,
+            get_preprocessor_options(std::bitset<3>(data[0])),
+            diagnostic_limit { diag_limit },
+            asm_option { .statement_count_limit = stmt_limit },
+        });
     a.analyze();
 
     auto num1 = data[1] >> 4;

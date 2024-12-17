@@ -110,7 +110,7 @@ std::unique_ptr<processing::preprocessor> analyzer_options::get_preprocessor(pro
 struct analyzer::impl final
 {
     impl(std::string_view text, analyzer_options&& opts)
-        : diag_ctx(opts.get_hlasm_context())
+        : diag_ctx(opts.get_hlasm_context(), opts.diag_limit.limit)
         , ctx(std::move(opts.get_context()))
         , src_proc(opts.collect_hl_info == collect_highlighting_info::yes)
         , field_parser(ctx.hlasm_ctx.get())

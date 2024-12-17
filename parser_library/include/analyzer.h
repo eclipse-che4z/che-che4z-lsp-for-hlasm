@@ -80,6 +80,11 @@ enum class file_is_opencode : bool
     yes,
 };
 
+struct diagnostic_limit
+{
+    size_t limit = static_cast<size_t>(-1);
+};
+
 class analyzer_options
 {
     class dependency_data
@@ -107,6 +112,7 @@ class analyzer_options
     output_handler* output = nullptr;
     std::string dep_name;
     processing::processing_kind dep_kind = processing::processing_kind::ORDINARY;
+    diagnostic_limit diag_limit;
 
     void set(utils::resource::resource_location rl) { file_loc = std::move(rl); }
     void set(parse_lib_provider* lp) { lib_provider = lp; }
@@ -125,6 +131,7 @@ class analyzer_options
         dep_kind = d.kind;
         dep_name = std::move(d.name);
     }
+    void set(diagnostic_limit dl) { diag_limit = dl; }
 
     context::hlasm_context& get_hlasm_context();
     analyzing_context& get_context();
@@ -159,8 +166,9 @@ public:
             (0 + ... + std::is_same_v<std::decay_t<Args>, std::shared_ptr<std::vector<fade_message>>>);
         constexpr auto o_cnt = (0 + ... + std::is_convertible_v<std::decay_t<Args>, output_handler*>);
         constexpr auto dep_data_cnt = (0 + ... + std::is_convertible_v<std::decay_t<Args>, dependency_data>);
+        constexpr auto diag_limit_cnt = (0 + ... + std::is_convertible_v<std::decay_t<Args>, diagnostic_limit>);
         constexpr auto cnt = rl_cnt + lib_cnt + ao_cnt + ac_cnt + hi_cnt + f_oc_cnt + ids_cnt + pp_cnt + vfm_cnt
-            + fmc_cnt + o_cnt + dep_data_cnt;
+            + fmc_cnt + o_cnt + dep_data_cnt + diag_limit_cnt;
 
         static_assert(rl_cnt <= 1, "Duplicate resource_location");
         static_assert(lib_cnt <= 1, "Duplicate parse_lib_provider");
@@ -176,6 +184,7 @@ public:
             "Do not specify both analyzing_context and asm_option, id_storage or preprocessor_args");
         static_assert(o_cnt <= 1, "Duplicate output_handler");
         static_assert(dep_data_cnt <= 1, "Duplicate dependency_data");
+        static_assert(diag_limit_cnt <= 1, "Duplicate diagnostic_limit");
         static_assert(cnt == sizeof...(Args), "Unrecognized argument provided");
 
         (set(std::forward<Args>(args)), ...);

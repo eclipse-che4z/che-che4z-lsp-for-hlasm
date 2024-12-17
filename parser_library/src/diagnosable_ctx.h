@@ -29,6 +29,7 @@ class diagnosable_ctx final : public diagnostic_consumer, public diagnostic_op_c
 {
     std::vector<diagnostic> collected_diags;
     context::hlasm_context& ctx_;
+    size_t limit;
 
 public:
     void add_raw_diagnostic(diagnostic diagnostic);
@@ -38,8 +39,9 @@ public:
 
     std::vector<diagnostic>& diags() { return collected_diags; }
 
-    diagnosable_ctx(context::hlasm_context& ctx)
+    diagnosable_ctx(context::hlasm_context& ctx, size_t limit = static_cast<size_t>(-1))
         : ctx_(ctx)
+        , limit(limit)
     {}
 
     friend class diagnostic_collector;
