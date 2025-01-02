@@ -30,9 +30,10 @@ class macrodef_processor final : public statement_processor
     branching_provider& branching_provider_;
     const macrodef_start_data start_;
 
+    position curr_outer_position_;
     size_t initial_copy_nest_;
     size_t macro_nest_;
-    position curr_outer_position_;
+    bool bumped_macro_nest = false;
     bool expecting_prototype_;
     bool expecting_MACRO_;
 
@@ -90,6 +91,8 @@ private:
 
     std::optional<context::id_index> resolve_concatenation(
         const semantics::concat_chain& concat, const range& r) const override;
+
+    void update_outer_position(const context::hlasm_statement& stmt);
 };
 
 } // namespace hlasm_plugin::parser_library::processing

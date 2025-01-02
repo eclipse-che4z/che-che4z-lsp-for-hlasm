@@ -63,3 +63,48 @@ TEST(lsp_context, macro_map)
     EXPECT_EQ(e->macro_map(), (std::vector<bool> {})); // used only as copybook in macro
     EXPECT_EQ(copym->macro_map(), (std::vector<bool> { false, false, true, true }));
 }
+
+TEST(lsp_context, macro_map_with_nested_macro)
+{
+    mock_parse_lib_provider libs {
+        { "F", R"(
+         MACRO
+         INNER2
+         COPY E
+         MEND)" },
+        { "E", " SAM31" },
+    };
+    std::string_view input = R"(
+* This empty area is part of the test
+
+
+
+
+
+         MACRO
+         MAC
+         MACRO
+         INNER
+         COPY F
+         MEND
+         MEND
+
+
+         MAC
+)";
+    analyzer a(input, analyzer_options { &libs });
+
+    a.analyze();
+
+    EXPECT_TRUE(a.diags().empty());
+
+    using hlasm_plugin::utils::resource::resource_location;
+
+    const auto* opencode = a.context().lsp_ctx->get_file_info(resource_location());
+
+    ASSERT_TRUE(opencode);
+
+    EXPECT_EQ(opencode->macro_map(),
+        (std::vector<bool> {
+            false, false, false, false, false, false, false, false, true, true, true, true, true, true }));
+}

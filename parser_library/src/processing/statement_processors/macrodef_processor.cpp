@@ -14,6 +14,10 @@
 
 #include "macrodef_processor.h"
 
+#include <functional>
+#include <iterator>
+#include <ranges>
+
 #include "context/instruction.h"
 #include "processing/branching_provider.h"
 #include "processing/instruction_sets/asm_processor.h"
@@ -85,6 +89,7 @@ void macrodef_processor::process_statement(context::shared_stmt_ptr statement)
 {
     bool expecting_tmp = expecting_prototype_ || expecting_MACRO_;
 
+    bumped_macro_nest = false;
     bool handled = process_statement(*statement);
 
     if (!expecting_tmp && !handled)
@@ -151,6 +156,17 @@ processing_status macrodef_processor::get_macro_processing_status(
     return std::make_pair(format, op_code());
 }
 
+void macrodef_processor::update_outer_position(const context::hlasm_statement& stmt)
+{
+    if (hlasm_ctx.current_copy_stack().size() != initial_copy_nest_)
+        return;
+    if (const auto& scope = hlasm_ctx.current_scope();
+        scope.is_in_macro() && scope.this_macro->get_current_copy_nest().size() >= 2)
+        return;
+
+    curr_outer_position_ = stmt.statement_position();
+}
+
 bool macrodef_processor::process_statement(const context::hlasm_statement& statement)
 {
     assert(!finished_flag_);
@@ -186,8 +202,7 @@ bool macrodef_processor::process_statement(const context::hlasm_statement& state
     }
     else
     {
-        if (hlasm_ctx.current_copy_stack().size() - initial_copy_nest_ == 0)
-            curr_outer_position_ = statement.statement_position();
+        update_outer_position(statement);
 
         if (res_stmt)
         {
@@ -375,6 +390,7 @@ macrodef_processor::process_table_t macrodef_processor::create_table()
 bool macrodef_processor::process_MACRO()
 {
     ++macro_nest_;
+    bumped_macro_nest = true;
     return false;
 }
 
@@ -533,8 +549,18 @@ void macrodef_processor::add_correct_copy_nest()
     if (initial_copy_nest_ < hlasm_ctx.current_copy_stack().size())
         result_.used_copy_members.insert(hlasm_ctx.current_copy_stack().back().copy_member_definition);
 
+    if (const auto& m = hlasm_ctx.current_scope().this_macro; m)
+    {
+        std::ranges::copy(m->get_current_copy_nest() | std::views::drop(1), std::back_inserter(result_.nests.back()));
+        std::ranges::transform(
+            m->get_current_copy_nest() | std::views::drop(1),
+            std::inserter(result_.used_copy_members, result_.used_copy_members.end()),
+            [this](auto id) { return hlasm_ctx.get_copy_member(id); },
+            &context::copy_nest_item::member_name);
+    }
+
     const auto& current_file = result_.nests.back().back().loc.resource_loc;
-    bool in_inner_macro = macro_nest_ > 1;
+    bool in_inner_macro = macro_nest_ > 1 + bumped_macro_nest;
 
 
     context::statement_id current_statement_id = { result_.definition.size() };
