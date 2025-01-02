@@ -265,8 +265,8 @@ void asm_processor::process_EQU(rebuilt_statement&& stmt)
 template<checking::data_instr_type instr_type>
 void asm_processor::process_data_instruction(rebuilt_statement&& stmt)
 {
-    if (const auto& ops = stmt.operands_ref().value;
-        ops.empty() || std::ranges::find(ops, semantics::operand_type::EMPTY, &semantics::operand::type) != ops.end())
+    const auto& ops = stmt.operands_ref().value;
+    if (ops.empty() || std::ranges::find(ops, semantics::operand_type::EMPTY, &semantics::operand::type) != ops.end())
     {
         context::ordinary_assembly_dependency_solver dep_solver(hlasm_ctx.ord_ctx, lib_info);
         hlasm_ctx.ord_ctx.symbol_dependencies().add_postponed_statement(
@@ -275,15 +275,15 @@ void asm_processor::process_data_instruction(rebuilt_statement&& stmt)
         return;
     }
 
+    const semantics::operand* first_op = ops.front().get();
+
     // enforce alignment of the first operand
-    context::alignment al = stmt.operands_ref().value.front()->access_data_def()->value->get_alignment();
+    context::alignment al = first_op->access_data_def()->value->get_alignment();
     context::address loctr = hlasm_ctx.ord_ctx.align(al, lib_info);
     context::ordinary_assembly_dependency_solver dep_solver(hlasm_ctx.ord_ctx, loctr, lib_info);
 
     // process label
     auto label = find_label_symbol(stmt);
-
-    const auto& operands = stmt.operands_ref().value;
 
     const context::resolvable* l_dep = nullptr;
     const context::resolvable* s_dep = nullptr;
@@ -302,7 +302,7 @@ void asm_processor::process_data_instruction(rebuilt_statement&& stmt)
         };
         if (!hlasm_ctx.ord_ctx.symbol_defined(label))
         {
-            auto data_op = stmt.operands_ref().value.front()->access_data_def();
+            auto data_op = first_op->access_data_def();
             l_dep = data_op->value->length.get();
             s_dep = data_op->value->scale.get();
 
@@ -364,7 +364,7 @@ void asm_processor::process_data_instruction(rebuilt_statement&& stmt)
     // 2. We cannot represent the whole area as a single dependency when the alignment requirements are growing.
     // Therefore, we split the operands into chunks depending on the alignment.
     // Whenever the alignment requirement increases between consecutive operands, we start a new chunk.
-    for (auto it = operands.begin(); it != operands.end();)
+    for (auto it = ops.begin(); it != ops.end();)
     {
         const auto start = it;
 
@@ -378,7 +378,7 @@ void asm_processor::process_data_instruction(rebuilt_statement&& stmt)
         // must be postponed
         bool has_length_dependencies = false;
 
-        for (; it != operands.end(); ++it)
+        for (; it != ops.end(); ++it)
         {
             const auto& op = *it;
 
@@ -426,7 +426,7 @@ void asm_processor::process_data_instruction(rebuilt_statement&& stmt)
         cycle_ok &= adder.add_dependency(label, context::data_attr_kind::S, s_dep);
 
     if (!cycle_ok)
-        add_diagnostic(diagnostic_op::error_E033(operands.front()->operand_range));
+        add_diagnostic(diagnostic_op::error_E033(first_op->operand_range));
 
     for (auto sp = dependencies_spaces.begin(); const auto& d : deps)
         adder.add_dependency(std::move(*sp++), &d);

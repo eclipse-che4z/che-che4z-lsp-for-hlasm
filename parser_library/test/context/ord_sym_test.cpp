@@ -492,6 +492,18 @@ X   EQU   1
     EXPECT_TRUE(contains_message_codes(a.diags(), { "E033" }));
 }
 
+TEST(ordinary_symbols, first_operand_dependency_after_rebuilt)
+{
+    std::string input(R"(
+&C  SETC '0'
+A   DC AL(L'A)(&C)
+)");
+    analyzer a(input);
+    a.analyze();
+
+    EXPECT_TRUE(contains_message_codes(a.diags(), { "E033" }));
+}
+
 TEST(ordinary_symbols, reduced_cyclic_dependency_cnop)
 {
     std::string input(R"(
