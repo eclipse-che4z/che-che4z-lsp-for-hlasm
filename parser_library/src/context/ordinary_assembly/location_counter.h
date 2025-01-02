@@ -78,7 +78,7 @@ public:
     // creates layout
     space_ptr finish_layout(size_t offset);
 
-    void resolve_space(const space* sp, int length);
+    void resolve_space(const space* sp, int length, resolve_reason r);
 
     // switches to unresolved ORG identified by space
     void switch_to_unresolved_value(space_ptr sp);

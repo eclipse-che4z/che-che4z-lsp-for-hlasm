@@ -47,7 +47,7 @@ space::space(location_counter& owner, alignment align, size_t boundary, int offs
     , resolved_(false)
 {}
 
-void space::resolve(space_ptr this_space, int length)
+void space::resolve(space_ptr this_space, int length, resolve_reason r)
 {
     if (this_space->resolved_)
         return;
@@ -63,7 +63,7 @@ void space::resolve(space_ptr this_space, int length)
 
     this_space->resolved_length = length;
 
-    this_space->owner.resolve_space(this_space.get(), length);
+    this_space->owner.resolve_space(this_space.get(), length, r);
 
     this_space->resolved_ = true;
 }

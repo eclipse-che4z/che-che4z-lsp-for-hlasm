@@ -209,7 +209,7 @@ space_ptr location_counter::finish_layout(size_t offset)
     if (kind == loctr_kind::NONSTARTING)
     {
         auto sp = org_data_.front().fist_space();
-        space::resolve(sp, (int)offset);
+        space::resolve(sp, (int)offset, resolve_reason::normal);
         return sp;
     }
 
@@ -218,9 +218,9 @@ space_ptr location_counter::finish_layout(size_t offset)
     return {};
 }
 
-void location_counter::resolve_space(const space* sp, int length)
+void location_counter::resolve_space(const space* sp, int length, resolve_reason r)
 {
-    if (sp->kind == space_kind::LOCTR_MAX && !org_data_.empty())
+    if (sp->kind == space_kind::LOCTR_MAX && !org_data_.empty() && r == resolve_reason::normal)
     {
         auto it = std::find_if(
             std::next(org_data_.begin()), org_data_.end(), [sp](const auto& d) { return d.matches_first_space(sp); });

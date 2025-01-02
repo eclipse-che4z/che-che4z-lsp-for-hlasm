@@ -64,7 +64,7 @@ TEST(address, has_unresolved_spaces)
 
     ASSERT_TRUE(addr.has_unresolved_space());
 
-    space::resolve(sp2, 1);
+    space::resolve(sp2, 1, resolve_reason::normal);
 
     ASSERT_FALSE(addr.has_unresolved_space());
 }

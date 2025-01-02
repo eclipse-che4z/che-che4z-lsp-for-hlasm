@@ -130,7 +130,7 @@ struct resolve_dependant_visitor
             resolve_unknown_loctr_dependency(sp, val, stmt);
         }
         else
-            space::resolve(sp, length);
+            space::resolve(sp, length, resolve_reason::normal);
     }
 
     void resolve_unknown_loctr_dependency(
@@ -265,7 +265,7 @@ struct resolve_dependant_default_visitor
         auto tmp_sym = m_sym_ctx.get_symbol(symbol);
         tmp_sym->set_value(0);
     }
-    void operator()(const space_ptr& sp) const { space::resolve(sp, 1); }
+    void operator()(const space_ptr& sp) const { space::resolve(sp, 1, resolve_reason::cycle_removal); }
 };
 
 void symbol_dependency_tables::resolve_dependant_default(const dependant& target)

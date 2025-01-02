@@ -1110,3 +1110,18 @@ S        LOCTR
 
     EXPECT_EQ(get_symbol_address(a.hlasm_ctx(), "C"), std::pair(12, std::string("S")));
 }
+
+TEST(org, cyclic_with_dependency_removal)
+{
+    std::string_view input = R"(
+  ORG    J
+  SAM31
+J DC     (O)C
+  ORG
+O SAM31
+)";
+    analyzer a(input);
+    a.analyze();
+
+    EXPECT_TRUE(matches_message_codes(a.diags(), { "E033", "E033" }));
+}

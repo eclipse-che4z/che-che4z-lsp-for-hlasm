@@ -148,6 +148,12 @@ enum class space_kind
     LOCTR_UNKNOWN = 'U'
 };
 
+enum class resolve_reason : bool
+{
+    normal,
+    cycle_removal,
+};
+
 // stucture representing space of unknown lenght in an adress structure (these are created when there are location
 // counter dependencies in a code)
 struct space
@@ -169,7 +175,7 @@ struct space
     space(const space&) = delete;
 
     // fill space with a length
-    static void resolve(space_ptr this_space, int length);
+    static void resolve(space_ptr this_space, int length, resolve_reason r);
     // replace space with another
     static void resolve(space_ptr this_space, space_ptr value);
     // fill space with the whole address
