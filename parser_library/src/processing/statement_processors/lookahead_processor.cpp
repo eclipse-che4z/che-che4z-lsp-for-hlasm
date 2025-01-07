@@ -204,14 +204,11 @@ void lookahead_processor::assign_EQU_attributes(context::id_index symbol_name, c
             && statement.operands_ref().value[0]->type == semantics::operand_type::ASM)
         {
             auto asm_op = statement.operands_ref().value[0]->access_asm();
-            auto expr_op = asm_op->access_expr();
-            if (!expr_op)
-                return;
-
-            auto l_term = expr_op->expression->leftmost_term();
-            if (auto symbol_term = dynamic_cast<const expressions::mach_expr_symbol*>(l_term))
+            if (auto expr_op = asm_op->access_expr(); !expr_op) // complex, string, ...
+                length_attr = 1;
+            else if (auto t = dynamic_cast<const expressions::mach_expr_symbol*>(expr_op->expression->leftmost_term()))
             {
-                auto len_symbol = hlasm_ctx.ord_ctx.get_symbol(symbol_term->value);
+                auto len_symbol = hlasm_ctx.ord_ctx.get_symbol(t->value);
 
                 if (len_symbol != nullptr && len_symbol->kind() != context::symbol_value_kind::UNDEF)
                     length_attr = len_symbol->attributes().length();

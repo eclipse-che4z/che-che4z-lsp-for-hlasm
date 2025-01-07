@@ -1325,3 +1325,35 @@ X  DS)");
 
     EXPECT_TRUE(matches_message_codes(a.diags(), { "A010", "W013" }));
 }
+
+TEST(lookahead, invalid_equ_parameter_complex)
+{
+    std::string input(
+        R"(
+&A  SETA L'I
+I   EQU  X(Y)
+)");
+
+    analyzer a(input);
+    a.analyze();
+
+    EXPECT_EQ(get_var_value<A_t>(a.hlasm_ctx(), "A"), 1);
+
+    EXPECT_TRUE(matches_message_codes(a.diags(), { "A132" }));
+}
+
+TEST(lookahead, invalid_equ_parameter_string)
+{
+    std::string input(
+        R"(
+&A  SETA L'I
+I   EQU  'ABC'
+)");
+
+    analyzer a(input);
+    a.analyze();
+
+    EXPECT_EQ(get_var_value<A_t>(a.hlasm_ctx(), "A"), 1);
+
+    EXPECT_TRUE(matches_message_codes(a.diags(), { "A132" }));
+}
