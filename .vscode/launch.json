@@ -65,6 +65,33 @@
       "environment": [],
       "externalConsole": true,
       "preLaunchTask": "build"
+    },
+    {
+      "name": "(Windows) Launch library_test (one)",
+      "type": "cppvsdbg",
+      "request": "launch",
+      "program": "${workspaceFolder}/build/x64-Debug/bin/library_test.exe",
+      "args": [
+        "--gtest_filter=${input:test_pattern}"
+      ],
+      "stopAtEntry": false,
+      "cwd": "${workspaceFolder}/build/x64-Debug/bin/",
+      "environment": [],
+      //"externalConsole": true,
+      "preLaunchTask": "build"
+    },
+    {
+      "name": "(Windows) Attach",
+      "type": "cppvsdbg",
+      "request": "attach",
+      "processId": "${command:pickProcess}"
     }
+  ],
+  "inputs": [
+      {
+          "id": "test_pattern",
+          "type": "promptString",
+          "description": "Test pattern"
+      }
   ]
 }

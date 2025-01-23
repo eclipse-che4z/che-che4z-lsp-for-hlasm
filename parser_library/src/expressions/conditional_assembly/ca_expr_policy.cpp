@@ -397,6 +397,7 @@ context::SET_t_enum ca_common_expr_policy::get_operands_type(ca_expr_ops op, con
 
 // string to func
 #define S2F(X)                                                                                                         \
+    static_assert(sizeof(#X) <= ca_common_expr_policy::max_function_name_length + 1);                                  \
     if (op == #X)                                                                                                      \
     return ca_expr_funcs::X
 

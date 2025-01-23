@@ -18,7 +18,7 @@
 #include "context/variables/set_symbol.h"
 #include "document_symbol_item.h"
 #include "fade_messages.h"
-#include "hlasmparser_multiline.h"
+#include "parsing/parser_impl.h"
 #include "utils/similar.h"
 #include "utils/task.h"
 #include "workspace_manager.h"
@@ -240,17 +240,13 @@ template std::optional<context::A_t> get_global_var_value(hlasm_context& ctx, st
 template std::optional<context::B_t> get_global_var_value(hlasm_context& ctx, std::string name);
 template std::optional<context::C_t> get_global_var_value(hlasm_context& ctx, std::string name);
 
-size_t get_syntax_errors(analyzer& a) { return a.parser().getNumberOfSyntaxErrors(); }
+std::unique_ptr<expressions::ca_expression> parse_ca_expression(analyzer& a) { return a.parser().testing_expr(); }
 
-std::unique_ptr<expressions::ca_expression> parse_ca_expression(analyzer& a)
-{
-    return std::move(a.parser().expr()->ca_expr);
-}
 expressions::data_definition parse_data_definition(analyzer& a, diagnostic_op_consumer* diag)
 {
     if (diag)
-        a.parser().set_diagnoser(diag);
-    return std::move(a.parser().data_def()->value);
+        a.parser().set_diagnostic_collector(diag);
+    return a.parser().testing_data_def();
 }
 
 namespace hlasm_plugin::parser_library {

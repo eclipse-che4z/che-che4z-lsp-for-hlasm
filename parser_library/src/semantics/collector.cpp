@@ -14,13 +14,11 @@
 
 #include "collector.h"
 
-#include "antlr4-runtime.h"
+#include <stdexcept>
 
 #include "expressions/data_definition.h"
-#include "lexing/lexer.h"
 #include "operand_impls.h"
 #include "processing/statement.h"
-#include "range_provider.h"
 
 using namespace hlasm_plugin::parser_library;
 using namespace hlasm_plugin::parser_library::semantics;
@@ -68,24 +66,11 @@ void collector::set_label_field(seq_sym sequence_symbol, range symbol_range)
     lbl_.emplace(symbol_range, std::move(sequence_symbol));
 }
 
-void collector::set_label_field(
-    context::id_index label, std::string mixed_case_label, antlr4::ParserRuleContext* parser_ctx, range symbol_range)
+void collector::set_label_field(ord_symbol_string ordsym, range symbol_range)
 {
     if (lbl_)
         throw std::runtime_error("field already assigned");
-    // recognise, whether label consists only of ORDSYMBOL token
-    if (!parser_ctx
-        || ((parser_ctx->getStart() == parser_ctx->getStop()
-                || parser_ctx->getStart()->getTokenIndex() == parser_ctx->getStop()->getTokenIndex())
-            && parser_ctx->getStart()->getType() == lexing::lexer::Tokens::ORDSYMBOL))
-    {
-        lbl_.emplace(symbol_range, ord_symbol_string { label, std::move(mixed_case_label) });
-    }
-    // otherwise it is macro label parameter
-    else
-    {
-        lbl_.emplace(symbol_range, mixed_case_label, label_si::mac_flag());
-    }
+    lbl_.emplace(symbol_range, std::move(ordsym));
 }
 
 void collector::set_label_field(concat_chain label, range symbol_range)

@@ -16,10 +16,9 @@
 #define HLASMPLUGIN_PARSERLIBRARY_EXPRESSIONS_DATA_DEF_H
 
 #include <cstdint>
-#include <optional>
 
 #include "checking/data_definition/data_def_fields.h"
-#include "context/id_storage.h"
+#include "context/id_index.h"
 #include "context/ordinary_assembly/alignment.h"
 #include "nominal_value.h"
 
@@ -116,66 +115,6 @@ struct data_definition final : public context::dependable
     friend bool is_similar(const data_definition& l, const data_definition& r) noexcept;
 
     size_t hash() const;
-};
-
-// Guide the ANTLR parser through the process of parsing data definition expression
-class data_definition_parser
-{
-public:
-    struct allowed_t
-    {
-        bool expression;
-        bool string;
-        bool plus_minus;
-        bool dot;
-    };
-
-    const allowed_t& allowed() const { return m_state.allowed; }
-
-    using push_arg = std::variant<std::string_view, mach_expr_ptr>;
-
-    void push(push_arg v, range r);
-    void push(nominal_value_ptr n);
-
-    std::pair<data_definition, std::vector<diagnostic_op>> take_result();
-
-    void set_collector(semantics::collector& collector) { m_collector = &collector; }
-    void set_goff(bool goff) { m_goff = goff; }
-
-private:
-    std::optional<std::pair<int, range>> parse_number(std::string_view& v, range& r);
-    mach_expr_ptr read_number(push_arg& v, range& r);
-    mach_expr_ptr read_number(std::string_view& v, range& r);
-
-    data_definition m_result;
-    std::vector<diagnostic_op> m_errors;
-    bool m_goff = false;
-
-    semantics::collector* m_collector = nullptr;
-
-    enum class state
-    {
-        done,
-        duplicating_factor,
-        read_type,
-        try_reading_program,
-        read_program,
-        try_reading_bitfield,
-        try_reading_length,
-        read_length,
-        try_reading_scale,
-        read_scale,
-        try_reading_exponent,
-        read_exponent,
-        too_much_text,
-    };
-
-    struct
-    {
-        state parsing_state;
-        allowed_t allowed;
-        std::optional<position> expecting_next;
-    } m_state = { state::duplicating_factor, { true, true, false, false }, std::nullopt };
 };
 
 } // namespace hlasm_plugin::parser_library::expressions

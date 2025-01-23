@@ -238,6 +238,8 @@ public:
     static context::SET_t_enum get_operands_type(ca_expr_ops op, context::SET_t_enum expr_kind);
 
     static ca_expr_funcs get_function(std::string_view symbol);
+
+    static constexpr size_t max_function_name_length = 8;
 };
 
 template<typename T>

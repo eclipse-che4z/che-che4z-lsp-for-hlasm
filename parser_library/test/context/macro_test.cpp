@@ -218,7 +218,6 @@ TEST(macro, macro_positional_param_subs)
     analyzer a(input);
     a.analyze();
     EXPECT_EQ(a.diags().size(), (size_t)1);
-    EXPECT_EQ(get_syntax_errors(a), (size_t)0);
 }
 
 TEST(macro, macro_keyword_param)
@@ -235,7 +234,6 @@ TEST(macro, macro_keyword_param)
     analyzer a(input);
     a.analyze();
     EXPECT_EQ(a.diags().size(), (size_t)1);
-    EXPECT_EQ(get_syntax_errors(a), (size_t)0);
 }
 
 TEST(macro, macro_undefined_keyword_param)
@@ -252,7 +250,6 @@ TEST(macro, macro_undefined_keyword_param)
     analyzer a(input);
     a.analyze();
     EXPECT_TRUE(contains_message_properties(a.diags(), { diagnostic_severity::warning }, &diagnostic::severity));
-    EXPECT_EQ(get_syntax_errors(a), (size_t)0);
 }
 
 TEST(macro, macro_param_expr)
@@ -272,7 +269,6 @@ TEST(macro, macro_param_expr)
     analyzer a(input);
     a.analyze();
     EXPECT_EQ(a.diags().size(), (size_t)2);
-    EXPECT_EQ(get_syntax_errors(a), (size_t)0);
 }
 
 TEST(macro, macro_composite_param_no_err)
@@ -288,7 +284,6 @@ TEST(macro, macro_composite_param_no_err)
     analyzer a(input);
     a.analyze();
     EXPECT_EQ(a.diags().size(), (size_t)0);
-    EXPECT_EQ(get_syntax_errors(a), (size_t)0);
 }
 
 TEST(macro, macro_composite_param_err)
@@ -304,7 +299,6 @@ TEST(macro, macro_composite_param_err)
     analyzer a(input);
     a.analyze();
     EXPECT_EQ(a.diags().size(), (size_t)1);
-    EXPECT_EQ(get_syntax_errors(a), (size_t)0);
 }
 
 
@@ -321,7 +315,6 @@ TEST(macro, macro_name_param)
     analyzer a(input);
     a.analyze();
     EXPECT_EQ(a.diags().size(), (size_t)0);
-    EXPECT_EQ(get_syntax_errors(a), (size_t)0);
 }
 
 TEST(macro, macro_name_param_repetition)
@@ -347,7 +340,6 @@ TEST(macro, macro_name_param_repetition)
     analyzer a(input);
     a.analyze();
     EXPECT_EQ(a.diags().size(), (size_t)3);
-    EXPECT_EQ(get_syntax_errors(a), (size_t)0);
 
     auto& m1 = *a.hlasm_ctx().find_macro(id_index("M1"));
     auto& m2 = *a.hlasm_ctx().find_macro(id_index("M2"));
@@ -409,7 +401,6 @@ TEST(macro, MEXIT)
     analyzer a(input);
     a.analyze();
     EXPECT_EQ(a.diags().size(), (size_t)1);
-    EXPECT_EQ(get_syntax_errors(a), (size_t)0);
 }
 
 TEST(macro, cyclic_call_infinite)
@@ -427,7 +418,6 @@ TEST(macro, cyclic_call_infinite)
     analyzer a(input);
     a.analyze();
     EXPECT_EQ(a.diags().size(), (size_t)1);
-    EXPECT_EQ(get_syntax_errors(a), (size_t)0);
 }
 
 TEST(macro, cyclic_call_finite)
@@ -448,7 +438,6 @@ TEST(macro, cyclic_call_finite)
     analyzer a(input);
     a.analyze();
     EXPECT_EQ(a.diags().size(), (size_t)10);
-    EXPECT_EQ(get_syntax_errors(a), (size_t)0);
 }
 
 TEST(macro, arguments_concatenation)
@@ -471,7 +460,6 @@ TEST(macro, arguments_concatenation)
     EXPECT_EQ(get_global_var_value<C_t>(a.hlasm_ctx(), "V"), "(B-C)+(A-D)");
 
     EXPECT_EQ(a.diags().size(), (size_t)0);
-    EXPECT_EQ(get_syntax_errors(a), (size_t)0);
 }
 
 TEST(macro, arguments_continuation)
@@ -496,7 +484,6 @@ TEST(macro, arguments_continuation)
     EXPECT_EQ(get_global_var_value<C_t>(a.hlasm_ctx(), "W"), "Y");
 
     EXPECT_EQ(a.diags().size(), (size_t)0);
-    EXPECT_EQ(get_syntax_errors(a), (size_t)0);
 }
 TEST(external_macro, bad_name)
 {
@@ -517,7 +504,6 @@ TEST(external_macro, bad_name)
     ASSERT_EQ(lib_provider.analyzers.count("MAC"), 1U);
     EXPECT_EQ(lib_provider.analyzers["MAC"]->diags().size(), 1U);
     EXPECT_EQ(a.diags().size(), 2U);
-    EXPECT_EQ(get_syntax_errors(a), 0U);
 }
 
 TEST(external_macro, bad_begin)
@@ -540,7 +526,6 @@ TEST(external_macro, bad_begin)
     ASSERT_EQ(lib_provider.analyzers.count("MAC"), 1U);
     EXPECT_EQ(lib_provider.analyzers["MAC"]->diags().size(), 1U);
     EXPECT_EQ(a.diags().size(), 2U);
-    EXPECT_EQ(get_syntax_errors(a), 0U);
 }
 
 TEST(external_macro, library_with_begin_comment)
@@ -563,7 +548,6 @@ TEST(external_macro, library_with_begin_comment)
     ASSERT_EQ(lib_provider.analyzers.count("MAC"), 1U);
     EXPECT_EQ(lib_provider.analyzers["MAC"]->diags().size(), 0U);
     EXPECT_TRUE(a.diags().empty());
-    EXPECT_EQ(get_syntax_errors(a), 0U);
 }
 
 TEST(external_macro, process_ordinary_restart)
@@ -724,7 +708,6 @@ TEST(macro, parse_args)
     a.analyze();
 
     EXPECT_EQ(a.diags().size(), (size_t)0);
-    EXPECT_EQ(get_syntax_errors(a), (size_t)0);
 }
 
 TEST(macro, seq_numbers)
@@ -740,7 +723,6 @@ TEST(macro, seq_numbers)
     a.analyze();
 
     EXPECT_EQ(a.diags().size(), (size_t)0);
-    EXPECT_EQ(get_syntax_errors(a), (size_t)0);
 }
 
 TEST(macro, apostrophe_in_substitution)
@@ -757,7 +739,6 @@ TEST(macro, apostrophe_in_substitution)
     analyzer a(input);
     a.analyze();
 
-    EXPECT_EQ(get_syntax_errors(a), (size_t)0);
     EXPECT_TRUE(matches_message_codes(a.diags(), { "MNOTE" }));
 }
 
@@ -1302,6 +1283,71 @@ TEST(macro, allowed_incomplete_literal)
 
          MAC   L'=
          MAC   "L'=
+)";
+    analyzer a(input);
+    a.analyze();
+
+    EXPECT_TRUE(a.diags().empty());
+}
+
+TEST(macro, remark_should_not_impact_operands)
+{
+    std::string input = R"(
+         MACRO
+         MAC
+         MEND
+
+         MAC   L'A,                                                   LX
+               'A'
+)";
+    analyzer a(input);
+    a.analyze();
+
+    EXPECT_TRUE(a.diags().empty());
+}
+
+TEST(macro, long_string_with_attribute_like_start)
+{
+    std::string input = R"(
+         MACRO
+         MAC
+         MEND
+
+         MAC   L'                                                      X
+                         A'
+)";
+    analyzer a(input);
+    a.analyze();
+
+    EXPECT_TRUE(a.diags().empty());
+}
+
+TEST(macro, instruction_substitution)
+{
+    std::string input = R"(
+         MACRO
+         MAC   &J
+         &J.H  LABEL
+         MEND
+
+         MAC   J
+LABEL    DS    0H
+)";
+    analyzer a(input);
+    a.analyze();
+
+    EXPECT_TRUE(a.diags().empty());
+}
+
+TEST(macro, operand_dot)
+{
+    std::string input = R"(
+         MACRO
+         MAC   &J
+         OI    0(1),&J.
+         MEND
+
+         MAC   1
 )";
     analyzer a(input);
     a.analyze();

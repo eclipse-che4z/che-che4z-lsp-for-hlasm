@@ -449,7 +449,6 @@ TEST(copy, inner_copy_jump)
     EXPECT_EQ(a.hlasm_ctx().copy_members().size(), (size_t)1);
 
     EXPECT_EQ(a.diags().size(), (size_t)1);
-    EXPECT_EQ(get_syntax_errors(a), (size_t)0);
 }
 
 TEST(copy, jump_from_copy_fail)
@@ -465,7 +464,6 @@ TEST(copy, jump_from_copy_fail)
     EXPECT_EQ(a.hlasm_ctx().copy_members().size(), (size_t)1);
 
     EXPECT_EQ(a.diags().size(), (size_t)2);
-    EXPECT_EQ(get_syntax_errors(a), (size_t)0);
 
     check_diag(a.diags()[1], 2, copyjf);
     ASSERT_EQ(a.diags()[1].related.size(), (size_t)1);
@@ -494,7 +492,6 @@ TEST(copy, jump_in_macro_from_copy_fail)
     EXPECT_EQ(a.hlasm_ctx().copy_members().size(), (size_t)1);
 
     EXPECT_EQ(a.diags().size(), (size_t)2);
-    EXPECT_EQ(get_syntax_errors(a), (size_t)0);
 
     check_diag(a.diags()[0], 1, copyjf);
     ASSERT_EQ(a.diags()[0].related.size(), (size_t)2);
@@ -521,7 +518,6 @@ TEST(copy, macro_nested_diagnostics)
     EXPECT_EQ(a.hlasm_ctx().copy_members().size(), (size_t)2);
 
     EXPECT_EQ(a.diags().size(), (size_t)1);
-    EXPECT_EQ(get_syntax_errors(a), (size_t)0);
 
     check_diag(a.diags()[0], 4, copynd2);
     ASSERT_EQ(a.diags()[0].related.size(), (size_t)3);
@@ -545,7 +541,6 @@ TEST(copy, copy_call_with_jump_before_comment)
     EXPECT_EQ(a.hlasm_ctx().copy_members().size(), (size_t)1);
 
     EXPECT_EQ(a.diags().size(), (size_t)0);
-    EXPECT_EQ(get_syntax_errors(a), (size_t)0);
 }
 
 TEST(copy, copy_empty_file)

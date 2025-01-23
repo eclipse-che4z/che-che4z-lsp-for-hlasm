@@ -74,10 +74,9 @@ TEST(ca_var_sym, invalid_definitions)
 {
     std::string input = R"(
     GBLC (([
-    GBLC (([
 )";
     analyzer a(input);
     a.analyze();
 
-    EXPECT_TRUE(matches_message_codes(a.diags(), { "S0011", "S0011" }));
+    EXPECT_TRUE(matches_message_codes(a.diags(), { "S0011", "E022" }));
 }

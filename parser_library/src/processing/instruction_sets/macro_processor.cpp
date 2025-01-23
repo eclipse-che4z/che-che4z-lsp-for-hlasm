@@ -64,6 +64,17 @@ void macro_processor::process(std::shared_ptr<const processing::resolved_stateme
         eval_ctx.diags.add_diagnostic(diagnostic_op::error_E081(stmt->operands_ref().field_range));
 }
 namespace {
+bool is_attribute_consuming(char c)
+{
+    auto tmp = std::toupper(static_cast<int>(c));
+    return tmp == 'O' || tmp == 'S' || tmp == 'I' || tmp == 'L' || tmp == 'T';
+}
+
+bool can_attribute_consume(char c)
+{
+    return (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') || c == '=' || c == '$' || c == '_' || c == '#' || c == '@';
+}
+
 bool is_valid_string(std::string_view s)
 {
     size_t index = 0;
@@ -75,8 +86,8 @@ bool is_valid_string(std::string_view s)
         if (ap_id == std::string_view::npos)
             break;
 
-        if (ap_id > 0 && ap_id + 1 < s.size() && parsing::parser_impl::is_attribute_consuming(s[ap_id - 1])
-            && parsing::parser_impl::can_attribute_consume(s[ap_id + 1]))
+        if (ap_id > 0 && ap_id + 1 < s.size() && is_attribute_consuming(s[ap_id - 1])
+            && can_attribute_consume(s[ap_id + 1]))
         {
             index = ap_id + 1;
             continue;
@@ -121,8 +132,8 @@ std::pair<std::unique_ptr<context::macro_param_data_single>, bool> find_single_m
         }
         else if (data[start] == '\'')
         {
-            if (start > 0 && start + 1 < data.size() && parsing::parser_impl::is_attribute_consuming(data[start - 1])
-                && parsing::parser_impl::can_attribute_consume(data[start + 1]))
+            if (start > 0 && start + 1 < data.size() && is_attribute_consuming(data[start - 1])
+                && can_attribute_consume(data[start + 1]))
             {
                 ++start;
                 continue;

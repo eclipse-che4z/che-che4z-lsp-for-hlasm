@@ -95,6 +95,14 @@ public:
 
     constexpr bool empty() const noexcept { return m_buffer[buffer_size - 1] == 0; }
 
+    constexpr size_t size() const noexcept
+    {
+        if (const auto len = m_buffer[buffer_size - 1]; len < 0x80)
+            return len;
+        else
+            return reinterpret_cast<const std::string* const&>(m_buffer)->size();
+    }
+
     auto hash() const noexcept
     {
         return std::hash<std::string_view>()(std::string_view(reinterpret_cast<const char*>(m_buffer), buffer_size));

@@ -11,7 +11,6 @@
 #   Broadcom, Inc. - initial API and implementation
 
 target_sources(library_test PRIVATE
-    lexer_test.cpp
     logical_line_iterator_test.cpp
     logical_line_test.cpp
 )

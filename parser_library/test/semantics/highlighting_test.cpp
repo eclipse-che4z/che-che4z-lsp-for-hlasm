@@ -176,7 +176,7 @@ TEST(highlighting, asm_simple_operand)
 
 TEST(highlighting, asm_list)
 {
-    const std::string contents = " AMODE (op2,op3)";
+    const std::string contents = " USING (op2,op3)";
     analyzer a(contents, analyzer_options { source_file_loc, collect_highlighting_info::yes });
     a.analyze();
     const auto& tokens = a.take_semantic_tokens();
@@ -524,6 +524,8 @@ INSTANTIATE_TEST_SUITE_P(highlighting,
 )",
             semantics::lines_info {
                 token_info({ { 1, 8 }, { 1, 11 } }, hl_scopes::instruction),
+
+                token_info({ { 1, 14 }, { 1, 17 } }, hl_scopes::operand),
             },
         },
         test_params {
@@ -533,7 +535,7 @@ INSTANTIATE_TEST_SUITE_P(highlighting,
             semantics::lines_info {
                 token_info({ { 1, 8 }, { 1, 11 } }, hl_scopes::instruction),
 
-                token_info({ { 1, 14 }, { 1, 15 } }, hl_scopes::operand),
+                token_info({ { 1, 14 }, { 1, 16 } }, hl_scopes::operand),
             },
         },
         test_params {
@@ -562,7 +564,7 @@ TEST_P(highlighting_fixture, macro_params_no_definition)
     analyzer a(GetParam().text_to_test, analyzer_options { collect_highlighting_info::yes });
     a.analyze();
 
-    matches_message_codes(a.diags(), { "E049" });
+    EXPECT_TRUE(matches_message_codes(a.diags(), { "E049" }));
 
     EXPECT_EQ(a.take_semantic_tokens(), GetParam().expected);
 }

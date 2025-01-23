@@ -55,9 +55,7 @@ option(WITH_STATIC_CRT "(Visual C++) Enable to statically link CRT, which avoids
 option(DISCOVER_TESTS "Enables CTest by executing tests and discovering test cases. To disable with: -DDISCOVER_TESTS=Off" On)
 option(BUILD_VSIX "When disabled, the VS Code client is not built and it is not packaged into vsix." On)
 option(BUILD_FUZZER "Enable building of the fuzzer. Tested with clang and libstdc++ (enable with -DWITH_LIBCXX=Off)" Off)
-option(USE_STATIC_ANTLR "Always use static ANTLR library." On)
 
-set(USE_PRE_GENERATED_GRAMMAR "" CACHE PATH "Directory with pre-generated grammar files")
 set(LANGUAGE_SERVER_BIN_SUBDIR "" CACHE STRING "Subdirectory for the language server binary in the client project")
 
 if(BUILD_SHARED_LIBS AND WITH_STATIC_CRT AND MSVC)
@@ -99,8 +97,6 @@ find_package(Filesystem REQUIRED)
 
 include(CTest)
 
-include(external_antlr4cpp)
-
 include(external_json)
 
 include(external_uri)
@@ -131,7 +127,6 @@ install(TARGETS
     hlasm_language_server
     parser_library
     hlasm_utils
-    ${ANTLR4_RUNTIME}
     network-uri
     FILE_SET public_headers
 )

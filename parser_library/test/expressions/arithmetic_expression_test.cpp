@@ -102,7 +102,7 @@ TEST(arithmetic_expressions, invalid_self_defining_term)
     a.analyze();
 
     EXPECT_TRUE(matches_message_codes(
-        a.diags(), { "S0002", "S0002", "CE012", "CE012", "CE007", "CE007", "CE007", "CE007", "CE007", "CE007" }));
+        a.diags(), { "S0002", "CE012", "S0002", "CE007", "CE007", "CE007", "CE007", "CE007", "CE007" }));
 }
 
 TEST(arithmetic_expressions, substitution_to_character_expression)
@@ -134,7 +134,7 @@ TEST(arithmetic_expressions, subscript_use)
     analyzer a(input);
     a.analyze();
 
-    EXPECT_TRUE(matches_message_codes(a.diags(), { "S0002", "E013" }));
+    EXPECT_TRUE(matches_message_codes(a.diags(), { "S0011" }));
 }
 
 TEST(arithmetic_expressions, unary_operators)
@@ -338,7 +338,7 @@ TEST(arithmetic_expressions, multiple_operand_with_spaces)
     analyzer a(input);
     a.analyze();
 
-    EXPECT_TRUE(matches_message_codes(a.diags(), { "S0002", "S0002", "S0012", "CE012", "CE012" }));
+    EXPECT_TRUE(matches_message_codes(a.diags(), { "S0011", "S0011", "S0011" }));
 }
 
 TEST(arithmetic_expressions, conversion_from_binary)

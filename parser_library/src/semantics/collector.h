@@ -18,9 +18,8 @@
 #include <optional>
 #include <span>
 
-#include "ParserRuleContext.h"
 #include "processing/op_code.h"
-#include "source_info_processor.h"
+#include "protocol.h"
 #include "statement.h"
 
 namespace hlasm_plugin::parser_library::expressions {
@@ -46,8 +45,7 @@ public:
     void set_label_field(range symbol_range);
     void set_label_field(std::string label, range symbol_range);
     void set_label_field(seq_sym sequence_symbol, range symbol_range);
-    void set_label_field(
-        context::id_index label, std::string mixed_case_label, antlr4::ParserRuleContext* ctx, range symbol_range);
+    void set_label_field(ord_symbol_string ordsym, range symbol_range);
     void set_label_field(concat_chain label, range symbol_range);
 
     void set_instruction_field(range symbol_range);

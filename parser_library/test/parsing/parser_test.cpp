@@ -64,9 +64,4 @@ INSTANTIATE_TEST_SUITE_P(library_test,
         ));
 
 // 3 instruction statements
-TEST_P(library_test, syntax_errors)
-{
-    holder->analyze();
-    // no errors found while parsing
-    EXPECT_EQ(get_syntax_errors(*holder), size_t_zero);
-}
+TEST_P(library_test, syntax_errors) { EXPECT_NO_FATAL_FAILURE(holder->analyze()); }

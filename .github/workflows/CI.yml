@@ -95,39 +95,9 @@ jobs:
             ${{ env.CLIENT_DIR }}/package.json
             ${{ env.CLIENT_DIR }}/CHANGELOG.md
 
-  generate_grammar:
-    name: Generate grammar
-    runs-on: ubuntu-24.04
-    needs: [formal-checks]
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/cache@v4
-        id: cache
-        with:
-          path: build/generated_parser
-          key: ${{ hashFiles('**/CMakeLists.txt', 'cmake/**', 'parser_library/src/parsing/grammar/**') }}
-      - name: Set up JDK 11
-        if: steps.cache.outputs.cache-hit != 'true'
-        uses: actions/setup-java@v4
-        with:
-          java-version: 11
-          distribution: 'temurin'
-      - name: Generate grammar
-        if: steps.cache.outputs.cache-hit != 'true'
-        run: |
-          mkdir build && cd build
-          cmake -DBUILD_VSIX=Off -DBUILD_TESTING=Off ../
-          cmake --build . --target generate_grammar
-      - name: Upload generated files
-        uses: actions/upload-artifact@v4
-        with:
-          name: grammar
-          path: build/generated_parser/hlasmparser_*.*
-
   sanitizer-builds:
     name: Build with sanitizers
     runs-on: ubuntu-24.04
-    needs: [generate_grammar]
     strategy:
       matrix:
         include:
@@ -136,17 +106,14 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
-      - name: Download generated files
-        uses: actions/download-artifact@v4
-        with:
-          name: grammar
-          path: build/generated_parser
       - name: Requirements install
         run: |
           sudo apt-get update
           sudo apt-get install ninja-build xvfb
+      - name: Make build directory
+        run: mkdir build
       - name: Configure
-        run: cmake -G Ninja -DBUILD_VSIX=Off -DCMAKE_C_COMPILER=clang-18 -DCMAKE_CXX_COMPILER=clang++-18 -DCMAKE_CXX_FLAGS="-fsanitize=${{ matrix.flags }}" -DWITH_LIBCXX=Off -DUSE_PRE_GENERATED_GRAMMAR="generated_parser" ../
+        run: cmake -G Ninja -DBUILD_VSIX=Off -DCMAKE_C_COMPILER=clang-18 -DCMAKE_CXX_COMPILER=clang++-18 -DCMAKE_CXX_FLAGS="-fsanitize=${{ matrix.flags }}" -DWITH_LIBCXX=Off ../
         working-directory: build
       - name: Build
         run: cmake --build .
@@ -206,7 +173,7 @@ jobs:
   build-matrix:
     name: Build
     runs-on: ${{ matrix.os }}
-    needs: [generate_grammar, aarch64-linux-musl, s390x-linux-musl]
+    needs: [aarch64-linux-musl, s390x-linux-musl]
     strategy:
       matrix:
         include:
@@ -243,13 +210,10 @@ jobs:
     container: ${{ matrix.container }}
     steps:
       - uses: actions/checkout@v4
-      - name: Download generated files
-        uses: actions/download-artifact@v4
-        with:
-          name: grammar
-          path: build/generated_parser
       - name: Requirements install
         run: if [ -f ./scripts/prereq.${{ matrix.native }}.sh ]; then ./scripts/prereq.${{ matrix.native }}.sh; fi
+      - name: Make build directory
+        run: mkdir build
       - name: Download toolchain
         if: ${{ hashFiles(format('scripts/toolchain.{0}.sh', matrix.native)) != '' }}
         uses: actions/cache/restore@v4

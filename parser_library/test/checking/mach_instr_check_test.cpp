@@ -106,7 +106,6 @@ TEST(machine_instr_check_test, second_par_omitted)
 )");
     analyzer a(input);
     a.analyze();
-    EXPECT_EQ(get_syntax_errors(a), (size_t)0);
     EXPECT_TRUE(matches_message_codes(a.diags(), { "M004" }));
 }
 
@@ -118,7 +117,6 @@ TEST(machine_instr_check_test, displ_unsigned_size)
 )");
     analyzer a(input);
     a.analyze();
-    EXPECT_EQ(get_syntax_errors(a), (size_t)0);
     EXPECT_TRUE(matches_message_codes(a.diags(), { "M130" }));
 }
 
@@ -130,7 +128,6 @@ TEST(machine_instr_check_test, displ_signed_size)
 )");
     analyzer a(input);
     a.analyze();
-    EXPECT_EQ(get_syntax_errors(a), (size_t)0);
     EXPECT_TRUE(a.diags().empty());
 }
 
@@ -142,7 +139,6 @@ TEST(machine_instr_check_test, displ_signed_err)
 )");
     analyzer a(input);
     a.analyze();
-    EXPECT_EQ(get_syntax_errors(a), (size_t)0);
     EXPECT_TRUE(matches_message_codes(a.diags(), { "M130" }));
 }
 
@@ -154,7 +150,6 @@ TEST(machine_instr_check_test, db_incorrect_format)
 )");
     analyzer a(input);
     a.analyze();
-    EXPECT_EQ(get_syntax_errors(a), (size_t)0);
     EXPECT_TRUE(matches_message_codes(a.diags(), { "M104" }));
 }
 
@@ -166,7 +161,6 @@ TEST(machine_instr_check_test, db_not_corresponding)
 )");
     analyzer a(input);
     a.analyze();
-    EXPECT_EQ(get_syntax_errors(a), (size_t)0);
     EXPECT_TRUE(matches_message_codes(a.diags(), { "M131" }));
 }
 
@@ -178,7 +172,6 @@ TEST(machine_instr_check_test, dxb_second_par_incorrect)
 )");
     analyzer a(input);
     a.analyze();
-    EXPECT_EQ(get_syntax_errors(a), (size_t)0);
     EXPECT_TRUE(matches_message_codes(a.diags(), { "M131" }));
 }
 
@@ -190,7 +183,6 @@ TEST(machine_instr_check_test, length_not_corresponding)
 )");
     analyzer a(input);
     a.analyze();
-    EXPECT_EQ(get_syntax_errors(a), (size_t)0);
     EXPECT_TRUE(matches_message_codes(a.diags(), { "M132" }));
 }
 
@@ -202,7 +194,6 @@ TEST(machine_instr_check_test, dis_reg_not_corresponding)
 )");
     analyzer a(input);
     a.analyze();
-    EXPECT_EQ(get_syntax_errors(a), (size_t)0);
     EXPECT_TRUE(matches_message_codes(a.diags(), { "M135" }));
 }
 
@@ -214,7 +205,6 @@ TEST(machine_instr_check_test, reg_not_corresponding)
 )");
     analyzer a(input);
     a.analyze();
-    EXPECT_EQ(get_syntax_errors(a), (size_t)0);
     EXPECT_TRUE(matches_message_codes(a.diags(), { "M133" }));
 }
 
@@ -226,7 +216,6 @@ TEST(machine_instr_check_test, vec_reg_not_corresponding)
 )");
     analyzer a(input);
     a.analyze();
-    EXPECT_EQ(get_syntax_errors(a), (size_t)0);
     EXPECT_TRUE(matches_message_codes(a.diags(), { "M134" }));
 }
 
@@ -238,7 +227,6 @@ TEST(machine_instr_check_test, displ_as_simple_unsigned)
 )");
     analyzer a(input);
     a.analyze();
-    EXPECT_EQ(get_syntax_errors(a), (size_t)0);
     EXPECT_TRUE(matches_message_codes(a.diags(), { "M130" }));
 }
 
@@ -250,7 +238,6 @@ TEST(machine_instr_check_test, displ_as_simple_signed_correct)
 )");
     analyzer a(input);
     a.analyze();
-    EXPECT_EQ(get_syntax_errors(a), (size_t)0);
     EXPECT_TRUE(a.diags().empty());
 }
 
@@ -262,7 +249,6 @@ TEST(machine_instr_check_test, displ_as_simple_signed_err)
 )");
     analyzer a(input);
     a.analyze();
-    EXPECT_EQ(get_syntax_errors(a), (size_t)0);
     EXPECT_TRUE(matches_message_codes(a.diags(), { "M130" }));
 }
 
@@ -274,7 +260,6 @@ TEST(machine_instr_check_test, immS_out_of_range)
 )");
     analyzer a(input);
     a.analyze();
-    EXPECT_EQ(get_syntax_errors(a), (size_t)0);
     EXPECT_TRUE(matches_message_codes(a.diags(), { "M137" }));
 }
 
@@ -288,7 +273,6 @@ DISP     MVC  0(1),1
 )");
     analyzer a(input);
     a.analyze();
-    EXPECT_EQ(get_syntax_errors(a), (size_t)0);
     EXPECT_TRUE(matches_message_codes(a.diags(), { "M123" }));
 }
 
@@ -302,7 +286,6 @@ DISP     MVC 0(1),1
 )");
     analyzer a(input);
     a.analyze();
-    EXPECT_EQ(get_syntax_errors(a), (size_t)0);
     EXPECT_TRUE(a.diags().empty());
 }
 
@@ -314,7 +297,6 @@ TEST(machine_instr_check_test, mask_out_of_range)
 )");
     analyzer a(input);
     a.analyze();
-    EXPECT_EQ(get_syntax_errors(a), (size_t)0);
     EXPECT_TRUE(matches_message_codes(a.diags(), { "M121" }));
 }
 
@@ -326,7 +308,6 @@ TEST(machine_instr_check_test, immU_out_of_range)
 )");
     analyzer a(input);
     a.analyze();
-    EXPECT_EQ(get_syntax_errors(a), (size_t)0);
     EXPECT_TRUE(matches_message_codes(a.diags(), { "M137" }));
 }
 
@@ -338,7 +319,6 @@ TEST(machine_instr_check_test, vecReg_out_of_range)
 )");
     analyzer a(input);
     a.analyze();
-    EXPECT_EQ(get_syntax_errors(a), (size_t)0);
     EXPECT_TRUE(matches_message_codes(a.diags(), { "M124" }));
 }
 
@@ -350,7 +330,6 @@ TEST(machine_instr_check_test, mask_expected)
 )");
     analyzer a(input);
     a.analyze();
-    EXPECT_EQ(get_syntax_errors(a), (size_t)0);
     EXPECT_TRUE(matches_message_codes(a.diags(), { "M111" }));
 }
 
@@ -362,7 +341,6 @@ TEST(machine_instr_check_test, imm_expected)
 )");
     analyzer a(input);
     a.analyze();
-    EXPECT_EQ(get_syntax_errors(a), (size_t)0);
     EXPECT_TRUE(matches_message_codes(a.diags(), { "M112" }));
 }
 
@@ -374,7 +352,6 @@ TEST(machine_instr_check_test, vec_reg_limits)
 )");
     analyzer a(input);
     a.analyze();
-    EXPECT_EQ(get_syntax_errors(a), (size_t)0);
     EXPECT_TRUE(a.diags().empty());
 }
 
@@ -389,6 +366,5 @@ TEST(machine_instr_check_test, mnemonics_with_optional_args)
 )");
     analyzer a(input);
     a.analyze();
-    EXPECT_EQ(get_syntax_errors(a), (size_t)0);
     EXPECT_TRUE(matches_message_codes(a.diags(), { "M001", "M001" }));
 }

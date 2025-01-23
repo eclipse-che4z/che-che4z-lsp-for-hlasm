@@ -67,7 +67,7 @@ TEST(data_def_checker, unknown_extension_analyzer)
     analyzer a(input);
     a.analyze();
 
-    EXPECT_TRUE(matches_message_codes(a.diags(), { "D006" }));
+    EXPECT_TRUE(matches_message_codes(a.diags(), { "S0002", "D016" }));
 }
 
 TEST(data_def_checker, unexpected_expr)

@@ -16,6 +16,7 @@
 #define HLASMPLUGIN_UTILS_TRUTH_TABLE_H
 
 #include <array>
+#include <assert.h>
 #include <limits>
 #include <string_view>
 #include <type_traits>

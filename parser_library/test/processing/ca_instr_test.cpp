@@ -355,6 +355,24 @@ TEST(AIF, extended_fail)
     EXPECT_EQ(get_var_value<B_t>(a.hlasm_ctx(), "var3"), false);
 }
 
+TEST(AIF, complex_expression)
+{
+    std::string input = R"(
+&A  SETA 0
+&C  SETC 'ERR'
+    AIF (NOT(('&C'EQ'OK')OR('&C'EQ'NOTOK'))).B
+&A  SETA &A+1
+.B  ANOP
+&A  SETA &A+1
+)";
+    analyzer a(input);
+    a.analyze();
+
+    EXPECT_TRUE(a.diags().empty());
+
+    EXPECT_EQ(get_var_value<A_t>(a.hlasm_ctx(), "A"), 1);
+}
+
 TEST(ACTR, exceeded)
 {
     std::string input(R"(
@@ -417,7 +435,7 @@ TEST(ACTR, bad_arguments_2)
     analyzer a(input);
     a.analyze();
 
-    EXPECT_TRUE(matches_message_codes(a.diags(), { "E020" }));
+    EXPECT_TRUE(matches_message_codes(a.diags(), { "S0002" }));
 }
 
 TEST(MHELP, SYSNDX_limit)
@@ -517,6 +535,37 @@ TEST(SET, conversions_invalid)
     a.analyze();
 
     EXPECT_TRUE(matches_message_codes(a.diags(), { "CE004", "CE004", "CE017", "CE017" }));
+}
+
+TEST(SET, multiline)
+{
+    std::string input = R"(
+&C(1)  SETC    'A',                                                    X
+               'B',                                                    X
+               'C'
+&A     SETA    N'&C
+)";
+    analyzer a(input);
+    a.analyze();
+
+    EXPECT_TRUE(a.diags().empty());
+
+    EXPECT_EQ(get_var_value<A_t>(a.hlasm_ctx(), "A"), 3);
+    EXPECT_EQ(get_var_vector<C_t>(a.hlasm_ctx(), "C"), (std::vector<std::string> { "A", "B", "C" }));
+}
+
+TEST(SET, complex_logical)
+{
+    std::string input = R"(
+&C1  SETC 'ABC'
+&B   SETB (K'&C1 EQ 3 AND NOT('&C1' EQ 'XYZ'))
+    )";
+    analyzer a(input);
+    a.analyze();
+
+    EXPECT_TRUE(a.diags().empty());
+
+    EXPECT_EQ(get_var_value<B_t>(a.hlasm_ctx(), "B"), true);
 }
 
 TEST(CA_instructions, undefined_relocatable)
@@ -633,5 +682,5 @@ TEST(SET, missing_var_name)
     analyzer a(input);
     a.analyze();
 
-    EXPECT_TRUE(matches_message_codes(a.diags(), { "S0008", "E010" }));
+    EXPECT_TRUE(matches_message_codes(a.diags(), { "S0008" }));
 }

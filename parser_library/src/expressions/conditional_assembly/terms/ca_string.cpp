@@ -24,12 +24,6 @@
 
 namespace hlasm_plugin::parser_library::expressions {
 
-ca_string::substring_t::substring_t()
-    : start(nullptr)
-    , count(nullptr)
-    , substring_range()
-{}
-
 ca_string::ca_string(
     semantics::concat_chain value, ca_expr_ptr duplication_factor, substring_t substring, range expr_range)
     : ca_expression(context::SET_t_enum::C_TYPE, std::move(expr_range))

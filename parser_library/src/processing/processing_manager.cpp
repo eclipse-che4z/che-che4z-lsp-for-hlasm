@@ -464,7 +464,7 @@ void processing_manager::perform_opencode_jump(
     hlasm_ctx_.apply_source_snapshot(std::move(snapshot));
 }
 
-parsing::hlasmparser_multiline& processing_manager::opencode_parser() // for testing only
+parsing::parser_holder& processing_manager::opencode_parser() // for testing only
 {
     if (helper_task_.valid())
         std::exchange(helper_task_, {}).run();

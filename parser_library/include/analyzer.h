@@ -44,7 +44,7 @@ class id_storage;
 } // namespace hlasm_plugin::parser_library::context
 
 namespace hlasm_plugin::parser_library::parsing {
-class hlasmparser_multiline;
+class parser_holder;
 } // namespace hlasm_plugin::parser_library::parsing
 
 namespace hlasm_plugin::parser_library::processing {
@@ -222,7 +222,7 @@ public:
 
     void register_stmt_analyzer(processing::statement_analyzer* stmt_analyzer);
 
-    parsing::hlasmparser_multiline& parser(); // for testing only
+    parsing::parser_holder& parser(); // for testing only
 };
 
 } // namespace hlasm_plugin::parser_library

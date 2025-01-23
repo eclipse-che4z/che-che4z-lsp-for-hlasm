@@ -34,7 +34,7 @@ auto parse_model(std::string s,
 {
     hlasm_context fallback_context;
     diagnostic_op_consumer_container fallback_container;
-    return statement_fields_parser(context ? context : &fallback_context)
+    return statement_fields_parser(context ? *context : fallback_context)
         .parse_operand_field(lexing::u8string_view_with_newlines(s),
             after_substitution,
             range_provider(r, adjusting_state::NONE),
@@ -160,9 +160,8 @@ TEST(parser, parse_bad_model)
 
     std::vector<diagnostic_op>& diags = diag_container.diags;
 
-    EXPECT_TRUE(matches_message_text(
-        diags, { "While evaluating the result of substitution ''' => Unexpected end of statement" }));
-    EXPECT_TRUE(matches_message_properties(diags, { range({ 0, 5 }, { 0, 5 }) }, &diagnostic_op::diag_range));
+    EXPECT_TRUE(matches_message_text(diags, { "While evaluating the result of substitution ''' => Syntax error" }));
+    EXPECT_TRUE(matches_message_properties(diags, { range({ 0, 4 }, { 0, 4 }) }, &diagnostic_op::diag_range));
 }
 
 TEST(parser, parse_bad_model_no_substitution)
@@ -173,8 +172,8 @@ TEST(parser, parse_bad_model_no_substitution)
     auto [op, rem, lit] = parse_model("'", r, false, &diag_container);
 
     std::vector<diagnostic_op>& diags = diag_container.diags;
-    EXPECT_TRUE(matches_message_text(diags, { "Unexpected end of statement" }));
-    EXPECT_TRUE(matches_message_properties(diags, { range({ 0, 5 }, { 0, 5 }) }, &diagnostic_op::diag_range));
+    EXPECT_TRUE(matches_message_text(diags, { "Syntax error" }));
+    EXPECT_TRUE(matches_message_properties(diags, { range({ 0, 4 }, { 0, 4 }) }, &diagnostic_op::diag_range));
 }
 
 TEST(parser, invalid_self_def)
@@ -186,8 +185,8 @@ TEST(parser, invalid_self_def)
 
     std::vector<diagnostic_op>& diags = diag_container.diags;
 
-    EXPECT_TRUE(matches_message_codes(diags, { "CE015" }));
-    EXPECT_TRUE(matches_message_properties(diags, { range({ 0, 7 }, { 0, 12 }) }, &diagnostic_op::diag_range));
+    EXPECT_TRUE(matches_message_codes(diags, { "S0002" }));
+    EXPECT_TRUE(matches_message_properties(diags, { range({ 0, 8 }, { 0, 8 }) }, &diagnostic_op::diag_range));
 }
 
 TEST(parser, invalid_macro_param_alternative)

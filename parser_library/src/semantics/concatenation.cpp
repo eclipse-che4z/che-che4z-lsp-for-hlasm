@@ -148,6 +148,16 @@ void concatenation_point::clear_concat_chain(concat_chain& chain)
 
 std::string concatenation_point::to_string(const concat_chain& chain) { return to_string(chain.begin(), chain.end()); }
 
+std::string concatenation_point::to_string(concat_chain&& chain)
+{
+    if (chain.empty())
+        return {};
+    else if (chain.size() == 1 && std::holds_alternative<char_str_conc>(chain.front().value))
+        return std::move(std::get<char_str_conc>(chain.front().value).value);
+    else
+        return to_string(chain.begin(), chain.end());
+}
+
 struct concat_point_stringifier
 {
     std::string& result;

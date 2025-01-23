@@ -178,8 +178,6 @@ std::optional<address> get_symbol_reloc(hlasm_context& ctx, std::string name);
 
 std::optional<std::pair<int, std::string>> get_symbol_address(hlasm_context& ctx, std::string name);
 
-size_t get_syntax_errors(analyzer& a);
-
 std::unique_ptr<expressions::ca_expression> parse_ca_expression(analyzer& a);
 expressions::data_definition parse_data_definition(analyzer& a, diagnostic_consumer_t<diagnostic_op>* diag = nullptr);
 

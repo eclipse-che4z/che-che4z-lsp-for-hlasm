@@ -97,7 +97,7 @@ TEST(character_expression, invalid_string)
     analyzer a(input);
     a.analyze();
 
-    EXPECT_TRUE(matches_message_codes(a.diags(), { "S0008", "CE004", "CE011" })); // CE004 is artifact of S0008
+    EXPECT_TRUE(matches_message_codes(a.diags(), { "S0008", "CE011" }));
 }
 
 TEST(character_expression, escaping)

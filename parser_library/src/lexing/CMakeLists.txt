@@ -11,15 +11,9 @@
 #   Broadcom, Inc. - initial API and implementation
 
 target_sources(parser_library PRIVATE
-    lexer.cpp
-    lexer.h
     logical_line.cpp
     logical_line.h
     string_with_newlines.h
-    token.cpp
-    token.h
-    token_stream.cpp
-    token_stream.h
     tools.cpp
     tools.h
 )

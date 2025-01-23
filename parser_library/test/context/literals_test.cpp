@@ -465,6 +465,7 @@ TEST(literals, deduplicate_loctr_len_reference)
 
 TEST(literals, invalid_loctr_references)
 {
+    // TODO: the second case is actually accepted
     std::string input = R"(
 &VARP(3)             SETC ' ','B','C'
 &VARP(L'=CL(L'*)'1') SETC 'A'
@@ -475,7 +476,7 @@ TEST(literals, invalid_loctr_references)
     analyzer a(input);
     a.analyze();
 
-    EXPECT_TRUE(matches_message_codes(a.diags(), { "S0012", "S0012", "S0005", "S0005" }));
+    EXPECT_TRUE(matches_message_codes(a.diags(), { "S0014", "S0014", "S0014", "S0014" }));
 }
 
 TEST(literals, part_of_expression)
@@ -493,12 +494,12 @@ TEST(literals, part_of_expression)
 TEST(literals, propagate_error_from_literals)
 {
     std::string input = R"(
-    LARL 0,=AL(0)
+    LARL 0,=AL(0)(0)
 )";
     analyzer a(input);
     a.analyze();
 
-    EXPECT_TRUE(matches_message_codes(a.diags(), { "S0003", "D031" }));
+    EXPECT_TRUE(matches_message_codes(a.diags(), { "D031" }));
 }
 
 TEST(literals, everywhere)

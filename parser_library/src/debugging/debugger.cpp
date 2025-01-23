@@ -36,7 +36,6 @@
 #include "diagnostic_consumer.h"
 #include "expressions/evaluation_context.h"
 #include "lexing/string_with_newlines.h"
-#include "lexing/token_stream.h"
 #include "lexing/tools.h"
 #include "library_info_transitional.h"
 #include "output_handler.h"
@@ -698,12 +697,12 @@ public:
         std::string error_msg;
         error_collector diags(error_msg);
 
-        auto p = parsing::parser_holder::create(ctx_, nullptr, false);
-        p->prepare_parser(
-            lexing::u8string_view_with_newlines(expr), ctx_, &diags, semantics::range_provider(), range(), 1, status);
+        auto p = parsing::parser_holder(*ctx_, nullptr);
+        p.prepare_parser(
+            lexing::u8string_view_with_newlines(expr), *ctx_, &diags, semantics::range_provider(), range(), 1, status);
 
         semantics::operand_ptr op =
-            status.first.form == processing::processing_form::CA ? p->ca_op_expr() : p->operand_mach();
+            status.first.form == processing::processing_form::CA ? p.ca_op_expr() : p.operand_mach();
 
         static constexpr auto ca_expr = [](const semantics::operand_ptr& o) -> const expressions::ca_expression* {
             if (auto* ca_op = o->access_ca())
@@ -716,9 +715,7 @@ public:
             return nullptr;
         };
 
-        if (p->stream->LA(1) != (size_t)-1)
-            return evaluated_expression_error("Invalid expression");
-        else if (!error_msg.empty())
+        if (!error_msg.empty())
             return evaluated_expression_error(std::move(error_msg));
         else if (!op)
             return evaluated_expression_error("Single expression expected");

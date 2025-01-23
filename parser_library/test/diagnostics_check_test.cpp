@@ -33,7 +33,6 @@ LABEL EQU *+2
     analyzer a(input);
     a.analyze();
 
-    EXPECT_EQ(get_syntax_errors(a), (size_t)0);
 
     EXPECT_TRUE(a.diags().empty());
 }
@@ -58,7 +57,6 @@ TEST(diagnostics, string_substitution)
     a.analyze();
 
 
-    EXPECT_EQ(get_syntax_errors(a), (size_t)0);
 
     EXPECT_TRUE(a.diags().empty());
 }
@@ -84,7 +82,6 @@ TEST(diagnostics, division_by_zero) // test ok
     a.analyze();
 
 
-    EXPECT_EQ(get_syntax_errors(a), (size_t)0);
 
     EXPECT_TRUE(a.diags().empty());
 }
@@ -104,7 +101,6 @@ TEST(diagnostics, instr_zero_op) // test ok
     a.analyze();
 
 
-    EXPECT_EQ(get_syntax_errors(a), (size_t)0);
 
     EXPECT_TRUE(a.diags().empty());
 }
@@ -126,7 +122,6 @@ TEST(diagnostics, unkown_symbols) // to do? number of errors?
         a.analyze();
 
 
-        EXPECT_EQ(get_syntax_errors(a), (size_t)0);
 
         EXPECT_TRUE(a.diags().empty());
 }*/
@@ -146,7 +141,6 @@ X CATTR rMODE(31),ALIgn(2)
     a.analyze();
 
 
-    EXPECT_EQ(get_syntax_errors(a), (size_t)0);
 
     EXPECT_TRUE(a.diags().empty());
 }
@@ -166,7 +160,6 @@ TEST(diagnostics, machine)
     a.analyze();
 
 
-    EXPECT_EQ(get_syntax_errors(a), (size_t)0);
 
     EXPECT_TRUE(a.diags().empty());
 }
@@ -228,7 +221,6 @@ LABEL2 equ *+79000
     a.analyze();
 
 
-    EXPECT_EQ(get_syntax_errors(a), (size_t)0);
 
     EXPECT_TRUE(a.diags().empty());
 }
@@ -284,7 +276,6 @@ A XATTR ATTR(lab),REFERENCE(DIRECT,DATA),LINK(XPLINK),SCOPE(SECTION)
     a.analyze();
 
 
-    EXPECT_EQ(get_syntax_errors(a), (size_t)0);
 
     EXPECT_TRUE(matches_message_codes(a.diags(), { "MNOTE" }));
 }

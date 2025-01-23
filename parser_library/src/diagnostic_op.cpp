@@ -2621,6 +2621,16 @@ diagnostic_op diagnostic_op::error_S0012(const range& range)
     return diagnostic_op(diagnostic_severity::error, "S0012", "Right parenthesis has no left match", range);
 }
 
+diagnostic_op diagnostic_op::error_S0013(const range& range)
+{
+    return diagnostic_op(diagnostic_severity::error, "S0013", "Invalid literal usage", range);
+}
+
+diagnostic_op diagnostic_op::error_S0014(const range& range)
+{
+    return diagnostic_op(diagnostic_severity::error, "S0014", "Invalid attribute reference", range);
+}
+
 diagnostic_op diagnostic_op::error_S100(std::string_view message, const range& range)
 {
     return diagnostic_op(diagnostic_severity::error, "S100", concat("Long ordinary symbol name - ", message), range);

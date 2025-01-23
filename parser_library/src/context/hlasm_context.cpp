@@ -21,11 +21,9 @@
 
 #include "diagnostic_tools.h"
 #include "ebcdic_encoding.h"
-#include "expressions/conditional_assembly/terms/ca_constant.h"
-#include "expressions/conditional_assembly/terms/ca_symbol_attribute.h"
 #include "expressions/evaluation_context.h"
+#include "expressions/mach_expression.h"
 #include "instruction.h"
-#include "lexing/lexer.h"
 #include "lexing/tools.h"
 #include "ordinary_assembly/location_counter.h"
 #include "using.h"
@@ -1009,7 +1007,7 @@ index_t<using_collection> hlasm_context::using_current() const { return m_active
 
 hlasm_context::name_result hlasm_context::try_get_symbol_name(std::string_view symbol)
 {
-    if (!lexing::lexer::ord_symbol(symbol))
+    if (!lexing::is_ord_symbol(symbol))
         return std::make_pair(false, context::id_index());
 
     return std::make_pair(true, ids().add(symbol));
@@ -1017,7 +1015,7 @@ hlasm_context::name_result hlasm_context::try_get_symbol_name(std::string_view s
 
 hlasm_context::name_result hlasm_context::try_get_symbol_name(id_index symbol) const
 {
-    if (!lexing::lexer::ord_symbol(symbol.to_string_view()))
+    if (!lexing::is_ord_symbol(symbol.to_string_view()))
         return std::make_pair(false, context::id_index());
 
     return std::make_pair(true, symbol);

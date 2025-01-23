@@ -53,6 +53,7 @@ struct op_rem
 {
     std::vector<operand_ptr> operands;
     std::vector<range> remarks;
+    range line_range;
 };
 
 // sequence symbol structure

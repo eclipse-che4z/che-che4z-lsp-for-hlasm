@@ -11,10 +11,6 @@ In order to build the project on any platform, the following software needs to b
 
 -   C++ compiler with support for C++20
 
--   Java Development Kit (JDK) 11 or higher (the ANTLR project written in Java is built from sources)
-
--   Maven (the build system of ANTLR)
-
 -   Git (to download sources of the third party software)
 
 -   npm (to compile the typescript parts of the VS Code extension)

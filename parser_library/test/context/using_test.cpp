@@ -1042,7 +1042,7 @@ LABEL USING 'FAIL',1
     analyzer a(input);
     a.analyze();
 
-    EXPECT_TRUE(matches_message_codes(a.diags(), { "A164", "A164", "A104" }));
+    EXPECT_TRUE(matches_message_codes(a.diags(), { "S0002", "S0002", "S0011", "A164", "A164", "A012" }));
 }
 
 TEST(using, push_pop)

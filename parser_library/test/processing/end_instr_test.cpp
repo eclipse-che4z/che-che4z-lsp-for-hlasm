@@ -16,6 +16,7 @@
 
 #include "../common_testing.h"
 #include "../mock_parse_lib_provider.h"
+
 TEST(END, relocatable_symbol)
 {
     std::string input(R"(
@@ -27,6 +28,7 @@ TEST CSECT
 
     EXPECT_TRUE(a.diags().empty());
 }
+
 TEST(END, relocatable_expression)
 {
     std::string input(R"(
@@ -38,6 +40,7 @@ TEST CSECT
 
     EXPECT_TRUE(a.diags().empty());
 }
+
 TEST(END, external_symbol)
 {
     std::string input(R"(
@@ -50,6 +53,7 @@ TEST(END, external_symbol)
 
     EXPECT_TRUE(a.diags().empty());
 }
+
 TEST(END, multiple_ends)
 {
     std::string input(R"(
@@ -61,6 +65,7 @@ TEST(END, multiple_ends)
 
     EXPECT_TRUE(matches_message_codes(a.diags(), { "W015" }));
 }
+
 TEST(END, no_operands)
 {
     std::string input(R"(
@@ -71,6 +76,7 @@ TEST(END, no_operands)
 
     EXPECT_TRUE(a.diags().empty());
 }
+
 TEST(END, undefined_symbol)
 {
     std::string input(R"(   
@@ -82,6 +88,7 @@ TEST(END, undefined_symbol)
     ASSERT_TRUE(matches_message_codes(a.diags(), { "E010" }));
     EXPECT_TRUE(a.diags()[0].message.ends_with(": UNDEF"));
 }
+
 TEST(END, absolute_symbol_false)
 {
     std::string input(R"( 
@@ -93,6 +100,7 @@ UNDEF EQU 12
 
     EXPECT_TRUE(matches_message_codes(a.diags(), { "E032" }));
 }
+
 TEST(END, no_operand)
 {
     std::string input(R"(   
@@ -103,6 +111,7 @@ TEST(END, no_operand)
 
     EXPECT_TRUE(a.diags().empty());
 }
+
 TEST(END, two_operands_true)
 {
     std::string input(R"( 
@@ -116,6 +125,7 @@ ENTRYPT  BALR            2,0
 
     EXPECT_TRUE(a.diags().empty());
 }
+
 TEST(END, two_operands_with_operand_identifier_false)
 {
     std::string input(R"( 
@@ -127,8 +137,9 @@ ENTRYPT  BALR            2,0
     analyzer a(input);
     a.analyze();
 
-    EXPECT_TRUE(matches_message_codes(a.diags(), { "A137" }));
+    EXPECT_TRUE(matches_message_codes(a.diags(), { "S0002" }));
 }
+
 TEST(END, three_operands_empty_false)
 {
     std::string input(R"( 
@@ -140,7 +151,7 @@ ENTRYPT  BALR            2,0
     analyzer a(input);
     a.analyze();
 
-    EXPECT_TRUE(matches_message_codes(a.diags(), { "A012" }));
+    EXPECT_TRUE(matches_message_codes(a.diags(), { "S0002" }));
 }
 
 TEST(END, strange_operands)
@@ -153,6 +164,7 @@ TEST(END, strange_operands)
 
     EXPECT_TRUE(a.diags().empty());
 }
+
 TEST(END, label_sequenceSymbol_true)
 {
     std::string input(R"( 
@@ -162,6 +174,7 @@ TEST(END, label_sequenceSymbol_true)
     a.analyze();
     EXPECT_TRUE(a.diags().empty());
 }
+
 TEST(END, label_sequenceSymbol_false)
 {
     std::string input(R"( 
@@ -183,7 +196,7 @@ ENTRYPT  BALR            2,0
     analyzer a(input);
     a.analyze();
 
-    EXPECT_TRUE(matches_message_codes(a.diags(), { "E010" }));
+    EXPECT_TRUE(matches_message_codes(a.diags(), { "S0002" }));
 }
 
 TEST(END, end_called_from_macro_correct)
@@ -318,6 +331,7 @@ TEST(END, end_called_from_macro_inside_copybook_two)
 
     EXPECT_TRUE(a.diags().empty());
 }
+
 TEST(END, end_called_from_nested_macro)
 {
     std::string input = R"(
@@ -337,6 +351,7 @@ TEST(END, end_called_from_nested_macro)
 
     EXPECT_TRUE(a.diags().empty());
 }
+
 TEST(END, end_called_from_nested_macro_with_warning_issued)
 {
     std::string input = R"(
@@ -357,6 +372,7 @@ TEST(END, end_called_from_nested_macro_with_warning_issued)
 
     EXPECT_TRUE(matches_message_codes(a.diags(), { "W015" }));
 }
+
 TEST(END, end_called_from_copy_book_inside_macro_with_warning)
 {
     std::string input = R"(
@@ -377,6 +393,7 @@ TEST(END, end_called_from_copy_book_inside_macro_with_warning)
 
     EXPECT_TRUE(matches_message_codes(a.diags(), { "W015" }));
 }
+
 TEST(END, end_called_from_copy_book_inside_macro)
 {
     std::string input = R"(
@@ -397,6 +414,7 @@ TEST(END, end_called_from_copy_book_inside_macro)
 
     EXPECT_TRUE(a.diags().empty());
 }
+
 TEST(END, stops_lookahead)
 {
     std::string input = R"(

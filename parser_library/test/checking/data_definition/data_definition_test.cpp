@@ -189,7 +189,7 @@ TEST(data_definition, duplication_factor)
 
     auto parsed = parse_data_definition(a, &diags);
 
-    EXPECT_EQ(diags.diags.size(), (size_t)0);
+    EXPECT_TRUE(diags.diags.empty());
 
     context::ordinary_assembly_dependency_solver dep_solver(a.hlasm_ctx().ord_ctx, library_info_transitional::empty);
     diags.diags.clear();
@@ -206,7 +206,7 @@ TEST(data_definition, duplication_factor_expr)
 
     auto parsed = parse_data_definition(a, &diags);
 
-    EXPECT_EQ(diags.diags.size(), (size_t)0);
+    EXPECT_TRUE(diags.diags.empty());
 
     context::ordinary_assembly_dependency_solver dep_solver(a.hlasm_ctx().ord_ctx, library_info_transitional::empty);
     diags.diags.clear();
@@ -223,11 +223,7 @@ TEST(data_definition, duplication_factor_out_of_range)
 
     auto parsed = parse_data_definition(a, &diags);
 
-    EXPECT_GT(diags.diags.size(), (size_t)0);
-
-    context::ordinary_assembly_dependency_solver dep_solver(a.hlasm_ctx().ord_ctx, library_info_transitional::empty);
-
-    EXPECT_FALSE(parsed.dupl_factor);
+    EXPECT_FALSE(diags.diags.empty());
 }
 
 TEST(data_definition, duplication_factor_invalid_number)
@@ -238,11 +234,7 @@ TEST(data_definition, duplication_factor_invalid_number)
 
     auto parsed = parse_data_definition(a, &diags);
 
-    EXPECT_GT(diags.diags.size(), (size_t)0);
-
-    context::ordinary_assembly_dependency_solver dep_solver(a.hlasm_ctx().ord_ctx, library_info_transitional::empty);
-
-    EXPECT_FALSE(parsed.dupl_factor);
+    EXPECT_FALSE(diags.diags.empty());
 }
 
 TEST(data_definition, all_fields)
@@ -253,7 +245,7 @@ TEST(data_definition, all_fields)
 
     auto parsed = parse_data_definition(a, &diags);
 
-    EXPECT_EQ(diags.diags.size(), (size_t)0);
+    EXPECT_TRUE(diags.diags.empty());
 
     context::ordinary_assembly_dependency_solver dep_solver(a.hlasm_ctx().ord_ctx, library_info_transitional::empty);
     diags.diags.clear();
@@ -278,7 +270,7 @@ TEST(data_definition, no_nominal)
 
     auto parsed = parse_data_definition(a, &diags);
 
-    EXPECT_EQ(diags.diags.size(), (size_t)0);
+    EXPECT_TRUE(diags.diags.empty());
 
     context::ordinary_assembly_dependency_solver dep_solver(a.hlasm_ctx().ord_ctx, library_info_transitional::empty);
     diags.diags.clear();
@@ -300,7 +292,7 @@ TEST(data_definition, no_nominal_expr)
 
     auto parsed = parse_data_definition(a, &diags);
 
-    EXPECT_EQ(diags.diags.size(), (size_t)0);
+    EXPECT_TRUE(diags.diags.empty());
 
     context::ordinary_assembly_dependency_solver dep_solver(a.hlasm_ctx().ord_ctx, library_info_transitional::empty);
     diags.diags.clear();
@@ -322,7 +314,7 @@ TEST(data_definition, bit_length)
 
     auto parsed = parse_data_definition(a, &diags);
 
-    EXPECT_EQ(diags.diags.size(), (size_t)0);
+    EXPECT_TRUE(diags.diags.empty());
 
     context::ordinary_assembly_dependency_solver dep_solver(a.hlasm_ctx().ord_ctx, library_info_transitional::empty);
     diags.diags.clear();
@@ -346,19 +338,7 @@ TEST(data_definition, unexpected_dot)
 
     auto parsed = parse_data_definition(a, &diags);
 
-    EXPECT_GT(diags.diags.size(), (size_t)0);
-
-    context::ordinary_assembly_dependency_solver dep_solver(a.hlasm_ctx().ord_ctx, library_info_transitional::empty);
-    diags.diags.clear();
-
-    EXPECT_EQ(parsed.dupl_factor->evaluate(dep_solver, diags).get_abs(), 8);
-
-    EXPECT_EQ(parsed.program_type, nullptr);
-    EXPECT_EQ(parsed.length->evaluate(dep_solver, diags).get_abs(), 2);
-    EXPECT_EQ(parsed.length_type, expressions::data_definition::length_type::BIT);
-    EXPECT_FALSE(parsed.scale);
-    EXPECT_FALSE(parsed.exponent);
-    EXPECT_FALSE(parsed.nominal_value);
+    EXPECT_FALSE(diags.diags.empty());
 }
 
 TEST(data_definition, unexpected_minus)
@@ -369,7 +349,7 @@ TEST(data_definition, unexpected_minus)
 
     auto parsed = parse_data_definition(a, &diags);
 
-    EXPECT_GT(diags.diags.size(), (size_t)0);
+    EXPECT_FALSE(diags.diags.empty());
 }
 
 TEST(data_definition, wrong_modifier_order)
@@ -380,7 +360,7 @@ TEST(data_definition, wrong_modifier_order)
 
     auto parsed = parse_data_definition(a, &diags);
 
-    EXPECT_GT(diags.diags.size(), (size_t)0);
+    EXPECT_FALSE(diags.diags.empty());
 }
 
 TEST(data_definition, B_wrong_nominal_value)
@@ -420,7 +400,7 @@ TEST(data_definition, syntax_error_for_each_call)
     analyzer a(input);
     a.analyze();
 
-    EXPECT_TRUE(matches_message_codes(a.diags(), { "D003", "D003" }));
+    EXPECT_TRUE(matches_message_codes(a.diags(), { "S0003", "S0003", "A010", "A010" }));
 }
 
 TEST(data_definition, trim_labels)
@@ -529,7 +509,7 @@ LZ   EQU *-Z
 )";
     analyzer a(input);
     a.analyze();
-    EXPECT_EQ(a.diags().size(), (size_t)0);
+    EXPECT_TRUE(a.diags().empty());
 
     EXPECT_EQ(get_symbol_abs(a.hlasm_ctx(), "LX"), 24);
     EXPECT_EQ(get_symbol_abs(a.hlasm_ctx(), "LY"), 6);

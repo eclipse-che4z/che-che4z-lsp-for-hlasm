@@ -21,12 +21,6 @@ else()
     set(CALL "")
 endif()
 
-if(WIN32)
-    set(ANTLR_VERSION_SUFFIX "")
-else()
-    set(ANTLR_VERSION_SUFFIX .${ANTLR4CPP_EXTERNAL_TAG})
-endif()
-
 set(BIN_EXTRAS "")
 if(NOT "${LANGUAGE_SERVER_BIN_SUBDIR}" STREQUAL "")
     set(BIN_FOLDER "${CMAKE_CURRENT_SOURCE_DIR}/bin/${LANGUAGE_SERVER_BIN_SUBDIR}/")
@@ -42,18 +36,9 @@ endif()
 
 
 set(COPY_PARSER_LIBRARY_COMMAND "")
-set(COPY_ANTLR_LIBRARY_COMMAND "")
 if(BUILD_SHARED_LIBS)
     set(COPY_PARSER_LIBRARY_COMMAND
         ${CMAKE_COMMAND} -E copy $<TARGET_FILE:parser_library> ${BIN_FOLDER})
-
-    if(APPLE)
-        set(COPY_ANTLR_LIBRARY_COMMAND
-            ${CMAKE_COMMAND} -E copy ${GLOBAL_OUTPUT_PATH}/${CMAKE_SHARED_LIBRARY_PREFIX}antlr4-runtime${ANTLR_VERSION_SUFFIX}${CMAKE_SHARED_LIBRARY_SUFFIX} ${BIN_FOLDER})
-    else()
-        set(COPY_ANTLR_LIBRARY_COMMAND
-            ${CMAKE_COMMAND} -E copy ${GLOBAL_OUTPUT_PATH}/${CMAKE_SHARED_LIBRARY_PREFIX}antlr4-runtime${CMAKE_SHARED_LIBRARY_SUFFIX}${ANTLR_VERSION_SUFFIX} ${BIN_FOLDER})
-    endif()
 endif()
 
 #Check whether npm is installed and in path
@@ -86,8 +71,6 @@ add_custom_command(
             ${CMAKE_COMMAND} -E make_directory ${BIN_FOLDER}
         COMMAND
             ${COPY_PARSER_LIBRARY_COMMAND}
-        COMMAND
-            ${COPY_ANTLR_LIBRARY_COMMAND}
         COMMAND
             ${CMAKE_COMMAND} -E copy  $<TARGET_FILE:hlasm_language_server> ${BIN_EXTRAS} ${BIN_FOLDER}
         COMMAND

@@ -29,7 +29,7 @@ struct u8string_view_with_newlines;
 
 namespace hlasm_plugin::parser_library::parsing {
 class parser_error_listener_ctx;
-struct parser_holder;
+class parser_holder;
 } // namespace hlasm_plugin::parser_library::parsing
 
 namespace hlasm_plugin::parser_library::processing {
@@ -41,8 +41,7 @@ using provider_ptr = std::unique_ptr<statement_provider>;
 
 class statement_fields_parser final
 {
-    std::unique_ptr<parsing::parser_holder> m_parser_singleline;
-    std::unique_ptr<parsing::parser_holder> m_parser_multiline;
+    std::unique_ptr<parsing::parser_holder> m_parser;
     context::hlasm_context* m_hlasm_ctx;
 
 public:
@@ -60,7 +59,7 @@ public:
         processing::processing_status status,
         diagnostic_op_consumer& add_diag);
 
-    explicit statement_fields_parser(context::hlasm_context* hlasm_ctx);
+    explicit statement_fields_parser(context::hlasm_context& hlasm_ctx);
     ~statement_fields_parser();
 };
 

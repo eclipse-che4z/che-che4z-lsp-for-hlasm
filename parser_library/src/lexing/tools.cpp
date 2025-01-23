@@ -44,4 +44,6 @@ bool is_valid_symbol_name(std::string_view s, bool extended_names_allowed)
     return std::ranges::all_of(s, [](unsigned char c) { return c < allowed_symbols.size() && allowed_symbols[c]; });
 }
 
+bool is_ord_symbol(std::string_view s) { return is_valid_symbol_name(s, true); }
+
 } // namespace hlasm_plugin::parser_library::lexing

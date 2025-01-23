@@ -50,10 +50,7 @@ namespace hlasm_plugin::parser_library::lexing {
 struct u8string_view_with_newlines;
 } // namespace hlasm_plugin::parser_library::lexing
 namespace hlasm_plugin::parser_library::parsing {
-class hlasmparser_multiline;
-class parser_error_listener;
-class parser_error_listener_ctx;
-struct parser_holder;
+class parser_holder;
 } // namespace hlasm_plugin::parser_library::parsing
 namespace hlasm_plugin::parser_library::semantics {
 class collector;
@@ -119,8 +116,7 @@ class opencode_provider final : public statement_provider, virtual_file_monitor
         std::unique_ptr<parsing::parser_holder> m_lookahead_parser;
         std::unique_ptr<parsing::parser_holder> m_operand_parser;
     };
-    parser_set m_singleline;
-    parser_set m_multiline;
+    parser_set m_parsers;
 
     analyzing_context m_ctx;
     parse_lib_provider* m_lib_provider;
@@ -187,7 +183,7 @@ public:
         std::vector<std::pair<virtual_file_handle, utils::resource::resource_location>>& vf_handles);
     ~opencode_provider();
 
-    parsing::hlasmparser_multiline& parser(); // for testing only
+    parsing::parser_holder& parser(); // for testing only
 
     context::shared_stmt_ptr get_next(const processing::statement_processor& processor) override;
 
@@ -198,7 +194,7 @@ public:
     void onetime_action();
 
 private:
-    void feed_line(const parsing::parser_holder& p, bool is_process, bool produce_source_info);
+    void feed_line(parsing::parser_holder& p, bool is_process, bool produce_source_info);
     bool is_comment();
     void process_comment();
     void generate_aread_highlighting(std::string_view text, size_t line_no) const;
@@ -208,7 +204,7 @@ private:
     extract_next_logical_line_result extract_next_logical_line_from_copy_buffer();
     extract_next_logical_line_result extract_next_logical_line();
 
-    const parsing::parser_holder& prepare_operand_parser(lexing::u8string_view_with_newlines text,
+    parsing::parser_holder& prepare_operand_parser(lexing::u8string_view_with_newlines text,
         context::hlasm_context& hlasm_ctx,
         diagnostic_op_consumer* diag_collector,
         semantics::range_provider range_prov,

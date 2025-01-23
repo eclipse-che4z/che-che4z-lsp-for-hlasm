@@ -29,7 +29,6 @@ public:
         ca_expr_ptr start;
         ca_expr_ptr count;
         range substring_range;
-        substring_t();
     };
 
     const semantics::concat_chain value;

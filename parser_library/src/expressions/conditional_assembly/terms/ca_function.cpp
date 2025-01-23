@@ -14,18 +14,15 @@
 
 #include "ca_function.h"
 
-#include <array>
+#include <bitset>
 #include <cassert>
 #include <charconv>
-#include <iomanip>
-#include <sstream>
 
 #include "ca_string.h"
 #include "ebcdic_encoding.h"
 #include "expressions/conditional_assembly/ca_expr_visitor.h"
 #include "expressions/evaluation_context.h"
-#include "lexing/lexer.h"
-#include "semantics/variable_symbol.h"
+#include "lexing/tools.h"
 
 #define RET_ERRPARM                                                                                                    \
     do                                                                                                                 \
@@ -345,8 +342,7 @@ context::SET_t ca_function::ISSYM(const context::C_t& param, diagnostic_adder& a
     if (param.empty())
         RET_ERRPARM;
 
-    return !std::isdigit((unsigned char)param.front()) && param.size() < 64
-        && std::ranges::all_of(param, lexing::lexer::ord_char);
+    return lexing::is_ord_symbol(param);
 }
 
 context::SET_t ca_function::X2A(std::string_view param, diagnostic_adder& add_diagnostic)

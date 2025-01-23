@@ -26,8 +26,8 @@
 #include "ebcdic_encoding.h"
 #include "expressions/conditional_assembly/ca_expr_visitor.h"
 #include "expressions/evaluation_context.h"
-#include "lexing/lexer.h"
 #include "lexing/string_with_newlines.h"
+#include "lexing/tools.h"
 #include "parsing/parser_impl.h"
 #include "processing/op_code.h"
 #include "semantics/range_provider.h"
@@ -178,13 +178,12 @@ std::string_view ca_symbol_attribute::try_extract_leading_symbol(std::string_vie
     }
 
     // remove leading using prefixes
-    for (auto p = expr.find_first_of('.'); p != std::string_view::npos && !std::isdigit((unsigned char)expr.front())
-         && std::all_of(expr.begin(), expr.begin() + p, lexing::lexer::ord_char);
+    for (auto p = expr.find_first_of('.'); p != std::string_view::npos && lexing::is_ord_symbol(expr.substr(0, p));
          p = expr.find_first_of('.'))
         expr.remove_prefix(p + 1);
 
     // try to isolate one ordinary symbol
-    if (!expr.empty() && !std::isdigit((unsigned char)expr.front()) && lexing::lexer::ord_char(expr.front()))
+    if (lexing::is_ord_symbol(expr.substr(0, 1)))
     {
         if (auto d = expr.find_first_of("+-*/()"); d != std::string_view::npos)
             expr = expr.substr(0, d);
@@ -462,10 +461,10 @@ semantics::literal_si ca_symbol_attribute::reparse_substituted_literal(
         diag.message = diagnostic_decorate_message(text, diag.message);
         eval_ctx.diags.add_diagnostic(std::move(diag));
     });
-    auto h = parsing::parser_holder::create(&eval_ctx.hlasm_ctx, &add_diag_subst, false);
+    auto h = parsing::parser_holder(eval_ctx.hlasm_ctx, &add_diag_subst);
 
-    h->prepare_parser(lexing::u8string_view_with_newlines(text),
-        &eval_ctx.hlasm_ctx,
+    h.prepare_parser(lexing::u8string_view_with_newlines(text),
+        eval_ctx.hlasm_ctx,
         &add_diag_subst,
         semantics::range_provider(var_range, semantics::adjusting_state::SUBSTITUTION),
         var_range,
@@ -475,7 +474,7 @@ semantics::literal_si ca_symbol_attribute::reparse_substituted_literal(
                                           processing::operand_occurrence::ABSENT),
             processing::op_code()));
 
-    auto literal_value = h->literal_reparse();
+    auto literal_value = h.literal_reparse();
 
     if (!error)
         return literal_value;

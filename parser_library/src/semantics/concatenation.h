@@ -116,6 +116,7 @@ struct concatenation_point
     static void clear_concat_chain(concat_chain& conc_list);
 
     static std::string to_string(const concat_chain& chain);
+    static std::string to_string(concat_chain&& chain);
     static std::string to_string(concat_chain::const_iterator begin, concat_chain::const_iterator end);
 
     static const var_sym_conc* find_var_sym(concat_chain::const_iterator begin, concat_chain::const_iterator end);
@@ -138,6 +139,21 @@ struct concatenation_point
     {}
     explicit concatenation_point(equals_conc v)
         : value(std::move(v))
+    {}
+    explicit concatenation_point(std::in_place_type_t<char_str_conc> t, std::string value, const range& conc_range)
+        : value(t, std::move(value), conc_range)
+    {}
+    explicit concatenation_point(std::in_place_type_t<var_sym_conc> t, vs_ptr v)
+        : value(t, std::move(v))
+    {}
+    explicit concatenation_point(std::in_place_type_t<dot_conc> t, const range& r)
+        : value(t, r)
+    {}
+    explicit concatenation_point(std::in_place_type_t<sublist_conc> t, std::vector<concat_chain> list)
+        : value(t, std::move(list))
+    {}
+    explicit concatenation_point(std::in_place_type_t<equals_conc> t, const range& r)
+        : value(t, r)
     {}
 
     static std::string evaluate(const concat_chain& chain, const expressions::evaluation_context& eval_ctx);
