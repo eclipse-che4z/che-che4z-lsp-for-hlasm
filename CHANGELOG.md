@@ -1,3 +1,30 @@
+## [1.16.0](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/compare/1.15.1...1.16.0) (2025-01-29)
+
+
+### Features
+
+* New parser implementation ([b91f166](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/b91f166eb17b9fdccc7dcbc1fc64492470d03961))
+
+
+### Other changes
+
+* Address const correctness of diagnostic collectors ([058a4c0](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/058a4c07ac19c6822c3db3a3198e28a52881ad7c))
+* Do not scan generated source code ([d349fe3](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/d349fe32a8fd2abc3213c88eb46bfbb58da2b6e2))
+* MacOS 12 deprecated ([190db1f](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/190db1fda3a0a3bdef918dd4eab8e428dec1635b))
+* Move header ([b8cf91c](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/b8cf91c08b68878ccb72522c7b112cd55c94b1e2))
+
+
+### Fixes
+
+* Infinite loop on invalid preprocessor operands ([815ef61](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/815ef61e0bada782daa778fad4fd7df77a128087))
+* Infinite loop when an incomplete data definition is found in the lookahead mode ([da99fd7](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/da99fd7d9e4330b849493eab4cf8ad07699f8a35))
+* Infinite loop when an invalid EQU operand is found in the lookahead mode ([b40887d](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/b40887dfaca39fe04c8e5da1c9e16d71b09abdbc))
+* Origin of macro statements is tracked incorrectly ([aa59bd6](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/aa59bd636856e3efa5ee1b82ef23f73e42c9e199))
+* Origin of macro statements is tracked incorrectly for nested macros ([b76ffa1](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/b76ffa1f3f6896e4eea70a985411458dda7b9b5c))
+* The language server crashes due to incorrect handling of dependency cycles ([59be123](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/59be123b3c3dbc00da8805846f253e9f162defce))
+* The language server crashes when a redefined data constant has a dependency ([4254c4f](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/4254c4f3f58a69da260c042daf8bf8f23b825541))
+* The language server crashes while processing data constant with cyclic dependency ([c112c7a](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/c112c7a6312bd210e7e1d0b185ffb9254570bdc0))
+
 ### [1.15.1](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/compare/1.15.0...1.15.1) (2024-11-22)
 
 
