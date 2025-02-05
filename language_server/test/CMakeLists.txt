@@ -12,6 +12,10 @@
 
 add_executable(server_test)
 
+target_compile_features(server_test PRIVATE cxx_std_20)
+target_compile_options(server_test PRIVATE ${HLASM_EXTRA_FLAGS})
+set_target_properties(server_test PROPERTIES CXX_EXTENSIONS OFF)
+
 target_sources(server_test PRIVATE
     blocking_queue_test.cpp
     channel_test.cpp
@@ -46,6 +50,8 @@ endif()
 target_link_libraries(server_test PRIVATE network-uri)
 target_link_libraries(server_test PRIVATE parser_library)
 
+target_link_options(server_test PRIVATE ${HLASM_EXTRA_LINKER_FLAGS})
+
 if(DISCOVER_TESTS)
-    gtest_discover_tests(server_test WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/bin DISCOVERY_TIMEOUT 120)
+    gtest_discover_tests(server_test WORKING_DIRECTORY $<TARGET_FILE_DIR:server_test> DISCOVERY_TIMEOUT 120)
 endif()

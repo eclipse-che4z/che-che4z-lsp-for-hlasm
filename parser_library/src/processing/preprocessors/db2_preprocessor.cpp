@@ -124,14 +124,13 @@ public:
 
 private:
     template<typename It>
-    It find_start_of_line_comment(
-        std::stack<unsigned char, std::basic_string<unsigned char>>& quotes, It code, const It& code_end) const
+    It find_start_of_line_comment(std::stack<char, std::string>& quotes, It code, const It& code_end) const
     {
         bool comment_possibly_started = false;
         for (; code != code_end; ++code)
         {
-            const unsigned char c = *code;
-            if (auto s = symbols[c]; s == symbol_type::quote)
+            const char c = *code;
+            if (const auto s = symbols[(unsigned char)c]; s == symbol_type::quote)
             {
                 if (quotes.empty() || quotes.top() != c)
                     quotes.push(c);
@@ -156,7 +155,7 @@ private:
         std::vector<std::optional<std::string_view>>& comments) const
     {
         comments.clear();
-        std::stack<unsigned char, std::basic_string<unsigned char>> quotes;
+        std::stack<char, std::string> quotes;
         for (auto& seg : ll.segments)
         {
             auto& comment = comments.emplace_back(std::nullopt);

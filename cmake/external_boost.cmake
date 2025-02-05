@@ -14,6 +14,7 @@ project(boost-asio)
 
 include(FetchContent)
 
+message("Populating ASIO")
 FetchContent_Declare(
   boost_ext
   GIT_REPOSITORY https://github.com/chriskohlhoff/asio.git
@@ -21,12 +22,9 @@ FetchContent_Declare(
   GIT_SHALLOW    ON
   LOG_DOWNLOAD   ON
   GIT_PROGRESS   1
+  EXCLUDE_FROM_ALL
 )
-
-if(NOT boost_ext_POPULATED)
-    message("Populating ASIO")
-    FetchContent_Populate(boost_ext)
-endif()
+FetchContent_MakeAvailable(boost_ext)
 
 add_library(boost-asio INTERFACE)
 target_include_directories(boost-asio INTERFACE ${boost_ext_SOURCE_DIR}/asio/include)

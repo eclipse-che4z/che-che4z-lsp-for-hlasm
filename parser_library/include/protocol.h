@@ -27,9 +27,6 @@
 
 #include "range.h"
 
-#pragma warning(push)
-#pragma warning(disable : 4661)
-
 namespace hlasm_plugin::parser_library {
 
 using version_t = uint64_t;
@@ -144,5 +141,4 @@ struct output_line
 };
 
 } // namespace hlasm_plugin::parser_library
-#pragma warning(pop)
 #endif // !HLASMPLUGIN_PARSERLIBRARY_PROTOCOL_H

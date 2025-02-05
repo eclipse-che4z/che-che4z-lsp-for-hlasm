@@ -14,24 +14,23 @@ project(googletest-download NONE)
 
 include(FetchContent)
 
+set(INSTALL_GTEST Off)
+
+message("Populating googletest")
 FetchContent_Declare(googletest
     GIT_REPOSITORY      https://github.com/google/googletest.git
-    GIT_TAG             v1.14.0
+    GIT_TAG             v1.15.2
     LOG_DOWNLOAD        ON
     GIT_PROGRESS        1
-    )
+    EXCLUDE_FROM_ALL
+)
+FetchContent_MakeAvailable(googletest)
+target_compile_features(gmock PUBLIC cxx_std_20)
+target_compile_features(gmock_main PUBLIC cxx_std_20)
+target_compile_features(gtest PUBLIC cxx_std_20)
+target_compile_features(gtest_main PUBLIC cxx_std_20)
 
-FetchContent_GetProperties(googletest)
-
-function(add_googletest)
-    set(CMAKE_SUPPRESS_DEVELOPER_WARNINGS 1 CACHE BOOL "")
-    set(gtest_force_shared_crt ${WITH_STATIC_CRT} CACHE BOOL "" FORCE)
-    add_subdirectory(${googletest_SOURCE_DIR} ${googletest_BINARY_DIR} EXCLUDE_FROM_ALL)
-    unset(CMAKE_SUPPRESS_DEVELOPER_WARNINGS)
-endfunction()
-
-if(NOT googletest_POPULATED)
-    message("Populating GTest")
-    FetchContent_Populate(googletest)
-    add_googletest()
-endif()
+set_target_properties(gmock PROPERTIES CXX_EXTENSIONS OFF)
+set_target_properties(gmock_main PROPERTIES CXX_EXTENSIONS OFF)
+set_target_properties(gtest PROPERTIES CXX_EXTENSIONS OFF)
+set_target_properties(gtest_main PROPERTIES CXX_EXTENSIONS OFF)

@@ -12,6 +12,10 @@
 
 add_executable(hlasm_utils_test)
 
+target_compile_features(hlasm_utils_test PRIVATE cxx_std_20)
+target_compile_options(hlasm_utils_test PRIVATE ${HLASM_EXTRA_FLAGS})
+set_target_properties(hlasm_utils_test PROPERTIES CXX_EXTENSIONS OFF)
+
 target_sources(hlasm_utils_test PRIVATE
     bk_tree_test.cpp
     encoding_test.cpp
@@ -33,6 +37,8 @@ if (BUILD_SHARED_LIBS)
     set_target_properties(hlasm_utils_test PROPERTIES COMPILE_DEFINITIONS "GTEST_LINKED_AS_SHARED_LIBRARY=1")
 endif()
 
+target_link_options(hlasm_utils_test PRIVATE ${HLASM_EXTRA_LINKER_FLAGS})
+
 if(DISCOVER_TESTS)
-    gtest_discover_tests(hlasm_utils_test WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/bin DISCOVERY_TIMEOUT 120)
+    gtest_discover_tests(hlasm_utils_test WORKING_DIRECTORY $<TARGET_FILE_DIR:hlasm_utils_test> DISCOVERY_TIMEOUT 120)
 endif()

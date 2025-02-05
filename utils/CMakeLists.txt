@@ -16,6 +16,10 @@ add_library(hlasm_utils STATIC EXCLUDE_FROM_ALL)
 
 target_include_directories(hlasm_utils PUBLIC include)
 
+target_compile_features(hlasm_utils PUBLIC cxx_std_20)
+target_compile_options(hlasm_utils PRIVATE ${HLASM_EXTRA_FLAGS})
+set_target_properties(hlasm_utils PROPERTIES CXX_EXTENSIONS OFF)
+
 add_subdirectory(include)
 add_subdirectory(src)
 

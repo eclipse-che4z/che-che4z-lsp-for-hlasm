@@ -16,6 +16,10 @@ add_executable(benchmark
     benchmark.cpp
     diagnostic_counter.h)
 
+target_compile_features(benchmark PRIVATE cxx_std_20)
+target_compile_options(benchmark PRIVATE ${HLASM_EXTRA_FLAGS})
+set_target_properties(benchmark PROPERTIES CXX_EXTENSIONS OFF)
+
 target_include_directories(benchmark
     PRIVATE
     ../parser_library/src
@@ -26,3 +30,5 @@ target_link_libraries(benchmark PRIVATE nlohmann_json::nlohmann_json)
 target_link_libraries(benchmark PRIVATE parser_library hlasm_utils)
 
 target_link_libraries(benchmark PRIVATE Threads::Threads)
+
+target_link_options(benchmark PRIVATE ${HLASM_EXTRA_LINKER_FLAGS})

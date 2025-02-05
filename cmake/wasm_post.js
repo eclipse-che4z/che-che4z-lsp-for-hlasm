@@ -12,28 +12,30 @@
  *   Broadcom, Inc. - initial API and implementation
  */
 
-if (typeof importScripts == "function") {
-    const tmpQueue = [];
-    self.onmessage = (event) => {
-        self.onmessage = (event) => { tmpQueue.push(event); };
+if (!isPthread) {
+    if (typeof importScripts == "function") {
+        const tmpQueue = [];
+        self.onmessage = (event) => {
+            self.onmessage = (event) => { tmpQueue.push(event); };
 
-        const { extensionUri, arguments } = event.data;
+            const { extensionUri, arguments } = event.data;
 
-        Module({
-            tmpQueue,
-            worker: self,
-            arguments,
-            mainScriptUrlOrBlob: self.location.href,
-            locateFile(path) {
-                if (typeof path !== 'string') return path;
-                if (path.endsWith(".wasm")) {
-                    return extensionUri + 'bin/wasm/hlasm_language_server.wasm';
-                }
-                return path;
-            },
-        });
+            Module({
+                tmpQueue,
+                worker: self,
+                arguments,
+                mainScriptUrlOrBlob: self.location.href,
+                locateFile(path) {
+                    if (typeof path !== 'string') return path;
+                    if (path.endsWith(".wasm")) {
+                        return extensionUri + 'bin/wasm/hlasm_language_server.wasm';
+                    }
+                    return path;
+                },
+            });
+        }
     }
-}
-else if (require.main === module) {
-    Module();
+    else if (require.main === module) {
+        Module();
+    }
 }

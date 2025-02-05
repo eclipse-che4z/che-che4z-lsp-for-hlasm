@@ -1,0 +1,284 @@
+{
+  "version": 8,
+  "cmakeMinimumRequired": {
+    "major": 3,
+    "minor": 28,
+    "patch": 0
+  },
+  "configurePresets": [
+      {
+          "name": "ci",
+          "generator": "Ninja",
+          "binaryDir": "${sourceDir}/build",
+          "cacheVariables": {
+              "CMAKE_BUILD_TYPE": "Release",
+              "CMAKE_VERIFY_HEADER_SETS": {
+                  "type": "BOOL",
+                  "value": "ON"
+              },
+              "DISCOVER_TESTS": {
+                  "type": "BOOL",
+                  "value": "OFF"
+              },
+              "BUILD_VSIX": {
+                  "type": "BOOL",
+                  "value": "OFF"
+              },
+              "CMAKE_RUNTIME_OUTPUT_DIRECTORY": "${sourceDir}/build/bin"
+          }
+      },
+      {
+          "name": "ci-sonar",
+          "binaryDir": "${sourceDir}/build",
+          "cacheVariables": {
+              "CMAKE_BUILD_TYPE": "Debug",
+              "CMAKE_C_COMPILER": "clang-18",
+              "CMAKE_CXX_COMPILER": "clang++-18",
+              "CMAKE_CXX_FLAGS": "-fprofile-instr-generate -fcoverage-mapping -mllvm -runtime-counter-relocation",
+              "LANGUAGE_SERVER_BIN_SUBDIR": "linux_x64",
+              "CMAKE_RUNTIME_OUTPUT_DIRECTORY": "${sourceDir}/build/bin"
+          }
+      },
+      {
+          "name": "ci-sanitizer",
+          "inherits": "ci",
+          "cacheVariables": {
+              "CMAKE_C_COMPILER": "clang-18",
+              "CMAKE_CXX_COMPILER": "clang++-18"
+          },
+          "hidden": true
+      },
+      {
+          "name": "ci-sanitizer-asan",
+          "inherits": "ci-sanitizer",
+          "environment": {
+              "CXXFLAGS": "-fsanitize=address,undefined"
+          }
+      },
+      {
+          "name": "ci-sanitizer-tsan",
+          "inherits": "ci-sanitizer",
+          "environment": {
+              "CXXFLAGS": "-fsanitize=thread"
+          }
+      },
+      {
+          "name": "ci-linux_x64",
+          "inherits": "ci",
+          "cacheVariables": {
+              "CMAKE_EXE_LINKER_FLAGS": "-static"
+          }
+      },
+      {
+          "name": "ci-linux_arm64",
+          "inherits": "ci",
+          "cacheVariables": {
+              "CMAKE_SYSTEM_NAME": "Linux",
+              "CMAKE_C_COMPILER": "aarch64-linux-musl-gcc",
+              "CMAKE_CXX_COMPILER": "aarch64-linux-musl-g++",
+              "CMAKE_EXE_LINKER_FLAGS": "-static -Wl,--gc-sections"
+          }
+      },
+      {
+          "name": "ci-linux_s390x",
+          "inherits": "ci",
+          "cacheVariables": {
+              "CMAKE_SYSTEM_NAME": "Linux",
+              "CMAKE_C_COMPILER": "s390x-linux-musl-gcc",
+              "CMAKE_CXX_COMPILER": "s390x-linux-musl-g++",
+              "CMAKE_EXE_LINKER_FLAGS": "-static -Wl,--gc-sections"
+          }
+      },
+      {
+          "name": "ci-wasm",
+          "inherits": "ci",
+          "cacheVariables": {
+              "CMAKE_TOOLCHAIN_FILE": "/emsdk/upstream/emscripten/cmake/Modules/Platform/Emscripten.cmake",
+              "CMAKE_CXX_FLAGS": "-s USE_PTHREADS=1 -fwasm-exceptions",
+              "CMAKE_EXE_LINKER_FLAGS": "-s PTHREAD_POOL_SIZE=8 -s MAXIMUM_MEMORY=2147418112 -s INITIAL_MEMORY=268435456 -s ALLOW_MEMORY_GROWTH=1 -s PROXY_TO_PTHREAD=1 -s MODULARIZE=1 -s EXIT_RUNTIME=1 --bind -s STACK_SIZE=4MB -fwasm-exceptions --extern-post-js ${sourceDir}/cmake/wasm_post.js",
+              "CMAKE_CROSSCOMPILING_EMULATOR": "node",
+              "gtest_disable_pthreads": {
+                  "type": "BOOL",
+                  "value": "ON"
+              }
+          }
+      },
+      {
+          "name": "ci-win32_x64",
+          "inherits": "ci",
+          "generator": "Visual Studio 17 2022",
+          "cacheVariables": {
+              "CMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE": "${sourceDir}/build/bin",
+              "CMAKE_MSVC_RUNTIME_LIBRARY": "MultiThreaded"
+          }
+      },
+      {
+          "name": "ci-win32_arm64",
+          "inherits": "ci",
+          "generator": "Visual Studio 17 2022",
+          "architecture": "ARM64",
+          "cacheVariables": {
+              "CMAKE_SYSTEM_NAME": "Windows",
+              "CMAKE_SYSTEM_VERSION": "10",
+              "CMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE": "${sourceDir}/build/bin",
+              "CMAKE_MSVC_RUNTIME_LIBRARY": "MultiThreaded"
+          }
+      },
+      {
+          "name": "ci-darwin_x64",
+          "inherits": "ci",
+          "cacheVariables": {
+              "LLVM_PATH": "$env{LLVM_PATH}",
+              "CMAKE_C_COMPILER": "$env{LLVM_PATH}/bin/clang",
+              "CMAKE_CXX_COMPILER": "$env{LLVM_PATH}/bin/clang++",
+              "APPLE_STATIC_CRT": {
+                  "type": "BOOL",
+                  "value": "ON"
+              }
+          },
+          "environment": {
+              "CXXFLAGS": "-stdlib=libc++"
+          }
+      },
+      {
+          "name": "ci-darwin_arm64",
+          "inherits": "ci",
+          "cacheVariables": {
+              "LLVM_PATH": "$env{LLVM_PATH}",
+              "CMAKE_C_COMPILER": "$env{LLVM_PATH}/bin/clang",
+              "CMAKE_CXX_COMPILER": "$env{LLVM_PATH}/bin/clang++",
+              "APPLE_STATIC_CRT": {
+                  "type": "BOOL",
+                  "value": "ON"
+              }
+          },
+          "environment": {
+              "CXXFLAGS": "-stdlib=libc++"
+          }
+      },
+      {
+          "name": "dev",
+          "generator": "Ninja",
+          "cacheVariables": {
+              "CMAKE_VERIFY_HEADER_SETS": {
+                  "type": "BOOL",
+                  "value": "ON"
+              },
+              "HLASM_DEV_GUESS_BIN_SUBDIR": {
+                  "type": "BOOL",
+                  "value": "ON"
+              }
+          },
+          "hidden": true
+      },
+      {
+          "name": "dev.debug",
+          "inherits": "dev",
+          "binaryDir": "${sourceDir}/build/debug",
+          "cacheVariables": {
+              "CMAKE_BUILD_TYPE": "Debug",
+              "CMAKE_RUNTIME_OUTPUT_DIRECTORY": "${sourceDir}/build/debug/bin",
+              "CMAKE_VS_JUST_MY_CODE_DEBUGGING": {
+                  "type": "BOOL",
+                  "value": "ON"
+              }
+          }
+      },
+      {
+          "name": "dev.release",
+          "inherits": "dev",
+          "binaryDir": "${sourceDir}/build/debug",
+          "cacheVariables": {
+              "CMAKE_BUILD_TYPE": "Release",
+              "CMAKE_RUNTIME_OUTPUT_DIRECTORY": "${sourceDir}/build/release/bin"
+          }
+      },
+      {
+          "name": "dev.profile.msvc",
+          "inherits": "dev",
+          "binaryDir": "${sourceDir}/build/profile",
+          "cacheVariables": {
+              "CMAKE_BUILD_TYPE": "ReleaseWithDebInfo",
+              "CMAKE_RUNTIME_OUTPUT_DIRECTORY": "${sourceDir}/build/profile/bin",
+              "CMAKE_EXE_LINKER_FLAGS": "/PROFILE"
+          }
+      },
+      {
+          "name": "dev.asan",
+          "inherits": "dev",
+          "binaryDir": "${sourceDir}/build/asan",
+          "cacheVariables": {
+              "CMAKE_BUILD_TYPE": "Debug",
+              "CMAKE_RUNTIME_OUTPUT_DIRECTORY": "${sourceDir}/build/asan/bin",
+              "CMAKE_VS_JUST_MY_CODE_DEBUGGING": {
+                  "type": "BOOL",
+                  "value": "ON"
+              }
+          },
+          "environment": {
+              "CFLAGS": "-fsanitize=address",
+              "CXXFLAGS": "-fsanitize=address",
+              "LINK_FLAGS": "-fsanitize=address"
+          }
+      }
+  ],
+  "buildPresets": [
+      {
+          "name": "ci",
+          "jobs": 0,
+          "hidden": true
+      },
+      {
+          "name": "ci-sanitizer-asan",
+          "inherits": "ci",
+          "configurePreset": "ci-sanitizer-asan"
+      },
+      {
+          "name": "ci-sanitizer-tsan",
+          "inherits": "ci",
+          "configurePreset": "ci-sanitizer-tsan"
+      },
+      {
+          "name": "ci-linux_x64",
+          "inherits": "ci",
+          "configurePreset": "ci-linux_x64"
+      },
+      {
+          "name": "ci-linux_arm64",
+          "inherits": "ci",
+          "configurePreset": "ci-linux_arm64"
+      },
+      {
+          "name": "ci-linux_s390x",
+          "inherits": "ci",
+          "configurePreset": "ci-linux_s390x"
+      },
+      {
+          "name": "ci-wasm",
+          "inherits": "ci",
+          "configurePreset": "ci-wasm"
+      },
+      {
+          "name": "ci-win32_x64",
+          "inherits": "ci",
+          "configurePreset": "ci-win32_x64",
+          "configuration": "Release"
+      },
+      {
+          "name": "ci-win32_arm64",
+          "inherits": "ci",
+          "configurePreset": "ci-win32_arm64",
+          "configuration": "Release"
+      },
+      {
+          "name": "ci-darwin_x64",
+          "inherits": "ci",
+          "configurePreset": "ci-darwin_x64"
+      },
+      {
+          "name": "ci-darwin_arm64",
+          "inherits": "ci",
+          "configurePreset": "ci-darwin_arm64"
+      }
+  ]
+}

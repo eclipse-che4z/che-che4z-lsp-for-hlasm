@@ -12,6 +12,10 @@
 
 add_executable(library_test)
 
+target_compile_features(library_test PRIVATE cxx_std_20)
+target_compile_options(library_test PRIVATE ${HLASM_EXTRA_FLAGS})
+set_target_properties(library_test PROPERTIES CXX_EXTENSIONS OFF)
+
 target_sources(library_test PRIVATE
     aread_time_test.cpp
     async_macro_parsing.cpp
@@ -50,7 +54,7 @@ endif()
 
 add_custom_target(library_tests_copy
                 COMMAND ${CMAKE_COMMAND} -E copy_directory
-                    ${PROJECT_SOURCE_DIR}/test/res ${CMAKE_BINARY_DIR}/bin/test/library)
+                    ${PROJECT_SOURCE_DIR}/test/res $<TARGET_FILE_DIR:library_test>/test/library)
 
 target_include_directories(library_test
     PRIVATE
@@ -61,11 +65,12 @@ target_link_libraries(library_test PRIVATE gmock_main)
 if (BUILD_SHARED_LIBS)
     set_target_properties(library_test PROPERTIES COMPILE_DEFINITIONS "GTEST_LINKED_AS_SHARED_LIBRARY=1")
 endif()
-target_link_libraries(library_test PRIVATE std::filesystem)
 target_link_libraries(library_test PRIVATE nlohmann_json::nlohmann_json)
+
+target_link_options(library_test PRIVATE ${HLASM_EXTRA_LINKER_FLAGS})
 
 add_dependencies(library_test library_tests_copy)
 
 if(DISCOVER_TESTS)
-    gtest_discover_tests(library_test WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/bin DISCOVERY_TIMEOUT 120)
+    gtest_discover_tests(library_test WORKING_DIRECTORY $<TARGET_FILE_DIR:library_test> DISCOVERY_TIMEOUT 120)
 endif()

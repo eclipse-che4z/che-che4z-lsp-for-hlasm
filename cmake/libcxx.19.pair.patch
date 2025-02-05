@@ -1,0 +1,20 @@
+diff --git a/pair.h b/pair.h
+index c0002b7..ec82733 100755
+--- a/pair.orig.h
++++ b/pair.h
+@@ -257,6 +257,7 @@ struct _LIBCPP_TEMPLATE_VIS pair
+              typename __make_tuple_indices<sizeof...(_Args1)>::type(),
+              typename __make_tuple_indices<sizeof...(_Args2) >::type()) {}
+
++#ifndef _LIBCPP_ABI_TRIVIALLY_COPYABLE_PAIR
+   _LIBCPP_HIDE_FROM_ABI _LIBCPP_CONSTEXPR_SINCE_CXX20 pair&
+   operator=(__conditional_t<!__has_defaulted_members::value && is_copy_assignable<first_type>::value &&
+                                 is_copy_assignable<second_type>::value,
+@@ -278,6 +279,7 @@ struct _LIBCPP_TEMPLATE_VIS pair
+     second = std::forward<second_type>(__p.second);
+     return *this;
+   }
++#endif
+
+   template <
+       class _U1,

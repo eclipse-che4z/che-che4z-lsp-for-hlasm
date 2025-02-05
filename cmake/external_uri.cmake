@@ -16,6 +16,7 @@ FIND_PACKAGE(Git REQUIRED)
 
 include(FetchContent)
 
+message("Populating netlib uri")
 # download runtime environment
 FetchContent_Declare(
   uri_ext
@@ -25,28 +26,13 @@ FetchContent_Declare(
   LOG_DOWNLOAD   ON
   GIT_PROGRESS   1
   PATCH_COMMAND  ${CMAKE_COMMAND} -DGIT_EXECUTABLE=${GIT_EXECUTABLE} -DPROJECT_SOURCE_DIR=${PROJECT_SOURCE_DIR} -DCMAKE_BINARY_DIR=${CMAKE_BINARY_DIR} -P ${PROJECT_SOURCE_DIR}/cmake/apply_uri_patch.cmake
+  EXCLUDE_FROM_ALL
+  SOURCE_SUBDIR  dummy
 )
+FetchContent_MakeAvailable(uri_ext)
+add_subdirectory(${uri_ext_SOURCE_DIR}/src ${uri_ext_BINARY_DIR} EXCLUDE_FROM_ALL)
+target_include_directories(network-uri PRIVATE ${uri_ext_SOURCE_DIR}/src)
+target_include_directories(network-uri PUBLIC ${uri_ext_SOURCE_DIR}/include)
 
-FetchContent_GetProperties(uri_ext)
-
-function(add_uri_ext)
-    if(WITH_LIBCXX)
-      set(Uri_DISABLE_LIBCXX Off)
-    else()
-      set(Uri_DISABLE_LIBCXX On)
-    endif()
-    set(Uri_BUILD_TESTS Off)
-    set(Uri_BUILD_DOCS Off)
-    set(Uri_WARNINGS_AS_ERRORS Off)
-
-    add_subdirectory(${uri_ext_SOURCE_DIR}/src ${uri_ext_BINARY_DIR} EXCLUDE_FROM_ALL)
-
-    target_include_directories(network-uri PRIVATE ${uri_ext_SOURCE_DIR}/src)
-    target_include_directories(network-uri PUBLIC ${uri_ext_SOURCE_DIR}/include)
-endfunction()
-
-if(NOT uri_ext_POPULATED)
-    message("Populating netlib uri")
-    FetchContent_Populate(uri_ext)
-    add_uri_ext()
-endif()
+target_compile_features(network-uri PUBLIC cxx_std_20)
+set_target_properties(network-uri PROPERTIES CXX_EXTENSIONS OFF)
