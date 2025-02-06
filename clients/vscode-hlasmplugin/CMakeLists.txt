@@ -102,7 +102,7 @@ add_custom_command(
         COMMAND
             ${CMAKE_COMMAND} -E copy  $<TARGET_FILE:hlasm_language_server> ${BIN_EXTRAS} ${BIN_FOLDER}
         COMMAND
-            npx vsce package --no-dependencies -o ${CMAKE_CURRENT_BINARY_DIR}/vscode-hlasmplugin.vsix
+            npm exec vsce -- package --no-dependencies -o ${CMAKE_CURRENT_BINARY_DIR}/vscode-hlasmplugin.vsix
         COMMAND
             ${CMAKE_COMMAND} -E touch ${CHECK_BUILD}
         DEPENDS

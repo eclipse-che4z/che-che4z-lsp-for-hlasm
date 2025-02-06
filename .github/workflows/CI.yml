@@ -81,7 +81,7 @@ jobs:
         env:
           TITLE: ${{ github.event.pull_request.title }}
       - name: Update version
-        run: npx semantic-release --dry-run
+        run: npm exec semantic-release -- --dry-run
         working-directory: ${{ env.CLIENT_DIR }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -340,7 +340,7 @@ jobs:
         run: npm run test:web
         working-directory: ${{ env.CLIENT_DIR }}
       - name: Package VSIX
-        run: npx vsce package ${{ github.ref == 'refs/heads/master' && ' ' || '--pre-release' }}  --no-dependencies --target web -o hlasm-language-support-web.vsix --baseContentUrl "https://raw.githubusercontent.com/${{ github.repository }}/${{ github.sha }}/"
+        run: npm exec vsce -- package ${{ github.ref == 'refs/heads/master' && ' ' || '--pre-release' }}  --no-dependencies --target web -o hlasm-language-support-web.vsix --baseContentUrl "https://raw.githubusercontent.com/${{ github.repository }}/${{ github.sha }}/"
         working-directory: ${{ env.CLIENT_DIR }}
       - name: Upload VSIX
         uses: actions/upload-artifact@v4
@@ -411,7 +411,7 @@ jobs:
         run: npm run compile
         working-directory: ${{ env.CLIENT_DIR }}
       - name: Package VSIX
-        run: npx vsce package ${{ github.ref == 'refs/heads/master' && ' ' || '--pre-release' }} --no-dependencies -o hlasm-language-support.vsix --baseContentUrl "https://raw.githubusercontent.com/${{ github.repository }}/${{ github.sha }}/"
+        run: npm exec vsce -- package ${{ github.ref == 'refs/heads/master' && ' ' || '--pre-release' }} --no-dependencies -o hlasm-language-support.vsix --baseContentUrl "https://raw.githubusercontent.com/${{ github.repository }}/${{ github.sha }}/"
         working-directory: ${{ env.CLIENT_DIR }}
       - name: Upload VSIX
         uses: actions/upload-artifact@v4
@@ -497,7 +497,7 @@ jobs:
         run: npm ci
         working-directory: ${{ env.CLIENT_DIR }}
       - name: Release new version
-        run: npx semantic-release
+        run: npm exec semantic-release
         working-directory: ${{ env.CLIENT_DIR }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -526,25 +526,26 @@ jobs:
     needs: VSIX
     strategy:
       matrix:
-        theia: ["ghcr.io/eclipse-theia/theia-blueprint/blueprint:1.35.0"]
+        theia: ["ghcr.io/eclipse-theia/theia-ide/theia-ide:1.57.100"]
 # theiaide images not supported anymore
     container:
       image: ${{ matrix.theia }}
       options: --user root
 
     steps:
-      - name: Workaround for git safe.directory feature
-        run: chown root:root .
       - uses: actions/checkout@v4
         with:
           persist-credentials: false
       - name: Install Chromium
-        run: apt-get update && apt-get install -y chromium
+        run: apt-get update && apt-get install -y chromium unzip
       - name: Download VSIX
         uses: actions/download-artifact@v4
         with:
           name: hlasm-language-support.vsix
-          path: ${{ env.CLIENT_DIR }}/plugin/
+          path: /tmp
+      - name: Extract VSIX
+        run: unzip /tmp/hlasm-language-support.vsix extension/* -d ./plugin
+        working-directory: ${{ env.CLIENT_DIR }}
       - name: npm ci
         run: npm ci
         working-directory: ${{ env.CLIENT_DIR }}

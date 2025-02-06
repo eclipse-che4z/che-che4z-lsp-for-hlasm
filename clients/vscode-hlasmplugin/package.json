@@ -32,7 +32,7 @@
   "main": "./dist/extension.js",
   "typings": "./typings/extension.d.ts",
   "engines": {
-    "vscode": "^1.75.0"
+    "vscode": "^1.82.0"
   },
   "repository": {
     "type": "git",
@@ -42,30 +42,29 @@
     "url": "https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/issues"
   },
   "devDependencies": {
-    "@semantic-release/changelog": "^6.0.1",
-    "@semantic-release/exec": "^6.0.3",
-    "@types/glob": "^5.0.35",
-    "@types/mocha": "^7.0.2",
-    "@types/node": "^16.4.13",
-    "@types/vscode": "^1.75.0",
-    "@vscode/test-electron": "^2.3.8",
-    "@vscode/test-web": "^0.0.59",
-    "@vscode/vsce": "^2.19.0",
-    "c8": "^7.12.0",
-    "conventional-changelog-conventionalcommits": "^4.5.0",
-    "dts-bundle-generator": "^8.0.1",
-    "esbuild": "^0.17.18",
-    "glob": "^7.1.6",
-    "mocha": "^10.1.0",
-    "puppeteer": "^22.1.0",
-    "semantic-release": "^21.0.5",
-    "typescript": "^5.0.4",
-    "vscode-tmgrammar-test": "^0.1.1"
+    "@semantic-release/changelog": "^6.0.3",
+    "@semantic-release/exec": "^7.0.3",
+    "@types/mocha": "^10.0.10",
+    "@types/node": "^20.17.17",
+    "@types/vscode": "~1.82.0",
+    "@vscode/test-electron": "^2.4.1",
+    "@vscode/test-web": "^0.0.66",
+    "@vscode/vsce": "^3.2.2",
+    "c8": "^10.1.3",
+    "conventional-changelog-conventionalcommits": "^8.0.0",
+    "dts-bundle-generator": "^9.5.1",
+    "esbuild": "^0.24.2",
+    "glob": "^11.0.1",
+    "mocha": "^11.1.0",
+    "puppeteer": "^24.2.0",
+    "semantic-release": "^24.2.1",
+    "typescript": "^5.7.3",
+    "vscode-tmgrammar-test": "^0.1.3"
   },
   "dependencies": {
     "basic-ftp": "^5.0.0",
     "terse.js": "file:./terse/terse.js-1.0.0.tgz",
-    "vscode-languageclient": "^8.1.0"
+    "vscode-languageclient": "^9.0.1"
   },
   "scripts": {
     "postinstall": "node ./build/bin/postinstall.js",
@@ -76,12 +75,12 @@
     "generate:tmgrammar": "tsc -p ./scripts/syntaxes/tsconfig.json && node ./lib_syntaxes/tmgrammarGenerator.js",
     "clean": "node ./build/bin/clean.js",
     "test": "npm run compile:test && node ./build/bin/prepareWorkspace.js && node ./dist_test/test/runTest.js && npm run test:tmgrammar",
-    "test:web": "npm run compile:webtest && node ./build/bin/prepareWorkspace.js && npx vscode-test-web --browserType=chromium --coi --extensionDevelopmentPath=. --headless --verbose --extensionTestsPath=dist_test/index.web.js dist_test/workspace/ && npm run test:tmgrammar",
+    "test:web": "npm run compile:webtest && node ./build/bin/prepareWorkspace.js && npm exec vscode-test-web -- --browserType=chromium --coi --extensionDevelopmentPath=. --headless --verbose --extensionTestsPath=dist_test/index.web.js dist_test/workspace/ && npm run test:tmgrammar",
     "test:wasm": "npm run compile:test && node ./build/bin/prepareWorkspace.js wasm && node ./dist_test/test/runTest.js && npm run test:tmgrammar",
     "test:insiders": "npm run compile:test && node ./build/bin/prepareWorkspace.js && node ./dist_test/test/runTest.js insiders && npm run test:tmgrammar",
     "test:theia": "npm run compile:test && node ./build/bin/prepareWorkspace.js && npm run test:tmgrammar && node ./build/bin/theiaTest.js",
     "test:tmgrammar": "vscode-tmgrammar-snap -g syntaxes/hlasm.tmLanguage.json src/test/syntaxes/**/*.hlasm && vscode-tmgrammar-snap -g syntaxes/hlasmListing.tmLanguage.json src/test/syntaxes/**/*.listing",
-    "run:web": "npx vscode-test-web --browserType=chromium --coi --extensionDevelopmentPath=. --open-devtools --verbose ../../example_workspace/"
+    "run:web": "npm exec vscode-test-web -- --browserType=chromium --coi --extensionDevelopmentPath=. --open-devtools --verbose ../../example_workspace/"
   },
   "browser": "./dist/extension.js",
   "contributes": {
