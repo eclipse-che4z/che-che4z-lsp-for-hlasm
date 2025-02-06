@@ -70,11 +70,11 @@ jobs:
 
       - name: Download Sonar
         env:
-          SONAR_SCANNER_VERSION: 5.0.1.3006
+          SONAR_SCANNER_VERSION: 7.0.1.4817
         run: |
-          curl -sSLo sonar-scanner.zip https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-$SONAR_SCANNER_VERSION-linux.zip
+          curl -sSLo sonar-scanner.zip https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-$SONAR_SCANNER_VERSION-linux-x64.zip
           unzip sonar-scanner.zip
-          mv sonar-scanner-$SONAR_SCANNER_VERSION-linux sonar-scanner-linux
+          mv sonar-scanner-$SONAR_SCANNER_VERSION-linux-x64 sonar-scanner-linux
         working-directory: ${{ runner.temp }}
 
       - name: Sonar scan
@@ -82,20 +82,20 @@ jobs:
           SONAR_SCANNER_OPTS: -server
         run: >
           $RUNNER_TEMP/sonar-scanner-linux/bin/sonar-scanner
-          -Dsonar.projectKey=$(echo "$GITHUB_REPOSITORY" | tr "/" "_")
-          -Dsonar.organization=$(echo "$GITHUB_REPOSITORY_OWNER" | tr "[:upper:]" "[:lower:]")
-          -Dsonar.sources=benchmark,clients/vscode-hlasmplugin/src/,language_server/src,parser_library/src,parser_library/include,utils/src,utils/include
-          -Dsonar.tests=parser_library/test,language_server/test,clients/vscode-hlasmplugin/src/test,utils/test
-          -Dsonar.host.url=https://sonarcloud.io
-          -Dsonar.token=${{ secrets.SONAR_TOKEN }}
-          -Dsonar.cfamily.build-wrapper-output=build/bw-output
-          -Dsonar.cfamily.llvm-cov.reportPath=build/coverage.txt
-          -Dsonar.javascript.lcov.reportPaths=clients/vscode-hlasmplugin/coverage/lcov.info
-          -Dsonar.projectVersion=$VERSION
-          -Dsonar.cpd.exclusions=parser_library/src/context/instruction.cpp
-          -Dsonar.exclusions=clients/vscode-hlasmplugin/src/test/**
-          -Dsonar.test.inclusions=clients/vscode-hlasmplugin/src/test/**
-          -Dsonar.coverage.exclusions=benchmark/benchmark.cpp,**/*.web.ts
-          -Dsonar.scm.revision=${{ github.event.workflow_run.head_sha }}
-          $HEAD_BRANCH_ARG
-          $PR_NUMBER_ARG
+          "-Dsonar.projectKey=$(echo "$GITHUB_REPOSITORY" | tr "/" "_")"
+          "-Dsonar.organization=$(echo "$GITHUB_REPOSITORY_OWNER" | tr "[:upper:]" "[:lower:]")"
+          "-Dsonar.sources=benchmark,clients/vscode-hlasmplugin/src/,language_server/src,parser_library/src,parser_library/include,utils/src,utils/include"
+          "-Dsonar.tests=parser_library/test,language_server/test,clients/vscode-hlasmplugin/src/test,utils/test"
+          "-Dsonar.host.url=https://sonarcloud.io"
+          "-Dsonar.token=${{ secrets.SONAR_TOKEN }}"
+          "-Dsonar.cfamily.compile-commands=build/compile_commands.json"
+          "-Dsonar.cfamily.llvm-cov.reportPath=build/coverage.txt"
+          "-Dsonar.javascript.lcov.reportPaths=clients/vscode-hlasmplugin/coverage/lcov.info"
+          "-Dsonar.projectVersion=$VERSION"
+          "-Dsonar.cpd.exclusions=parser_library/src/context/instruction.cpp"
+          "-Dsonar.exclusions=clients/vscode-hlasmplugin/src/test/**"
+          "-Dsonar.test.inclusions=clients/vscode-hlasmplugin/src/test/**"
+          "-Dsonar.coverage.exclusions=benchmark/benchmark.cpp,**/*.web.ts"
+          "-Dsonar.scm.revision=${{ github.event.workflow_run.head_sha }}"
+          ${HEAD_BRANCH_ARG:+"$HEAD_BRANCH_ARG"}
+          ${PR_NUMBER_ARG:+"$PR_NUMBER_ARG"}

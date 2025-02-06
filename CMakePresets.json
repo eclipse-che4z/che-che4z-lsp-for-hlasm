@@ -36,7 +36,11 @@
               "CMAKE_CXX_COMPILER": "clang++-18",
               "CMAKE_CXX_FLAGS": "-fprofile-instr-generate -fcoverage-mapping -mllvm -runtime-counter-relocation",
               "LANGUAGE_SERVER_BIN_SUBDIR": "linux_x64",
-              "CMAKE_RUNTIME_OUTPUT_DIRECTORY": "${sourceDir}/build/bin"
+              "CMAKE_RUNTIME_OUTPUT_DIRECTORY": "${sourceDir}/build/bin",
+              "CMAKE_EXPORT_COMPILE_COMMANDS": {
+                  "type": "BOOL",
+                  "value": "ON"
+              }
           }
       },
       {
@@ -165,6 +169,10 @@
                   "value": "ON"
               },
               "HLASM_DEV_GUESS_BIN_SUBDIR": {
+                  "type": "BOOL",
+                  "value": "ON"
+              },
+              "CMAKE_EXPORT_COMPILE_COMMANDS": {
                   "type": "BOOL",
                   "value": "ON"
               }
