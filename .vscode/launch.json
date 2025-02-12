@@ -70,12 +70,12 @@
       "name": "(Windows) Launch library_test (one)",
       "type": "cppvsdbg",
       "request": "launch",
-      "program": "${workspaceFolder}/build/x64-Debug/bin/library_test.exe",
+      "program": "${workspaceFolder}/build/debug/bin/library_test.exe",
       "args": [
         "--gtest_filter=${input:test_pattern}"
       ],
       "stopAtEntry": false,
-      "cwd": "${workspaceFolder}/build/x64-Debug/bin/",
+      "cwd": "${workspaceFolder}/build/debug/bin/",
       "environment": [],
       //"externalConsole": true,
       "preLaunchTask": "build"

@@ -12,6 +12,7 @@
  *   Broadcom, Inc. - initial API and implementation
  */
 
+#include <chrono>
 #include <thread>
 
 #include "gtest/gtest.h"

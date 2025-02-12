@@ -367,12 +367,20 @@ class condition_code_explanation
 {
     std::array<const char*, 5> text;
     std::array<unsigned char, 5> lengths;
+    bool single_explanation;
+
+    static constexpr bool identical(const char* t0, const char* t1, const char* t2, const char* t3, size_t n)
+    {
+        return std::equal(t0, t0 + n, t1, t1 + n) && std::equal(t0, t0 + n, t2, t2 + n)
+            && std::equal(t0, t0 + n, t3, t3 + n);
+    }
 
 public:
     template<size_t L0>
     explicit consteval condition_code_explanation(const char (&t0)[L0]) noexcept requires(L0 > 1 && L0 < 256)
         : text { t0, t0, t0, t0 }
         , lengths { L0 - 1, L0 - 1, L0 - 1, L0 - 1 }
+        , single_explanation(true)
     {}
     template<size_t L0, size_t L1, size_t L2, size_t L3>
     explicit consteval condition_code_explanation(
@@ -380,6 +388,7 @@ public:
         requires(L0 > 0 && L1 > 0 && L2 > 0 && L3 > 0 && L0 < 256 && L1 < 256 && L2 < 256 && L3 < 256)
         : text { L0 == 1 ? nullptr : t0, L1 == 1 ? nullptr : t1, L2 == 1 ? nullptr : t2, L3 == 1 ? nullptr : t3 }
         , lengths { L0 - 1, L1 - 1, L2 - 1, L3 - 1 }
+        , single_explanation(L0 == L1 && L0 == L2 && L0 == L3 && identical(t0, t1, t2, t3, L0))
     {}
     template<size_t L0, size_t L1, size_t L2, size_t L3, size_t Qual>
     explicit consteval condition_code_explanation(const char (&t0)[L0],
@@ -395,6 +404,7 @@ public:
             L3 == 1 ? nullptr : t3,
             qualification }
         , lengths { L0 - 1, L1 - 1, L2 - 1, L3 - 1, Qual - 1 }
+        , single_explanation(L0 == L1 && L0 == L2 && L0 == L3 && identical(t0, t1, t2, t3, L0))
     {}
 
     constexpr std::string_view tranlate_cc(condition_code cc) const noexcept
@@ -405,11 +415,7 @@ public:
 
     constexpr std::string_view cc_qualification() const noexcept { return std::string_view(text[4], lengths[4]); }
 
-    constexpr bool has_single_explanation() const noexcept
-    {
-        return text[0] == text[1] && text[0] == text[2] && text[0] == text[3] && lengths[0] == lengths[1]
-            && lengths[0] == lengths[2] && lengths[0] == lengths[3];
-    }
+    constexpr bool has_single_explanation() const noexcept { return single_explanation; }
 };
 
 extern constinit const condition_code_explanation condition_code_explanations[];
