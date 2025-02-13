@@ -10,9 +10,7 @@
 # Contributors:
 #   Broadcom, Inc. - initial API and implementation
 
-PROJECT(JSON_fetcher)
-
-INCLUDE(FetchContent)
+include(FetchContent)
 
 message("Populating JSON")
 FetchContent_Declare(json

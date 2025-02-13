@@ -10,8 +10,6 @@
 # Contributors:
 #   Broadcom, Inc. - initial API and implementation
 
-project(googletest-download NONE)
-
 include(FetchContent)
 
 set(INSTALL_GTEST Off)

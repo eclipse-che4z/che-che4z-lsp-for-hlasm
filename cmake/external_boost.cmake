@@ -10,8 +10,6 @@
 # Contributors:
 #   Broadcom, Inc. - initial API and implementation
 
-project(boost-asio)
-
 include(FetchContent)
 
 message("Populating ASIO")

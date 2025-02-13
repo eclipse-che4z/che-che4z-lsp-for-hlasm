@@ -31,7 +31,7 @@ if(BUILD_FUZZER AND BUILD_SHARED_LIBS)
   message(ERROR "Building fuzzer with dynamic libraries not supported.")
 endif()
 
-LIST( APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake )
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 
 include(compiler_flags)
 

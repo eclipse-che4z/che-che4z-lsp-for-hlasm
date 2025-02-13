@@ -10,9 +10,7 @@
 # Contributors:
 #   Broadcom, Inc. - initial API and implementation
 
-PROJECT(uri_fetcher CXX)
-INCLUDE(ExternalProject)
-FIND_PACKAGE(Git REQUIRED)
+find_package(Git REQUIRED)
 
 include(FetchContent)
 
