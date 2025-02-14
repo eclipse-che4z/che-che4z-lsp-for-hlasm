@@ -340,7 +340,7 @@ function asHover(md: vscode.MarkdownString | undefined): vscode.Hover | undefine
     return md ? new vscode.Hover(md) : undefined;
 }
 
-function isolateSymbolSimple(document: vscode.TextDocument, position: vscode.Position) {
+function isolateSymbolSimple(document: vscode.TextDocument, position: vscode.Position, hasPrefix: boolean) {
     if (position.line >= document.lineCount)
         return undefined;
     const line = document.lineAt(position.line).text;
@@ -348,7 +348,7 @@ function isolateSymbolSimple(document: vscode.TextDocument, position: vscode.Pos
     let start = position.character;
     let end = position.character;
 
-    while (start > 0 && ordchar.test(line[start - 1]))
+    while (start > +hasPrefix && ordchar.test(line[start - 1]))
         --start;
     while (end < line.length && ordchar.test(line[end]))
         ++end;
@@ -365,10 +365,10 @@ function codeColumns(type: 'short' | 'long', hasPrefix: boolean) {
 
 function isolateSymbol(l: Listing, document: vscode.TextDocument, position: vscode.Position) {
     const csi = l.codeSections.findIndex(s => s.codeStart <= position.line && position.line < s.end);
-    if (!l.type || csi === -1) return isolateSymbolSimple(document, position);
+    if (!l.type || csi === -1) return isolateSymbolSimple(document, position, l.hasPrefix);
     const cs = l.codeSections[csi];
     const { left, right } = codeColumns(l.type, l.hasPrefix);
-    if (position.character < left || position.character >= right) return isolateSymbolSimple(document, position);
+    if (position.character < left || position.character >= right) return isolateSymbolSimple(document, position, l.hasPrefix);
 
     let start = position.character;
     let end = position.character;
