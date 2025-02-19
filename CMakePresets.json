@@ -195,7 +195,7 @@
       {
           "name": "dev.release",
           "inherits": "dev",
-          "binaryDir": "${sourceDir}/build/debug",
+          "binaryDir": "${sourceDir}/build/release",
           "cacheVariables": {
               "CMAKE_BUILD_TYPE": "Release",
               "CMAKE_RUNTIME_OUTPUT_DIRECTORY": "${sourceDir}/build/release/bin"
