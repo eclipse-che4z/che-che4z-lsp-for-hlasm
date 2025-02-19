@@ -2,6 +2,9 @@
 
 ## ****Unreleased****
 
+#### Added
+- Navigation through listings using label names and CSECT offsets
+
 #### Fixed
 - Symbols in listings with ASA characters are incorrectly isolated
 

@@ -183,7 +183,7 @@ suite('Language services for listings', () => {
 
         assert.deepStrictEqual(l.options, { start: 2, end: 69 });
         assert.deepStrictEqual(l.externals, { start: 69, end: 73 });
-        assert.deepStrictEqual(l.codeSections, [{ start: 73, end: 86, title: '', codeStart: 76 }]);
+        assert.deepStrictEqual(l.codeSections, [{ start: 73, end: 86, title: '', codeStart: 76, dsect: false, firstStmtNo: 1 }]);
         assert.strictEqual(l.relocations, undefined);
         assert.deepStrictEqual(l.ordinary, { start: 86, end: 93 });
         assert.strictEqual(l.macro, undefined);
@@ -239,5 +239,20 @@ suite('Language services for listings', () => {
         const code = outline[0].children.find(x => x.children.length > 0);
         assert.ok(code);
         assert.ok(code.children.some(x => x.name === '(untitled)'));
+    });
+
+    test('Offsets', async () => {
+        const offsetsParent = services.provideOffsets(document);
+
+        assert.strictEqual(offsetsParent?.length, 1);
+        const offsets = offsetsParent[0].children;
+
+        assert.strictEqual(offsets.length, 3)
+        assert.deepStrictEqual(offsets.map(x => ({ name: x.name, line: x.range.start.line })), [
+            { name: 'Offset 00000000 (C+00000000)', line: 76 },
+            { name: 'Offset 00000000 (C+00000000)', line: 78 },
+            { name: 'Offset 00000004 (C+00000004)', line: 79 },
+        ]);
+
     });
 });
