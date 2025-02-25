@@ -19,7 +19,6 @@
 #include <string_view>
 
 namespace hlasm_plugin::parser_library::lexing {
-using char_t = char32_t;
 
 struct u8string_with_newlines
 {
@@ -33,8 +32,7 @@ struct u8string_with_newlines
 
 struct u8string_view_with_newlines
 {
-    static constexpr const unsigned char EOLuc = (unsigned char)-1;
-    static constexpr const char EOLc = (char)-1;
+    static constexpr const char8_t EOL = (char8_t)-1;
 
     std::string_view text;
 

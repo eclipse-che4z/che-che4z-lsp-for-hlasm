@@ -18,6 +18,7 @@
 #include <cctype>
 #include <charconv>
 #include <concepts>
+#include <cstdint>
 #include <utility>
 
 #include "context/hlasm_context.h"
@@ -74,51 +75,49 @@ void parser_holder::prepare_parser(lexing::u8string_view_with_newlines text,
     collector.prepare_for_next_statement();
 }
 
-constexpr const auto EOF_SYMBOL = (parser_holder::char_t)-1;
-template<parser_holder::char_t... chars>
+constexpr const auto EOF_SYMBOL = (char8_t)-1;
+template<char8_t... chars>
 requires((chars != EOF_SYMBOL) && ...) struct group_t
 {
-    [[nodiscard]] static constexpr bool matches(parser_holder::char_t ch) noexcept { return ((ch == chars) || ...); }
+    [[nodiscard]] static constexpr bool matches(char8_t ch) noexcept { return ((ch == chars) || ...); }
 };
-template<parser_holder::char_t... chars>
+template<char8_t... chars>
 constexpr group_t<chars...> group = {};
 
-template<std::array<parser_holder::char_t, 256> s>
+template<std::array<char8_t, 256> s>
 constexpr auto group_from_string()
 {
-    constexpr auto n = std::ranges::find(s, U'\0') - s.begin();
+    constexpr auto n = std::ranges::find(s, u8'\0') - s.begin();
     return []<size_t... i>(std::index_sequence<i...>) {
         return group_t<s[i]...>(); //
     }(std::make_index_sequence<n>());
 }
 
-constexpr auto selfdef = group_from_string<{ U"BXCGbxcg" }>();
-constexpr auto mach_attrs = group_from_string<{ U"OSILTosilt" }>();
-constexpr auto all_attrs = group_from_string<{ U"NKDOSILTnkdosilt" }>();
-constexpr auto attr_argument = group_from_string<{ U"$_#@abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ&=*" }>();
+constexpr auto selfdef = group_from_string<{ u8"BXCGbxcg" }>();
+constexpr auto mach_attrs = group_from_string<{ u8"OSILTosilt" }>();
+constexpr auto all_attrs = group_from_string<{ u8"NKDOSILTnkdosilt" }>();
+constexpr auto attr_argument = group_from_string<{ u8"$_#@abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ&=*" }>();
 
-constexpr const auto ord_first = utils::create_truth_table("$_#@abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ");
+constexpr const auto ord_first =
+    utils::create_truth_table(u8"$_#@abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ");
 constexpr const auto ord =
-    utils::create_truth_table("$_#@abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789");
-constexpr const auto numbers = utils::create_truth_table("0123456789");
+    utils::create_truth_table(u8"$_#@abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789");
+constexpr const auto numbers = utils::create_truth_table(u8"0123456789");
 
-[[nodiscard]] constexpr bool char_is_ord_first(parser_holder::char_t c) noexcept
-{
-    return c < ord_first.size() && ord_first[c];
-}
-[[nodiscard]] constexpr bool char_is_ord(parser_holder::char_t c) noexcept { return c < ord.size() && ord[c]; }
-[[nodiscard]] constexpr bool char_is_num(parser_holder::char_t c) noexcept { return c < numbers.size() && numbers[c]; }
+[[nodiscard]] constexpr bool char_is_ord_first(char8_t c) noexcept { return c < ord_first.size() && ord_first[c]; }
+[[nodiscard]] constexpr bool char_is_ord(char8_t c) noexcept { return c < ord.size() && ord[c]; }
+[[nodiscard]] constexpr bool char_is_num(char8_t c) noexcept { return c < numbers.size() && numbers[c]; }
 
 namespace {
-std::pair<char_substitution, size_t> append_utf8_with_newlines_to_utf32(
-    std::vector<parser_holder::char_t>& t, std::vector<size_t>& nl, std::vector<size_t>& ll, std::string_view s)
+std::pair<char_substitution, size_t> append_utf8_with_newlines(
+    std::vector<char8_t>& t, std::vector<size_t>& nl, std::vector<size_t>& ll, std::string_view s)
 {
     char_substitution subs {};
 
     size_t utf16_length = 0;
     while (!s.empty())
     {
-        unsigned char c = s.front();
+        char8_t c = s.front();
         if (c < 0x80)
         {
             t.push_back(c);
@@ -126,7 +125,7 @@ std::pair<char_substitution, size_t> append_utf8_with_newlines_to_utf32(
             ++utf16_length;
             continue;
         }
-        else if (c == lexing::u8string_view_with_newlines::EOLuc)
+        else if (c == lexing::u8string_view_with_newlines::EOL)
         {
             nl.push_back(t.size());
             ll.push_back(std::exchange(utf16_length, 0));
@@ -136,21 +135,26 @@ std::pair<char_substitution, size_t> append_utf8_with_newlines_to_utf32(
         const auto cs = utils::utf8_prefix_sizes[c];
         if (cs.utf8 && cs.utf8 <= s.size())
         {
+            t.push_back(c);
             char32_t v = c & 0b0111'1111u >> cs.utf8;
             for (int i = 1; i < cs.utf8; ++i)
-                v = v << 6 | (s[i] & 0b0011'1111u);
+            {
+                const char8_t n = s[i] & 0b0011'1111u;
+                t.push_back(0x80u | n);
+                v = v << 6 | n;
+            }
 
             if (v == utils::substitute_character)
                 subs.client = true;
 
-            t.push_back(v);
             s.remove_prefix(cs.utf8);
             utf16_length += cs.utf16;
         }
         else
         {
+            static constexpr std::u8string_view substitute_character = u8"\U00000FFD";
             subs.server = true;
-            t.push_back(utils::substitute_character);
+            t.insert(t.end(), substitute_character.begin(), substitute_character.end());
             s.remove_prefix(1);
             ++utf16_length;
         }
@@ -186,7 +190,7 @@ char_substitution parser_holder::reset(
     input.clear();
     newlines.clear();
     line_limits.clear();
-    auto [subs, _] = append_utf8_with_newlines_to_utf32(input, newlines, line_limits, str.text);
+    auto [subs, _] = append_utf8_with_newlines(input, newlines, line_limits, str.text);
 
     reset(file_offset, logical_column, process);
 
@@ -209,7 +213,7 @@ char_substitution parser_holder::reset(
     {
         const auto& s = l.segments[i];
 
-        auto [subs_update, utf16_rem] = append_utf8_with_newlines_to_utf32(
+        auto [subs_update, utf16_rem] = append_utf8_with_newlines(
             input, newlines, line_limits, std::string_view(s.code_begin().base(), s.code_end().base()));
 
         subs |= subs_update;
@@ -286,7 +290,7 @@ struct parser2
     parser_holder* holder;
 
     parser_holder::input_state_t input;
-    const lexing::char_t* data;
+    const char8_t* data;
 
     std::vector<range> remarks;
 
@@ -301,7 +305,7 @@ struct parser2
 
     [[nodiscard]] constexpr bool eof() const noexcept { return *input.next == EOF_SYMBOL; }
 
-    template<parser_holder::char_t... chars>
+    template<char8_t... chars>
     [[nodiscard]] constexpr bool except() const noexcept requires((chars != EOF_SYMBOL) && ...)
     {
         const auto ch = *input.next;
@@ -316,14 +320,14 @@ struct parser2
         }(std::make_index_sequence<sizeof...(groups)>());
     }
 
-    template<parser_holder::char_t... chars>
+    template<char8_t... chars>
     [[nodiscard]] constexpr bool follows() const noexcept requires((chars != EOF_SYMBOL) && ...)
     {
         const auto ch = *input.next;
         return ((ch == chars) || ...);
     }
 
-    template<parser_holder::char_t... chars>
+    template<char8_t... chars>
     [[nodiscard]] constexpr bool must_follow() requires((chars != EOF_SYMBOL) && ...)
     {
         if (follows<chars...>())
@@ -334,7 +338,7 @@ struct parser2
         return false;
     }
 
-    template<parser_holder::char_t... chars>
+    template<char8_t... chars>
     [[nodiscard]] constexpr bool must_follow(diagnostic_op (&d)(const range&)) requires((chars != EOF_SYMBOL) && ...)
     {
         if (follows<chars...>())
@@ -344,7 +348,7 @@ struct parser2
         return false;
     }
 
-    template<parser_holder::char_t... chars>
+    template<char8_t... chars>
     [[nodiscard]] constexpr bool match(diagnostic_op (&d)(const range&)) requires((chars != EOF_SYMBOL) && ...)
     {
         if (!follows<chars...>())
@@ -356,7 +360,7 @@ struct parser2
         return true;
     }
 
-    template<parser_holder::char_t... chars>
+    template<char8_t... chars>
     [[nodiscard]] constexpr bool match(hl_scopes s, diagnostic_op (&d)(const range&))
         requires((chars != EOF_SYMBOL) && ...)
     {
@@ -369,7 +373,7 @@ struct parser2
         return true;
     }
 
-    template<parser_holder::char_t... chars>
+    template<char8_t... chars>
     [[nodiscard]] constexpr bool match() requires((chars != EOF_SYMBOL) && ...)
     {
         if (must_follow<chars...>())
@@ -381,7 +385,7 @@ struct parser2
         return false;
     }
 
-    template<parser_holder::char_t... chars>
+    template<char8_t... chars>
     [[nodiscard]] constexpr bool match(hl_scopes s) requires((chars != EOF_SYMBOL) && ...)
     {
         if (must_follow<chars...>())
@@ -392,7 +396,7 @@ struct parser2
         return false;
     }
 
-    template<parser_holder::char_t... chars>
+    template<char8_t... chars>
     [[nodiscard]] constexpr bool try_consume() requires((chars != EOF_SYMBOL) && ...)
     {
         if (follows<chars...>())
@@ -403,7 +407,7 @@ struct parser2
         return false;
     }
 
-    template<parser_holder::char_t... chars>
+    template<char8_t... chars>
     [[nodiscard]] constexpr bool try_consume(hl_scopes s) requires((chars != EOF_SYMBOL) && ...)
     {
         if (follows<chars...>())
@@ -433,7 +437,7 @@ struct parser2
 
     void consume_spaces() noexcept
     {
-        while (follows<U' '>())
+        while (follows<u8' '>())
             consume();
     }
 
@@ -488,22 +492,22 @@ struct parser2
 
     [[nodiscard]] constexpr bool follows_NOT() const noexcept
     {
-        return follows<group<U'N', U'n'>, group<U'O', U'o'>, group<U'T', U't'>>() && input.next[3] != EOF_SYMBOL
+        return follows<group<u8'N', u8'n'>, group<u8'O', u8'o'>, group<u8'T', u8't'>>() && input.next[3] != EOF_SYMBOL
             && !char_is_ord(input.next[3]);
     }
 
     static constexpr auto PROCESS = context::id_index("*PROCESS");
     [[nodiscard]] constexpr bool follows_PROCESS() const noexcept
     {
-        return follows<group<U'*'>,
-                   group<U'P', U'p'>,
-                   group<U'R', U'r'>,
-                   group<U'O', U'o'>,
-                   group<U'C', U'c'>,
-                   group<U'E', U'e'>,
-                   group<U'S', U's'>,
-                   group<U'S', U's'>>()
-            && (input.next[PROCESS.size()] == EOF_SYMBOL || input.next[PROCESS.size()] == U' ');
+        return follows<group<u8'*'>,
+                   group<u8'P', u8'p'>,
+                   group<u8'R', u8'r'>,
+                   group<u8'O', u8'o'>,
+                   group<u8'C', u8'c'>,
+                   group<u8'E', u8'e'>,
+                   group<u8'S', u8's'>,
+                   group<u8'S', u8's'>>()
+            && (input.next[PROCESS.size()] == EOF_SYMBOL || input.next[PROCESS.size()] == u8' ');
     }
 
     result_t<semantics::seq_sym> lex_seq_symbol();
@@ -560,20 +564,20 @@ struct parser2
         return checking::data_def_type::types_and_extensions.contains(std::make_pair(type, ch));
     }
 
-    static constexpr int digit_to_value(parser_holder::char_t c) noexcept
+    static constexpr int digit_to_value(char8_t c) noexcept
     {
-        static_assert(U'0' + 0 == U'0');
-        static_assert(U'0' + 1 == U'1');
-        static_assert(U'0' + 2 == U'2');
-        static_assert(U'0' + 3 == U'3');
-        static_assert(U'0' + 4 == U'4');
-        static_assert(U'0' + 5 == U'5');
-        static_assert(U'0' + 6 == U'6');
-        static_assert(U'0' + 7 == U'7');
-        static_assert(U'0' + 8 == U'8');
-        static_assert(U'0' + 9 == U'9');
-        assert(c >= U'0' && c <= U'9');
-        return c - U'0';
+        static_assert(u8'0' + 0 == u8'0');
+        static_assert(u8'0' + 1 == u8'1');
+        static_assert(u8'0' + 2 == u8'2');
+        static_assert(u8'0' + 3 == u8'3');
+        static_assert(u8'0' + 4 == u8'4');
+        static_assert(u8'0' + 5 == u8'5');
+        static_assert(u8'0' + 6 == u8'6');
+        static_assert(u8'0' + 7 == u8'7');
+        static_assert(u8'0' + 8 == u8'8');
+        static_assert(u8'0' + 9 == u8'9');
+        assert(c >= u8'0' && c <= u8'9');
+        return c - u8'0';
     }
 
     result_t<std::pair<int32_t, range>> parse_number();
@@ -592,9 +596,9 @@ struct parser2
 
     result_t<expressions::data_definition> lex_data_definition(bool require_nominal);
 
-    std::string capture_text(const parser_holder::char_t* start, const parser_holder::char_t* end) const;
+    std::string capture_text(const char8_t* start, const char8_t* end) const;
 
-    std::string capture_text(const parser_holder::char_t* start) const;
+    std::string capture_text(const char8_t* start) const;
 
     result_t<semantics::literal_si> lex_literal();
 
@@ -789,6 +793,28 @@ constexpr void parser2::adjust_lines() noexcept
     return;
 }
 
+constexpr auto utf8_length_extras = []() {
+    std::uint32_t v = 0;
+
+    for (size_t i = 0; i < 0x100; i += 16)
+    {
+        unsigned long long bits = 0;
+        if (i <= 0b0111'1111)
+            bits = 0;
+        else if (0b1100'0000 <= i && i <= 0b1101'1111)
+            bits = 1;
+        else if (0b1110'0000 <= i && i <= 0b1110'1111)
+            bits = 2;
+        else if (0b1111'0000 <= i && i <= 0b1111'0111)
+            bits = 3;
+        v |= bits << (i >> 4 << 1);
+    }
+
+    return v;
+}();
+
+constexpr char8_t first_long_utf16 = 0xF0;
+
 void parser2::consume() noexcept
 {
     assert(!eof());
@@ -797,9 +823,10 @@ void parser2::consume() noexcept
 
     adjust_lines();
 
-    ++input.next;
+    input.next += 1 + (utf8_length_extras >> (ch >> 4 << 1) & 0b11);
+
     ++input.char_position_in_line;
-    input.char_position_in_line_utf16 += 1 + (ch > 0xffffu);
+    input.char_position_in_line_utf16 += 1 + (ch >= first_long_utf16);
 }
 
 void parser2::consume(hl_scopes s) noexcept
@@ -815,15 +842,27 @@ void parser2::consume(hl_scopes s) noexcept
 void parser2::consume_into(std::string& s)
 {
     assert(!eof());
-    utils::append_utf32_to_utf8(s, *input.next);
-    consume();
+
+    const auto ch = *input.next;
+
+    adjust_lines();
+
+    do
+    {
+        s.push_back(*input.next);
+        ++input.next;
+    } while ((*input.next & 0xC0) == 0x80);
+
+    ++input.char_position_in_line;
+    input.char_position_in_line_utf16 += 1 + (ch >= first_long_utf16);
 }
 
 void parser2::consume_into(std::string& s, hl_scopes scope)
 {
     assert(!eof());
-    utils::append_utf32_to_utf8(s, *input.next);
-    consume(scope);
+    const auto pos = cur_pos_adjusted();
+    consume_into(s);
+    add_hl_symbol(range_from(pos), scope);
 }
 
 
@@ -850,7 +889,7 @@ void parser2::consume_into(std::string& s, hl_scopes scope)
 
 void parser2::consume_rest()
 {
-    while (except<U' '>())
+    while (except<u8' '>())
         consume();
     adjust_lines();
     if (!eof())
@@ -963,9 +1002,9 @@ void parser2::lex_last_remark()
 
 void parser2::lex_line_remark()
 {
-    assert(follows<U' '>() && before_nl());
+    assert(follows<u8' '>() && before_nl());
 
-    while (follows<U' '>() && before_nl())
+    while (follows<u8' '>() && before_nl())
         consume();
 
     if (before_nl())
@@ -1079,7 +1118,7 @@ result_t<parser2::qualified_id> parser2::lex_qualified_id()
     if (error)
         return failure;
 
-    if (try_consume<U'.'>(hl_scopes::operator_symbol))
+    if (try_consume<u8'.'>(hl_scopes::operator_symbol))
     {
         if (!is_ord_first())
         {
@@ -1099,7 +1138,7 @@ result_t<parser2::qualified_id> parser2::lex_qualified_id()
 
 result_t<semantics::concat_chain> parser2::lex_compound_variable()
 {
-    if (!except<U')'>())
+    if (!except<u8')'>())
     {
         syntax_error_or_eof();
         return failure;
@@ -1110,10 +1149,10 @@ result_t<semantics::concat_chain> parser2::lex_compound_variable()
     {
         switch (*input.next)
         {
-            case U')':
+            case u8')':
                 return result;
 
-            case U'&': {
+            case u8'&': {
                 auto [error, var] = lex_variable();
                 if (error)
                     return failure;
@@ -1121,7 +1160,7 @@ result_t<semantics::concat_chain> parser2::lex_compound_variable()
                 break;
             }
 
-            case U'.': {
+            case u8'.': {
                 const auto start = cur_pos_adjusted();
                 consume(hl_scopes::operator_symbol);
                 result.emplace_back(std::in_place_type<semantics::dot_conc>, range_from(start));
@@ -1132,7 +1171,7 @@ result_t<semantics::concat_chain> parser2::lex_compound_variable()
                 const auto start = cur_pos_adjusted();
                 std::string collected;
 
-                while (except<U')', U'&', U'.'>())
+                while (except<u8')', u8'&', u8'.'>())
                 {
                     consume_into(collected);
                 }
@@ -1150,7 +1189,7 @@ result_t<semantics::concat_chain> parser2::lex_compound_variable()
 result_t<semantics::seq_sym> parser2::lex_seq_symbol()
 {
     const auto start = cur_pos_adjusted();
-    if (!try_consume<U'.'>() || !is_ord_first())
+    if (!try_consume<u8'.'>() || !is_ord_first())
     {
         syntax_error_or_eof();
         return failure;
@@ -1192,7 +1231,7 @@ result_t<expressions::ca_expr_ptr> parser2::lex_expr_general()
 
 result_t<semantics::concat_chain> parser2::lex_ca_string_value()
 {
-    assert(follows<U'\''>());
+    assert(follows<u8'\''>());
 
     semantics::concat_chain cc;
     concat_chain_builder ccb(*this, cc, false);
@@ -1206,16 +1245,16 @@ result_t<semantics::concat_chain> parser2::lex_ca_string_value()
                 add_diagnostic(diagnostic_op::error_S0005);
                 return failure;
 
-            case U'.':
+            case u8'.':
                 ccb.push_dot();
                 break;
 
-            case U'=':
+            case u8'=':
                 ccb.push_equals();
                 break;
 
-            case U'&':
-                if (input.next[1] == U'&')
+            case u8'&':
+                if (input.next[1] == u8'&')
                 {
                     consume_into(ccb.last_text_value());
                     consume_into(ccb.last_text_value());
@@ -1230,9 +1269,9 @@ result_t<semantics::concat_chain> parser2::lex_ca_string_value()
                 }
                 break;
 
-            case U'\'':
+            case u8'\'':
                 consume();
-                if (!follows<U'\''>())
+                if (!follows<u8'\''>())
                 {
                     ccb.push_last_text();
                     semantics::concatenation_point::clear_concat_chain(cc);
@@ -1245,7 +1284,7 @@ result_t<semantics::concat_chain> parser2::lex_ca_string_value()
                 do
                 {
                     consume_into(s);
-                } while (except<U'.', U'=', U'&', U'\''>());
+                } while (except<u8'.', u8'=', u8'&', u8'\''>());
                 break;
             }
         }
@@ -1254,7 +1293,7 @@ result_t<semantics::concat_chain> parser2::lex_ca_string_value()
 
 result_t<expressions::ca_string::substring_t> parser2::lex_substring()
 {
-    assert(follows<U'('>());
+    assert(follows<u8'('>());
 
     const auto sub_start = cur_pos_adjusted();
 
@@ -1264,12 +1303,12 @@ result_t<expressions::ca_string::substring_t> parser2::lex_substring()
     if (e1_error)
         return failure;
 
-    if (!match<U','>(hl_scopes::operator_symbol))
+    if (!match<u8','>(hl_scopes::operator_symbol))
         return failure;
 
-    if (try_consume<U'*'>()) // TODO: no hightlighting?
+    if (try_consume<u8'*'>()) // TODO: no hightlighting?
     {
-        if (!match<U')'>(hl_scopes::operator_symbol, diagnostic_op::error_S0011))
+        if (!match<u8')'>(hl_scopes::operator_symbol, diagnostic_op::error_S0011))
             return failure;
         return { std::move(e1), expressions::ca_expr_ptr(), range_from(sub_start) };
     }
@@ -1278,7 +1317,7 @@ result_t<expressions::ca_string::substring_t> parser2::lex_substring()
     if (e2_error)
         return failure;
 
-    if (!match<U')'>(hl_scopes::operator_symbol, diagnostic_op::error_S0011))
+    if (!match<u8')'>(hl_scopes::operator_symbol, diagnostic_op::error_S0011))
         return failure;
 
     return {
@@ -1291,12 +1330,12 @@ result_t<expressions::ca_string::substring_t> parser2::lex_substring()
 result_t<std::pair<semantics::concat_chain, expressions::ca_string::substring_t>>
 parser2::lex_ca_string_with_optional_substring()
 {
-    assert(follows<U'\''>());
+    assert(follows<u8'\''>());
     auto [cc_error, cc] = lex_ca_string_value();
     if (cc_error)
         return failure;
 
-    if (!follows<U'('>())
+    if (!follows<u8'('>())
         return { std::move(cc), expressions::ca_string::substring_t {} };
 
     auto [sub_error, sub] = lex_substring();
@@ -1309,7 +1348,7 @@ parser2::lex_ca_string_with_optional_substring()
 bool parser2::lex_optional_space()
 {
     bool matched = false;
-    while (try_consume<U' '>())
+    while (try_consume<u8' '>())
     {
         matched = true;
     }
@@ -1318,7 +1357,7 @@ bool parser2::lex_optional_space()
 
 result_t<std::vector<expressions::ca_expr_ptr>> parser2::lex_subscript_ne()
 {
-    assert(follows<U'('>());
+    assert(follows<u8'('>());
 
     std::vector<expressions::ca_expr_ptr> result;
 
@@ -1331,7 +1370,7 @@ result_t<std::vector<expressions::ca_expr_ptr>> parser2::lex_subscript_ne()
 
         result.push_back(std::move(e));
         lex_optional_space();
-        if (!match<U')'>(hl_scopes::operator_symbol, diagnostic_op::error_S0011))
+        if (!match<u8')'>(hl_scopes::operator_symbol, diagnostic_op::error_S0011))
             return failure;
 
         return result;
@@ -1344,14 +1383,14 @@ result_t<std::vector<expressions::ca_expr_ptr>> parser2::lex_subscript_ne()
 
     if (lex_optional_space())
     {
-        if (!match<U')'>(hl_scopes::operator_symbol, diagnostic_op::error_S0011))
+        if (!match<u8')'>(hl_scopes::operator_symbol, diagnostic_op::error_S0011))
             return failure;
         return result;
     }
-    if (try_consume<U')'>(hl_scopes::operator_symbol))
+    if (try_consume<u8')'>(hl_scopes::operator_symbol))
         return result;
 
-    if (!match<U','>(hl_scopes::operator_symbol, diagnostic_op::error_S0002))
+    if (!match<u8','>(hl_scopes::operator_symbol, diagnostic_op::error_S0002))
         return failure;
 
     if (auto [error, e] = lex_expr(); error)
@@ -1359,14 +1398,14 @@ result_t<std::vector<expressions::ca_expr_ptr>> parser2::lex_subscript_ne()
     else
         result.push_back(std::move(e));
 
-    while (try_consume<U','>(hl_scopes::operator_symbol))
+    while (try_consume<u8','>(hl_scopes::operator_symbol))
     {
         if (auto [error, e] = lex_expr(); error)
             return failure;
         else
             result.push_back(std::move(e));
     }
-    if (!match<U')'>(hl_scopes::operator_symbol, diagnostic_op::error_S0011))
+    if (!match<u8')'>(hl_scopes::operator_symbol, diagnostic_op::error_S0011))
         return failure;
 
     return result;
@@ -1387,8 +1426,8 @@ result_t<std::vector<expressions::ca_expr_ptr>> parser2::lex_subscript_ne()
     {
         switch (type.front())
         {
-            case 'b':
-            case 'B': {
+            case u8'b':
+            case u8'B': {
                 if (value.empty())
                     return 0;
                 uint32_t res = 0;
@@ -1401,20 +1440,20 @@ result_t<std::vector<expressions::ca_expr_ptr>> parser2::lex_subscript_ne()
 
                 return static_cast<int32_t>(res);
             }
-            case 'd':
-            case 'D': {
+            case u8'd':
+            case u8'D': {
                 if (value.empty())
                     return 0;
 
-                const auto it = std::ranges::find_if(value, [](auto c) { return c != '-' && c != '+'; });
+                const auto it = std::ranges::find_if(value, [](auto c) { return c != u8'-' && c != u8'+'; });
 
-                if (it - value.begin() > 1 || (value.front() == '-' && value.size() > 11))
+                if (it - value.begin() > 1 || (value.front() == u8'-' && value.size() > 11))
                 {
                     add_diagnostic(diagnostic_op::error_CE007);
                     return 0;
                 }
 
-                size_t start = value.front() == '+' ? 1 : 0;
+                size_t start = value.front() == u8'+' ? 1 : 0;
 
                 int32_t res = 0;
                 if (auto conv = std::from_chars(value.data() + start, value.data() + value.size(), res, 10);
@@ -1426,8 +1465,8 @@ result_t<std::vector<expressions::ca_expr_ptr>> parser2::lex_subscript_ne()
 
                 return res;
             }
-            case 'x':
-            case 'X': {
+            case u8'x':
+            case u8'X': {
                 if (value.empty())
                     return 0;
                 uint32_t res = 0;
@@ -1459,16 +1498,16 @@ result_t<expressions::ca_expr_ptr> parser2::lex_rest_of_ca_string_group(
     expressions::ca_expr_ptr result = std::make_unique<expressions::ca_string>(
         std::move(s.first), std::move(initial_duplicate_factor), std::move(s.second), range_from(start));
 
-    while (follows<U'(', U'\''>())
+    while (follows<u8'(', u8'\''>())
     {
         const auto conc_start = cur_pos_adjusted();
         expressions::ca_expr_ptr nested_dupl;
-        if (try_consume<U'('>(hl_scopes::operator_symbol))
+        if (try_consume<u8'('>(hl_scopes::operator_symbol))
         {
             auto [error2, dupl] = lex_expr_general();
             if (error2)
                 return failure;
-            if (!match<U')'>(hl_scopes::operator_symbol, diagnostic_op::error_S0011))
+            if (!match<u8')'>(hl_scopes::operator_symbol, diagnostic_op::error_S0011))
                 return failure;
             nested_dupl = std::move(dupl);
         }
@@ -1496,7 +1535,7 @@ result_t<parser2::maybe_expr_list> parser2::lex_maybe_expression_list()
         p_expr = std::move(e);
 
     auto trailing_spaces = lex_optional_space();
-    for (; except<U')'>(); trailing_spaces = lex_optional_space())
+    for (; except<u8')'>(); trailing_spaces = lex_optional_space())
     {
         auto [error, e] = lex_expr();
         if (error)
@@ -1516,7 +1555,7 @@ result_t<parser2::maybe_expr_list> parser2::lex_maybe_expression_list()
 
 result_t<expressions::ca_expr_ptr> parser2::lex_expr_list()
 {
-    assert(follows<U'('>());
+    assert(follows<u8'('>());
     const auto start = cur_pos_adjusted();
 
     consume(hl_scopes::operator_symbol);
@@ -1530,21 +1569,21 @@ result_t<expressions::ca_expr_ptr> parser2::lex_expr_list()
         expr_list.push_back(std::move(e));
 
     (void)lex_optional_space();
-    for (; except<U')'>(); (void)lex_optional_space())
+    for (; except<u8')'>(); (void)lex_optional_space())
     {
         auto [error, e] = lex_expr();
         if (error)
             return failure;
         expr_list.push_back(std::move(e));
     }
-    if (!match<U')'>(hl_scopes::operator_symbol, diagnostic_op::error_S0011))
+    if (!match<u8')'>(hl_scopes::operator_symbol, diagnostic_op::error_S0011))
         return failure;
     return std::make_unique<expressions::ca_expr_list>(std::move(expr_list), range_from(start), true);
 }
 
 result_t<expressions::ca_expr_ptr> parser2::lex_self_def()
 {
-    assert((follows<selfdef, group<U'\''>>()));
+    assert((follows<selfdef, group<u8'\''>>()));
     const auto start = cur_pos_adjusted();
 
     const auto c = static_cast<char>(*input.next);
@@ -1559,7 +1598,7 @@ result_t<expressions::ca_expr_ptr> parser2::lex_self_def()
 
 result_t<expressions::ca_expr_ptr> parser2::lex_attribute_reference()
 {
-    assert((follows<all_attrs, group<U'\''>>()));
+    assert((follows<all_attrs, group<u8'\''>>()));
     const auto start = cur_pos_adjusted();
 
     const auto attr = context::symbol_attributes::transform_attr(utils::upper_cased[*input.next]);
@@ -1569,24 +1608,24 @@ result_t<expressions::ca_expr_ptr> parser2::lex_attribute_reference()
     const auto start_value = cur_pos_adjusted();
     switch (*input.next)
     {
-        case U'&': {
+        case u8'&': {
             auto [error, v] = lex_variable();
             if (error)
                 return failure;
             // TODO: in reality, this seems to be much more complicated (arbitrary many dots
             // are consumed for *some* attributes)
             // TODO: highlighting
-            (void)try_consume<U'.'>();
+            (void)try_consume<u8'.'>();
 
             return std::make_unique<expressions::ca_symbol_attribute>(
                 std::move(v), attr, range_from(start), range_from(start_value));
         }
 
-        case U'*':
+        case u8'*':
             add_diagnostic(diagnostic_op::error_S0014);
             return failure;
 
-        case U'=': {
+        case u8'=': {
             auto [error, l] = lex_literal();
             if (error)
                 return failure;
@@ -1632,27 +1671,27 @@ result_t<expressions::ca_expr_ptr> parser2::lex_term()
     const auto start = cur_pos_adjusted();
     switch (*input.next)
     {
-        case U'&': {
+        case u8'&': {
             auto [error, v] = lex_variable();
             if (error)
                 return failure;
             return std::make_unique<expressions::ca_var_sym>(std::move(v), range_from(start));
         }
 
-        case U'-':
-        case U'0':
-        case U'1':
-        case U'2':
-        case U'3':
-        case U'4':
-        case U'5':
-        case U'6':
-        case U'7':
-        case U'8':
-        case U'9':
+        case u8'-':
+        case u8'0':
+        case u8'1':
+        case u8'2':
+        case u8'3':
+        case u8'4':
+        case u8'5':
+        case u8'6':
+        case u8'7':
+        case u8'8':
+        case u8'9':
             return lex_num();
 
-        case U'\'':
+        case u8'\'':
             if (auto [error, s] = lex_rest_of_ca_string_group({}, start); error)
                 return failure;
             else
@@ -1661,13 +1700,13 @@ result_t<expressions::ca_expr_ptr> parser2::lex_term()
                 return std::move(s);
             }
 
-        case U'(': {
+        case u8'(': {
             consume(hl_scopes::operator_symbol);
 
             auto [error, maybe_expr_list] = lex_maybe_expression_list();
             if (error)
                 return failure;
-            if (!match<U')'>(hl_scopes::operator_symbol, diagnostic_op::error_S0011))
+            if (!match<u8')'>(hl_scopes::operator_symbol, diagnostic_op::error_S0011))
                 return failure;
             expressions::ca_expr_ptr p_expr;
             const auto already_expr_list =
@@ -1683,7 +1722,7 @@ result_t<expressions::ca_expr_ptr> parser2::lex_term()
             if (maybe_expr_list.leading_trailing_spaces)
                 return p_expr;
 
-            if (follows<U'\''>())
+            if (follows<u8'\''>())
             {
                 if (auto [error2, s] = lex_rest_of_ca_string_group(std::move(p_expr), start); error2)
                     return failure;
@@ -1698,7 +1737,7 @@ result_t<expressions::ca_expr_ptr> parser2::lex_term()
                 auto [id_error, id] = lex_id();
                 if (id_error)
                     return failure;
-                if (!must_follow<U'('>())
+                if (!must_follow<u8'('>())
                     return failure;
                 auto [s_error, s] = lex_subscript_ne();
                 if (s_error)
@@ -1727,7 +1766,7 @@ result_t<expressions::ca_expr_ptr> parser2::lex_term()
                 return failure;
             }
 
-            if (follows<selfdef, group<U'\''>>())
+            if (follows<selfdef, group<u8'\''>>())
             {
                 auto [error, self_def] = lex_self_def();
                 if (error)
@@ -1736,7 +1775,7 @@ result_t<expressions::ca_expr_ptr> parser2::lex_term()
             }
 
 
-            if (follows<all_attrs, group<U'\''>>())
+            if (follows<all_attrs, group<u8'\''>>())
             {
                 auto [error, attr_ref] = lex_attribute_reference();
                 if (error)
@@ -1746,7 +1785,7 @@ result_t<expressions::ca_expr_ptr> parser2::lex_term()
 
             if (auto [error, id] = lex_id(); error)
                 return failure;
-            else if (follows<U'('>()
+            else if (follows<u8'('>()
                 && expressions::ca_common_expr_policy::get_function(id.to_string_view())
                     != expressions::ca_expr_funcs::UNKNOWN)
             {
@@ -1772,12 +1811,12 @@ result_t<expressions::ca_expr_ptr> parser2::lex_term()
 
 result_t<std::pair<std::string, range>> parser2::lex_number_as_string()
 {
-    assert((follows<U'0', U'1', U'2', U'3', U'4', U'5', U'6', U'7', U'8', U'9', U'-'>()));
+    assert((follows<u8'0', u8'1', u8'2', u8'3', u8'4', u8'5', u8'6', u8'7', u8'8', u8'9', u8'-'>()));
     const auto start = cur_pos_adjusted();
 
     std::string result;
 
-    if (follows<U'-'>())
+    if (follows<u8'-'>())
     {
         consume_into(result);
     }
@@ -1808,7 +1847,7 @@ result_t<std::pair<int32_t, range>> parser2::lex_number_as_int()
 
 result_t<expressions::ca_expr_ptr> parser2::lex_num()
 {
-    assert((follows<U'0', U'1', U'2', U'3', U'4', U'5', U'6', U'7', U'8', U'9', U'-'>()));
+    assert((follows<u8'0', u8'1', u8'2', u8'3', u8'4', u8'5', u8'6', u8'7', u8'8', u8'9', u8'-'>()));
     const auto [error, number] = lex_number_as_int();
     if (error)
         return failure;
@@ -1825,31 +1864,31 @@ result_t<expressions::mach_expr_ptr> parser2::lex_mach_term()
             add_diagnostic(diagnostic_op::error_S0003);
             return failure;
 
-        case U'(': {
+        case u8'(': {
             consume(hl_scopes::operator_symbol);
             auto [error, e] = lex_mach_expr();
             if (error)
                 return failure;
-            if (!match<U')'>(hl_scopes::operator_symbol, diagnostic_op::error_S0011))
+            if (!match<u8')'>(hl_scopes::operator_symbol, diagnostic_op::error_S0011))
                 return failure;
             return std::make_unique<expressions::mach_expr_unary<expressions::par>>(std::move(e), range_from(start));
         }
 
-        case U'*':
+        case u8'*':
             consume(hl_scopes::operand);
             return std::make_unique<expressions::mach_expr_location_counter>(range_from(start));
 
-        case U'-':
-        case U'0':
-        case U'1':
-        case U'2':
-        case U'3':
-        case U'4':
-        case U'5':
-        case U'6':
-        case U'7':
-        case U'8':
-        case U'9': {
+        case u8'-':
+        case u8'0':
+        case u8'1':
+        case u8'2':
+        case u8'3':
+        case u8'4':
+        case u8'5':
+        case u8'6':
+        case u8'7':
+        case u8'8':
+        case u8'9': {
             const auto [error, number] = lex_number_as_string();
             if (error)
                 return failure;
@@ -1857,7 +1896,7 @@ result_t<expressions::mach_expr_ptr> parser2::lex_mach_term()
             return std::make_unique<expressions::mach_expr_constant>(parse_self_def_term_in_mach("D", v, r), r);
         }
 
-        case U'=': {
+        case u8'=': {
             auto [error, l] = lex_literal();
             if (error)
                 return failure;
@@ -1870,7 +1909,7 @@ result_t<expressions::mach_expr_ptr> parser2::lex_mach_term()
                 syntax_error_or_eof();
                 return failure;
             }
-            if (follows<group<U'L', U'l'>, group<U'\''>, group<U'*'>>())
+            if (follows<group<u8'L', u8'l'>, group<u8'\''>, group<u8'*'>>())
             {
                 consume(hl_scopes::data_attr_type);
                 consume(hl_scopes::operator_symbol);
@@ -1883,13 +1922,13 @@ result_t<expressions::mach_expr_ptr> parser2::lex_mach_term()
                 consume(hl_scopes::operand);
                 return std::make_unique<expressions::mach_expr_constant>(loctr_len.value(), range_from(start));
             }
-            if (follows<mach_attrs, group<U'\''>>())
+            if (follows<mach_attrs, group<u8'\''>>())
             {
                 const auto attr = context::symbol_attributes::transform_attr(utils::upper_cased[*input.next]);
                 consume(hl_scopes::data_attr_type);
                 consume(hl_scopes::operator_symbol);
                 const auto start_value = cur_pos_adjusted();
-                if (follows<U'='>())
+                if (follows<u8'='>())
                 {
                     auto lit = enable_literals();
                     auto [error, l] = lex_literal();
@@ -1915,7 +1954,7 @@ result_t<expressions::mach_expr_ptr> parser2::lex_mach_term()
                 syntax_error_or_eof();
                 return failure;
             }
-            if (follows<group<U'C', U'c'>, group<U'A', U'E', U'U', U'a', U'e', U'u'>, group<U'\''>>())
+            if (follows<group<u8'C', u8'c'>, group<u8'A', u8'E', u8'U', u8'a', u8'e', u8'u'>, group<u8'\''>>())
             {
                 const char opt[2] = { static_cast<char>(input.next[0]), static_cast<char>(input.next[1]) };
                 consume();
@@ -1929,7 +1968,7 @@ result_t<expressions::mach_expr_ptr> parser2::lex_mach_term()
                 return std::make_unique<expressions::mach_expr_constant>(
                     parse_self_def_term_in_mach(std::string_view(opt, 2), s, r), r);
             }
-            if (follows<selfdef, group<U'\''>>())
+            if (follows<selfdef, group<u8'\''>>())
             {
                 const auto opt = static_cast<char>(*input.next);
                 consume(hl_scopes::self_def_type);
@@ -1954,7 +1993,7 @@ result_t<expressions::mach_expr_ptr> parser2::lex_mach_term()
 
 result_t<std::string> parser2::lex_simple_string()
 {
-    assert(follows<U'\''>());
+    assert(follows<u8'\''>());
 
     const auto start = cur_pos_adjusted();
     std::string s;
@@ -1963,18 +2002,18 @@ result_t<std::string> parser2::lex_simple_string()
 
     while (!eof())
     {
-        if (follows<group<U'\''>, group<U'\''>>() || follows<group<U'&'>, group<U'&'>>())
+        if (follows<group<u8'\''>, group<u8'\''>>() || follows<group<u8'&'>, group<u8'&'>>())
         {
             consume_into(s);
             consume();
         }
-        else if (follows<U'\''>())
+        else if (follows<u8'\''>())
         {
             consume();
             add_hl_symbol(range_from(start), hl_scopes::string);
             return s;
         }
-        else if (follows<U'&'>())
+        else if (follows<u8'&'>())
         {
             add_diagnostic(diagnostic_op::error_S0002);
             return failure;
@@ -1991,9 +2030,9 @@ result_t<std::string> parser2::lex_simple_string()
 
 result_t<expressions::mach_expr_ptr> parser2::lex_mach_term_c()
 {
-    if (follows<U'+'>() || (follows<U'-'>() && !char_is_num(input.next[1])))
+    if (follows<u8'+'>() || (follows<u8'-'>() && !char_is_num(input.next[1])))
     {
-        const auto plus = *input.next == U'+';
+        const auto plus = *input.next == u8'+';
         const auto start = cur_pos_adjusted();
         consume(hl_scopes::operator_symbol);
         auto [error, e] = lex_mach_term_c();
@@ -2015,9 +2054,9 @@ result_t<expressions::mach_expr_ptr> parser2::lex_mach_expr_s()
         return failure;
     else
     {
-        while (follows<U'*', U'/'>())
+        while (follows<u8'*', u8'/'>())
         {
-            const auto mul = *input.next == U'*';
+            const auto mul = *input.next == u8'*';
             consume(hl_scopes::operator_symbol);
             auto [error2, next] = lex_mach_term_c();
             if (error2)
@@ -2040,9 +2079,9 @@ result_t<expressions::mach_expr_ptr> parser2::lex_mach_expr()
         return failure;
     else
     {
-        while (follows<U'+', U'-'>())
+        while (follows<u8'+', u8'-'>())
         {
-            const auto plus = *input.next == U'+';
+            const auto plus = *input.next == u8'+';
             consume(hl_scopes::operator_symbol);
             auto [error2, next] = lex_mach_expr_s();
             if (error2)
@@ -2072,10 +2111,10 @@ result_t<std::pair<int32_t, range>> parser2::parse_number()
     const bool negative = [&]() {
         switch (*input.next)
         {
-            case U'-':
+            case u8'-':
                 consume();
                 return true;
-            case U'+':
+            case u8'+':
                 consume();
                 return false;
             default:
@@ -2116,12 +2155,12 @@ result_t<std::pair<int32_t, range>> parser2::parse_number()
 
 result_t<expressions::mach_expr_ptr> parser2::lex_literal_signed_num()
 {
-    if (try_consume<U'('>(hl_scopes::operator_symbol))
+    if (try_consume<u8'('>(hl_scopes::operator_symbol))
     {
         auto [error, e] = lex_mach_expr();
         if (error)
             return failure;
-        if (!match<U')'>(hl_scopes::operator_symbol, diagnostic_op::error_S0011))
+        if (!match<u8')'>(hl_scopes::operator_symbol, diagnostic_op::error_S0011))
             return failure;
         else
             return std::move(e);
@@ -2134,12 +2173,12 @@ result_t<expressions::mach_expr_ptr> parser2::lex_literal_signed_num()
 
 result_t<expressions::mach_expr_ptr> parser2::lex_literal_unsigned_num()
 {
-    if (try_consume<U'('>(hl_scopes::operator_symbol))
+    if (try_consume<u8'('>(hl_scopes::operator_symbol))
     {
         auto [error, e] = lex_mach_expr();
         if (error)
             return failure;
-        if (!match<U')'>(hl_scopes::operator_symbol, diagnostic_op::error_S0011))
+        if (!match<u8')'>(hl_scopes::operator_symbol, diagnostic_op::error_S0011))
             return failure;
         return std::move(e);
     }
@@ -2158,7 +2197,7 @@ result_t<expressions::data_definition> parser2::lex_data_def_base()
 {
     expressions::data_definition result;
     // duplicating_factor
-    if (follows<U'('>() || is_num())
+    if (follows<u8'('>() || is_num())
     {
         if (auto [error, e] = lex_literal_unsigned_num(); error)
             return failure;
@@ -2188,7 +2227,7 @@ result_t<expressions::data_definition> parser2::lex_data_def_base()
     add_hl_symbol(range_from(type_start), hl_scopes::data_def_type);
 
     // read_program
-    if (try_consume<U'P', U'p'>(hl_scopes::data_def_modifier))
+    if (try_consume<u8'P', u8'p'>(hl_scopes::data_def_modifier))
     {
         auto [error, e] = lex_literal_signed_num();
         if (error)
@@ -2197,9 +2236,9 @@ result_t<expressions::data_definition> parser2::lex_data_def_base()
     }
 
     // read_length
-    if (try_consume<U'L', U'l'>(hl_scopes::data_def_modifier))
+    if (try_consume<u8'L', u8'l'>(hl_scopes::data_def_modifier))
     {
-        if (try_consume<U'.'>())
+        if (try_consume<u8'.'>())
         {
             result.length_type = expressions::data_definition::length_type::BIT;
         }
@@ -2210,7 +2249,7 @@ result_t<expressions::data_definition> parser2::lex_data_def_base()
     }
 
     // read_scale
-    if (try_consume<U'S', U's'>(hl_scopes::data_def_modifier))
+    if (try_consume<u8'S', u8's'>(hl_scopes::data_def_modifier))
     {
         auto [error, e] = lex_literal_signed_num();
         if (error)
@@ -2219,8 +2258,8 @@ result_t<expressions::data_definition> parser2::lex_data_def_base()
     }
 
     // read_exponent
-    using can_have_exponent = decltype(group_from_string<{ U"DEFHLdefhl" }>());
-    if (can_have_exponent::matches(result.type) && try_consume<U'E', U'e'>(hl_scopes::data_def_modifier))
+    using can_have_exponent = decltype(group_from_string<{ u8"DEFHLdefhl" }>());
+    if (can_have_exponent::matches(result.type) && try_consume<u8'E', u8'e'>(hl_scopes::data_def_modifier))
     {
         auto [error, e] = lex_literal_signed_num();
         if (error)
@@ -2237,12 +2276,12 @@ result_t<expressions::expr_or_address> parser2::lex_expr_or_addr()
     if (error)
         return failure;
 
-    if (!try_consume<U'('>(hl_scopes::operator_symbol))
+    if (!try_consume<u8'('>(hl_scopes::operator_symbol))
         return { std::move(e) };
     auto [error2, e2] = lex_mach_expr();
     if (error2)
         return failure;
-    if (!match<U')'>(hl_scopes::operator_symbol, diagnostic_op::error_S0011))
+    if (!match<u8')'>(hl_scopes::operator_symbol, diagnostic_op::error_S0011))
         return failure;
     return expressions::expr_or_address(
         std::in_place_type<expressions::address_nominal>, std::move(e), std::move(e2), range_from(start));
@@ -2250,7 +2289,7 @@ result_t<expressions::expr_or_address> parser2::lex_expr_or_addr()
 
 result_t<expressions::expr_or_address_list> parser2::lex_literal_nominal_addr()
 {
-    assert(follows<U'('>());
+    assert(follows<u8'('>());
     consume(hl_scopes::operator_symbol);
 
     expressions::expr_or_address_list result;
@@ -2260,7 +2299,7 @@ result_t<expressions::expr_or_address_list> parser2::lex_literal_nominal_addr()
         return failure;
     result.push_back(std::move(e));
 
-    while (try_consume<U','>(hl_scopes::operator_symbol))
+    while (try_consume<u8','>(hl_scopes::operator_symbol))
     {
         auto [error2, e_next] = lex_expr_or_addr();
         if (error2)
@@ -2268,7 +2307,7 @@ result_t<expressions::expr_or_address_list> parser2::lex_literal_nominal_addr()
         result.push_back(std::move(e_next));
     }
 
-    if (!match<U')'>(hl_scopes::operator_symbol, diagnostic_op::error_S0011))
+    if (!match<u8')'>(hl_scopes::operator_symbol, diagnostic_op::error_S0011))
         return failure;
 
     return result;
@@ -2277,14 +2316,14 @@ result_t<expressions::expr_or_address_list> parser2::lex_literal_nominal_addr()
 result_t<expressions::nominal_value_ptr> parser2::lex_literal_nominal()
 {
     const auto start = cur_pos_adjusted();
-    if (follows<U'\''>())
+    if (follows<u8'\''>())
     {
         auto [error, n] = lex_simple_string();
         if (error)
             return failure;
         return std::make_unique<expressions::nominal_value_string>(std::move(n), range_from(start));
     }
-    else if (follows<U'('>())
+    else if (follows<u8'('>())
     {
         auto [error, n] = lex_literal_nominal_addr();
         if (error)
@@ -2303,7 +2342,7 @@ result_t<expressions::data_definition> parser2::lex_data_definition(bool require
     auto [error, d] = lex_data_def_base();
     if (error)
         return failure;
-    if (require_nominal || follows<U'(', U'\''>())
+    if (require_nominal || follows<u8'(', u8'\''>())
     {
         auto [error2, n] = lex_literal_nominal();
         if (error2)
@@ -2329,15 +2368,9 @@ result_t<expressions::data_definition> parser2::lex_data_definition(bool require
     return std::move(d);
 }
 
-std::string parser2::capture_text(const parser_holder::char_t* start, const parser_holder::char_t* end) const
-{
-    std::string s;
-    s.reserve(end - start);
-    std::for_each(start, end, [&s](auto c) { utils::append_utf32_to_utf8(s, c); });
-    return s;
-}
+std::string parser2::capture_text(const char8_t* start, const char8_t* end) const { return std::string(start, end); }
 
-std::string parser2::capture_text(const parser_holder::char_t* start) const { return capture_text(start, input.next); }
+std::string parser2::capture_text(const char8_t* start) const { return capture_text(start, input.next); }
 
 result_t<semantics::literal_si> parser2::lex_literal()
 {
@@ -2346,7 +2379,7 @@ result_t<semantics::literal_si> parser2::lex_literal()
     const auto start = cur_pos_adjusted();
     const auto initial = input.next;
 
-    assert(follows<U'='>());
+    assert(follows<u8'='>());
     consume(hl_scopes::operator_symbol);
 
     auto [error, dd] = lex_data_definition(true);
@@ -2364,10 +2397,10 @@ result_t<semantics::literal_si> parser2::lex_literal()
 
 result_t<expressions::ca_expr_ptr> parser2::lex_term_c()
 {
-    if (follows<U'+'>() || (follows<U'-'>() && !char_is_num(input.next[1])))
+    if (follows<u8'+'>() || (follows<u8'-'>() && !char_is_num(input.next[1])))
     {
         const auto start = cur_pos_adjusted();
-        const auto plus = *input.next == U'+';
+        const auto plus = *input.next == u8'+';
         consume(hl_scopes::operator_symbol);
         auto [error, e] = lex_term_c();
         if (error)
@@ -2389,9 +2422,9 @@ result_t<expressions::ca_expr_ptr> parser2::lex_expr_s()
         return failure;
     result = std::move(e);
 
-    while (follows<U'*', U'/'>())
+    while (follows<u8'*', u8'/'>())
     {
-        const auto mult = *input.next == U'*';
+        const auto mult = *input.next == u8'*';
         consume(hl_scopes::operator_symbol);
         auto [error2, e_next] = lex_term_c();
         if (error2)
@@ -2419,11 +2452,11 @@ result_t<expressions::ca_expr_ptr> parser2::lex_expr()
 
     switch (*input.next)
     {
-        case '+':
-        case '-':
-            while (follows<U'+', U'-'>())
+        case u8'+':
+        case u8'-':
+            while (follows<u8'+', u8'-'>())
             {
-                const auto plus = *input.next == U'+';
+                const auto plus = *input.next == u8'+';
                 consume(hl_scopes::operator_symbol);
                 auto [error, e] = lex_expr_s();
                 if (error)
@@ -2436,8 +2469,8 @@ result_t<expressions::ca_expr_ptr> parser2::lex_expr()
                         std::move(result), std::move(e), range_from(start));
             }
             break;
-        case '.':
-            while (try_consume<U'.'>(hl_scopes::operator_symbol))
+        case u8'.':
+            while (try_consume<u8'.'>(hl_scopes::operator_symbol))
             {
                 auto [error, e] = lex_term_c();
                 if (error)
@@ -2453,7 +2486,7 @@ result_t<expressions::ca_expr_ptr> parser2::lex_expr()
 
 result_t<std::vector<expressions::ca_expr_ptr>> parser2::lex_subscript()
 {
-    assert(follows<U'('>());
+    assert(follows<u8'('>());
 
     consume(hl_scopes::operator_symbol);
 
@@ -2464,7 +2497,7 @@ result_t<std::vector<expressions::ca_expr_ptr>> parser2::lex_subscript()
         return failure;
     result.push_back(std::move(expr));
 
-    while (try_consume<U','>(hl_scopes::operator_symbol))
+    while (try_consume<u8','>(hl_scopes::operator_symbol))
     {
         auto [error2, expr_next] = lex_expr();
         if (error2)
@@ -2472,7 +2505,7 @@ result_t<std::vector<expressions::ca_expr_ptr>> parser2::lex_subscript()
         result.push_back(std::move(expr_next));
     }
 
-    if (!match<U')'>(hl_scopes::operator_symbol, diagnostic_op::error_S0011))
+    if (!match<u8')'>(hl_scopes::operator_symbol, diagnostic_op::error_S0011))
         return failure;
 
     return result;
@@ -2480,8 +2513,8 @@ result_t<std::vector<expressions::ca_expr_ptr>> parser2::lex_subscript()
 
 result_t<void> parser2::lex_macro_operand_amp(concat_chain_builder& ccb)
 {
-    assert(follows<U'&'>());
-    if (input.next[1] == U'&')
+    assert(follows<u8'&'>());
+    if (input.next[1] == u8'&')
     {
         consume_into(ccb.last_text_value());
         consume_into(ccb.last_text_value());
@@ -2499,7 +2532,7 @@ result_t<void> parser2::lex_macro_operand_amp(concat_chain_builder& ccb)
 
 result_t<void> parser2::lex_macro_operand_string(concat_chain_builder& ccb)
 {
-    assert(follows<U'\''>());
+    assert(follows<u8'\''>());
 
     consume_into(ccb.last_text_value());
     while (true)
@@ -2511,22 +2544,22 @@ result_t<void> parser2::lex_macro_operand_string(concat_chain_builder& ccb)
                 add_diagnostic(diagnostic_op::error_S0005);
                 return failure;
 
-            case U'&':
+            case u8'&':
                 if (auto [error] = lex_macro_operand_amp(ccb); error)
                     return failure;
                 break;
 
-            case U'=':
+            case u8'=':
                 ccb.push_equals();
                 break;
 
-            case U'.':
+            case u8'.':
                 ccb.push_dot();
                 break;
 
-            case U'\'':
+            case u8'\'':
                 consume_into(ccb.last_text_value());
-                if (!follows<U'\''>())
+                if (!follows<u8'\''>())
                 {
                     ccb.push_last_text();
                     return {};
@@ -2538,7 +2571,7 @@ result_t<void> parser2::lex_macro_operand_string(concat_chain_builder& ccb)
                 do
                 {
                     consume_into(s);
-                } while (except<U'&', U'=', U'.', U'\''>());
+                } while (except<u8'&', u8'=', u8'.', u8'\''>());
                 break;
             }
         }
@@ -2547,32 +2580,32 @@ result_t<void> parser2::lex_macro_operand_string(concat_chain_builder& ccb)
 
 result_t<bool> parser2::lex_macro_operand_attr(concat_chain_builder& ccb)
 {
-    if (input.next[1] != U'\'')
+    if (input.next[1] != u8'\'')
     {
         consume_into(ccb.last_text_value());
         return false;
     }
 
-    if (char_is_ord_first(input.next[2]) || input.next[2] == U'=')
+    if (char_is_ord_first(input.next[2]) || input.next[2] == u8'=')
     {
         consume_into(ccb.last_text_value());
         consume_into(ccb.last_text_value());
         return false;
     }
 
-    if (input.next[2] != U'&')
+    if (input.next[2] != u8'&')
     {
         consume_into(ccb.last_text_value());
         return false;
     }
 
-    while (except<U',', U')', U' '>())
+    while (except<u8',', u8')', u8' '>())
     {
-        if (!follows<U'&'>())
+        if (!follows<u8'&'>())
         {
             consume_into(ccb.last_text_value());
         }
-        else if (input.next[1] == U'&')
+        else if (input.next[1] == u8'&')
         {
             consume_into(ccb.last_text_value());
             consume_into(ccb.last_text_value());
@@ -2582,7 +2615,7 @@ result_t<bool> parser2::lex_macro_operand_attr(concat_chain_builder& ccb)
         else
         {
             ccb.emplace_back(std::in_place_type<semantics::var_sym_conc>, std::move(vs));
-            if (follows<U'.'>())
+            if (follows<u8'.'>())
                 ccb.push_dot<true>();
         }
     }
@@ -2598,22 +2631,22 @@ result_t<void> parser2::lex_macro_operand(semantics::concat_chain& cc, bool next
         switch (*input.next)
         {
             case EOF_SYMBOL:
-            case U' ':
-            case U')':
-            case U',':
+            case u8' ':
+            case u8')':
+            case u8',':
                 ccb.push_last_text();
                 return {};
 
-            case U'=':
+            case u8'=':
                 ccb.push_equals<true>();
                 next_char_special = false;
                 break;
 
-            case U'.':
+            case u8'.':
                 ccb.push_dot<true>();
                 break;
 
-            case U'(': {
+            case u8'(': {
                 std::vector<semantics::concat_chain> nested;
                 ccb.push_last_text();
                 if (auto [error] = process_macro_list(nested); error)
@@ -2622,33 +2655,33 @@ result_t<void> parser2::lex_macro_operand(semantics::concat_chain& cc, bool next
                 break;
             }
 
-            case U'\'':
+            case u8'\'':
                 if (auto [error] = lex_macro_operand_string(ccb); error)
                     return failure;
 
                 next_char_special = false;
                 break;
 
-            case U'&': {
+            case u8'&': {
                 if (auto [error] = lex_macro_operand_amp(ccb); error)
                     return failure;
-                if (op_name && follows<U'='>())
+                if (op_name && follows<u8'='>())
                     ccb.push_equals<true>();
                 else
                     next_char_special = false;
                 break;
             }
 
-            case U'O':
-            case U'S':
-            case U'I':
-            case U'L':
-            case U'T':
-            case U'o':
-            case U's':
-            case U'i':
-            case U'l':
-            case U't':
+            case u8'O':
+            case u8'S':
+            case u8'I':
+            case u8'L':
+            case u8'T':
+            case u8'o':
+            case u8's':
+            case u8'i':
+            case u8'l':
+            case u8't':
                 if (!last_char_special)
                 {
                     consume_into(ccb.last_text_value());
@@ -2672,7 +2705,7 @@ result_t<void> parser2::lex_macro_operand(semantics::concat_chain& cc, bool next
 
 void parser2::process_optional_line_remark()
 {
-    if (follows<U' '>() && before_nl())
+    if (follows<u8' '>() && before_nl())
     {
         lex_line_remark();
 
@@ -2682,23 +2715,23 @@ void parser2::process_optional_line_remark()
 
 result_t<void> parser2::process_macro_list(std::vector<semantics::concat_chain>& cc)
 {
-    assert(follows<U'('>());
+    assert(follows<u8'('>());
 
     consume(hl_scopes::operator_symbol);
-    if (try_consume<U')'>(hl_scopes::operator_symbol))
+    if (try_consume<u8')'>(hl_scopes::operator_symbol))
         return {};
 
     if (auto [error] = lex_macro_operand(cc.emplace_back(), true, false); error)
         return failure;
 
-    while (try_consume<U','>(hl_scopes::operator_symbol))
+    while (try_consume<u8','>(hl_scopes::operator_symbol))
     {
         process_optional_line_remark();
         if (auto [error] = lex_macro_operand(cc.emplace_back(), true, false); error)
             return failure;
     }
 
-    if (!match<U')'>(hl_scopes::operator_symbol, diagnostic_op::error_S0011))
+    if (!match<u8')'>(hl_scopes::operator_symbol, diagnostic_op::error_S0011))
         return failure;
 
     return {};
@@ -2706,7 +2739,7 @@ result_t<void> parser2::process_macro_list(std::vector<semantics::concat_chain>&
 
 result_t<void> parser2::handle_initial_space(bool reparse)
 {
-    if (!reparse && *input.next != U' ')
+    if (!reparse && *input.next != u8' ')
     {
         add_diagnostic(diagnostic_op::error_S0002);
         consume_rest();
@@ -2752,30 +2785,30 @@ std::pair<semantics::operand_list, range> parser2::macro_ops(bool reparse)
     {
         switch (*input.next)
         {
-            case U' ':
+            case u8' ':
                 push_operand();
                 pending = false;
                 lex_last_remark();
                 goto end;
 
-            case U',':
+            case u8',':
                 push_operand();
                 consume(hl_scopes::operator_symbol);
                 process_optional_line_remark();
                 start = cur_pos_adjusted();
                 break;
 
-            case U'O':
-            case U'S':
-            case U'I':
-            case U'L':
-            case U'T':
-            case U'o':
-            case U's':
-            case U'i':
-            case U'l':
-            case U't':
-                if (input.next[1] == U'\'')
+            case u8'O':
+            case u8'S':
+            case u8'I':
+            case u8'L':
+            case u8'T':
+            case u8'o':
+            case u8's':
+            case u8'i':
+            case u8'l':
+            case u8't':
+                if (input.next[1] == u8'\'')
                 {
                     if (auto [error] = lex_macro_operand(cc, true, false); error)
                     {
@@ -2786,52 +2819,52 @@ std::pair<semantics::operand_list, range> parser2::macro_ops(bool reparse)
                 }
                 [[fallthrough]];
 
-            case U'$':
-            case U'_':
-            case U'#':
-            case U'@':
-            case U'a':
-            case U'b':
-            case U'c':
-            case U'd':
-            case U'e':
-            case U'f':
-            case U'g':
-            case U'h':
-            case U'j':
-            case U'k':
-            case U'm':
-            case U'n':
-            case U'p':
-            case U'q':
-            case U'r':
-            case U'u':
-            case U'v':
-            case U'w':
-            case U'x':
-            case U'y':
-            case U'z':
-            case U'A':
-            case U'B':
-            case U'C':
-            case U'D':
-            case U'E':
-            case U'F':
-            case U'G':
-            case U'H':
-            case U'J':
-            case U'K':
-            case U'M':
-            case U'N':
-            case U'P':
-            case U'Q':
-            case U'R':
-            case U'U':
-            case U'V':
-            case U'W':
-            case U'X':
-            case U'Y':
-            case U'Z': {
+            case u8'$':
+            case u8'_':
+            case u8'#':
+            case u8'@':
+            case u8'a':
+            case u8'b':
+            case u8'c':
+            case u8'd':
+            case u8'e':
+            case u8'f':
+            case u8'g':
+            case u8'h':
+            case u8'j':
+            case u8'k':
+            case u8'm':
+            case u8'n':
+            case u8'p':
+            case u8'q':
+            case u8'r':
+            case u8'u':
+            case u8'v':
+            case u8'w':
+            case u8'x':
+            case u8'y':
+            case u8'z':
+            case u8'A':
+            case u8'B':
+            case u8'C':
+            case u8'D':
+            case u8'E':
+            case u8'F':
+            case u8'G':
+            case u8'H':
+            case u8'J':
+            case u8'K':
+            case u8'M':
+            case u8'N':
+            case u8'P':
+            case u8'Q':
+            case u8'R':
+            case u8'U':
+            case u8'V':
+            case u8'W':
+            case u8'X':
+            case u8'Y':
+            case u8'Z': {
                 bool next_char_special = false;
                 concat_chain_builder ccb(*this, cc);
                 auto& l = ccb.last_text_value();
@@ -2841,12 +2874,12 @@ std::pair<semantics::operand_list, range> parser2::macro_ops(bool reparse)
                     consume();
                 } while (is_ord());
                 ccb.push_last_text();
-                if (follows<U'='>())
+                if (follows<u8'='>())
                 {
                     ccb.push_equals(); // TODO: no highlighting???
                     next_char_special = true;
                 }
-                if (const auto n = *input.next; n == EOF_SYMBOL || n == U' ' || n == U',')
+                if (const auto n = *input.next; n == EOF_SYMBOL || n == u8' ' || n == u8',')
                     continue;
                 if (auto [error] = lex_macro_operand(cc, next_char_special, false); error)
                 {
@@ -2856,7 +2889,7 @@ std::pair<semantics::operand_list, range> parser2::macro_ops(bool reparse)
                 break;
             }
 
-            case U'&':
+            case u8'&':
                 if (auto [error] = lex_macro_operand(cc, true, true); error)
                 {
                     consume_rest();
@@ -2864,7 +2897,7 @@ std::pair<semantics::operand_list, range> parser2::macro_ops(bool reparse)
                 }
                 break;
 
-            case U'\'':
+            case u8'\'':
             default:
                 if (auto [error] = lex_macro_operand(cc, true, false); error)
                 {
@@ -2873,12 +2906,12 @@ std::pair<semantics::operand_list, range> parser2::macro_ops(bool reparse)
                 }
                 break;
 
-            case U')':
+            case u8')':
                 add_diagnostic(diagnostic_op::error_S0012);
                 consume_rest();
                 goto end;
 
-            case U'(': {
+            case u8'(': {
                 std::vector<semantics::concat_chain> nested;
                 if (auto [error] = process_macro_list(nested); error)
                 {
@@ -2898,14 +2931,14 @@ end:;
 
 result_t<std::variant<context::id_index, semantics::concat_chain>> parser2::lex_variable_name(parser_position start)
 {
-    if (follows<U'('>())
+    if (follows<u8'('>())
     {
         add_hl_symbol(range_from(start), hl_scopes::var_symbol);
         consume(hl_scopes::operator_symbol);
         auto [error, cc] = lex_compound_variable();
         if (error)
             return failure;
-        if (!match<U')'>(hl_scopes::operator_symbol, diagnostic_op::error_S0011))
+        if (!match<u8')'>(hl_scopes::operator_symbol, diagnostic_op::error_S0011))
             return failure;
         return std::move(cc);
     }
@@ -2926,7 +2959,7 @@ result_t<std::variant<context::id_index, semantics::concat_chain>> parser2::lex_
 
 result_t<semantics::vs_ptr> parser2::lex_variable()
 {
-    assert(follows<U'&'>());
+    assert(follows<u8'&'>());
 
     const auto start = cur_pos_adjusted();
     consume();
@@ -2936,7 +2969,7 @@ result_t<semantics::vs_ptr> parser2::lex_variable()
         return failure;
 
     std::vector<expressions::ca_expr_ptr> sub;
-    if (follows<U'('>())
+    if (follows<u8'('>())
     {
         if (auto [error_sub, sub_] = lex_subscript(); error_sub)
             return failure;
@@ -2975,10 +3008,10 @@ std::pair<semantics::operand_list, range> parser2::ca_args()
     semantics::operand_list result;
 
     bool pending = true;
-    while (except<U' '>())
+    while (except<u8' '>())
     {
         const auto start = cur_pos_adjusted();
-        if (try_consume<U','>(hl_scopes::operator_symbol))
+        if (try_consume<u8','>(hl_scopes::operator_symbol))
         {
             if (pending)
                 result.push_back(std::make_unique<semantics::empty_operand>(empty_range(start)));
@@ -3028,7 +3061,7 @@ std::pair<bool, semantics::operand_ptr> parser2::ca_expr_ops(parser_position sta
 std::pair<bool, semantics::operand_ptr> parser2::ca_branch_ops(parser_position start)
 {
     expressions::ca_expr_ptr first_expr;
-    if (follows<U'('>())
+    if (follows<u8'('>())
     {
         auto [error, e] = lex_expr_list();
         if (error)
@@ -3048,12 +3081,12 @@ std::pair<bool, semantics::operand_ptr> parser2::ca_branch_ops(parser_position s
 
 std::pair<bool, semantics::operand_ptr> parser2::ca_var_def_ops(parser_position start)
 {
-    (void)try_consume<U'&'>();
+    (void)try_consume<u8'&'>();
     auto [error, var_name] = lex_variable_name(start);
     if (error)
         return {};
     std::vector<expressions::ca_expr_ptr> num;
-    if (try_consume<U'('>(hl_scopes::operator_symbol))
+    if (try_consume<u8'('>(hl_scopes::operator_symbol))
     {
         if (!is_num())
         {
@@ -3064,7 +3097,7 @@ std::pair<bool, semantics::operand_ptr> parser2::ca_var_def_ops(parser_position 
         if (error_num)
             return {};
         num.push_back(std::move(num_));
-        if (!match<U')'>(hl_scopes::operator_symbol, diagnostic_op::error_S0011))
+        if (!match<u8')'>(hl_scopes::operator_symbol, diagnostic_op::error_S0011))
             return {};
     }
     const auto r = range_from(start);
@@ -3166,11 +3199,12 @@ parser_holder::op_data parser2::lab_instr_rest()
         .op_logical_column = input.char_position_in_line,
     };
 
+    result.op_text->text.reserve((input.last - input.next) + (&holder->newlines.back() - input.nl));
     while (!eof())
     {
         while (!before_nl())
         {
-            result.op_text->text.push_back(lexing::u8string_view_with_newlines::EOLc);
+            result.op_text->text.push_back(lexing::u8string_view_with_newlines::EOL);
             ++input.line;
             ++input.nl;
             input.char_position_in_line = holder->cont;
@@ -3178,16 +3212,20 @@ parser_holder::op_data parser2::lab_instr_rest()
         }
 
         const auto ch = *input.next;
-        utils::append_utf32_to_utf8(result.op_text->text, ch);
 
-        ++input.next;
+        do
+        {
+            result.op_text->text.push_back(*input.next);
+            ++input.next;
+        } while ((*input.next & 0xC0) == 0x80);
+
         ++input.char_position_in_line;
-        input.char_position_in_line_utf16 += 1 + (ch > 0xffffu);
+        input.char_position_in_line_utf16 += 1 + (ch >= first_long_utf16);
     }
 
     while (*input.nl != (size_t)-1)
     {
-        result.op_text->text.push_back(lexing::u8string_view_with_newlines::EOLc);
+        result.op_text->text.push_back(lexing::u8string_view_with_newlines::EOL);
         ++input.line;
         ++input.nl;
         input.char_position_in_line = holder->cont;
@@ -3212,7 +3250,7 @@ parser_holder::op_data parser2::lab_instr_empty(parser_position start)
 
 result_t<void> parser2::lex_label_string(concat_chain_builder& cb)
 {
-    assert(follows<U'\''>());
+    assert(follows<u8'\''>());
 
     consume_into(cb.last_text_value());
 
@@ -3220,12 +3258,12 @@ result_t<void> parser2::lex_label_string(concat_chain_builder& cb)
     {
         switch (*input.next)
         {
-            case U'\'':
+            case u8'\'':
                 consume_into(cb.last_text_value());
                 return {};
 
-            case U'&':
-                if (input.next[1] == U'&')
+            case u8'&':
+                if (input.next[1] == u8'&')
                 {
                     consume_into(cb.last_text_value());
                     consume_into(cb.last_text_value());
@@ -3262,22 +3300,22 @@ result_t<semantics::concat_chain> parser2::lex_label()
         switch (*input.next)
         {
             case EOF_SYMBOL:
-            case U' ':
+            case u8' ':
                 cb.push_last_text();
                 return chain;
 
-            case U'.':
+            case u8'.':
                 cb.push_dot();
-                next_char_special = follows<U'C', U'c'>();
+                next_char_special = follows<u8'C', u8'c'>();
                 break;
 
-            case U'=':
+            case u8'=':
                 cb.push_equals();
-                next_char_special = follows<U'C', U'c'>();
+                next_char_special = follows<u8'C', u8'c'>();
                 break;
 
-            case U'&':
-                if (input.next[1] == U'&')
+            case u8'&':
+                if (input.next[1] == u8'&')
                 {
                     consume_into(cb.last_text_value());
                     consume_into(cb.last_text_value());
@@ -3292,24 +3330,24 @@ result_t<semantics::concat_chain> parser2::lex_label()
                 }
                 break;
 
-            case U'\'':
-                if (!last_char_special && input.next[1] == U' ')
+            case u8'\'':
+                if (!last_char_special && input.next[1] == u8' ')
                     consume_into(cb.last_text_value());
                 else if (auto [error] = lex_label_string(cb); error)
                     return failure;
                 break;
 
-            case U'O':
-            case U'S':
-            case U'I':
-            case U'L':
-            case U'T':
-            case U'o':
-            case U's':
-            case U'i':
-            case U'l':
-            case U't':
-                if (last_char_special && input.next[1] == U'\'')
+            case u8'O':
+            case u8'S':
+            case u8'I':
+            case u8'L':
+            case u8'T':
+            case u8'o':
+            case u8's':
+            case u8'i':
+            case u8'l':
+            case u8't':
+                if (last_char_special && input.next[1] == u8'\'')
                 {
                     consume_into(cb.last_text_value());
                     consume_into(cb.last_text_value());
@@ -3317,9 +3355,9 @@ result_t<semantics::concat_chain> parser2::lex_label()
                 }
                 [[fallthrough]];
 
-            case U'C':
-            case U'c':
-                if (last_char_special && input.next[1] == U'\'')
+            case u8'C':
+            case u8'c':
+                if (last_char_special && input.next[1] == u8'\'')
                 {
                     consume_into(cb.last_text_value());
                     if (auto [error] = lex_label_string(cb); error)
@@ -3340,7 +3378,7 @@ result_t<semantics::concat_chain> parser2::lex_label()
 
 result_t<semantics::concat_chain> parser2::lex_instr()
 {
-    if (eof() || follows<U' '>())
+    if (eof() || follows<u8' '>())
     {
         syntax_error_or_eof();
         return failure;
@@ -3354,24 +3392,24 @@ result_t<semantics::concat_chain> parser2::lex_instr()
         switch (*input.next)
         {
             case EOF_SYMBOL:
-            case U' ':
+            case u8' ':
                 cb.push_last_text();
                 return result;
 
-            case U'\'':
+            case u8'\'':
                 syntax_error_or_eof();
                 return failure;
 
-            case U'=':
+            case u8'=':
                 cb.push_equals();
                 break;
 
-            case U'.':
+            case u8'.':
                 cb.push_dot();
                 break;
 
-            case U'&':
-                if (input.next[1] == U'&')
+            case u8'&':
+                if (input.next[1] == u8'&')
                 {
                     consume_into(cb.last_text_value());
                     consume();
@@ -3563,7 +3601,7 @@ parser_holder::op_data parser2::look_lab_instr_seq()
     std::string instr = lex_ord();
     const auto instr_end = cur_pos();
 
-    if (!eof() && !follows<U' '>())
+    if (!eof() && !follows<u8' '>())
     {
         const auto r = empty_range(seq_end);
         holder->collector.set_instruction_field(r);
@@ -3592,7 +3630,7 @@ parser_holder::op_data parser2::look_lab_instr()
     {
         case EOF_SYMBOL:
             return lab_instr_empty(start);
-        case U'.':
+        case u8'.':
             return look_lab_instr_seq();
 
         default:
@@ -3602,7 +3640,7 @@ parser_holder::op_data parser2::look_lab_instr()
             label_r = range_from(start);
             break;
 
-        case U' ':
+        case u8' ':
             break;
     }
 
@@ -3615,7 +3653,7 @@ parser_holder::op_data parser2::look_lab_instr()
     auto instr = lex_ord();
     const auto instr_r = range_from(instr_start);
 
-    if (!eof() && !follows<U' '>())
+    if (!eof() && !follows<u8' '>())
         return lab_instr_empty(start);
 
     if (!label.empty())
@@ -3666,8 +3704,8 @@ result_t<void> parser2::lex_deferred_string(std::vector<semantics::vs_ptr>& vs)
                 add_hl_symbol(range_from(string_start), hl_scopes::string);
                 return failure;
 
-            case U'\'':
-                if (input.next[1] != U'\'')
+            case u8'\'':
+                if (input.next[1] != u8'\'')
                 {
                     consume();
 
@@ -3678,8 +3716,8 @@ result_t<void> parser2::lex_deferred_string(std::vector<semantics::vs_ptr>& vs)
                 consume();
                 break;
 
-            case U'&':
-                if (input.next[1] == U'&')
+            case u8'&':
+                if (input.next[1] == u8'&')
                 {
                     consume();
                     consume();
@@ -3705,7 +3743,7 @@ void parser2::op_rem_body_deferred()
         holder->collector.set_operand_remark_field(empty_range(start));
         return;
     }
-    if (!follows<U' '>())
+    if (!follows<u8' '>())
     {
         syntax_error_or_eof();
         return;
@@ -3723,32 +3761,32 @@ void parser2::op_rem_body_deferred()
         const auto last_char_special = std::exchange(next_char_special, true);
         switch (*input.next)
         {
-            case U',':
+            case u8',':
                 consume(hl_scopes::operator_symbol);
                 process_optional_line_remark();
                 break;
 
-            case U' ':
+            case u8' ':
                 lex_last_remark();
                 break;
 
-            case U'*':
-            case U'/':
-            case U'+':
-            case U'-':
-            case U'=':
-            case U'.':
-            case U'(':
-            case U')':
+            case u8'*':
+            case u8'/':
+            case u8'+':
+            case u8'-':
+            case u8'=':
+            case u8'.':
+            case u8'(':
+            case u8')':
                 consume(hl_scopes::operator_symbol);
                 break;
 
-            case U'\'':
+            case u8'\'':
                 if (auto [error] = lex_deferred_string(vs); error)
                     return;
                 break;
 
-            case U'&': {
+            case u8'&': {
                 const auto amp = cur_pos_adjusted();
                 switch (input.next[1])
                 {
@@ -3757,7 +3795,7 @@ void parser2::op_rem_body_deferred()
                         add_diagnostic(diagnostic_op::error_S0003);
                         return;
 
-                    case U'&':
+                    case u8'&':
                         consume();
                         consume();
                         break;
@@ -3775,17 +3813,17 @@ void parser2::op_rem_body_deferred()
             }
             break;
 
-            case U'O':
-            case U'S':
-            case U'I':
-            case U'L':
-            case U'T':
-            case U'o':
-            case U's':
-            case U'i':
-            case U'l':
-            case U't':
-                if (last_char_special && follows<mach_attrs, group<U'\''>, attr_argument>())
+            case u8'O':
+            case u8'S':
+            case u8'I':
+            case u8'L':
+            case u8'T':
+            case u8'o':
+            case u8's':
+            case u8'i':
+            case u8'l':
+            case u8't':
+                if (last_char_special && follows<mach_attrs, group<u8'\''>, attr_argument>())
                 {
                     const auto p = cur_pos_adjusted();
                     consume();
@@ -3797,7 +3835,7 @@ void parser2::op_rem_body_deferred()
                 [[fallthrough]];
             default: {
                 const auto substart = cur_pos_adjusted();
-                while (except<U'&', U' ', U',', U'*', U'/', U'+', U'-', U'=', U'.', U'(', U')', U'\''>())
+                while (except<u8'&', u8' ', u8',', u8'*', u8'/', u8'+', u8'-', u8'=', u8'.', u8'(', u8')', u8'\''>())
                 {
                     next_char_special = !is_ord();
                     consume();
@@ -3855,8 +3893,8 @@ result_t<void> parser2::lex_rest_of_model_string(concat_chain_builder& ccb)
             case EOF_SYMBOL:
                 return failure;
 
-            case U'&':
-                if (input.next[1] == U'&')
+            case u8'&':
+                if (input.next[1] == u8'&')
                 {
                     consume_into(ccb.last_text_value());
                     consume_into(ccb.last_text_value());
@@ -3868,15 +3906,15 @@ result_t<void> parser2::lex_rest_of_model_string(concat_chain_builder& ccb)
                     ccb.emplace_back(std::in_place_type<semantics::var_sym_conc>, std::move(vs));
                 break;
 
-            case U'.':
+            case u8'.':
                 ccb.push_dot();
                 break;
 
-            case U'=':
+            case u8'=':
                 ccb.push_equals();
                 break;
 
-            case U'\'':
+            case u8'\'':
                 consume_into(ccb.last_text_value());
                 return {};
 
@@ -3897,11 +3935,11 @@ result_t<parser2::before_model> parser2::model_before_variable()
         switch (*input.next)
         {
             case EOF_SYMBOL:
-            case U' ':
+            case u8' ':
                 return { false, next_char_special, in_string };
 
-            case U'&':
-                if (input.next[1] == U'&')
+            case u8'&':
+                if (input.next[1] == u8'&')
                 {
                     consume();
                     consume();
@@ -3910,47 +3948,47 @@ result_t<parser2::before_model> parser2::model_before_variable()
                 else
                     return { true, next_char_special, in_string };
 
-            case U'\'': {
+            case u8'\'': {
                 in_string = cur_pos_adjusted();
                 consume();
-                while (except<U'\''>())
+                while (except<u8'\''>())
                 {
-                    if (follows<group<U'&'>, group<U'&'>>())
+                    if (follows<group<u8'&'>, group<u8'&'>>())
                         consume();
-                    else if (follows<U'&'>())
+                    else if (follows<u8'&'>())
                         return { true, next_char_special, in_string };
                     consume();
                 }
-                if (!match<U'\''>(diagnostic_op::error_S0005))
+                if (!match<u8'\''>(diagnostic_op::error_S0005))
                     return failure;
                 add_hl_symbol(range_from(*in_string), hl_scopes::string);
                 in_string.reset();
                 break;
             }
 
-            case U',':
-            case U'(':
-            case U')':
+            case u8',':
+            case u8'(':
+            case u8')':
                 consume(hl_scopes::operator_symbol);
                 break;
 
-            case U'=':
+            case u8'=':
                 consume();
                 next_char_special = false;
                 break;
 
-            case U'O':
-            case U'S':
-            case U'I':
-            case U'L':
-            case U'T':
-            case U'o':
-            case U's':
-            case U'i':
-            case U'l':
-            case U't':
+            case u8'O':
+            case u8'S':
+            case u8'I':
+            case u8'L':
+            case u8'T':
+            case u8'o':
+            case u8's':
+            case u8'i':
+            case u8'l':
+            case u8't':
                 consume();
-                if (last_char_special && follows<group<U'\''>, attr_argument>())
+                if (last_char_special && follows<group<u8'\''>, attr_argument>())
                     consume();
                 next_char_special = false;
                 break;
@@ -3978,7 +4016,7 @@ result_t<std::optional<semantics::op_rem>> parser2::try_model_ops(parser_positio
     if (!variable_follows)
         return std::nullopt;
 
-    assert(follows<U'&'>());
+    assert(follows<u8'&'>());
 
     if (initial != input.next)
         cc.emplace_back(std::in_place_type<semantics::char_str_conc>, capture_text(initial), range_from(start));
@@ -4003,7 +4041,7 @@ result_t<std::optional<semantics::op_rem>> parser2::try_model_ops(parser_positio
         const bool last_char_special = std::exchange(next_char_special, true);
         switch (*input.next)
         {
-            case U' ':
+            case u8' ':
                 operand_end.emplace(cur_pos());
                 lex_last_remark();
                 [[fallthrough]];
@@ -4023,8 +4061,8 @@ result_t<std::optional<semantics::op_rem>> parser2::try_model_ops(parser_positio
                 return result;
             }
 
-            case U'&':
-                if (input.next[1] == U'&')
+            case u8'&':
+                if (input.next[1] == u8'&')
                 {
                     consume_into(ccb.last_text_value());
                     consume_into(ccb.last_text_value());
@@ -4035,7 +4073,7 @@ result_t<std::optional<semantics::op_rem>> parser2::try_model_ops(parser_positio
                     ccb.emplace_back(std::in_place_type<semantics::var_sym_conc>, std::move(vs));
                 break;
 
-            case U'\'': {
+            case u8'\'': {
                 const auto string_start = cur_pos_adjusted();
                 consume_into(ccb.last_text_value());
                 auto [error] = lex_rest_of_model_string(ccb);
@@ -4045,34 +4083,34 @@ result_t<std::optional<semantics::op_rem>> parser2::try_model_ops(parser_positio
                 break;
             }
 
-            case U'(':
-            case U')':
-            case U',':
+            case u8'(':
+            case u8')':
+            case u8',':
                 consume_into(ccb.last_text_value(), hl_scopes::operator_symbol);
                 break;
 
 
-            case U'.':
+            case u8'.':
                 ccb.push_dot();
                 break;
 
-            case U'=':
+            case u8'=':
                 ccb.push_equals();
                 next_char_special = false;
                 break;
 
-            case U'O':
-            case U'S':
-            case U'I':
-            case U'L':
-            case U'T':
-            case U'o':
-            case U's':
-            case U'i':
-            case U'l':
-            case U't':
+            case u8'O':
+            case u8'S':
+            case u8'I':
+            case u8'L':
+            case u8'T':
+            case u8'o':
+            case u8's':
+            case u8'i':
+            case u8'l':
+            case u8't':
                 consume_into(ccb.last_text_value());
-                if (last_char_special && follows<group<U'\''>, attr_argument>())
+                if (last_char_special && follows<group<u8'\''>, attr_argument>())
                     consume_into(ccb.last_text_value());
                 next_char_special = false;
                 break;
@@ -4092,7 +4130,7 @@ result_t<semantics::operand_ptr> parser2::mach_op()
     if (disp_error)
         return failure;
 
-    if (!try_consume<U'('>(hl_scopes::operator_symbol))
+    if (!try_consume<u8'('>(hl_scopes::operator_symbol))
         return std::make_unique<semantics::expr_machine_operand>(std::move(disp), range_from(start));
 
     expressions::mach_expr_ptr e1, e2;
@@ -4102,7 +4140,7 @@ result_t<semantics::operand_ptr> parser2::mach_op()
         return failure;
     }
 
-    if (except<U','>())
+    if (except<u8','>())
     {
         if (auto [error, e] = lex_mach_expr(); error)
             return failure;
@@ -4110,7 +4148,7 @@ result_t<semantics::operand_ptr> parser2::mach_op()
             e1 = std::move(e);
     }
     bool parsed_comma = false;
-    if ((parsed_comma = try_consume<U','>(hl_scopes::operator_symbol)) && !follows<U')'>())
+    if ((parsed_comma = try_consume<u8','>(hl_scopes::operator_symbol)) && !follows<u8')'>())
     {
         if (auto [error, e] = lex_mach_expr(); error)
             return failure;
@@ -4118,7 +4156,7 @@ result_t<semantics::operand_ptr> parser2::mach_op()
             e2 = std::move(e);
     }
 
-    if (!match<U')'>(hl_scopes::operator_symbol, diagnostic_op::error_S0011))
+    if (!match<u8')'>(hl_scopes::operator_symbol, diagnostic_op::error_S0011))
         return failure;
 
     if (e1 && e2)
@@ -4159,7 +4197,7 @@ std::optional<semantics::op_rem> parser2::with_model(bool reparse, bool model_al
     if (eof())
         return semantics::op_rem { .line_range = empty_range(start) };
 
-    if (model_allowed && std::find(input.next, input.last, U'&') != input.last)
+    if (model_allowed && std::find(input.next, input.last, u8'&') != input.last)
     {
         auto model_parser = *this;
         if (auto [error, result] = model_parser.try_model_ops(start); error)
@@ -4172,25 +4210,25 @@ std::optional<semantics::op_rem> parser2::with_model(bool reparse, bool model_al
     std::vector<semantics::operand_ptr> operands;
 
     bool has_error = false;
-    if (follows<U','>())
+    if (follows<u8','>())
         operands.push_back(std::make_unique<semantics::empty_operand>(cur_pos_range()));
     else if (auto [error, op] = (this->*first)(); (has_error = error))
         operands.push_back(std::make_unique<semantics::empty_operand>(cur_pos_range()));
     else
         operands.push_back(std::move(op));
 
-    if (!has_error && ((rest == nullptr && except<U' '>()) || except<U',', U' '>()))
+    if (!has_error && ((rest == nullptr && except<u8' '>()) || except<u8',', u8' '>()))
     {
         has_error = true;
         syntax_error_or_eof();
     }
 
-    while (!has_error && follows<U','>())
+    while (!has_error && follows<u8','>())
     {
         consume(hl_scopes::operator_symbol);
-        if (follows<U','>())
+        if (follows<u8','>())
             operands.push_back(std::make_unique<semantics::empty_operand>(cur_pos_range()));
-        else if (eof() || follows<U' '>())
+        else if (eof() || follows<u8' '>())
         {
             operands.push_back(std::make_unique<semantics::empty_operand>(cur_pos_range()));
             break;
@@ -4203,7 +4241,7 @@ std::optional<semantics::op_rem> parser2::with_model(bool reparse, bool model_al
         else
         {
             operands.push_back(std::move(op_inner));
-            if (except<U',', U' '>())
+            if (except<u8',', u8' '>())
             {
                 syntax_error_or_eof();
                 break;
@@ -4238,10 +4276,10 @@ result_t<semantics::operand_ptr> parser2::alias_op()
     const auto start = cur_pos_adjusted();
     const auto initial = input.next;
 
-    if (!match<U'C', U'c', U'X', U'x'>(hl_scopes::self_def_type))
+    if (!match<u8'C', u8'c', u8'X', u8'x'>(hl_scopes::self_def_type))
         return failure;
 
-    if (!must_follow<U'\''>())
+    if (!must_follow<u8'\''>())
         return failure;
 
     auto [error, s] = lex_simple_string();
@@ -4258,33 +4296,33 @@ result_t<semantics::operand_ptr> parser2::alias_op()
 result_t<semantics::operand_ptr> parser2::end_op()
 {
     const auto start = cur_pos_adjusted();
-    if (!match<U'('>(hl_scopes::operator_symbol))
+    if (!match<u8'('>(hl_scopes::operator_symbol))
         return failure;
 
     std::string s1, s2, s3;
 
     auto op_start = cur_pos_adjusted();
-    while (except<U','>())
+    while (except<u8','>())
         consume_into(s1);
     const auto r1 = range_from(op_start);
 
-    if (!match<U','>(hl_scopes::operator_symbol))
+    if (!match<u8','>(hl_scopes::operator_symbol))
         return failure;
 
     op_start = cur_pos_adjusted();
-    while (except<U','>())
+    while (except<u8','>())
         consume_into(s2);
     const auto r2 = range_from(op_start);
 
-    if (!match<U','>(hl_scopes::operator_symbol))
+    if (!match<u8','>(hl_scopes::operator_symbol))
         return failure;
 
     op_start = cur_pos_adjusted();
-    while (except<U')'>())
+    while (except<u8')'>())
         consume_into(s3);
     const auto r3 = range_from(op_start);
 
-    if (!match<U')'>(hl_scopes::operator_symbol))
+    if (!match<u8')'>(hl_scopes::operator_symbol))
         return failure;
 
     std::vector<std::unique_ptr<semantics::complex_assembler_operand::component_value_t>> language_triplet;
@@ -4305,7 +4343,7 @@ result_t<semantics::operand_ptr> parser2::end_op()
 result_t<semantics::operand_ptr> parser2::using_op1()
 {
     const auto start = cur_pos_adjusted();
-    if (!try_consume<U'('>(hl_scopes::operator_symbol))
+    if (!try_consume<u8'('>(hl_scopes::operator_symbol))
         return asm_mach_expr();
 
     const auto initial1 = input.next;
@@ -4314,9 +4352,9 @@ result_t<semantics::operand_ptr> parser2::using_op1()
         return failure;
     const auto end1 = input.next;
 
-    if (!try_consume<U','>(hl_scopes::operator_symbol))
+    if (!try_consume<u8','>(hl_scopes::operator_symbol))
     {
-        if (!match<U')'>(hl_scopes::operator_symbol))
+        if (!match<u8')'>(hl_scopes::operator_symbol))
             return failure;
 
         const auto r = range_from(start);
@@ -4330,7 +4368,7 @@ result_t<semantics::operand_ptr> parser2::using_op1()
         return failure;
     const auto end2 = input.next;
 
-    if (!match<U')'>(hl_scopes::operator_symbol))
+    if (!match<u8')'>(hl_scopes::operator_symbol))
         return failure;
 
     const auto r = range_from(start);
@@ -4362,13 +4400,13 @@ constexpr bool parser2::ord_followed_by_parenthesis() const noexcept
     while (char_is_ord(*p))
         ++p;
 
-    return *p == U'(';
+    return *p == u8'(';
 }
 
 result_t<std::unique_ptr<semantics::complex_assembler_operand::component_value_t>> parser2::asm_op_inner()
 {
     const auto start = cur_pos_adjusted();
-    if (follows<U'\''>())
+    if (follows<u8'\''>())
     {
         auto [error, s] = lex_simple_string();
         if (error)
@@ -4387,7 +4425,7 @@ result_t<std::unique_ptr<semantics::complex_assembler_operand::component_value_t
         return std::make_unique<semantics::complex_assembler_operand::int_value_t>(n, r);
     }
 
-    if (follows<U',', U')'>())
+    if (follows<u8',', u8')'>())
         return std::make_unique<semantics::complex_assembler_operand::string_value_t>("", empty_range(start));
 
     if (!is_ord_first())
@@ -4400,14 +4438,14 @@ result_t<std::unique_ptr<semantics::complex_assembler_operand::component_value_t
 
     add_hl_symbol(range_from(start), hl_scopes::operand);
 
-    if (!try_consume<U'('>(hl_scopes::operator_symbol))
+    if (!try_consume<u8'('>(hl_scopes::operator_symbol))
         return std::make_unique<semantics::complex_assembler_operand::string_value_t>(std::move(id), range_from(start));
 
     auto [error, nested] = asm_op_comma_c();
     if (error)
         return failure;
 
-    if (!match<U')'>(hl_scopes::operator_symbol))
+    if (!match<u8')'>(hl_scopes::operator_symbol))
         return failure;
 
     const auto r = range_from(start);
@@ -4423,7 +4461,7 @@ parser2::asm_op_comma_c()
     else
         result.push_back(std::move(op));
 
-    while (try_consume<U','>(hl_scopes::operator_symbol))
+    while (try_consume<u8','>(hl_scopes::operator_symbol))
     {
         if (auto [error, op] = asm_op_inner(); error)
             return failure;
@@ -4438,7 +4476,7 @@ parser2::asm_op_comma_c()
 result_t<semantics::operand_ptr> parser2::asm_op()
 {
     const auto start = cur_pos_adjusted();
-    if (follows<U'\''>())
+    if (follows<u8'\''>())
     {
         auto [error, s] = lex_simple_string();
         if (error)
@@ -4452,14 +4490,14 @@ result_t<semantics::operand_ptr> parser2::asm_op()
     auto id = lex_ord_upper();
     add_hl_symbol(range_from(start), hl_scopes::operand);
 
-    if (!match<U'('>(hl_scopes::operator_symbol))
+    if (!match<u8'('>(hl_scopes::operator_symbol))
         return failure;
 
     auto [error, nested] = asm_op_comma_c();
     if (error)
         return failure;
 
-    if (!match<U')'>(hl_scopes::operator_symbol))
+    if (!match<u8')'>(hl_scopes::operator_symbol))
         return failure;
 
     const auto r = range_from(start);
@@ -4539,17 +4577,17 @@ void parser2::lookahead_operands_and_remarks_asm()
     {
         errors = true;
         operands.push_back(std::make_unique<semantics::empty_operand>(empty_range(op_start)));
-        while (except<U',', U' '>())
+        while (except<u8',', u8' '>())
             consume();
     }
     else
         operands.push_back(std::move(op));
 
-    while (follows<U','>())
+    while (follows<u8','>())
     {
         consume();
         op_start = cur_pos_adjusted();
-        if (follows<U',', U' '>())
+        if (follows<u8',', u8' '>())
         {
             operands.push_back(std::make_unique<semantics::empty_operand>(empty_range(op_start)));
             continue;
@@ -4559,7 +4597,7 @@ void parser2::lookahead_operands_and_remarks_asm()
         {
             errors = true;
             operands.push_back(std::make_unique<semantics::empty_operand>(empty_range(op_start)));
-            while (except<U',', U' '>())
+            while (except<u8',', u8' '>())
                 consume();
         }
         else

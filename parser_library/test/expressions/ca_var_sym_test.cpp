@@ -80,3 +80,20 @@ TEST(ca_var_sym, invalid_definitions)
 
     EXPECT_TRUE(matches_message_codes(a.diags(), { "S0011", "E022" }));
 }
+
+TEST(ca_var_sym, zero_symbol)
+{
+    std::string input = R"(
+&C       SETC  'C'
+&B       SETC  '&C$'
+&A       SETA  K'&B
+)";
+    std::ranges::replace(input, '$', 0);
+
+    analyzer a(input);
+    a.analyze();
+
+    EXPECT_TRUE(a.diags().empty());
+
+    EXPECT_EQ(get_var_value<A_t>(a.hlasm_ctx(), "A"), 2);
+}

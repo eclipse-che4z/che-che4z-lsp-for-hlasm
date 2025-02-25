@@ -341,39 +341,6 @@ void utf8_prev(It& it, size_t n, const Sentinel& begin)
     }
 }
 
-constexpr void append_utf32_to_utf8(std::string& s, char32_t ch)
-{
-    constexpr auto low6 = 0b111111U;
-    if (ch <= 0x007FU) // U+0000 - U+007F
-    {
-        s.push_back(static_cast<char>(ch));
-    }
-    else if (ch <= 0x7FFU) // U+0080 - U+07FF
-    {
-        s.push_back(static_cast<char>(0xc0U | ch >> 6));
-        s.push_back(static_cast<char>(0x80U | (ch & low6)));
-    }
-    else if (ch <= 0xFFFFU) // U+0800 - U+FFFF
-    {
-        s.push_back(static_cast<char>(0xe0U | ch >> 12));
-        s.push_back(static_cast<char>(0x80U | (ch >> 6 & low6)));
-        s.push_back(static_cast<char>(0x80U | (ch & low6)));
-    }
-    else if (ch <= 0x10FFFFU) // U+10000 - U+10FFFF
-    {
-        s.push_back(static_cast<char>(0xf0U | ch >> 18));
-        s.push_back(static_cast<char>(0x80U | (ch >> 12 & low6)));
-        s.push_back(static_cast<char>(0x80U | (ch >> 6 & low6)));
-        s.push_back(static_cast<char>(0x80U | (ch & low6)));
-    }
-    else
-    {
-        assert(false);
-    }
-}
-
-std::string utf32_to_utf8(std::u32string_view s);
-
 } // namespace hlasm_plugin::utils
 
 namespace std {

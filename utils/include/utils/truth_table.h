@@ -18,17 +18,18 @@
 #include <array>
 #include <assert.h>
 #include <limits>
+#include <ranges>
 #include <string_view>
-#include <type_traits>
 
 namespace hlasm_plugin::utils {
 
-template<typename T = bool>
-constexpr auto create_truth_table(std::string_view true_values, T true_value = (T)1) requires(sizeof(T) == 1)
+template<typename T = bool, typename Input>
+constexpr auto create_truth_table(const Input& true_values, T true_value = (T)1)
+    requires(sizeof(T) == 1 && sizeof(std::ranges::range_value_t<Input>) == 1)
 {
     std::array<T, std::numeric_limits<unsigned char>::max() + 1> result {};
 
-    for (auto c : true_values)
+    for (auto c : std::basic_string_view(true_values))
         result[(unsigned char)c] = true_value;
 
     return result;

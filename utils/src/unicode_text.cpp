@@ -261,13 +261,4 @@ size_t length_utf32_no_validation(std::string_view text)
     return char_count;
 }
 
-std::string utf32_to_utf8(std::u32string_view s)
-{
-    std::string n;
-    n.reserve(s.size());
-    for (const auto ch : s)
-        append_utf32_to_utf8(n, ch);
-    return n;
-}
-
 } // namespace hlasm_plugin::utils

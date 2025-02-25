@@ -61,28 +61,24 @@ struct char_substitution
 // structure containing parser components
 class parser_holder
 {
-public:
-    using char_t = char32_t;
-
-private:
     context::hlasm_context* hlasm_ctx = nullptr; // TODO: notnull
     diagnostic_op_consumer* diagnostic_collector = nullptr;
     semantics::range_provider range_prov;
     std::optional<processing::processing_status> proc_status;
     size_t cont = 15;
 
-    std::vector<char_t> input;
+    std::vector<char8_t> input;
     std::vector<size_t> newlines;
     std::vector<size_t> line_limits;
 
     struct input_state_t
     {
-        const char_t* next;
+        const char8_t* next;
         const size_t* nl;
         size_t line = 0;
         size_t char_position_in_line = 0;
         size_t char_position_in_line_utf16 = 0;
-        const char_t* last;
+        const char8_t* last;
     };
 
     input_state_t input_state;

@@ -205,9 +205,3 @@ TEST(replace_non_utf8_chars, middle_char)
     EXPECT_EQ(res.substr(0, begin.size()), begin);
     EXPECT_EQ(res.substr(begin.size() + 3), end);
 }
-
-TEST(input_source, utf8conv)
-{
-    const auto result = hlasm_plugin::utils::utf32_to_utf8(unicode_utf32);
-    EXPECT_EQ(result, unicode_utf8);
-}
