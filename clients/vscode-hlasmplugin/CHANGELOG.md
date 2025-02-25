@@ -4,6 +4,7 @@
 
 #### Added
 - Navigation through listings using label names and CSECT offsets
+- Support analyzing files opened directly by Zowe Explorer
 
 #### Fixed
 - Symbols in listings with ASA characters are incorrectly isolated
