@@ -44,53 +44,55 @@ struct line_detail
 {
     size_t count = 0;
     bool contains_statement = false;
-    bool macro_definition = false;
+    bool macro_body = false;
+    bool macro_prototype = false;
 
-    line_detail& operator+=(const line_detail& other)
+    line_detail merge(const line_detail& other) const
     {
-        count += other.count;
-        contains_statement |= other.contains_statement;
-        macro_definition |= other.macro_definition;
-        return *this;
+        return line_detail {
+            .count = count + other.count,
+            .contains_statement = contains_statement || other.contains_statement,
+            .macro_body = macro_body || other.macro_body,
+            .macro_prototype = macro_prototype || other.macro_prototype,
+        };
     }
 
     line_detail& add(size_t other_count, bool is_macro)
     {
         count += other_count;
         contains_statement = true;
-        macro_definition |= is_macro;
+        macro_body |= is_macro;
         return *this;
     }
 };
 
-struct line_hits
+struct hit_count_entry
 {
-    std::vector<line_detail> line_details;
-    size_t max_lineno = 0;
+    std::vector<line_detail> details;
+    bool has_sections = false;
 
-    line_hits& merge(const line_hits& other)
+    hit_count_entry& merge(const hit_count_entry& other)
     {
-        max_lineno = std::max(max_lineno, other.max_lineno);
+        has_sections |= other.has_sections;
 
-        if (!other.line_details.empty())
-        {
-            auto& other_line_hits = other.line_details;
-            auto& our_line_hits = line_details;
-
-            if (other_line_hits.size() > our_line_hits.size())
-                our_line_hits.resize(other_line_hits.size());
-
-            for (size_t i = 0; i <= other.max_lineno; ++i)
-                our_line_hits[i] += other_line_hits[i];
-        }
+        const auto [e, o, _] = std::ranges::transform(details, other.details, details.begin(), &line_detail::merge);
+        details.insert(e, o, other.details.end());
 
         return *this;
+    }
+
+    bool contains_prototype(size_t i) const noexcept { return i < details.size() && details[i].macro_prototype; }
+
+    void emplace_prototype(size_t line)
+    {
+        update_max_and_resize(line);
+        details[line].macro_prototype = true;
     }
 
     void add(size_t line, size_t count, bool is_macro)
     {
         update_max_and_resize(line);
-        line_details[line].add(count, is_macro);
+        details[line].add(count, is_macro);
     }
 
     void add(const stmt_lines_range& lines_range, size_t count, bool is_macro)
@@ -98,55 +100,15 @@ struct line_hits
         const auto& [start_line, end_line] = lines_range;
 
         update_max_and_resize(end_line);
-        for (auto i = start_line; i <= end_line; ++i)
-            line_details[i].add(count, is_macro);
+        for (size_t line = start_line; line <= end_line; ++line)
+            details[line].add(count, is_macro);
     }
 
 private:
     void update_max_and_resize(size_t line)
     {
-        max_lineno = std::max(max_lineno, line);
-
-        if (line_details.size() <= line)
-            line_details.resize(2 * line + 1000);
-    }
-};
-
-struct hit_count_entry
-{
-    bool has_sections = false;
-    line_hits hits;
-    std::vector<bool> macro_definition_lines;
-
-    hit_count_entry& merge(const hit_count_entry& other)
-    {
-        has_sections |= other.has_sections;
-
-        hits.merge(other.hits);
-
-        const auto& other_mac_def_lines = other.macro_definition_lines;
-        const auto common = std::min(macro_definition_lines.size(), other_mac_def_lines.size());
-        const auto middle = other_mac_def_lines.begin() + common;
-        std::transform(other_mac_def_lines.begin(),
-            middle,
-            macro_definition_lines.begin(),
-            macro_definition_lines.begin(),
-            std::logical_or<bool>());
-        macro_definition_lines.insert(macro_definition_lines.end(), middle, other_mac_def_lines.end());
-
-        return *this;
-    }
-
-    bool contains_line(size_t i) const noexcept
-    {
-        return i < macro_definition_lines.size() && macro_definition_lines[i];
-    }
-
-    void emplace_line(size_t i)
-    {
-        if (i >= macro_definition_lines.size())
-            macro_definition_lines.resize(i + 1);
-        macro_definition_lines[i] = true;
+        if (line >= details.size())
+            details.resize(line + 1);
     }
 };
 

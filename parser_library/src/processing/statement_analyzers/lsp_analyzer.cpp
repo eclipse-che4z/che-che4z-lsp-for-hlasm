@@ -236,7 +236,7 @@ void lsp_analyzer::macrodef_finished(context::macro_def_ptr macrodef, macrodef_p
             std::move(result.variable_symbols),
             std::move(result.file_scopes),
             std::move(macro_occurrences_));
-        m_i->file_occurrences_[macro_file].symbols.emplace_back(md->id, md, result.prototype.macro_name_range);
+        m_i->file_occurrences[macro_file].symbols.emplace_back(md->id, md, result.prototype.macro_name_range);
 
         if (result.external)
             lsp_ctx_.add_macro(std::move(m_i), lsp::text_data_view(file_text_));

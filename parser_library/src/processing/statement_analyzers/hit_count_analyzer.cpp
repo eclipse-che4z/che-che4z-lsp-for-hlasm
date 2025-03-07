@@ -140,16 +140,16 @@ bool hit_count_analyzer::analyze(
         using enum statement_type;
         case REGULAR: {
             auto& hc_ref = get_hc_entry_reference(get_current_stmt_rl(proc_kind));
-            hc_ref.hits.add(*stmt_lines_range, proc_kind == processing::processing_kind::ORDINARY, false);
+            hc_ref.add(*stmt_lines_range, proc_kind == processing::processing_kind::ORDINARY, false);
 
             if (auto mac_invo_loc = m_ctx.current_macro_definition_location(); mac_invo_loc)
-                hc_ref.emplace_line(mac_invo_loc->pos.line);
+                hc_ref.emplace_prototype(mac_invo_loc->pos.line);
 
             break;
         }
 
         case MACRO_BODY:
-            get_hc_entry_reference(get_current_stmt_rl(proc_kind)).hits.add(*stmt_lines_range, false, true);
+            get_hc_entry_reference(get_current_stmt_rl(proc_kind)).add(*stmt_lines_range, false, true);
             break;
 
         default:
@@ -163,7 +163,7 @@ bool hit_count_analyzer::analyze(
 void hit_count_analyzer::analyze_aread_line(
     const utils::resource::resource_location& rl, size_t lineno, std::string_view)
 {
-    get_hc_entry_reference(rl).hits.add(std::make_pair(lineno, lineno), true, false);
+    get_hc_entry_reference(rl).add(std::make_pair(lineno, lineno), true, false);
 }
 
 hit_count_map hit_count_analyzer::take_hit_count_map()

@@ -138,8 +138,8 @@ struct macro_info
     location definition_location;
     context::macro_def_ptr macro_definition;
     vardef_storage var_definitions;
-    file_scopes_t file_scopes_;
-    file_occurrences_t file_occurrences_;
+    file_scopes_t file_scopes;
+    file_occurrences_t file_occurrences;
 
     macro_info(bool external,
         location definition_location,
@@ -151,8 +151,8 @@ struct macro_info
         , definition_location(std::move(definition_location))
         , macro_definition(std::move(macro_definition))
         , var_definitions(std::move(var_definitions))
-        , file_scopes_(std::move(file_scopes))
-        , file_occurrences_(std::move(file_occurrences))
+        , file_scopes(std::move(file_scopes))
+        , file_occurrences(std::move(file_occurrences))
     {}
 };
 

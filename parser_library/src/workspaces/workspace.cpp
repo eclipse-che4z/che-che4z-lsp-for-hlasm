@@ -345,13 +345,13 @@ void generate_merged_fade_messages(const resource_location& rl,
         active_rl_mac_cpy_map_it != active_rl_mac_cpy_map.end())
         active_mac_cpy_defs_map = &active_rl_mac_cpy_map_it->second;
 
-    const auto line_details_it_b = hc_entry.hits.line_details.begin();
-    const auto line_details_it_e = std::next(line_details_it_b, hc_entry.hits.max_lineno + 1);
+    const auto line_details_it_b = hc_entry.details.begin();
+    const auto line_details_it_e = hc_entry.details.end();
 
-    const auto faded_line_predicate = [&active_mac_cpy_defs_map,
+    const auto faded_line_predicate = [active_mac_cpy_defs_map,
                                           line_details_addr = std::to_address(line_details_it_b),
                                           &hc_entry](const processing::line_detail& e) {
-        if (e.macro_definition)
+        if (e.macro_body)
         {
             if (!active_mac_cpy_defs_map)
                 return false;
@@ -367,7 +367,7 @@ void generate_merged_fade_messages(const resource_location& rl,
                 });
 
             if (active_mac_cpy_it == active_mac_cpy_it_e
-                || (!active_mac_cpy_it->second.cpy_book && !hc_entry.contains_line(active_mac_cpy_it->first)))
+                || (!active_mac_cpy_it->second.cpy_book && !hc_entry.contains_prototype(active_mac_cpy_it->first)))
                 return false;
         }
 
@@ -459,7 +459,7 @@ void fade_unused_mac_names(const processing::hit_count_map& hc_map,
 
         for (const auto& [mac_cpy_def_start_line, mac_cpy_def_details] : active_mac_cpy_defs)
         {
-            if (!mac_cpy_def_details.cpy_book && !hc_map_it->second.contains_line(mac_cpy_def_start_line))
+            if (!mac_cpy_def_details.cpy_book && !hc_map_it->second.contains_prototype(mac_cpy_def_start_line))
                 fms.emplace_back(fade_message::unused_macro(active_rl.get_uri(),
                     range(position(mac_cpy_def_details.prototype_line, 0),
                         position(mac_cpy_def_details.prototype_line, 80))));

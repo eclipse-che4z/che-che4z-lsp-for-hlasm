@@ -58,7 +58,7 @@ struct file_slice_t
 {
     scope_type type;
 
-    macro_info_ptr macro_context;
+    const macro_info* macro_context;
 
     // range of slice within macro definition
     macro_range macro_lines;
@@ -66,10 +66,7 @@ struct file_slice_t
     line_range file_lines;
 
     static file_slice_t transform_slice(
-        const macro_slice_t& slice, const macro_info_ptr& macro_i, const utils::resource::resource_location& f);
-    static std::vector<file_slice_t> transform_slices(const std::vector<macro_slice_t>& slices,
-        const macro_info_ptr& macro_i,
-        const utils::resource::resource_location& f);
+        const macro_slice_t& slice, const macro_info& macro_i, const utils::resource::resource_location& f);
 };
 
 enum class file_type
@@ -81,9 +78,7 @@ enum class file_type
 
 class file_info;
 
-using file_info_ptr = std::unique_ptr<file_info>;
-
-using occurrence_scope_t = std::pair<const symbol_occurrence*, macro_info_ptr>;
+using occurrence_scope_t = std::pair<const symbol_occurrence*, const macro_info*>;
 
 class file_info
 {
@@ -91,26 +86,24 @@ public:
     // first variant is monostate as there is no storing of opencode statements in the code yet
     using owner_t = std::variant<std::monostate, context::macro_def_ptr, context::copy_member_ptr>;
 
-    utils::resource::resource_location location;
     file_type type;
     owner_t owner;
     text_data_view data;
 
 
-    explicit file_info(utils::resource::resource_location location, text_data_view text_data);
+    explicit file_info(text_data_view text_data);
     explicit file_info(context::macro_def_ptr owner, text_data_view text_data);
     explicit file_info(context::copy_member_ptr owner, text_data_view text_data);
 
     static bool is_in_range(const position& pos, const range& r);
 
     occurrence_scope_t find_occurrence_with_scope(position pos) const;
-    macro_info_ptr find_scope(position pos) const;
+    const macro_info* find_scope(position pos) const;
     static std::vector<position> find_references(
         const symbol_occurrence& occurrence, const std::vector<symbol_occurrence>& occurrences);
 
     void update_occurrences(const std::vector<symbol_occurrence>& occurrences_upd,
         const std::vector<line_occurence_details>& line_details_upd);
-    void update_slices(const std::vector<file_slice_t>& slices);
     const std::vector<symbol_occurrence>& get_occurrences() const;
     void process_occurrences();
     void collect_instruction_like_references(
@@ -124,8 +117,12 @@ public:
 
     std::vector<bool> macro_map() const;
 
+    static void distribute_macro_slices(
+        const std::unordered_map<const context::macro_definition*, macro_info_ptr>& macros,
+        std::unordered_map<utils::resource::resource_location, file_info>& files);
+
 private:
-    std::map<line_range, file_slice_t> slices;
+    std::vector<file_slice_t> slices;
     std::vector<symbol_occurrence> occurrences;
     std::vector<line_occurence_details> line_details;
     std::vector<size_t> occurrences_start_limit;

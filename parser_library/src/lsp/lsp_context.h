@@ -43,8 +43,8 @@ namespace hlasm_plugin::parser_library::lsp {
 class lsp_context final
 {
     opencode_info_ptr m_opencode;
-    std::unordered_map<utils::resource::resource_location, file_info_ptr> m_files;
     std::unordered_map<const context::macro_definition*, macro_info_ptr> m_macros;
+    std::unordered_map<utils::resource::resource_location, file_info> m_files;
 
     std::shared_ptr<context::hlasm_context> m_hlasm_ctx;
 
@@ -99,8 +99,6 @@ public:
     std::vector<branch_info> get_opencode_branch_info() const;
 
 private:
-    void add_file(file_info file_i);
-    void distribute_macro_i(const macro_info_ptr& macro_i);
     void distribute_file_occurrences(const file_occurrences_t& occurrences);
 
     occurrence_scope_t find_occurrence_with_scope(
@@ -109,13 +107,13 @@ private:
         const utils::resource::resource_location& document_loc, size_t l) const;
 
     std::optional<location> find_definition_location(const symbol_occurrence& occ,
-        macro_info_ptr macro_i,
+        const macro_info* macro_i,
         const utils::resource::resource_location& document_loc,
         position pos) const;
     location find_symbol_definition_location(
         const context::symbol& sym, const utils::resource::resource_location& document_loc, position pos) const;
     std::string find_hover(const symbol_occurrence& occ,
-        macro_info_ptr macro_i,
+        const macro_info* macro_i,
         const line_occurence_details* ld,
         std::optional<location> definition) const;
 

@@ -15,6 +15,7 @@
 #include "file_info.h"
 
 #include <algorithm>
+#include <ranges>
 
 namespace {
 constexpr auto occurrence_end_line(const hlasm_plugin::parser_library::lsp::symbol_occurrence& o)
@@ -25,22 +26,19 @@ constexpr auto occurrence_end_line(const hlasm_plugin::parser_library::lsp::symb
 
 namespace hlasm_plugin::parser_library::lsp {
 
-file_info::file_info(utils::resource::resource_location location, text_data_view text_data)
-    : location(std::move(location))
-    , type(file_type::OPENCODE)
+file_info::file_info(text_data_view text_data)
+    : type(file_type::OPENCODE)
     , data(std::move(text_data))
 {}
 
 file_info::file_info(context::macro_def_ptr owner, text_data_view text_data)
-    : location(owner->definition_location.resource_loc)
-    , type(file_type::MACRO)
+    : type(file_type::MACRO)
     , owner(std::move(owner))
     , data(std::move(text_data))
 {}
 
 file_info::file_info(context::copy_member_ptr owner, text_data_view text_data)
-    : location(owner->definition_location.resource_loc)
-    , type(file_type::COPY)
+    : type(file_type::COPY)
     , owner(std::move(owner))
     , data(std::move(text_data))
 {}
@@ -77,8 +75,8 @@ occurrence_scope_t file_info::find_occurrence_with_scope(position pos) const
         return std::make_pair(nullptr, nullptr);
 
     // else, find scope
-    macro_info_ptr macro_i = find_scope(pos);
-    return std::make_pair(found, std::move(macro_i));
+    const auto* macro_i = find_scope(pos);
+    return std::make_pair(found, macro_i);
 }
 
 const symbol_occurrence* file_info::find_closest_instruction(position pos) const noexcept
@@ -129,9 +127,9 @@ const line_occurence_details* file_info::get_line_details(size_t l) const noexce
     return &line_details[l];
 }
 
-macro_info_ptr file_info::find_scope(position pos) const
+const macro_info* file_info::find_scope(position pos) const
 {
-    for (const auto& [_, scope] : slices)
+    for (const auto& scope : slices)
         if (scope.file_lines.begin <= pos.line && scope.file_lines.end > pos.line)
             return scope.macro_context;
     return nullptr;
@@ -139,11 +137,12 @@ macro_info_ptr file_info::find_scope(position pos) const
 
 std::vector<bool> file_info::macro_map() const
 {
-    std::vector<bool> result;
-    for (const auto& [_, scope] : slices)
+    if (slices.empty())
+        return {};
+    static constexpr auto line_end = [](const auto& s) { return s.file_lines.end; };
+    std::vector<bool> result(std::ranges::max(slices | std::views::transform(line_end)));
+    for (const auto& scope : slices)
     {
-        if (scope.file_lines.end > result.size())
-            result.resize(scope.file_lines.end);
         std::fill(result.begin() + scope.file_lines.begin, result.begin() + scope.file_lines.end, true);
     }
     return result;
@@ -166,39 +165,49 @@ void file_info::update_occurrences(const std::vector<symbol_occurrence>& occurre
 {
     occurrences.insert(occurrences.end(), occurrences_upd.begin(), occurrences_upd.end());
 
-    auto common_size = std::min(line_details.size(), line_details_upd.size());
+    static constexpr auto merge_lines = [](const auto& o, const auto& n) {
+        return lsp::line_occurence_details {
+            std::max(o.max_endline, n.max_endline),
+            o.active_using ? o.active_using : n.active_using,
+            o.active_section ? o.active_section : n.active_section,
+            o.active_using && n.active_using && o.active_using != n.active_using,
+            o.active_section && n.active_section && o.active_section != n.active_section,
+            o.branches_up || n.branches_up,
+            o.branches_down || n.branches_down,
+            o.branches_somewhere || n.branches_somewhere,
+            std::max(o.offset_to_jump_opcode, n.offset_to_jump_opcode),
+        };
+    };
+    const auto [e, u, _] = std::ranges::transform(line_details, line_details_upd, line_details.begin(), merge_lines);
 
-    std::transform(line_details.begin(),
-        line_details.begin() + common_size,
-        line_details_upd.begin(),
-        line_details.begin(),
-        [](const auto& o, const auto& n) {
-            return lsp::line_occurence_details {
-                std::max(o.max_endline, n.max_endline),
-                o.active_using ? o.active_using : n.active_using,
-                o.active_section ? o.active_section : n.active_section,
-                o.active_using && n.active_using && o.active_using != n.active_using,
-                o.active_section && n.active_section && o.active_section != n.active_section,
-                o.branches_up || n.branches_up,
-                o.branches_down || n.branches_down,
-                o.branches_somewhere || n.branches_somewhere,
-                std::max(o.offset_to_jump_opcode, n.offset_to_jump_opcode),
-            };
-        });
-
-    line_details.insert(line_details.end(), line_details_upd.begin() + common_size, line_details_upd.end());
+    line_details.insert(e, u, line_details_upd.end());
 }
 
-void file_info::update_slices(const std::vector<file_slice_t>& slices_upd)
+void file_info::distribute_macro_slices(
+    const std::unordered_map<const context::macro_definition*, macro_info_ptr>& macros,
+    std::unordered_map<utils::resource::resource_location, file_info>& files)
 {
-    for (const auto& slice : slices_upd)
+    // If the slice is not there yet, add it.
+    // If the slice is already there, overwrite it with the new slice.
+    // There may be some obscure cases where the same portion of code is parsed multiple times, resulting in
+    // defining more macros with the same name. For now, we take the last definition (since file_slice contains
+    // pointer to macro definition).
+    for (const auto& [_, m] : macros)
     {
-        // If the slice is not there yet, add it.
-        // If the slice is already there, overwrite it with the new slice.
-        // There may be some obscure cases where the same portion of code is parsed multiple times, resulting in
-        // defining more macros with the same name. For now, we take the last definition (since file_slice contains
-        // pointer to macro definition).
-        slices[slice.file_lines] = slice;
+        for (const auto& [file, s_upd] : m->file_scopes)
+        {
+            std::ranges::transform(s_upd, std::back_inserter(files.at(file).slices), [&m, &file](const auto& s) {
+                return file_slice_t::transform_slice(s, *m, file);
+            });
+        }
+    }
+
+    for (auto& [_, file] : files)
+    {
+        auto& slices = file.slices;
+        std::ranges::stable_sort(slices, {}, &file_slice_t::file_lines);
+        auto [new_begin, __] = std::ranges::unique(std::views::reverse(slices), {}, &file_slice_t::file_lines);
+        slices.erase(slices.begin(), new_begin.base());
     }
 }
 
@@ -215,17 +224,17 @@ auto source_line(
 } // namespace
 
 file_slice_t file_slice_t::transform_slice(
-    const macro_slice_t& slice, const macro_info_ptr& macro_i, const utils::resource::resource_location& f)
+    const macro_slice_t& slice, const macro_info& macro_i, const utils::resource::resource_location& f)
 {
     file_slice_t fslice;
 
     fslice.macro_lines.begin = slice.begin_statement;
     fslice.macro_lines.end = slice.end_statement;
 
-    const auto& mdef = *macro_i->macro_definition;
+    const auto& mdef = *macro_i.macro_definition;
 
     if (slice.begin_statement.value == 0)
-        fslice.file_lines.begin = macro_i->definition_location.pos.line;
+        fslice.file_lines.begin = macro_i.definition_location.pos.line;
     else
         fslice.file_lines.begin = source_line(mdef, slice.begin_statement, f);
 
@@ -235,21 +244,10 @@ file_slice_t file_slice_t::transform_slice(
         fslice.file_lines.end = source_line(mdef, { slice.end_statement.value - 1 }, f) + 1;
 
     fslice.type = slice.inner_macro ? scope_type::INNER_MACRO : scope_type::MACRO;
-    fslice.macro_context = macro_i;
+    fslice.macro_context = &macro_i;
 
     return fslice;
 }
-
-std::vector<file_slice_t> file_slice_t::transform_slices(const std::vector<macro_slice_t>& slices,
-    const macro_info_ptr& macro_i,
-    const utils::resource::resource_location& f)
-{
-    std::vector<file_slice_t> ret;
-    for (const auto& s : slices)
-        ret.push_back(transform_slice(s, macro_i, f));
-    return ret;
-}
-
 
 const std::vector<symbol_occurrence>& file_info::get_occurrences() const { return occurrences; }
 

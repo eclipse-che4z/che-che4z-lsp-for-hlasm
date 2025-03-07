@@ -206,7 +206,7 @@
           "inherits": "dev",
           "binaryDir": "${sourceDir}/build/profile",
           "cacheVariables": {
-              "CMAKE_BUILD_TYPE": "ReleaseWithDebInfo",
+              "CMAKE_BUILD_TYPE": "RelWithDebInfo",
               "CMAKE_RUNTIME_OUTPUT_DIRECTORY": "${sourceDir}/build/profile/bin",
               "CMAKE_EXE_LINKER_FLAGS": "/PROFILE"
           }
