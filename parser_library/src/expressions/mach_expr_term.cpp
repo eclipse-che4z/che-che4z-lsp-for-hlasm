@@ -32,27 +32,10 @@ using utils::hashers::hash_combine;
 
 bool mach_expr_constant::do_is_similar(const mach_expression& expr) const
 {
-    const auto& e = static_cast<const mach_expr_constant&>(expr);
-    if (value_.value_kind() != e.value_.value_kind())
-        return false;
-    if (value_.value_kind() == context::symbol_value_kind::ABS)
-        return value_.get_abs() == e.value_.get_abs();
-
-    return true;
+    return value_ == static_cast<const mach_expr_constant&>(expr).value_;
 }
 
-mach_expr_constant::mach_expr_constant(std::string value_text, range rng)
-    : mach_expression(rng)
-{
-    int32_t v = 0;
-
-    const auto* b = value_text.data();
-    const auto* e = b + value_text.size();
-
-    if (auto ec = std::from_chars(b, e, v); ec.ec == std::errc {} && ec.ptr == e)
-        value_ = value_t(v);
-}
-mach_expr_constant::mach_expr_constant(int value, range rng)
+mach_expr_constant::mach_expr_constant(int32_t value, range rng)
     : mach_expression(rng)
     , value_(value)
 {}
@@ -62,11 +45,8 @@ context::dependency_collector mach_expr_constant::get_dependencies(context::depe
     return context::dependency_collector();
 }
 
-mach_expr_constant::value_t mach_expr_constant::evaluate(
-    context::dependency_solver&, diagnostic_op_consumer& diags) const
+mach_expr_constant::value_t mach_expr_constant::evaluate(context::dependency_solver&, diagnostic_op_consumer&) const
 {
-    if (value_.value_kind() == context::symbol_value_kind::UNDEF)
-        diags.add_diagnostic(diagnostic_op::error_ME001(get_range()));
     return value_;
 }
 
@@ -74,18 +54,9 @@ const mach_expression* mach_expr_constant::leftmost_term() const { return this; 
 
 void mach_expr_constant::apply(mach_expr_visitor& visitor) const { visitor.visit(*this); }
 
-size_t mach_expr_constant::hash() const
-{
-    auto result = (size_t)0x38402610af574281;
-    if (value_.value_kind() == context::symbol_value_kind::ABS)
-        result = hash_combine(result, value_.get_abs());
-    return result;
-}
+size_t mach_expr_constant::hash() const { return hash_combine((size_t)0x38402610af574281, value_); }
 
-mach_expr_ptr mach_expr_constant::clone() const
-{
-    return std::make_unique<mach_expr_constant>(value_.get_abs(), get_range());
-}
+mach_expr_ptr mach_expr_constant::clone() const { return std::make_unique<mach_expr_constant>(value_, get_range()); }
 
 //***********  mach_expr_symbol ************
 mach_expr_symbol::mach_expr_symbol(context::id_index value, context::id_index qualifier, range rng)

@@ -25,13 +25,12 @@ namespace hlasm_plugin::parser_library::expressions {
 // Represents a number written in a machine expression.
 class mach_expr_constant final : public mach_expression
 {
-    value_t value_;
+    int32_t value_;
 
     bool do_is_similar(const mach_expression& expr) const override;
 
 public:
-    mach_expr_constant(std::string value_text, range rng);
-    mach_expr_constant(int value, range rng);
+    mach_expr_constant(int32_t value, range rng);
 
     context::dependency_collector get_dependencies(context::dependency_solver& solver) const override;
 
