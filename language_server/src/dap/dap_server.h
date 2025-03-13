@@ -40,7 +40,7 @@ public:
 
     void respond(const request_id& id, std::string_view requested_method, const nlohmann::json& args) override;
 
-    void notify(const std::string& method, const nlohmann::json& args) override;
+    void notify(std::string_view method, const nlohmann::json& args) override;
 
     void respond_error(const request_id& id,
         std::string_view requested_method,

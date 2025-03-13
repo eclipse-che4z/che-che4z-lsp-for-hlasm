@@ -111,7 +111,7 @@ public:
         std::function<void(const nlohmann::json& params)> handler,
         std::function<void(int, const char*)> error_handler) = 0;
     virtual void respond(const request_id& id, std::string_view requested_method, const nlohmann::json& args) = 0;
-    virtual void notify(const std::string& method, const nlohmann::json& args) = 0;
+    virtual void notify(std::string_view method, const nlohmann::json& args) = 0;
     virtual void respond_error(const request_id& id,
         std::string_view requested_method,
         int err_code,

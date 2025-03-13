@@ -52,7 +52,7 @@ void server::respond(const request_id& request_seq, std::string_view requested_c
     });
 }
 
-void server::notify(const std::string& method, const nlohmann::json& args)
+void server::notify(std::string_view method, const nlohmann::json& args)
 {
     send_message_->reply(nlohmann::json {
         { "seq", ++last_seq_ },

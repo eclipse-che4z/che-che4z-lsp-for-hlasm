@@ -32,7 +32,7 @@ public:
         respond,
         (const request_id& id, std::string_view requested_method, const nlohmann::json& args),
         (override));
-    MOCK_METHOD(void, notify, (const std::string& method, const nlohmann::json& args), (override));
+    MOCK_METHOD(void, notify, (std::string_view method, const nlohmann::json& args), (override));
     MOCK_METHOD(void,
         respond_error,
         (const request_id& id,

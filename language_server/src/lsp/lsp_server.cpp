@@ -203,7 +203,7 @@ void server::respond(const request_id& id, std::string_view, const nlohmann::jso
     send_message_->reply(reply);
 }
 
-void server::notify(const std::string& method, const nlohmann::json& args)
+void server::notify(std::string_view method, const nlohmann::json& args)
 {
     nlohmann::json reply {
         { "jsonrpc", "2.0" },

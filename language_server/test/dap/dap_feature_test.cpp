@@ -78,9 +78,9 @@ struct response_provider_mock : public response_provider
     {
         responses.push_back({ id, std::string(requested_method), args });
     }
-    void notify(const std::string& method, const nlohmann::json& args) override
+    void notify(std::string_view method, const nlohmann::json& args) override
     {
-        notifs.push_back({ method, args });
+        notifs.push_back({ std::string(method), args });
         if (method == "stopped")
             stopped = true;
         if (method == "exited")

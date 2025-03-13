@@ -56,7 +56,7 @@ protected:
     // Sends respond to request to LSP client using send_message_provider.
     void respond(const request_id& id, std::string_view requested_method, const nlohmann::json& args) override;
     // Sends notification to LSP client using send_message_provider.
-    void notify(const std::string& method, const nlohmann::json& args) override;
+    void notify(std::string_view method, const nlohmann::json& args) override;
     // Sends erroneous respond to LSP client using send_message_provider.
     void respond_error(const request_id& id,
         std::string_view requested_method,
