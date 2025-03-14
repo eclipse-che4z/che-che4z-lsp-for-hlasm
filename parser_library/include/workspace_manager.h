@@ -70,6 +70,15 @@ protected:
     ~parsing_metadata_consumer() = default;
 };
 
+class progress_notification_consumer
+{
+public:
+    virtual void parsing_started(std::string_view uri) = 0;
+
+protected:
+    ~progress_notification_consumer() = default;
+};
+
 enum class fs_change_type
 {
     invalid = 0,
@@ -142,6 +151,7 @@ public:
     virtual void unregister_parsing_metadata_consumer(parsing_metadata_consumer* consumer) = 0;
     virtual void set_message_consumer(message_consumer* consumer) = 0;
     virtual void set_request_interface(workspace_manager_requests* requests) = 0;
+    virtual void set_progress_notification_consumer(progress_notification_consumer* progress) = 0;
 
     virtual std::string get_virtual_file_content(unsigned long long id) const = 0;
 

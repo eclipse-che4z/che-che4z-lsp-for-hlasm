@@ -76,6 +76,7 @@ public:
     MOCK_METHOD(void, unregister_parsing_metadata_consumer, (parsing_metadata_consumer * consumer), (override));
     MOCK_METHOD(void, set_message_consumer, (message_consumer * consumer), (override));
     MOCK_METHOD(void, set_request_interface, (workspace_manager_requests * requests), (override));
+    MOCK_METHOD(void, set_progress_notification_consumer, (progress_notification_consumer * progress), (override));
 
     MOCK_METHOD(std::string, get_virtual_file_content, (unsigned long long id), (const, override));
     MOCK_METHOD(void, toggle_advisory_configuration_diagnostics, (), (override));

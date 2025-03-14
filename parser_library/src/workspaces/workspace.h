@@ -95,8 +95,7 @@ public:
         std::vector<file_content_state> file_change_status,
         std::optional<std::vector<index_t<processor_group, unsigned long long>>> changed_groups);
 
-    [[nodiscard]] utils::value_task<parse_file_result> parse_file(
-        const resource_location& preferred_file = resource_location());
+    [[nodiscard]] utils::value_task<parse_file_result> parse_file(resource_location* selected = nullptr);
 
     location definition(const resource_location& document_loc, position pos) const;
     std::vector<location> references(const resource_location& document_loc, position pos) const;

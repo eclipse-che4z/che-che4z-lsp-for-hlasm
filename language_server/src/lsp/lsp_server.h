@@ -22,6 +22,7 @@
 #include "../server.h"
 #include "../telemetry_sink.h"
 #include "nlohmann/json_fwd.hpp"
+#include "progress_notification.h"
 #include "workspace_manager.h"
 #include "workspace_manager_requests.h"
 
@@ -69,6 +70,7 @@ protected:
 private:
     std::atomic<long> request_id_counter = 0;
     parser_library::workspace_manager& ws_mngr;
+    progress_notification progress;
 
     // requests
     // Implements initialize request.

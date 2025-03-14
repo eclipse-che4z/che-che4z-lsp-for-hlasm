@@ -15,7 +15,6 @@
 
 #include "lsp_server.h"
 
-#include <algorithm>
 #include <exception>
 #include <functional>
 #include <memory>
@@ -29,18 +28,17 @@
 #include "feature_language_features.h"
 #include "feature_text_synchronization.h"
 #include "feature_workspace_folders.h"
-#include "lib_config.h"
 #include "nlohmann/json.hpp"
 #include "parsing_metadata_serialization.h"
 #include "utils/error_codes.h"
 #include "utils/general_hashers.h"
-#include "utils/resource_location.h"
 
 namespace hlasm_plugin::language_server::lsp {
 
 server::server(parser_library::workspace_manager& ws_mngr)
     : language_server::server(this)
     , ws_mngr(ws_mngr)
+    , progress(*this)
 {
     features_.push_back(std::make_unique<feature_workspace_folders>(ws_mngr, *this));
     features_.push_back(std::make_unique<feature_text_synchronization>(ws_mngr, *this));
@@ -309,6 +307,9 @@ void server::on_initialize(const request_id& id, const nlohmann::json& param)
     {
         f->initialize_feature(param);
     }
+
+    if (progress_notification::client_supports_work_done_progress(param))
+        ws_mngr.set_progress_notification_consumer(&progress);
 }
 
 void server::on_initialized(const nlohmann::json&) const

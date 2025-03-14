@@ -19,4 +19,6 @@ target_sources(hlasm_language_server_base PRIVATE
     feature_workspace_folders.h
     lsp_server.cpp
     lsp_server.h
+    progress_notification.cpp
+    progress_notification.h
 )

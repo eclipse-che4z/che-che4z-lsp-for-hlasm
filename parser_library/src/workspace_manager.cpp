@@ -320,9 +320,13 @@ class workspace_manager_impl final : public workspace_manager,
         auto result = std::pair<bool, bool>(false, true);
         while (true)
         {
-            auto task = m_ws.parse_file();
+            resource_location file_to_parse;
+            auto task = m_ws.parse_file(&file_to_parse);
             if (!task.valid())
                 break;
+
+            if (m_progress)
+                m_progress->parsing_started(file_to_parse.get_uri());
 
             m_active_task = { std::move(task), std::chrono::steady_clock::now() };
 
@@ -401,6 +405,9 @@ class workspace_manager_impl final : public workspace_manager,
                 return;
 
             parsing_done = true;
+
+            if (m_progress)
+                m_progress->parsing_started({});
         }
     }
 
@@ -611,6 +618,8 @@ class workspace_manager_impl final : public workspace_manager,
     }
 
     void set_request_interface(workspace_manager_requests* requests) override { m_requests = requests; }
+
+    void set_progress_notification_consumer(progress_notification_consumer* p) override { m_progress = p; }
 
     static auto response_handle(auto r, auto f)
     {
@@ -982,6 +991,7 @@ class workspace_manager_impl final : public workspace_manager,
     std::vector<parsing_metadata_consumer*> m_parsing_metadata_consumers;
     message_consumer* m_message_consumer = nullptr;
     workspace_manager_requests* m_requests = nullptr;
+    progress_notification_consumer* m_progress = nullptr;
     std::vector<diagnostic> m_diagnostics;
     std::vector<fade_message> m_fade_messages;
     unsigned long long m_unique_id_sequence = 0;

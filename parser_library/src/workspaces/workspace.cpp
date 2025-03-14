@@ -547,13 +547,15 @@ void workspace::show_message(std::string_view message)
         message_consumer_->show_message(message, message_type::MT_INFO);
 }
 
-utils::value_task<parse_file_result> workspace::parse_file(const resource_location& preferred_file)
+utils::value_task<parse_file_result> workspace::parse_file(resource_location* selected)
 {
     if (m_parsing_pending.empty())
         return {};
 
-    processor_file_compoments& comp =
-        m_processor_files.at(m_parsing_pending.contains(preferred_file) ? preferred_file : *m_parsing_pending.begin());
+    const auto& file_to_parse = *m_parsing_pending.begin();
+    if (selected)
+        *selected = file_to_parse;
+    processor_file_compoments& comp = m_processor_files.at(file_to_parse);
 
     assert(comp.m_opened);
 
