@@ -1510,6 +1510,8 @@ result_t<expressions::ca_expr_ptr> parser2::lex_rest_of_ca_string_group(
             if (!match<u8')'>(hl_scopes::operator_symbol, diagnostic_op::error_S0011))
                 return failure;
             nested_dupl = std::move(dupl);
+            if (!follows<u8'\''>())
+                return failure;
         }
         auto [error2, s2] = lex_ca_string_with_optional_substring();
         if (error2)
