@@ -196,16 +196,19 @@ void file_info::distribute_macro_slices(
     {
         for (const auto& [file, s_upd] : m->file_scopes)
         {
-            std::ranges::transform(s_upd, std::back_inserter(files.at(file).slices), [&m, &file](const auto& s) {
+            std::ranges::transform(s_upd.first, std::back_inserter(files.at(file).slices), [&m, &file](const auto& s) {
                 return file_slice_t::transform_slice(s, *m, file);
             });
         }
     }
 
+    static constexpr auto prefer_macros = [](const file_slice_t& e) {
+        return std::make_tuple(std::cref(e.file_lines), -(int)e.type);
+    };
     for (auto& [_, file] : files)
     {
         auto& slices = file.slices;
-        std::ranges::stable_sort(slices, {}, &file_slice_t::file_lines);
+        std::ranges::stable_sort(slices, {}, prefer_macros);
         auto [new_begin, __] = std::ranges::unique(std::views::reverse(slices), {}, &file_slice_t::file_lines);
         slices.erase(slices.begin(), new_begin.base());
     }
@@ -238,10 +241,7 @@ file_slice_t file_slice_t::transform_slice(
     else
         fslice.file_lines.begin = source_line(mdef, slice.begin_statement, f);
 
-    if (slice.begin_statement == slice.end_statement)
-        fslice.file_lines.end = fslice.file_lines.begin;
-    else
-        fslice.file_lines.end = source_line(mdef, { slice.end_statement.value - 1 }, f) + 1;
+    fslice.file_lines.end = source_line(mdef, { slice.end_statement.value }, f) + 1;
 
     fslice.type = slice.inner_macro ? scope_type::INNER_MACRO : scope_type::MACRO;
     fslice.macro_context = &macro_i;
