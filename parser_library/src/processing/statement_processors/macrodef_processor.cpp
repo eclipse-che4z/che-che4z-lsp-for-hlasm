@@ -545,16 +545,6 @@ void macrodef_processor::add_correct_copy_nest()
     if (initial_copy_nest_ < hlasm_ctx.current_copy_stack().size())
         result_.used_copy_members.insert(hlasm_ctx.current_copy_stack().back().copy_member_definition);
 
-    if (const auto& m = hlasm_ctx.current_scope().this_macro; m)
-    {
-        std::ranges::copy(m->get_current_copy_nest() | std::views::drop(1), std::back_inserter(result_.nests.back()));
-        std::ranges::transform(
-            m->get_current_copy_nest() | std::views::drop(1),
-            std::inserter(result_.used_copy_members, result_.used_copy_members.end()),
-            [this](auto id) { return hlasm_ctx.get_copy_member(id); },
-            &context::copy_nest_item::member_name);
-    }
-
     const bool in_inner_macro = macro_nest_ > 1 + bumped_macro_nest;
     auto& [scope, start_new_slice] = result_.file_scopes[result_.nests.back().back().loc.resource_loc];
 

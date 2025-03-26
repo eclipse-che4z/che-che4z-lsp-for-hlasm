@@ -208,6 +208,8 @@ void file_info::distribute_macro_slices(
     for (auto& [_, file] : files)
     {
         auto& slices = file.slices;
+        // TODO: This is a workaround for what is obviously a bug
+        std::erase_if(slices, [](const file_slice_t& s) { return s.file_lines.begin > s.file_lines.end; });
         std::ranges::stable_sort(slices, {}, prefer_macros);
         auto [new_begin, __] = std::ranges::unique(std::views::reverse(slices), {}, &file_slice_t::file_lines);
         slices.erase(slices.begin(), new_begin.base());
@@ -220,8 +222,11 @@ auto source_line(
 {
     constexpr auto resloc = [](const context::copy_nest_item& cni) -> decltype(auto) { return cni.loc.resource_loc; };
     const auto& copy_nest = mdef.get_copy_nest(id);
-    const auto it = std::ranges::find(copy_nest, file, resloc);
-    assert(it != copy_nest.end());
+    const auto it = std::ranges::find(copy_nest | std::views::reverse, file, resloc);
+    // TODO: This is a workaround for what is obviously a bug
+    if (it == copy_nest.rend())
+        return (size_t)0;
+    assert(it != copy_nest.rend());
     return it->loc.pos.line;
 }
 } // namespace
