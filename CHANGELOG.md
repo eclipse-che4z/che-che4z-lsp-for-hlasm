@@ -1,3 +1,27 @@
+## [1.17.0](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/compare/1.16.0...1.17.0) (2025-03-31)
+
+### Features
+
+* Navigation through listings using label names and CSECT offsets ([a96a76b](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/a96a76b04a727b30bcaf7823976983af0d40b8a5))
+* Progress indicator ([5d4a022](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/5d4a022109bec1802ea8d1ab705c06b52d6b0904))
+* Support analyzing files opened directly by Zowe Explorer ([39d3529](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/39d3529d8327a0753162d18ca4fc395ff0fd7938))
+
+### Fixes
+
+* Incorrect handling of scopes in copybooks ([896e328](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/896e328aa2236b6aeeeb1b097d3fc4f9dba873ef))
+* Incorrect stack reporting ([0104633](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/0104633d6aa6a096ccddd6297e6f6e8f328db931))
+* Missing character check in CA string parser ([7ee10c2](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/7ee10c2a3dfc0f309f8594dfea5f450dcc11c57f))
+* Symbols in listings with ASA characters are incorrectly isolated ([2089b07](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/2089b072427ced60635685dda64bccd79433e09f))
+* Workaround for MSVC 17.13 ([562ddf6](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/562ddf69c110707f6af9dd5a2b1aa2cd1b79973f))
+
+### Other changes
+
+* Merge line details structures ([873dfc1](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/873dfc1339c1d888e67138abe0a6ce46f86ece59))
+* Simplify constant machine expression ([5ca5713](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/5ca5713021caba3b294bc9ba7623626f838bf03a))
+* Update Sonar scan ([729569f](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/729569f2de0afb74ed4d995428e326d0e44c6cac))
+* Upgrade CMake and CI ([469312a](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/469312a93b98148b352ca421d7b7df4339334cb7))
+* Use string_view in notify method ([7c3dddc](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/7c3dddc3d0273cc759c5726adad1b5c9a8c3b3ae))
+* Use UTF8 in the parser ([8f3e5f3](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/8f3e5f3971d15daa2cf1b9d6ac9cc0941b4fa8cd))
 ## [1.16.0](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/compare/1.15.1...1.16.0) (2025-01-29)
 
 
