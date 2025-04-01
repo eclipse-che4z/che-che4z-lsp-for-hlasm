@@ -18,7 +18,7 @@
 
 namespace hlasm_plugin::parser_library::context {
 
-statement_cache::statement_cache(shared_stmt_ptr base)
+statement_cache::statement_cache(shared_stmt_ptr base) noexcept
     : base_stmt_(std::move(base))
 {}
 
@@ -28,15 +28,13 @@ const statement_cache::cached_statement_t& statement_cache::insert(
     return cache_.emplace_back(key, std::move(statement)).second;
 }
 
-const statement_cache::cached_statement_t* statement_cache::get(processing::processing_status_cache_key key) const
+const statement_cache::cached_statement_t* statement_cache::get(
+    processing::processing_status_cache_key key) const noexcept
 {
     for (const auto& entry : cache_)
         if (entry.first == key)
             return &entry.second;
     return nullptr;
 }
-
-shared_stmt_ptr statement_cache::get_base() const { return base_stmt_; }
-
 
 } // namespace hlasm_plugin::parser_library::context

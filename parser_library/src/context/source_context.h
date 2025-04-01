@@ -102,7 +102,7 @@ class processing_frame_tree
 
         processing_frame frame;
 
-        bool operator==(const processing_frame_node&) const = default;
+        bool operator==(const processing_frame_node&) const noexcept = default;
 
         processing_frame_node(const processing_frame_node* parent,
             position pos,

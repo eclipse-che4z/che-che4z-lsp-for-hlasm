@@ -56,13 +56,14 @@ context::shared_stmt_ptr members_statement_provider::get_next(const statement_pr
 
     context::shared_stmt_ptr stmt;
 
-    switch (cache->get_base()->kind)
+    const auto& stmt_candiate = cache->get_base();
+    switch (stmt_candiate->kind)
     {
         case context::statement_kind::RESOLVED:
-            stmt = cache->get_base();
+            stmt = stmt_candiate;
             break;
         case context::statement_kind::DEFERRED: {
-            stmt = cache->get_base();
+            stmt = stmt_candiate;
             const auto& current_instr = stmt->access_deferred()->instruction;
             if (!resolved_instruction.has_value())
                 resolved_instruction.emplace(processor.resolve_instruction(current_instr));
@@ -77,7 +78,7 @@ context::shared_stmt_ptr members_statement_provider::get_next(const statement_pr
             break;
         }
         case context::statement_kind::ERROR:
-            stmt = cache->get_base();
+            stmt = stmt_candiate;
             break;
         default:
             break;
@@ -96,12 +97,13 @@ context::shared_stmt_ptr members_statement_provider::get_next(const statement_pr
 const semantics::instruction_si* members_statement_provider::retrieve_instruction(
     const context::statement_cache& cache) const
 {
-    switch (cache.get_base()->kind)
+    const auto& stmt = cache.get_base();
+    switch (stmt->kind)
     {
         case context::statement_kind::RESOLVED:
-            return &cache.get_base()->access_resolved()->instruction_ref();
+            return &stmt->access_resolved()->instruction_ref();
         case context::statement_kind::DEFERRED:
-            return &cache.get_base()->access_deferred()->instruction;
+            return &stmt->access_deferred()->instruction;
         case context::statement_kind::ERROR:
             return nullptr;
         default:

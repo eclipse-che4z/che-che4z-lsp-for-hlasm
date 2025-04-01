@@ -44,13 +44,13 @@ private:
     shared_stmt_ptr base_stmt_;
 
 public:
-    statement_cache(shared_stmt_ptr base);
+    statement_cache(shared_stmt_ptr base) noexcept;
 
     const cached_statement_t& insert(processing::processing_status_cache_key key, cached_statement_t statement);
 
-    const cached_statement_t* get(processing::processing_status_cache_key key) const;
+    const cached_statement_t* get(processing::processing_status_cache_key key) const noexcept;
 
-    shared_stmt_ptr get_base() const;
+    const shared_stmt_ptr& get_base() const noexcept { return base_stmt_; }
 };
 
 using cached_block = std::vector<statement_cache>;
