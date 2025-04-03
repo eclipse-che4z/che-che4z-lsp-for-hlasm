@@ -75,7 +75,7 @@ std::string uri_to_path(std::string_view uri)
         }
     }
 
-    return utils::path::lexically_normal(network::detail::decode(auth_path)).string();
+    return utils::path::lexically_normal(utils::encoding::percent_decode(auth_path)).string();
 }
 
 std::string path_to_uri(std::string_view path)
@@ -84,8 +84,7 @@ std::string path_to_uri(std::string_view path)
     if (std::regex_search(path.begin(), path.end(), uri_unlike_windows_path))
         return std::string(path);
 
-    // network::detail::encode_path(uri) ignores @, which is incompatible with VS Code
-    std::string uri = utils::encoding::percent_encode(path);
+    std::string uri = utils::encoding::percent_encode_path(path);
 
     if (utils::platform::is_windows())
     {
@@ -95,7 +94,7 @@ std::string path_to_uri(std::string_view path)
         else
         {
             if (!uri.empty())
-                uri.front() = tolower((unsigned char)uri.front());
+                uri.front() = (char)tolower((unsigned char)uri.front());
             uri.insert(0, "file:///");
         }
     }
@@ -244,7 +243,7 @@ std::string decorate_path(const std::optional<dissected_uri::authority>& auth, s
     if (utils::platform::is_windows())
         format_path_post_processing_win(hostname, s);
 
-    return network::detail::decode(s);
+    return utils::encoding::percent_decode(s);
 }
 
 void handle_local_host_file_scheme(dissected_uri& dis_uri)

@@ -19,26 +19,26 @@ using namespace hlasm_plugin::utils::encoding;
 
 TEST(encoding, percent_encode)
 {
-    EXPECT_EQ(percent_encode("\\abc"), "/abc");
-    EXPECT_EQ(percent_encode("%"), "%25");
-    EXPECT_EQ(percent_encode("%25"), "%2525");
-    EXPECT_EQ(percent_encode("%st"), "%25st");
-    EXPECT_EQ(percent_encode("%F0"), "%25F0");
-    EXPECT_EQ(percent_encode("%F0123456789"), "%25F0123456789");
-    EXPECT_EQ(percent_encode("%F0%82%83%AF"), "%25F0%2582%2583%25AF");
-    EXPECT_EQ(percent_encode("%F0%92%83%AF"), "%25F0%2592%2583%25AF");
-    EXPECT_EQ(percent_encode("%F0%92%83%D0"), "%25F0%2592%2583%25D0");
+    EXPECT_EQ(percent_encode_path("\\abc"), "/abc");
+    EXPECT_EQ(percent_encode_path("%"), "%25");
+    EXPECT_EQ(percent_encode_path("%25"), "%2525");
+    EXPECT_EQ(percent_encode_path("%st"), "%25st");
+    EXPECT_EQ(percent_encode_path("%F0"), "%25F0");
+    EXPECT_EQ(percent_encode_path("%F0123456789"), "%25F0123456789");
+    EXPECT_EQ(percent_encode_path("%F0%82%83%AF"), "%25F0%2582%2583%25AF");
+    EXPECT_EQ(percent_encode_path("%F0%92%83%AF"), "%25F0%2592%2583%25AF");
+    EXPECT_EQ(percent_encode_path("%F0%92%83%D0"), "%25F0%2592%2583%25D0");
 }
 
 TEST(encoding, percent_encode_and_ignore_utf8)
 {
-    EXPECT_EQ(percent_encode_and_ignore_utf8("\\abc"), "/abc");
-    EXPECT_EQ(percent_encode_and_ignore_utf8("%"), "%25");
-    EXPECT_EQ(percent_encode_and_ignore_utf8("%25"), "%25");
-    EXPECT_EQ(percent_encode_and_ignore_utf8("%st"), "%25st");
-    EXPECT_EQ(percent_encode_and_ignore_utf8("%F0"), "%25F0");
-    EXPECT_EQ(percent_encode_and_ignore_utf8("%F0123456789"), "%25F0123456789");
-    EXPECT_EQ(percent_encode_and_ignore_utf8("%F0%82%83%AF"), "%25F0%2582%2583%25AF");
-    EXPECT_EQ(percent_encode_and_ignore_utf8("%F0%92%83%AF"), "%F0%92%83%AF");
-    EXPECT_EQ(percent_encode_and_ignore_utf8("%F0%92%83%D0"), "%25F0%2592%2583%25D0");
+    EXPECT_EQ(percent_encode_path_and_ignore_utf8("\\abc"), "/abc");
+    EXPECT_EQ(percent_encode_path_and_ignore_utf8("%"), "%25");
+    EXPECT_EQ(percent_encode_path_and_ignore_utf8("%25"), "%25");
+    EXPECT_EQ(percent_encode_path_and_ignore_utf8("%st"), "%25st");
+    EXPECT_EQ(percent_encode_path_and_ignore_utf8("%F0"), "%25F0");
+    EXPECT_EQ(percent_encode_path_and_ignore_utf8("%F0123456789"), "%25F0123456789");
+    EXPECT_EQ(percent_encode_path_and_ignore_utf8("%F0%82%83%AF"), "%25F0%2582%2583%25AF");
+    EXPECT_EQ(percent_encode_path_and_ignore_utf8("%F0%92%83%AF"), "%F0%92%83%AF");
+    EXPECT_EQ(percent_encode_path_and_ignore_utf8("%F0%92%83%D0"), "%25F0%2592%2583%25D0");
 }

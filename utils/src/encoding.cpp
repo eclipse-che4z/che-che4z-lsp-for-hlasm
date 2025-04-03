@@ -14,6 +14,7 @@
 
 #include "utils/encoding.h"
 
+#include <algorithm>
 #include <functional>
 #include <iterator>
 #include <limits>
@@ -21,6 +22,7 @@
 
 #include "network/uri/uri.hpp"
 
+#include "utils/truth_table.h"
 #include "utils/unicode_text.h"
 
 namespace hlasm_plugin::utils::encoding {
@@ -91,7 +93,7 @@ size_t get_already_encoded_size(std::string_view s)
     return cs;
 }
 
-bool try_to_parse_encoded(std::back_insert_iterator<std::string>& out, std::string_view& s)
+bool try_to_parse_encoded(std::string& out, std::string_view& s)
 {
     auto encoded_size = get_already_encoded_size(s);
     if (encoded_size == 0)
@@ -99,9 +101,9 @@ bool try_to_parse_encoded(std::back_insert_iterator<std::string>& out, std::stri
 
     while (encoded_size > 0)
     {
-        out++ = s[0];
-        out++ = static_cast<char>(std::toupper(s[1]));
-        out++ = static_cast<char>(std::toupper(s[2]));
+        out.push_back(s[0]);
+        out.push_back(static_cast<char>(std::toupper(s[1])));
+        out.push_back(static_cast<char>(std::toupper(s[2])));
         s.remove_prefix(3);
 
         encoded_size--;
@@ -109,22 +111,67 @@ bool try_to_parse_encoded(std::back_insert_iterator<std::string>& out, std::stri
 
     return true;
 }
+constexpr const auto unreserved =
+    utils::create_truth_table(u8"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-._~");
+constexpr const auto path_tolerable =
+    utils::create_truth_table(u8"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-._~/*?");
+using keep_table_t = decltype(unreserved);
+constexpr const auto invert_hex = []() {
+    std::array<signed char, std::numeric_limits<char8_t>::max() + 1> result {};
+
+    std::ranges::fill(result, -1);
+
+    result[u8'0'] = 0x0;
+    result[u8'1'] = 0x1;
+    result[u8'2'] = 0x2;
+    result[u8'3'] = 0x3;
+    result[u8'4'] = 0x4;
+    result[u8'5'] = 0x5;
+    result[u8'6'] = 0x6;
+    result[u8'7'] = 0x7;
+    result[u8'8'] = 0x8;
+    result[u8'9'] = 0x9;
+    result[u8'A'] = 0xA;
+    result[u8'B'] = 0xB;
+    result[u8'C'] = 0xC;
+    result[u8'D'] = 0xD;
+    result[u8'E'] = 0xE;
+    result[u8'F'] = 0xF;
+    result[u8'a'] = 0xa;
+    result[u8'b'] = 0xb;
+    result[u8'c'] = 0xc;
+    result[u8'd'] = 0xd;
+    result[u8'e'] = 0xe;
+    result[u8'f'] = 0xf;
+
+    return result;
+}();
+void push_uri_char(std::string& uri, unsigned char c, const keep_table_t& keep)
+{
+    if (keep[c])
+    {
+        uri.push_back(c);
+    }
+    else
+    {
+        uri.push_back('%');
+        uri.push_back("0123456789ABCDEF"[c >> 4 & 0xf]);
+        uri.push_back("0123456789ABCDEF"[c & 0xf]);
+    }
+}
 } // namespace
 
-std::string percent_encode(std::string_view s)
+std::string percent_encode_path(std::string_view s)
 {
     std::string uri;
     uri.reserve(s.size());
-    auto out = std::back_inserter(uri);
 
-    while (!s.empty())
+    for (unsigned char c : s)
     {
-        auto c = s.front();
-        if (c == '\\')
+        if (c == (unsigned char)'\\')
             c = '/';
 
-        network::detail::encode_char(c, out, "/.*?");
-        s.remove_prefix(1);
+        push_uri_char(uri, c, path_tolerable);
     }
 
     return uri;
@@ -134,11 +181,10 @@ std::string percent_encode_component(std::string_view s)
 {
     std::string uri;
     uri.reserve(s.size());
-    auto out = std::back_inserter(uri);
 
-    for (auto c : s)
+    for (unsigned char c : s)
     {
-        network::detail::encode_char(c, out);
+        push_uri_char(uri, c, unreserved);
     }
 
     return uri;
@@ -149,35 +195,46 @@ std::string percent_decode(std::string_view s)
     std::string result;
     result.reserve(s.size());
 
-    try
+    while (true)
     {
-        network::detail::decode(s.begin(), s.end(), std::back_inserter(result));
-    }
-    catch (const network::percent_decoding_error&)
-    {
-        return {};
+        const size_t n = s.find('%');
+        result += s.substr(0, n);
+
+        if (n == std::string_view::npos)
+            break;
+
+        s.remove_prefix(n);
+
+        if (s.size() < 3)
+            return {};
+
+        const signed char hi = invert_hex[(unsigned char)s[1]];
+        const signed char lo = invert_hex[(unsigned char)s[2]];
+        s.remove_prefix(3);
+        if (hi < 0 || lo < 0)
+            return {};
+        result.push_back(hi << 4 | lo);
     }
 
     return result;
 }
 
-std::string percent_encode_and_ignore_utf8(std::string_view s)
+std::string percent_encode_path_and_ignore_utf8(std::string_view s)
 {
     std::string uri;
     uri.reserve(s.size());
-    auto out = std::back_inserter(uri);
 
     while (!s.empty())
     {
-        if (try_to_parse_encoded(out, s))
+        if (try_to_parse_encoded(uri, s))
             continue;
 
         auto c = s.front();
-        if (c == '\\')
+        s.remove_prefix(1);
+        if (c == (unsigned char)'\\')
             c = '/';
 
-        network::detail::encode_char(c, out, "/.*?");
-        s.remove_prefix(1);
+        push_uri_char(uri, c, path_tolerable);
     }
     return uri;
 }

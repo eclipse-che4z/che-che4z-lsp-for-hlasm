@@ -303,7 +303,7 @@ resource_location resource_location::lexically_normal() const
     dis_uri.path = normalize_path(dis_uri.path, dis_uri.scheme == "file", dis_uri.contains_host());
     normalize_windows_like_uri(dis_uri);
 
-    dis_uri.path = utils::encoding::percent_encode_and_ignore_utf8(dis_uri.path);
+    dis_uri.path = utils::encoding::percent_encode_path_and_ignore_utf8(dis_uri.path);
 
     return resource_location(utils::path::reconstruct_uri(dis_uri));
 }

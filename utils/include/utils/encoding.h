@@ -17,11 +17,11 @@
 
 namespace hlasm_plugin::utils::encoding {
 // Returns percent encoded string
-std::string percent_encode(std::string_view s);
+std::string percent_encode_path(std::string_view s);
 std::string percent_encode_component(std::string_view s);
 
 // Returns percent encoded string while ignoring already encoded utf-8 chars
-std::string percent_encode_and_ignore_utf8(std::string_view s);
+std::string percent_encode_path_and_ignore_utf8(std::string_view s);
 
 std::string percent_decode(std::string_view s);
 

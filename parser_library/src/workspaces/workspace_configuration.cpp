@@ -78,8 +78,8 @@ std::pair<utils::resource::resource_location, std::string> transform_to_resource
 
     if (resource_location::is_local(path))
     {
-        rl = resource_location("file:" + utils::encoding::percent_encode_and_ignore_utf8(path.substr(5)));
-        suffix = utils::encoding::percent_encode_and_ignore_utf8(path_suffix);
+        rl = resource_location("file:" + utils::encoding::percent_encode_path_and_ignore_utf8(path.substr(5)));
+        suffix = utils::encoding::percent_encode_path_and_ignore_utf8(path_suffix);
     }
     else if (utils::path::is_uri(path))
     {
@@ -89,12 +89,12 @@ std::pair<utils::resource::resource_location, std::string> transform_to_resource
     else if (auto fs_path = get_fs_abs_path(path); fs_path.has_value())
     {
         rl = resource_location(utils::path::path_to_uri(utils::path::lexically_normal(*fs_path).string()));
-        suffix = utils::encoding::percent_encode(path_suffix);
+        suffix = utils::encoding::percent_encode_path(path_suffix);
     }
     else
     {
-        rl = resource_location::join(base_resource_location, utils::encoding::percent_encode(path));
-        suffix = utils::encoding::percent_encode(path_suffix);
+        rl = resource_location::join(base_resource_location, utils::encoding::percent_encode_path(path));
+        suffix = utils::encoding::percent_encode_path(path_suffix);
     }
 
     rl = rl.lexically_normal();
