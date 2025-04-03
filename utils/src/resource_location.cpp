@@ -15,6 +15,7 @@
 #include "utils/resource_location.h"
 
 #include <algorithm>
+#include <array>
 #include <assert.h>
 #include <cstddef>
 #include <iterator>
@@ -246,43 +247,33 @@ std::string normalize_path(std::string_view orig_path, bool has_file_scheme, boo
     return ret;
 }
 
-void normalize_windows_like_uri_helper(
-    utils::path::dissected_uri& dis_uri, unsigned char win_drive_letter, std::string_view path_suffix)
+std::optional<std::pair<char, size_t>> windows_normalization_data(
+    const std::optional<utils::path::dissected_uri::authority>& auth, std::string_view path)
 {
-    std::string path;
-    path.push_back('/');
-    path.push_back(static_cast<const char>(tolower(win_drive_letter)));
-    path.push_back(':');
-    path.append(path_suffix);
+    std::optional<std::pair<char, size_t>> result;
 
-    dis_uri.path = std::move(path);
-
-    // Clear host but keep in mind that it needs to remain valid (albeit empty)
-    dis_uri.auth = { std::nullopt, "", std::nullopt };
-}
-
-void normalize_windows_like_uri(utils::path::dissected_uri& dis_uri)
-{
-    if (dis_uri.scheme == "file")
+    if (!auth.has_value() || auth->host.empty())
     {
-        if (!utils::platform::is_windows())
-            return;
-
-        if (std::smatch s; dis_uri.auth.has_value() && (!dis_uri.auth->port.has_value() || dis_uri.auth->port->empty())
-            && !dis_uri.auth->user_info.has_value() && dis_uri.contains_host())
+        if (std::match_results<std::string_view::iterator> s;
+            std::regex_search(path.begin(), path.end(), s, path_like_windows_path))
         {
-            if (!std::regex_search(dis_uri.auth->host, s, host_like_windows_path)
-                || (s[2].length() == 0 && !dis_uri.auth->port.has_value()))
-                return;
-
-            // auth consists only of host name resembling Windows drive and empty or missing port part
-            normalize_windows_like_uri_helper(dis_uri, s[1].str()[0], dis_uri.path);
-        }
-        else if (!dis_uri.contains_host() && std::regex_search(dis_uri.path, s, path_like_windows_path))
             // Seems like we have a windows like path
-            normalize_windows_like_uri_helper(dis_uri, s[1].str()[0], s.suffix().str());
+            result.emplace(s[1].str()[0], std::distance(path.begin(), s.suffix().first));
+        }
     }
+    else if ((!auth->port.has_value() || auth->port->empty()) && !auth->user_info.has_value())
+    {
+        if (std::smatch s; std::regex_search(auth->host.begin(), auth->host.end(), s, host_like_windows_path)
+            && (s[2].length() != 0 || auth->port.has_value()))
+        {
+            // auth consists only of host name resembling Windows drive and empty or missing port part
+            result.emplace(s[1].str()[0], 0);
+        }
+    }
+
+    return result;
 }
+
 } // namespace
 
 resource_location resource_location::lexically_normal() const
@@ -298,12 +289,27 @@ resource_location resource_location::lexically_normal() const
     if (dis_uri.path.empty())
         return *this;
 
-    std::ranges::transform(dis_uri.scheme, dis_uri.scheme.begin(), [](unsigned char c) { return (char)tolower(c); });
+    static constexpr auto to_lower = [](unsigned char c) { return (char)tolower(c); };
+    std::ranges::transform(dis_uri.scheme, dis_uri.scheme.begin(), to_lower);
 
-    dis_uri.path = normalize_path(dis_uri.path, dis_uri.scheme == "file", dis_uri.contains_host());
-    normalize_windows_like_uri(dis_uri);
+    const bool file_scheme = dis_uri.scheme == "file";
 
-    dis_uri.path = utils::encoding::percent_encode_path_and_ignore_utf8(dis_uri.path);
+    std::string path = normalize_path(dis_uri.path, file_scheme, dis_uri.contains_host());
+
+    if (file_scheme && utils::platform::is_windows())
+    {
+        if (const auto norm_data = windows_normalization_data(dis_uri.auth, path))
+        {
+            auto [win_drive_letter, useful_path_start] = *norm_data;
+            const auto prefix = std::to_array({ '/', to_lower(win_drive_letter), ':' });
+            path.replace(0, useful_path_start, prefix.data(), prefix.size());
+
+            // Clear host but keep in mind that it needs to remain valid (albeit empty)
+            dis_uri.auth = { std::nullopt, "", std::nullopt };
+        }
+    }
+
+    dis_uri.path = utils::encoding::percent_encode_path_and_ignore_utf8(path);
 
     return resource_location(utils::path::reconstruct_uri(dis_uri));
 }
