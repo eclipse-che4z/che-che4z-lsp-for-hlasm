@@ -257,7 +257,7 @@ class workspace_configuration : public configuration_provider
         config::pgm_conf& pgm_config, global_settings_map& utilized_settings_values, std::vector<diagnostic>& diags);
 
     [[nodiscard]] utils::task find_and_add_libs(utils::resource::resource_location root,
-        utils::resource::resource_location path_pattern,
+        std::string path_pattern,
         processor_group& prc_grp,
         library_local_options opts,
         std::vector<diagnostic>& diags);

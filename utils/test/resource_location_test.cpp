@@ -279,6 +279,14 @@ TEST(resource_location, to_presentable_other_schemes)
     EXPECT_EQ(res.to_presentable(), expected);
 }
 
+TEST(resource_location, to_presentable_pattern)
+{
+    std::string expected = "aaa://server/Public/**";
+
+    resource_location res("aaa://server/Public/**");
+    EXPECT_EQ(res.to_presentable(), expected);
+}
+
 TEST(resource_location, to_presentable_other_schemes_with_port)
 {
     std::string expected = "aaa://server:80/Public/folder%20With%20spaces/filE%20nAme";

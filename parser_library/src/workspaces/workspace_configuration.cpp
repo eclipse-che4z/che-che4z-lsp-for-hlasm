@@ -68,22 +68,38 @@ std::optional<std::filesystem::path> get_fs_abs_path(std::string_view path)
     }
 }
 
-utils::resource::resource_location transform_to_resource_location(
-    std::string_view path, const utils::resource::resource_location& base_resource_location)
+std::pair<utils::resource::resource_location, std::string> transform_to_resource_location(std::string_view path,
+    const utils::resource::resource_location& base_resource_location,
+    std::string_view path_suffix)
 {
     using utils::resource::resource_location;
-    resource_location rl;
+    std::pair<resource_location, std::string> result;
+    auto& [rl, suffix] = result;
 
     if (resource_location::is_local(path))
+    {
         rl = resource_location("file:" + utils::encoding::percent_encode_and_ignore_utf8(path.substr(5)));
+        suffix = utils::encoding::percent_encode_and_ignore_utf8(path_suffix);
+    }
     else if (utils::path::is_uri(path))
+    {
         rl = resource_location(path);
+        suffix = path_suffix;
+    }
     else if (auto fs_path = get_fs_abs_path(path); fs_path.has_value())
+    {
         rl = resource_location(utils::path::path_to_uri(utils::path::lexically_normal(*fs_path).string()));
+        suffix = utils::encoding::percent_encode(path_suffix);
+    }
     else
+    {
         rl = resource_location::join(base_resource_location, utils::encoding::percent_encode(path));
+        suffix = utils::encoding::percent_encode(path_suffix);
+    }
 
-    return rl.lexically_normal();
+    rl = rl.lexically_normal();
+
+    return result;
 }
 
 std::optional<std::string> substitute_home_directory(std::string p)
@@ -436,19 +452,26 @@ utils::task workspace_configuration::process_processor_group_library(const confi
     }
 
     auto lib_local_opts = get_library_local_options(lib, fallback_macro_extensions);
-    auto rl = transform_to_resource_location(*lib_path, root);
-    rl.join(""); // Ensure that this is a directory
 
-    const auto uri = rl.get_uri();
-    if (auto first_wild_card = uri.find_first_of("*?"); first_wild_card == std::string::npos)
+    if (auto first_wild_card = lib_path->find_first_of("*?"); first_wild_card == std::string::npos)
     {
-        prc_grp.add_library(get_local_library(rl, lib_local_opts));
+        auto [rl, _] = transform_to_resource_location(*lib_path, root, {});
+        prc_grp.add_library(get_local_library(rl.join(""), lib_local_opts));
         return {};
     }
     else
     {
-        utils::resource::resource_location search_root(uri.substr(0, uri.find_last_of("/", first_wild_card) + 1));
-        return find_and_add_libs(std::move(search_root), std::move(rl), prc_grp, std::move(lib_local_opts), diags);
+        const size_t last_slash = lib_path->find_last_of("/\\", first_wild_card) + 1;
+        const auto path_prefix = lib_path->substr(0, last_slash);
+
+        auto [search_root, pattern] = transform_to_resource_location(path_prefix, root, lib_path->substr(last_slash));
+        if (!pattern.ends_with("/"))
+            pattern.push_back('/');
+
+        search_root.join("");
+        pattern.insert(0, search_root.get_uri());
+
+        return find_and_add_libs(std::move(search_root), std::move(pattern), prc_grp, std::move(lib_local_opts), diags);
     }
 }
 
@@ -477,7 +500,7 @@ void workspace_configuration::process_program(const config::program_mapping& pgm
     }
 
     program prog {
-        transform_to_resource_location(*pgm_name, m_location),
+        transform_to_resource_location(*pgm_name, m_location, {}).first,
         basic_conf {
             pgm.pgroup,
         },
@@ -796,12 +819,12 @@ utils::value_task<parse_config_file_result> workspace_configuration::parse_b4g_c
 }
 
 utils::task workspace_configuration::find_and_add_libs(utils::resource::resource_location root,
-    utils::resource::resource_location path_pattern,
+    std::string path_pattern,
     processor_group& prc_grp,
     library_local_options opts,
     std::vector<diagnostic>& diags)
 {
-    std::regex path_validator = percent_encoded_pathmask_to_regex(path_pattern.get_uri());
+    std::regex path_validator = percent_encoded_pathmask_to_regex(path_pattern);
 
     std::unordered_set<std::string> processed_canonical_paths;
     std::deque<std::pair<std::string, utils::resource::resource_location>> dirs_to_search;
@@ -819,7 +842,8 @@ utils::task workspace_configuration::find_and_add_libs(utils::resource::resource
         const auto first = std::exchange(first_, false);
         if (processed_canonical_paths.size() > limit)
         {
-            diags.push_back(warning_L0005(m_proc_grps_current_loc, path_pattern.to_presentable(), limit));
+            const auto presentable_pattern = utils::path::get_presentable_uri(path_pattern, false);
+            diags.push_back(warning_L0005(m_proc_grps_current_loc, presentable_pattern, limit));
             break;
         }
 
