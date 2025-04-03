@@ -208,70 +208,34 @@ std::string reconstruct_uri(const dissected_uri& dis_uri)
 }
 
 namespace {
-void format_path_pre_processing(std::string& hostname, std::string_view port, std::string& path)
-{
-    if (!port.empty() && !hostname.empty())
-        hostname.append(":").append(port);
-
-    if (!hostname.empty() && !path.empty() && path[0] == '/')
-        path = path.substr(1, path.size() - 1);
-}
-
-void format_path_post_processing_win(std::string_view hostname, std::string& path)
-{
-    if (!path.empty() && hostname.empty())
-        path.erase(0, 1);
-}
-
-std::string decorate_path(const std::optional<dissected_uri::authority>& auth, std::string path)
+std::string decorate_path(const std::optional<dissected_uri::authority>& auth, std::string_view path)
 {
     std::string hostname;
-    std::string port;
 
-    if (auth.has_value())
+    if (auth.has_value() && !auth->host.empty())
     {
-        hostname = auth->host;
+        hostname = "//";
+        hostname += auth->host;
 
-        if (auth->port.has_value())
-            port = *auth->port;
+        if (auth->port && !auth->port->empty())
+            hostname.append(":").append(*auth->port);
+
+        if (path.starts_with("/"))
+            path.remove_prefix(1);
     }
-
-    format_path_pre_processing(hostname, port, path);
 
     std::string s = utils::path::lexically_normal(utils::path::join(hostname, path)).string();
 
-    if (utils::platform::is_windows())
-        format_path_post_processing_win(hostname, s);
+    const size_t skip_first = utils::platform::is_windows() && !s.empty() && hostname.empty();
 
-    return utils::encoding::percent_decode(s);
-}
-
-void handle_local_host_file_scheme(dissected_uri& dis_uri)
-{
-    // Decorate path with authority
-    dis_uri.path = decorate_path(dis_uri.auth, std::move(dis_uri.path));
-
-    // Clear not useful stuff before it goes to printer
-    dis_uri.scheme.clear();
-    dis_uri.auth = std::nullopt;
-}
-
-void to_presentable_pre_processing(dissected_uri& dis_uri)
-{
-    if (dis_uri.contains_host())
-        dis_uri.auth->host.insert(0, "//");
-
-    if (dis_uri.scheme == "file")
-    {
-        if (utils::platform::is_windows())
-            handle_local_host_file_scheme(dis_uri);
-        else if (!dis_uri.contains_host())
-            handle_local_host_file_scheme(dis_uri);
-    }
+    return utils::encoding::percent_decode(std::string_view(s).substr(skip_first));
 }
 
 std::string to_presentable_internal(const dissected_uri& dis_uri)
 {
+    if (dis_uri.scheme == "file" && (utils::platform::is_windows() || !dis_uri.contains_host()))
+        return decorate_path(dis_uri.auth, dis_uri.path); // Decorate path with authority
+
     std::string s;
 
     if (!dis_uri.scheme.empty())
@@ -279,6 +243,8 @@ std::string to_presentable_internal(const dissected_uri& dis_uri)
 
     if (dis_uri.auth.has_value())
     {
+        if (!dis_uri.auth->host.empty())
+            s.append("//");
         s.append(dis_uri.auth->host);
 
         if (dis_uri.auth->port.has_value())
@@ -287,7 +253,7 @@ std::string to_presentable_internal(const dissected_uri& dis_uri)
 
     s.append(dis_uri.path);
 
-    // TODO Think about presenting query and fragment parts
+    // TODO: Think about presenting query and fragment parts
 
     return s;
 }
@@ -323,10 +289,7 @@ std::string get_presentable_uri(std::string_view uri, bool debug)
     if (debug)
         return to_presentable_internal_debug(dis_uri, uri);
     else
-    {
-        to_presentable_pre_processing(dis_uri);
         return to_presentable_internal(dis_uri);
-    }
 }
 
 } // namespace hlasm_plugin::utils::path
