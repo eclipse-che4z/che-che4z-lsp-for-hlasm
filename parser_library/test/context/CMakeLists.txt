@@ -17,6 +17,7 @@ target_sources(library_test PRIVATE
     dependency_collector_test.cpp
     instruction_test.cpp
     literals_test.cpp
+    macro_processing_stack_test.cpp
     macro_test.cpp
     ord_sym_test.cpp
     system_variable_subscripts_test.cpp

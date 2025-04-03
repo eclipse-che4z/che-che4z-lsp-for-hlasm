@@ -27,6 +27,7 @@
 #include "lexing/tools.h"
 #include "ordinary_assembly/location_counter.h"
 #include "using.h"
+#include "utils/factory.h"
 #include "utils/time.h"
 #include "variables/set_symbol.h"
 #include "variables/system_variable.h"
@@ -866,11 +867,11 @@ const utils::resource::resource_location& hlasm_context::opencode_location() con
 copy_member_ptr hlasm_context::add_copy_member(
     id_index member, statement_block definition, location definition_location)
 {
-    auto& copydef = copy_members_[member];
-    if (!copydef)
-        copydef = std::make_shared<copy_member>(member, std::move(definition), definition_location);
+    auto [it, _] = copy_members_.try_emplace(member, utils::factory([&]() {
+        return std::make_shared<copy_member>(member, std::move(definition), std::move(definition_location));
+    }));
 
-    return copydef;
+    return it->second;
 }
 
 void hlasm_context::add_copy_member(copy_member_ptr member) { copy_members_[member->name] = std::move(member); }

@@ -15,7 +15,6 @@
 #include "macrodef_processor.h"
 
 #include <functional>
-#include <iterator>
 #include <ranges>
 
 #include "context/instruction.h"
@@ -37,20 +36,21 @@ macrodef_processor::macrodef_processor(const analyzing_context& ctx,
     , branching_provider_(branching_provider_)
     , start_(std::move(start))
     , initial_copy_nest_(hlasm_ctx.current_copy_stack().size())
-    , macro_nest_(1)
-    , expecting_prototype_(true)
     , expecting_MACRO_(start_.is_external)
-    , finished_flag_(false)
+    , result_({
+          // clang format really does not like it without the parenthesis
+          .prototype = macrodef_prototype(start_.is_external ? start_.external_name : context::id_index()),
+          .definition_location = hlasm_ctx.current_statement_location(),
+          .external = start_.is_external,
+          .invalid = true, // result starts invalid until mandatory statements are encountered
+      })
     , table_(create_table())
 {
-    result_.definition_location = hlasm_ctx.current_statement_location();
-    result_.external = start_.is_external;
-    if (start_.is_external)
-        result_.prototype.macro_name = start_.external_name;
-
-    result_.invalid = true; // result starts invalid until mandatory statements are encountered
+    if (const auto* mac = hlasm_ctx.current_macro())
+    {
+        drop_copy_nest = mac->get_current_copy_nest().size();
+    }
 }
-
 
 std::optional<context::id_index> macrodef_processor::resolve_concatenation(
     const semantics::concat_chain& concat, const range&) const
@@ -544,6 +544,15 @@ void macrodef_processor::add_correct_copy_nest()
 
     if (initial_copy_nest_ < hlasm_ctx.current_copy_stack().size())
         result_.used_copy_members.insert(hlasm_ctx.current_copy_stack().back().copy_member_definition);
+
+    if (drop_copy_nest != skip_copy_nest)
+    {
+        for (const auto& nest : hlasm_ctx.current_macro()->get_current_copy_nest() | std::views::drop(drop_copy_nest))
+        {
+            result_.used_copy_members.insert(hlasm_ctx.get_copy_member(nest.member_name));
+            result_.nests.back().push_back(nest);
+        }
+    }
 
     const bool in_inner_macro = macro_nest_ > 1 + bumped_macro_nest;
     auto& [scope, start_new_slice] = result_.file_scopes[result_.nests.back().back().loc.resource_loc];

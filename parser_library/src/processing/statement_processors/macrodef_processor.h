@@ -32,17 +32,18 @@ class macrodef_processor final : public statement_processor
 
     position curr_outer_position_;
     size_t initial_copy_nest_;
-    size_t macro_nest_;
+    size_t macro_nest_ = 1;
+    static constexpr size_t skip_copy_nest = (size_t)-1;
+    size_t drop_copy_nest = skip_copy_nest;
     bool bumped_macro_nest = false;
-    bool expecting_prototype_;
+    bool expecting_prototype_ = true;
     bool expecting_MACRO_;
+    bool last_in_inner_macro_ = false;
+    bool finished_flag_ = false;
 
     macrodef_processing_result result_;
-    bool last_in_inner_macro_ = false;
-    bool finished_flag_;
 
     using process_table_t = std::unordered_map<context::id_index, std::function<bool(const resolved_statement&)>>;
-
     const process_table_t table_;
 
 public:
