@@ -385,10 +385,10 @@ utils::task workspace_configuration::process_processor_group_library(const confi
     std::span<const std::string>,
     processor_group& prc_grp)
 {
-    utils::path::dissected_uri new_uri_components;
-    new_uri_components.scheme = external_uri_scheme;
-    new_uri_components.path = "/DATASET/" + utils::encoding::percent_encode_component(dsn.dsn);
-    utils::resource::resource_location new_uri(utils::path::reconstruct_uri(new_uri_components));
+    utils::resource::resource_location new_uri(utils::path::reconstruct_uri({
+        .scheme = std::string(external_uri_scheme),
+        .path = "/DATASET/" + utils::encoding::percent_encode_component(dsn.dsn),
+    }));
 
     prc_grp.add_library(get_local_library(new_uri, { .optional_library = dsn.optional }));
 
@@ -401,15 +401,16 @@ utils::task workspace_configuration::process_processor_group_library(const confi
     std::span<const std::string>,
     processor_group& prc_grp)
 {
-    utils::path::dissected_uri new_uri_components;
-    new_uri_components.scheme = external_uri_scheme;
-    new_uri_components.path = "/ENDEVOR/" + utils::encoding::percent_encode_component(end.profile) + "/"
-        + std::string(end.use_map ? "map" : "nomap") + "/" + utils::encoding::percent_encode_component(end.environment)
-        + "/" + utils::encoding::percent_encode_component(end.stage) + "/"
-        + utils::encoding::percent_encode_component(end.system) + "/"
-        + utils::encoding::percent_encode_component(end.subsystem) + "/"
-        + utils::encoding::percent_encode_component(end.type);
-    utils::resource::resource_location new_uri(utils::path::reconstruct_uri(new_uri_components));
+    utils::resource::resource_location new_uri(utils::path::reconstruct_uri({
+        .scheme = std::string(external_uri_scheme),
+        .path = "/ENDEVOR/" + utils::encoding::percent_encode_component(end.profile) + "/"
+            + std::string(end.use_map ? "map" : "nomap") + "/"
+            + utils::encoding::percent_encode_component(end.environment) + "/"
+            + utils::encoding::percent_encode_component(end.stage) + "/"
+            + utils::encoding::percent_encode_component(end.system) + "/"
+            + utils::encoding::percent_encode_component(end.subsystem) + "/"
+            + utils::encoding::percent_encode_component(end.type),
+    }));
 
     prc_grp.add_library(get_local_library(new_uri, { .optional_library = end.optional }));
 
@@ -422,11 +423,11 @@ utils::task workspace_configuration::process_processor_group_library(const confi
     std::span<const std::string>,
     processor_group& prc_grp)
 {
-    utils::path::dissected_uri new_uri_components;
-    new_uri_components.scheme = external_uri_scheme;
-    new_uri_components.path = "/ENDEVOR/" + utils::encoding::percent_encode_component(end.profile) + "/"
-        + utils::encoding::percent_encode_component(end.dsn);
-    utils::resource::resource_location new_uri(utils::path::reconstruct_uri(new_uri_components));
+    utils::resource::resource_location new_uri(utils::path::reconstruct_uri({
+        .scheme = std::string(external_uri_scheme),
+        .path = "/ENDEVOR/" + utils::encoding::percent_encode_component(end.profile) + "/"
+            + utils::encoding::percent_encode_component(end.dsn),
+    }));
 
     prc_grp.add_library(get_local_library(new_uri, { .optional_library = end.optional }));
 
