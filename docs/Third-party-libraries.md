@@ -6,9 +6,6 @@ ASIO is a cross-platform C++ library for network and low-level I/O programming t
 - [**JSON for Modern C++**](https://github.com/nlohmann/json)  
 We use the JSON for Modern C++ library to parse and serialize JSON. It is used in both LSP and DAP. It allows us to seamlessly traverse  JSON input, extract relevant values, and respond with valid JSON messages.
 
-- [**cpp-netlib URI**](https://github.com/cpp-netlib/uri)  
-The cpp-netlib URI library is used for parsing the URIs specified by the [RFC3986](https://tools.ietf.org/html/rfc3986), which is used by the LSP and DAP protocols to transfer paths to files. It is the responsibility of the language server to parse the URIs and convert them to file paths, so it is easier to work with them in the parser library.
-
 Usage of ANTLR4
 ----------------------------------
 

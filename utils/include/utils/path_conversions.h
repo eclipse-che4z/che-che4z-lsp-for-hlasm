@@ -20,20 +20,20 @@
 
 namespace hlasm_plugin::utils::path {
 
-struct dissected_uri
+struct dissected_uri_view
 {
     struct authority
     {
-        std::optional<std::string> user_info;
-        std::string host;
-        std::optional<std::string> port;
+        std::optional<std::string_view> user_info;
+        std::string_view host;
+        std::optional<std::string_view> port;
     };
 
-    std::string scheme;
+    std::string_view scheme;
     std::optional<authority> auth;
-    std::string path;
-    std::optional<std::string> query;
-    std::optional<std::string> fragment;
+    std::string_view path;
+    std::optional<std::string_view> query;
+    std::optional<std::string_view> fragment;
 
     bool contains_host() const { return auth.has_value() && !auth->host.empty(); }
 };
@@ -45,17 +45,16 @@ std::string uri_to_path(std::string_view uri);
 std::string path_to_uri(std::string_view path);
 
 // Checks if provided path has the URI format
-bool is_uri(std::string_view path);
 bool is_likely_uri(std::string_view path);
 
 // Returns URI in a presentable format for the user
 std::string get_presentable_uri(std::string_view uri, bool debug);
 
 // Do URI dissection
-dissected_uri dissect_uri(std::string_view uri);
+std::optional<dissected_uri_view> dissect_uri(std::string_view uri);
 
 // Reconstruct dissected URI
-std::string reconstruct_uri(const dissected_uri& dis_uri);
+std::string reconstruct_uri(const dissected_uri_view& dis_uri, std::string_view extra_path = {});
 
 } // namespace hlasm_plugin::utils::path
 

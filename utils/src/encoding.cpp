@@ -15,12 +15,8 @@
 #include "utils/encoding.h"
 
 #include <algorithm>
-#include <functional>
-#include <iterator>
 #include <limits>
 #include <optional>
-
-#include "network/uri/uri.hpp"
 
 #include "utils/truth_table.h"
 #include "utils/unicode_text.h"

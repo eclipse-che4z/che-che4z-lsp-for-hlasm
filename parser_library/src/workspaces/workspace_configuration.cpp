@@ -81,7 +81,7 @@ std::pair<utils::resource::resource_location, std::string> transform_to_resource
         rl = resource_location("file:" + utils::encoding::percent_encode_path_and_ignore_utf8(path.substr(5)));
         suffix = utils::encoding::percent_encode_path_and_ignore_utf8(path_suffix);
     }
-    else if (utils::path::is_uri(path))
+    else if (utils::path::dissect_uri(path).has_value())
     {
         rl = resource_location(path);
         suffix = path_suffix;
@@ -386,7 +386,7 @@ utils::task workspace_configuration::process_processor_group_library(const confi
     processor_group& prc_grp)
 {
     utils::resource::resource_location new_uri(utils::path::reconstruct_uri({
-        .scheme = std::string(external_uri_scheme),
+        .scheme = external_uri_scheme,
         .path = "/DATASET/" + utils::encoding::percent_encode_component(dsn.dsn),
     }));
 
@@ -402,7 +402,7 @@ utils::task workspace_configuration::process_processor_group_library(const confi
     processor_group& prc_grp)
 {
     utils::resource::resource_location new_uri(utils::path::reconstruct_uri({
-        .scheme = std::string(external_uri_scheme),
+        .scheme = external_uri_scheme,
         .path = "/ENDEVOR/" + utils::encoding::percent_encode_component(end.profile) + "/"
             + std::string(end.use_map ? "map" : "nomap") + "/"
             + utils::encoding::percent_encode_component(end.environment) + "/"
@@ -424,7 +424,7 @@ utils::task workspace_configuration::process_processor_group_library(const confi
     processor_group& prc_grp)
 {
     utils::resource::resource_location new_uri(utils::path::reconstruct_uri({
-        .scheme = std::string(external_uri_scheme),
+        .scheme = external_uri_scheme,
         .path = "/ENDEVOR/" + utils::encoding::percent_encode_component(end.profile) + "/"
             + utils::encoding::percent_encode_component(end.dsn),
     }));

@@ -248,14 +248,14 @@ std::string normalize_path(std::string_view orig_path, bool has_file_scheme, boo
 }
 
 std::optional<std::pair<char, size_t>> windows_normalization_data(
-    const std::optional<utils::path::dissected_uri::authority>& auth, std::string_view path)
+    const std::optional<utils::path::dissected_uri_view::authority>& auth, std::string_view path)
 {
     std::optional<std::pair<char, size_t>> result;
+    std::match_results<std::string_view::iterator> s;
 
     if (!auth.has_value() || auth->host.empty())
     {
-        if (std::match_results<std::string_view::iterator> s;
-            std::regex_search(path.begin(), path.end(), s, path_like_windows_path))
+        if (std::regex_search(path.begin(), path.end(), s, path_like_windows_path))
         {
             // Seems like we have a windows like path
             result.emplace(s[1].str()[0], std::distance(path.begin(), s.suffix().first));
@@ -263,7 +263,7 @@ std::optional<std::pair<char, size_t>> windows_normalization_data(
     }
     else if ((!auth->port.has_value() || auth->port->empty()) && !auth->user_info.has_value())
     {
-        if (std::smatch s; std::regex_search(auth->host.begin(), auth->host.end(), s, host_like_windows_path)
+        if (std::regex_search(auth->host.begin(), auth->host.end(), s, host_like_windows_path)
             && (s[2].length() != 0 || auth->port.has_value()))
         {
             // auth consists only of host name resembling Windows drive and empty or missing port part
@@ -278,40 +278,52 @@ std::optional<std::pair<char, size_t>> windows_normalization_data(
 
 resource_location resource_location::lexically_normal() const
 {
-    std::string uri(get_uri());
+    std::string_view uri = get_uri();
+    std::string buffer;
 
-    std::ranges::replace(uri, '\\', '/');
+    if (uri.find('\\') != std::string_view::npos)
+    {
+        buffer = uri;
+        std::ranges::replace(buffer, '\\', '/');
+        uri = buffer;
+    }
 
-    if (!utils::path::is_uri(uri))
+    auto dis_uri_view = utils::path::dissect_uri(uri);
+
+    if (!dis_uri_view)
         return resource_location(normalize_path(uri, false, false));
 
-    auto dis_uri = utils::path::dissect_uri(uri);
-    if (dis_uri.path.empty())
+    if (dis_uri_view->path.empty() && buffer.empty())
         return *this;
 
     static constexpr auto to_lower = [](unsigned char c) { return (char)tolower(c); };
-    std::ranges::transform(dis_uri.scheme, dis_uri.scheme.begin(), to_lower);
 
-    const bool file_scheme = dis_uri.scheme == "file";
+    std::string scheme;
+    scheme.reserve(dis_uri_view->scheme.size());
+    std::ranges::transform(dis_uri_view->scheme, std::back_inserter(scheme), to_lower);
+    dis_uri_view->scheme = scheme;
 
-    std::string path = normalize_path(dis_uri.path, file_scheme, dis_uri.contains_host());
+    const bool file_scheme = dis_uri_view->scheme == "file";
+
+    std::string path = normalize_path(dis_uri_view->path, file_scheme, dis_uri_view->contains_host());
 
     if (file_scheme && utils::platform::is_windows())
     {
-        if (const auto norm_data = windows_normalization_data(dis_uri.auth, path))
+        if (const auto norm_data = windows_normalization_data(dis_uri_view->auth, path))
         {
-            auto [win_drive_letter, useful_path_start] = *norm_data;
+            const auto [win_drive_letter, useful_path_start] = *norm_data;
             const auto prefix = std::to_array({ '/', to_lower(win_drive_letter), ':' });
             path.replace(0, useful_path_start, prefix.data(), prefix.size());
 
             // Clear host but keep in mind that it needs to remain valid (albeit empty)
-            dis_uri.auth = { std::nullopt, "", std::nullopt };
+            dis_uri_view->auth = { std::nullopt, "", std::nullopt };
         }
     }
 
-    dis_uri.path = utils::encoding::percent_encode_path_and_ignore_utf8(path);
+    path = utils::encoding::percent_encode_path_and_ignore_utf8(path);
+    dis_uri_view->path = path;
 
-    return resource_location(utils::path::reconstruct_uri(dis_uri));
+    return resource_location(utils::path::reconstruct_uri(*dis_uri_view));
 }
 
 resource_location resource_location::lexically_relative(const resource_location& base) const
@@ -383,13 +395,23 @@ resource_location& resource_location::join(std::string_view other) { return *thi
 
 resource_location resource_location::join(resource_location rl, std::string_view other)
 {
-    if (utils::path::is_uri(other))
+    if (utils::path::dissect_uri(other).has_value())
         return resource_location(other);
-    else if (other.starts_with("/"))
+    if (auto dis_rl = utils::path::dissect_uri(rl.get_uri()); other.starts_with("/"))
     {
-        auto dis_uri = utils::path::dissect_uri(rl.get_uri());
-        dis_uri.path = other;
-        return resource_location(utils::path::reconstruct_uri(dis_uri));
+        if (!dis_rl)
+            dis_rl.emplace(); // TODO: This looks wrong as well
+        dis_rl->path = other;
+        return resource_location(utils::path::reconstruct_uri(*dis_rl));
+    }
+    else if (dis_rl)
+    {
+        std::string path(dis_rl->path);
+        if (path.empty())
+            path = "/";
+        uri_append(path, other);
+        dis_rl->path = path;
+        return resource_location(path::reconstruct_uri(*dis_rl));
     }
     else
     {
@@ -406,7 +428,8 @@ resource_location& resource_location::replace_filename(std::string_view other)
 
 resource_location resource_location::replace_filename(resource_location rl, std::string_view other)
 {
-    if (!utils::path::is_uri(rl.get_uri()))
+    auto dis_uri = utils::path::dissect_uri(rl.get_uri());
+    if (!dis_uri)
     {
         std::string uri(rl.get_uri());
         uri.erase(uri.find_last_of("/\\") + 1);
@@ -415,31 +438,30 @@ resource_location resource_location::replace_filename(resource_location rl, std:
         return resource_location(std::move(uri));
     }
 
-    auto dis_uri = utils::path::dissect_uri(rl.get_uri());
-
-    if (auto pos = dis_uri.path.rfind('/'); pos == std::string::npos)
-        dis_uri.path = other;
+    if (auto pos = dis_uri->path.rfind('/'); pos == std::string::npos)
+        dis_uri->path = {};
     else
-        dis_uri.path.erase(pos + 1).append(other);
+        dis_uri->path = dis_uri->path.substr(0, pos + 1);
 
-    return resource_location(utils::path::reconstruct_uri(dis_uri));
+    return resource_location(utils::path::reconstruct_uri(*dis_uri, other));
 }
 
 std::string resource_location::filename() const
 {
     const auto uri = get_uri();
-    if (!utils::path::is_uri(uri))
+    const auto dis_uri = utils::path::dissect_uri(uri);
+
+    if (!dis_uri)
         return std::string(uri.substr(uri.find_last_of("/\\") + 1));
 
-    auto dis_uri = utils::path::dissect_uri(uri);
-
-    return dis_uri.path.substr(dis_uri.path.rfind('/') + 1);
+    return std::string(dis_uri->path.substr(dis_uri->path.rfind('/') + 1));
 }
 
 resource_location resource_location::parent() const
 {
     const auto& uri = get_uri();
-    if (!utils::path::is_uri(uri))
+    auto dis_uri = utils::path::dissect_uri(uri);
+    if (!dis_uri)
     {
         if (auto slash_pos = uri.find_last_of("/\\"); slash_pos != std::string::npos)
             return resource_location(uri.substr(0, slash_pos));
@@ -447,14 +469,12 @@ resource_location resource_location::parent() const
             return resource_location();
     }
 
-    auto dis_uri = utils::path::dissect_uri(uri);
-
-    if (auto slash_pos = dis_uri.path.rfind('/'); slash_pos != std::string::npos)
-        dis_uri.path.erase(slash_pos);
+    if (auto slash_pos = dis_uri->path.rfind('/'); slash_pos != std::string::npos)
+        dis_uri->path = dis_uri->path.substr(0, slash_pos);
     else
-        dis_uri.path.clear();
+        dis_uri->path = {};
 
-    return resource_location(utils::path::reconstruct_uri(dis_uri));
+    return resource_location(utils::path::reconstruct_uri(*dis_uri));
 }
 
 std::string resource_location::get_local_path_or_uri() const
@@ -463,21 +483,6 @@ std::string resource_location::get_local_path_or_uri() const
 }
 
 namespace {
-utils::path::dissected_uri::authority relative_reference_process_new_auth(
-    const std::optional<utils::path::dissected_uri::authority>& old_auth, std::string_view host)
-{
-    utils::path::dissected_uri::authority new_auth;
-    new_auth.host = host;
-
-    if (old_auth)
-    {
-        new_auth.user_info = old_auth->user_info;
-        new_auth.port = old_auth->port;
-    }
-
-    return new_auth;
-}
-
 // Merge based on RFC 3986
 void merge(std::string& uri, std::string_view r)
 {
@@ -553,48 +558,61 @@ resource_location resource_location::relative_reference_resolution(resource_loca
     if (other.empty())
         return rl;
 
-    if (utils::path::is_uri(other))
+    auto dis_uri = utils::path::dissect_uri(other);
+    if (dis_uri)
     {
-        auto dis_uri = utils::path::dissect_uri(other);
-        dis_uri.path = remove_dot_segments(dis_uri.path);
-        return resource_location(utils::path::reconstruct_uri(dis_uri));
+        const auto new_path = remove_dot_segments(dis_uri->path);
+        dis_uri->path = new_path;
+        return resource_location(utils::path::reconstruct_uri(*dis_uri));
     }
     else
     {
-        auto dis_uri = utils::path::dissect_uri(rl.get_uri());
+        std::string new_path;
 
-        if (dis_uri.scheme.empty() && dis_uri.path.empty())
+        dis_uri = utils::path::dissect_uri(rl.get_uri());
+        if (!dis_uri)
+            dis_uri.emplace(); // TODO: maybe assert would be more appropriate?
+
+        if (dis_uri->scheme.empty() && dis_uri->path.empty())
         {
             std::string uri(rl.get_uri());
             uri_append(uri, other);
-            return resource_location(
-                std::move(uri)); // This is a regular path and not a uri. Let's proceed in a regular way
+            // This is a regular path and not a uri. Let's proceed in a regular way
+            return resource_location(std::move(uri));
         }
         else if (other.front() == '?')
-            dis_uri.query = other.substr(1);
+            dis_uri->query = other.substr(1);
         else if (other.front() == '#')
-            dis_uri.fragment = other.substr(1);
+            dis_uri->fragment = other.substr(1);
         else if (other.starts_with("//"))
         {
-            dis_uri.auth = relative_reference_process_new_auth(dis_uri.auth, std::string_view(other).substr(2));
-            dis_uri.path.clear();
-            dis_uri.query = std::nullopt;
-            dis_uri.fragment = std::nullopt;
+            if (dis_uri->auth)
+                dis_uri->auth->host = std::string_view(other).substr(2);
+            else
+                dis_uri->auth.emplace(std::nullopt, std::string_view(other).substr(2), std::nullopt);
+            dis_uri->path = {};
+            dis_uri->query = std::nullopt;
+            dis_uri->fragment = std::nullopt;
         }
         else
         {
             if (other.starts_with("/"))
-                dis_uri.path = other;
+                dis_uri->path = other;
             else
-                merge(dis_uri.path, other);
+            {
+                new_path = dis_uri->path;
+                merge(new_path, other);
+                dis_uri->path = new_path;
+            }
 
-            dis_uri.path = remove_dot_segments(dis_uri.path);
+            new_path = remove_dot_segments(dis_uri->path);
+            dis_uri->path = new_path;
 
-            dis_uri.query = std::nullopt;
-            dis_uri.fragment = std::nullopt;
+            dis_uri->query = std::nullopt;
+            dis_uri->fragment = std::nullopt;
         }
 
-        return resource_location(utils::path::reconstruct_uri(dis_uri));
+        return resource_location(utils::path::reconstruct_uri(*dis_uri));
     }
 }
 

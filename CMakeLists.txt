@@ -43,8 +43,6 @@ include(CTest)
 
 include(external_json)
 
-include(external_uri)
-
 include(external_boost)
 
 #Testing setup
@@ -71,6 +69,5 @@ install(TARGETS
     hlasm_language_server
     parser_library
     hlasm_utils
-    network-uri
     FILE_SET public_headers
 )
