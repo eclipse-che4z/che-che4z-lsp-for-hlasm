@@ -3103,7 +3103,6 @@ std::pair<bool, semantics::operand_ptr> parser2::ca_var_def_ops(parser_position 
             return {};
     }
     const auto r = range_from(start);
-    add_hl_symbol(r, hl_scopes::var_symbol);
     semantics::vs_ptr var;
     if (std::holds_alternative<context::id_index>(var_name))
     {
@@ -3788,8 +3787,7 @@ void parser2::op_rem_body_deferred()
                     return;
                 break;
 
-            case u8'&': {
-                const auto amp = cur_pos_adjusted();
+            case u8'&':
                 switch (input.next[1])
                 {
                     case EOF_SYMBOL:
@@ -3806,14 +3804,10 @@ void parser2::op_rem_body_deferred()
                         if (auto [error, v] = lex_variable(); error)
                             return;
                         else
-                        {
                             vs.push_back(std::move(v));
-                            add_hl_symbol(range_from(amp), hl_scopes::var_symbol);
-                        }
                         break;
                 }
-            }
-            break;
+                break;
 
             case u8'O':
             case u8'S':
@@ -3902,6 +3896,7 @@ result_t<void> parser2::lex_rest_of_model_string(concat_chain_builder& ccb)
                     consume_into(ccb.last_text_value());
                     break;
                 }
+                ccb.push_last_text();
                 if (auto [error, vs] = lex_variable(); error)
                     return failure;
                 else
@@ -4023,6 +4018,7 @@ result_t<std::optional<semantics::op_rem>> parser2::try_model_ops(parser_positio
     if (initial != input.next)
         cc.emplace_back(std::in_place_type<semantics::char_str_conc>, capture_text(initial), range_from(start));
 
+    ccb.push_last_text();
     if (auto [error, vs] = lex_variable(); error)
         return failure;
     else
@@ -4069,7 +4065,7 @@ result_t<std::optional<semantics::op_rem>> parser2::try_model_ops(parser_positio
                     consume_into(ccb.last_text_value());
                     consume_into(ccb.last_text_value());
                 }
-                else if (auto [error, vs] = lex_variable(); error)
+                else if (auto [error, vs] = (ccb.push_last_text(), lex_variable()); error)
                     return failure;
                 else
                     ccb.emplace_back(std::in_place_type<semantics::var_sym_conc>, std::move(vs));
