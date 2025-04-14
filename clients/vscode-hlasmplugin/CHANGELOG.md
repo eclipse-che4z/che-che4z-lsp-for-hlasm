@@ -8,6 +8,7 @@
 #### Fixed
 - Incorrect processing stack in nested macros
 - Unhandled error while reading configuration
+- AREAD instruction handles multibyte UTF-8 sequences incorrectly
 
 #### Changed
 - Removed cpp-netlib/uri dependency

@@ -83,6 +83,8 @@ struct utf8_substr_result
 // utf-8 substr in unicode characters with optional validation
 template<bool validate = false>
 utf8_substr_result utf8_substr(std::string_view s, size_t offset_chars = 0, size_t length_chars = (size_t)-1);
+template<bool validate = false>
+void utf8_resize(std::string& s, size_t count, char pad);
 
 // returns the length of the string in utf-16 symbols
 size_t length_utf16(std::string_view text);

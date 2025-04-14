@@ -225,6 +225,19 @@ utf8_substr_result utf8_substr(std::string_view s, size_t offset, size_t length)
 template utf8_substr_result utf8_substr<false>(std::string_view s, size_t offset, size_t length);
 template utf8_substr_result utf8_substr<true>(std::string_view s, size_t offset, size_t length);
 
+template<bool validate>
+void utf8_resize(std::string& s, size_t count, char pad)
+{
+    auto res = utf8_substr(s, 0, count);
+    if (res.char_count >= count)
+        s.erase(res.str.size());
+    else
+        s.append(count - res.char_count, pad);
+}
+
+template void utf8_resize<false>(std::string& s, size_t count, char pad);
+template void utf8_resize<true>(std::string& s, size_t count, char pad);
+
 size_t length_utf16(std::string_view s)
 {
     auto len = (size_t)-1;

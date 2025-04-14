@@ -104,7 +104,7 @@ std::variant<std::string, utils::value_task<std::string>> opencode_provider::are
     {
         auto result = std::move(m_ainsert_buffer.front());
         m_ainsert_buffer.pop_front();
-        result.resize(80, ' ');
+        utils::utf8_resize(result, 80, ' ');
         return result;
     }
 
@@ -148,7 +148,7 @@ std::string opencode_provider::aread_from_copybook() const
     while (!opencode_stack.empty() && !opencode_stack.back().suspended())
         opencode_stack.pop_back();
 
-    result.resize(80, ' ');
+    utils::utf8_resize(result, 80, ' ');
 
     return result;
 }
@@ -166,7 +166,7 @@ std::string opencode_provider::try_aread_from_document()
         generate_aread_highlighting(result, *lineno);
     }
 
-    result.resize(80, ' ');
+    utils::utf8_resize(result, 80, ' ');
 
     return result;
 }

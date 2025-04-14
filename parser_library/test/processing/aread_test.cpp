@@ -60,6 +60,30 @@ This is a raw text
     EXPECT_EQ(get_var_value<C_t>(ctx, "var").value_or(""), aread_pad("This is a raw text"));
 }
 
+TEST(aread, basic_utf8_test)
+{
+    std::string input((const char*)u8R"(
+          MACRO
+          M
+          GBLC &VAR
+&VAR      AREAD
+          MEND
+
+          GBLC &VAR
+          M
+)"
+                                   u8"\U0001F600");
+    analyzer a(input);
+    a.analyze();
+
+    EXPECT_TRUE(a.diags().empty());
+
+    auto& ctx = a.hlasm_ctx();
+
+    const std::string expected = std::string((const char*)u8"\U0001F600") + std::string(79, ' ');
+    EXPECT_EQ(get_var_value<C_t>(ctx, "var").value_or(""), expected);
+}
+
 TEST(aread, array_test)
 {
     std::string input(R"(
