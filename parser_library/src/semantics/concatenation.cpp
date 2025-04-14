@@ -35,19 +35,18 @@ struct concatenation_point_evaluator
 
     void operator()(const char_str_conc& v)
     {
-        auto value = v.evaluate(eval_ctx);
         if constexpr (collect_ranges)
         {
             ranges.emplace_back(std::pair(utf16_offset, false), v.conc_range);
-            utf16_offset += utils::length_utf16_no_validation(value);
+            utf16_offset += utils::length_utf16_no_validation(v.value);
         }
-        result.append(std::move(value));
+        result.append(v.value);
         was_var = false;
     }
 
     void operator()(const var_sym_conc& v)
     {
-        auto value = v.evaluate(eval_ctx);
+        auto value = var_sym_conc::evaluate(v.symbol->evaluate(eval_ctx));
         if constexpr (collect_ranges)
         {
             ranges.emplace_back(std::pair(utf16_offset, true), v.symbol->symbol_range);
@@ -61,13 +60,12 @@ struct concatenation_point_evaluator
     {
         if (!was_var)
         {
-            auto value = v.evaluate(eval_ctx);
             if constexpr (collect_ranges)
             {
                 ranges.emplace_back(std::pair(utf16_offset, false), v.conc_range);
-                utf16_offset += utils::length_utf16_no_validation(value);
+                utf16_offset += 1;
             }
-            result.append(std::move(value));
+            result.push_back('.');
         }
         was_var = false;
     }
@@ -75,19 +73,28 @@ struct concatenation_point_evaluator
     void operator()(const sublist_conc& v)
     {
         assert(!collect_ranges);
-        result.append(v.evaluate(eval_ctx));
+        result.push_back('(');
+        for (bool first = true; const auto& l : v.list)
+        {
+            if (first)
+                first = false;
+            else
+                result.push_back(',');
+            for (const auto visitor = [this](const auto& e) { operator()(e); }; const auto& c : l)
+                std::visit(visitor, c.value);
+        }
+        result.push_back(')');
         was_var = false;
     }
 
     void operator()(const equals_conc& v)
     {
-        auto value = v.evaluate(eval_ctx);
         if constexpr (collect_ranges)
         {
             ranges.emplace_back(std::pair(utf16_offset, false), v.conc_range);
-            utf16_offset += utils::length_utf16_no_validation(value);
+            utf16_offset += 1;
         }
-        result.append(std::move(value));
+        result.push_back('=');
         was_var = false;
     }
 };
@@ -122,11 +129,6 @@ concatenation_point::evaluate_with_range_map(concat_chain::const_iterator begin,
         std::visit(evaluator, it->value);
 
     return { std::move(ret), std::move(evaluator.ranges) };
-}
-
-std::string concatenation_point::evaluate(const expressions::evaluation_context& eval_ctx) const
-{
-    return std::visit([&eval_ctx](const auto& v) { return v.evaluate(eval_ctx); }, value);
 }
 
 void concatenation_point::resolve(diagnostic_op_consumer& diag) const
@@ -170,7 +172,7 @@ struct concat_point_stringifier
         if (v.symbol->created)
         {
             result.push_back('(');
-            result.append(concatenation_point::to_string(v.symbol->access_created()->created_name));
+            operator()(v.symbol->access_created()->created_name);
             result.push_back(')');
         }
         else
@@ -182,16 +184,24 @@ struct concat_point_stringifier
     void operator()(const sublist_conc& v) const
     {
         result.push_back('(');
-        for (size_t i = 0; i < v.list.size(); ++i)
+        for (bool first = true; const auto& l : v.list)
         {
-            result.append(concatenation_point::to_string(v.list[i]));
-            if (i != v.list.size() - 1)
+            if (first)
+                first = false;
+            else
                 result.push_back(',');
+            operator()(l);
         }
         result.push_back(')');
     }
 
     void operator()(const equals_conc&) const { result.push_back('='); }
+
+    void operator()(const concat_chain& cc) const
+    {
+        for (const auto visitor = [this](const auto& e) { operator()(e); }; const auto& c : cc)
+            std::visit(visitor, c.value);
+    }
 };
 
 std::string concatenation_point::to_string(concat_chain::const_iterator begin, concat_chain::const_iterator end)
@@ -237,17 +247,7 @@ bool concatenation_point::get_undefined_attributed_symbols(
     return result;
 }
 
-std::string char_str_conc::evaluate(const expressions::evaluation_context&) const { return value; }
-
 void char_str_conc::resolve(diagnostic_op_consumer&) const {}
-
-
-std::string var_sym_conc::evaluate(const expressions::evaluation_context& eval_ctx) const
-{
-    auto value = symbol->evaluate(eval_ctx);
-
-    return evaluate(std::move(value));
-}
 
 void var_sym_conc::resolve(diagnostic_op_consumer& diag) const { symbol->resolve(context::SET_t_enum::A_TYPE, diag); }
 
@@ -266,27 +266,9 @@ std::string var_sym_conc::evaluate(context::SET_t varsym_value)
     }
 }
 
-std::string dot_conc::evaluate(const expressions::evaluation_context&) const { return "."; }
-
 void dot_conc::resolve(diagnostic_op_consumer&) const {}
 
-std::string equals_conc::evaluate(const expressions::evaluation_context&) const { return "="; }
-
 void equals_conc::resolve(diagnostic_op_consumer&) const {}
-
-std::string sublist_conc::evaluate(const expressions::evaluation_context& eval_ctx) const
-{
-    std::string ret;
-    ret.push_back('(');
-    for (size_t i = 0; i < list.size(); ++i)
-    {
-        ret.append(concatenation_point::evaluate(list[i], eval_ctx));
-        if (i + 1 != list.size())
-            ret.push_back(',');
-    }
-    ret.push_back(')');
-    return ret;
-}
 
 void sublist_conc::resolve(diagnostic_op_consumer& diag) const
 {

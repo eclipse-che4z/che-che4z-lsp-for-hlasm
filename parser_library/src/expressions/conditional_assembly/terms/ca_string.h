@@ -49,8 +49,9 @@ public:
 
     context::SET_t evaluate(const evaluation_context& eval_ctx) const override;
 
+    static context::A_t compute_duplication_factor(const ca_expr_ptr& dupl_factor, const evaluation_context& eval_ctx);
     static std::string duplicate(
-        const ca_expr_ptr& dupl_factor, std::string value, range expr_range, const evaluation_context& eval_ctx);
+        context::A_t dupl, std::string value, range expr_range, const evaluation_context& eval_ctx);
 };
 
 } // namespace hlasm_plugin::parser_library::expressions

@@ -2,6 +2,9 @@
 
 ## ****Unreleased****
 
+#### Added
+- Validate length of macro operands
+
 #### Fixed
 - Incorrect processing stack in nested macros
 - Unhandled error while reading configuration

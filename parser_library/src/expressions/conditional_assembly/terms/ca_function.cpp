@@ -201,8 +201,8 @@ context::SET_t ca_function::evaluate(const evaluation_context& eval_ctx) const
         default:
             return context::SET_t();
     }
-
-    return ca_string::duplicate(duplication_factor, std::move(str_ret.access_c()), expr_range, eval_ctx);
+    const auto dupl = ca_string::compute_duplication_factor(duplication_factor, eval_ctx);
+    return ca_string::duplicate(dupl, std::move(str_ret.access_c()), expr_range, eval_ctx);
 }
 
 context::SET_t ca_function::B2A(std::string_view param, diagnostic_adder& add_diagnostic)

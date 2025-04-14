@@ -16,6 +16,7 @@
 
 #include "../common_testing.h"
 #include "../mock_parse_lib_provider.h"
+#include "context/common_types.h"
 #include "context/hlasm_context.h"
 #include "context/variables/set_symbol.h"
 #include "processing/instruction_sets/macro_processor.h"
@@ -1353,4 +1354,165 @@ TEST(macro, operand_dot)
     a.analyze();
 
     EXPECT_TRUE(a.diags().empty());
+}
+
+TEST(macro, macro_operand_cap1)
+{
+    std::string input = R"(
+         GBLA  &L
+
+         MACRO
+         MAC   &C
+         GBLA  &L
+&L       SETA  K'&C
+         MEND
+
+&X       SETC  (4064)'A'
+         MAC   &X
+)";
+    analyzer a(input);
+    a.analyze();
+
+    EXPECT_TRUE(matches_message_codes(a.diags(), { "CE011" }));
+    EXPECT_EQ(get_var_value<A_t>(a.hlasm_ctx(), "L"), 0);
+}
+
+TEST(macro, macro_operand_cap2)
+{
+    std::string input = R"(
+         GBLA  &L
+         GBLC  &F
+
+         MACRO
+         MAC   &C
+         GBLA  &L
+         GBLC  &F
+&L       SETA  K'&C
+&F       SETC  '&C'(1,1)
+         MEND
+
+&X       SETC  (4064)'A'
+         MAC   X&X
+)";
+    analyzer a(input);
+    a.analyze();
+
+    EXPECT_TRUE(matches_message_codes(a.diags(), { "CE011" }));
+    EXPECT_EQ(get_var_value<A_t>(a.hlasm_ctx(), "L"), 1);
+    EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "F"), "A");
+}
+
+TEST(macro, macro_operand_cap3)
+{
+    std::string input = R"(
+         GBLA  &L
+         GBLC  &F
+
+         MACRO
+         MAC   &C=
+         GBLA  &L
+         GBLC  &F
+&L       SETA  K'&C
+&F       SETC  '&C'(1,1)
+         MEND
+
+&X       SETC  (4064)'A'
+         MAC   C=X&X
+)";
+    analyzer a(input);
+    a.analyze();
+
+    EXPECT_TRUE(matches_message_codes(a.diags(), { "CE011" }));
+    EXPECT_EQ(get_var_value<A_t>(a.hlasm_ctx(), "L"), 1);
+    EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "F"), "A");
+}
+
+TEST(macro, macro_operand_cap4)
+{
+    std::string input = R"(
+         GBLA  &L
+         GBLC  &F
+
+         MACRO
+         MAC   &C
+         GBLA  &L
+         GBLC  &F
+&L       SETA  K'&C(1)
+&F       SETC  '&C'(1,1)
+         MEND
+
+&X       SETC  (4061)'A'
+         MAC   (&X)
+)";
+    analyzer a(input);
+    a.analyze();
+
+    EXPECT_TRUE(a.diags().empty());
+    EXPECT_EQ(get_var_value<A_t>(a.hlasm_ctx(), "L"), 4061);
+    EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "F"), "(");
+}
+
+TEST(macro, macro_operand_cap5)
+{
+    std::string input = R"(
+         GBLA  &L
+
+         MACRO
+         MAC   &C
+         GBLA  &L
+&L       SETA  K'&C(1)
+         MEND
+
+&X       SETC  (4062)'A'
+         MAC   (&X)
+)";
+    analyzer a(input);
+    a.analyze();
+
+    // TODO: Does not work yet
+    // EXPECT_TRUE(matches_message_codes(a.diags(), { "CE011" }));
+    // EXPECT_EQ(get_var_value<A_t>(a.hlasm_ctx(), "L"), 0);
+}
+
+TEST(macro, macro_operand_cap6)
+{
+    std::string input = R"(
+         GBLA  &L
+
+         MACRO
+         MAC   &C=
+         GBLA  &L
+&L       SETA  K'&C(1)
+         MEND
+
+&X       SETC  (4062)'A'
+         MAC   C=(&X)
+)";
+    analyzer a(input);
+    a.analyze();
+
+    // TODO: Does not work yet
+    // EXPECT_TRUE(matches_message_codes(a.diags(), { "CE011" }));
+    // EXPECT_EQ(get_var_value<A_t>(a.hlasm_ctx(), "L"), 0);
+}
+
+TEST(macro, macro_label_cap)
+{
+    std::string input = R"(
+         GBLA  &L
+
+         MACRO
+&C       MAC
+         GBLA  &L
+&L       SETA  K'&C
+         MEND
+
+&X       SETC  (64)'A'
+&X       MAC
+)";
+    analyzer a(input);
+    a.analyze();
+
+    EXPECT_TRUE(matches_message_codes(a.diags(), { "CE011" }));
+    EXPECT_EQ(get_var_value<A_t>(a.hlasm_ctx(), "L"), 0);
 }

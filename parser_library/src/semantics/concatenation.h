@@ -52,7 +52,6 @@ struct char_str_conc
     std::string value;
     range conc_range;
 
-    std::string evaluate(const expressions::evaluation_context& eval_ctx) const;
     void resolve(diagnostic_op_consumer& diag) const;
 };
 
@@ -67,7 +66,6 @@ struct var_sym_conc
 
     static std::string evaluate(context::SET_t varsym_value);
 
-    std::string evaluate(const expressions::evaluation_context& eval_ctx) const;
     void resolve(diagnostic_op_consumer& diag) const;
 };
 
@@ -79,7 +77,6 @@ struct dot_conc
     {}
     range conc_range;
 
-    std::string evaluate(const expressions::evaluation_context& eval_ctx) const;
     void resolve(diagnostic_op_consumer& diag) const;
 };
 
@@ -90,7 +87,6 @@ struct equals_conc
         : conc_range(r)
     {}
     range conc_range;
-    std::string evaluate(const expressions::evaluation_context& eval_ctx) const;
     void resolve(diagnostic_op_consumer& diag) const;
 };
 
@@ -101,7 +97,6 @@ struct sublist_conc
 
     std::vector<concat_chain> list;
 
-    std::string evaluate(const expressions::evaluation_context& eval_ctx) const;
     void resolve(diagnostic_op_consumer& diag) const;
 };
 
@@ -167,7 +162,6 @@ struct concatenation_point
         concat_chain::const_iterator end,
         const expressions::evaluation_context& eval_ctx);
 
-    std::string evaluate(const expressions::evaluation_context& eval_ctx) const;
     void resolve(diagnostic_op_consumer& diag) const;
 };
 

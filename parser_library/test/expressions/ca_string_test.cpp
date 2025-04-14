@@ -71,8 +71,8 @@ INSTANTIATE_TEST_SUITE_P(param_suite,
     ca_string_suite,
     ::testing::Values(test_param { "abc", 0, "", false, "dupl_zero" },
         test_param { "abc", -5, "", true, "dupl_negative" },
-        test_param { std::string(8000, '1'), 1, "", true, "too_big_value" },
-        test_param { std::string(4000, '1'), 2, "", true, "too_big_dupl_factor" }),
+        test_param { std::string(8000, '1'), 1, std::string(4064, '1'), true, "too_big_value" },
+        test_param { std::string(4000, '1'), 2, std::string(4064, '1'), true, "too_big_dupl_factor" }),
     stringer());
 
 TEST(ca_string, test)
@@ -111,7 +111,5 @@ TEST_P(ca_string_suite, dupl)
     auto res = s.evaluate(eval_ctx);
 
     EXPECT_EQ(diags.diags.size(), GetParam().error);
-
-    if (!GetParam().error)
-        EXPECT_EQ(res.access_c(), GetParam().result);
+    EXPECT_EQ(res.access_c(), GetParam().result);
 }
