@@ -102,8 +102,11 @@ void macrodef_processor::process_statement(context::shared_stmt_ptr statement)
 void macrodef_processor::end_processing()
 {
     if (!finished_flag_)
+    {
         add_diagnostic(diagnostic_op::error_E046(
             result_.prototype.macro_name.to_string_view(), range(hlasm_ctx.current_statement_position())));
+        result_.invalid = true;
+    }
 
     hlasm_ctx.pop_statement_processing();
 

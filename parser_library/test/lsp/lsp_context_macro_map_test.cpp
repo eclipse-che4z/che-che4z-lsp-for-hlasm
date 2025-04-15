@@ -25,8 +25,9 @@ TEST(lsp_context, macro_map)
     MACRO
     MAC
     COPY E
+    MEND
 )" },
-        { "E", " MEND" },
+        { "E", " SAM31" },
         { "COPYM", R"(
     MACRO
     MACE
@@ -59,8 +60,8 @@ TEST(lsp_context, macro_map)
     ASSERT_TRUE(copym);
 
     EXPECT_EQ(opencode->macro_map(), (std::vector<bool> { false, false, true, true }));
-    EXPECT_EQ(mac->macro_map(), (std::vector<bool> { false, false, true, true }));
-    EXPECT_EQ(e->macro_map(), (std::vector<bool> {})); // used only as copybook in macro
+    EXPECT_EQ(mac->macro_map(), (std::vector<bool> { false, false, true, true, true }));
+    EXPECT_EQ(e->macro_map(), (std::vector<bool> { true })); // used only as copybook in macro
     EXPECT_EQ(copym->macro_map(), (std::vector<bool> { false, false, true, true }));
 }
 

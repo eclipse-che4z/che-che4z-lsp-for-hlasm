@@ -1516,3 +1516,22 @@ TEST(macro, macro_label_cap)
     EXPECT_TRUE(matches_message_codes(a.diags(), { "CE011" }));
     EXPECT_EQ(get_var_value<A_t>(a.hlasm_ctx(), "L"), 0);
 }
+
+TEST(external_macro, incomplete)
+{
+    mock_parse_lib_provider lib({
+        { "MAC", R"(.*
+    MACRO
+    MAC
+    MACRO
+ )" },
+    });
+    std::string input = R"(
+    MAC
+    SAM31
+)";
+    analyzer a(input, analyzer_options { &lib });
+    a.analyze();
+
+    EXPECT_TRUE(matches_message_codes(a.diags(), { "E049" }));
+}

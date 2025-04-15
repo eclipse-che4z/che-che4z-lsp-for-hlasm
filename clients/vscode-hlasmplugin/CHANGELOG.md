@@ -9,6 +9,7 @@
 - Incorrect processing stack in nested macros
 - Unhandled error while reading configuration
 - AREAD instruction handles multibyte UTF-8 sequences incorrectly
+- The language server crashes on an incomplete macro definition
 
 #### Changed
 - Removed cpp-netlib/uri dependency
