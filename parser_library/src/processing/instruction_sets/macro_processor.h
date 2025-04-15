@@ -44,22 +44,12 @@ public:
         semantics::concat_chain::const_iterator end,
         diagnostic_adder& add_diagnostic);
 
-    static context::macro_data_ptr create_macro_data(semantics::concat_chain::const_iterator begin,
-        semantics::concat_chain::const_iterator end,
-        const expressions::evaluation_context& eval_ctx,
-        diagnostic_adder& add_diagnostic);
+    auto make_evaluator() const;
 
 private:
     macro_arguments get_args(const resolved_statement& statement) const;
     context::macro_data_ptr get_label_args(const resolved_statement& statement) const;
     std::vector<context::macro_arg> get_operand_args(const resolved_statement& statement) const;
-
-    void get_keyword_arg(const resolved_statement& statement,
-        context::id_index arg_name,
-        const semantics::concat_chain& chain,
-        std::vector<context::macro_arg>& args,
-        std::vector<context::id_index>& keyword_params,
-        range op_range) const;
 };
 
 } // namespace hlasm_plugin::parser_library::processing

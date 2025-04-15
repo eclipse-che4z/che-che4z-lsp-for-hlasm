@@ -42,12 +42,12 @@ public:
 
     diagnostic_adder() = default;
 
-    template<typename F>
-    void operator()(F&& f) requires std::is_invocable_r_v<diagnostic_op, F, range>
+    template<typename F, typename... Args>
+    void operator()(F&& f, Args&&... args) requires std::is_invocable_r_v<diagnostic_op, F, Args..., range>
     {
         diagnostics_present = true;
         if (op_diagnoser_)
-            op_diagnoser_->add_diagnostic(f(diag_range_));
+            op_diagnoser_->add_diagnostic(f(std::forward<Args>(args)..., diag_range_));
     }
 };
 
