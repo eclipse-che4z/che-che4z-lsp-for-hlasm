@@ -1535,3 +1535,21 @@ TEST(external_macro, incomplete)
 
     EXPECT_TRUE(matches_message_codes(a.diags(), { "E049" }));
 }
+
+TEST(macro, empty_macro_name_from_preprocessor)
+{
+    mock_parse_lib_provider lib({
+        { "INC", R"(
+    MACRO
+
+    MEND
+ )" },
+    });
+    std::string input = R"(
+-INC INC
+)";
+    analyzer a(input, analyzer_options { &lib, endevor_preprocessor_options() });
+    a.analyze();
+
+    EXPECT_TRUE(matches_message_codes(a.diags(), { "E042" }));
+}

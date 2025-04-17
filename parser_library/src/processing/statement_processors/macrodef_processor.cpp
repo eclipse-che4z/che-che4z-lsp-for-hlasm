@@ -255,17 +255,22 @@ void macrodef_processor::process_prototype_label(
 
 void macrodef_processor::process_prototype_instruction(const resolved_statement& statement)
 {
+    const auto instr_range = statement.instruction_ref().field_range;
     auto macro_name = statement.opcode_ref().value;
     if (start_.is_external && macro_name != start_.external_name)
     {
-        add_diagnostic(
-            diagnostic_op::error_E060(start_.external_name.to_string_view(), statement.instruction_ref().field_range));
+        add_diagnostic(diagnostic_op::error_E060(start_.external_name.to_string_view(), instr_range));
         result_.invalid = true;
         finished_flag_ = true;
         return;
     }
-    result_.prototype.macro_name = statement.opcode_ref().value;
-    result_.prototype.macro_name_range = statement.instruction_ref().field_range;
+    if (macro_name.empty())
+    {
+        add_diagnostic(diagnostic_op::error_E042(instr_range));
+        macro_name = context::id_storage::well_known::ASPACE;
+    }
+    result_.prototype.macro_name = macro_name;
+    result_.prototype.macro_name_range = instr_range;
 }
 
 void macrodef_processor::process_prototype_operand(

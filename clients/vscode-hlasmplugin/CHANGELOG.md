@@ -10,6 +10,7 @@
 - Unhandled error while reading configuration
 - AREAD instruction handles multibyte UTF-8 sequences incorrectly
 - The language server crashes on an incomplete macro definition
+- Macro defined in a preprocessor output is allowed to have empty name
 
 #### Changed
 - Removed cpp-netlib/uri dependency
