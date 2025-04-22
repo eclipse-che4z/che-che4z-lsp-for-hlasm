@@ -1553,3 +1553,25 @@ TEST(macro, empty_macro_name_from_preprocessor)
 
     EXPECT_TRUE(matches_message_codes(a.diags(), { "E042" }));
 }
+
+TEST(macro, preprocessor_nesting)
+{
+    mock_parse_lib_provider lib({
+        { "INC", R"( SAM31
+J OPSYN MACRO
+ J
+)" },
+    });
+
+    std::string input = R"(
+
+    MACRO
+-INC INC
+    MEND
+-INC INC
+)";
+    analyzer a(input, analyzer_options { &lib, endevor_preprocessor_options() });
+    a.analyze();
+
+    EXPECT_TRUE(matches_message_codes(a.diags(), { "E046" }));
+}

@@ -50,6 +50,7 @@ struct copy_nest_item
 {
     location loc;
     id_index member_name;
+    size_t macro_nest_level;
 };
 
 using copy_nest_storage = std::vector<std::vector<copy_nest_item>>;

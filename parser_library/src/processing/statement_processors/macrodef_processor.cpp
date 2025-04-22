@@ -35,8 +35,6 @@ macrodef_processor::macrodef_processor(const analyzing_context& ctx,
     , listener_(listener)
     , branching_provider_(branching_provider_)
     , start_(std::move(start))
-    , initial_copy_nest_(hlasm_ctx.current_copy_stack().size())
-    , expecting_MACRO_(start_.is_external)
     , result_({
           // clang format really does not like it without the parenthesis
           .prototype = macrodef_prototype(start_.is_external ? start_.external_name : context::id_index()),
@@ -46,10 +44,8 @@ macrodef_processor::macrodef_processor(const analyzing_context& ctx,
       })
     , table_(create_table())
 {
-    if (const auto* mac = hlasm_ctx.current_macro())
-    {
-        drop_copy_nest = mac->get_current_copy_nest().size();
-    }
+    if (!start.is_external)
+        copy_nest_limit.push_back(hlasm_ctx.current_copy_stack().size());
 }
 
 std::optional<context::id_index> macrodef_processor::resolve_concatenation(
@@ -63,7 +59,7 @@ std::optional<processing_status> macrodef_processor::get_processing_status(
     const std::optional<context::id_index>& instruction, const range& r) const
 {
     assert(instruction.has_value());
-    if (expecting_prototype_ && !expecting_MACRO_)
+    if (expecting_prototype_ && !copy_nest_limit.empty())
     {
         processing_format format(processing_kind::MACRO, processing_form::MAC);
         context::id_index id;
@@ -87,7 +83,7 @@ std::optional<processing_status> macrodef_processor::get_processing_status(
 
 void macrodef_processor::process_statement(context::shared_stmt_ptr statement)
 {
-    bool expecting_tmp = expecting_prototype_ || expecting_MACRO_;
+    bool expecting_tmp = expecting_prototype_ || copy_nest_limit.empty();
 
     bumped_macro_nest = false;
     bool handled = process_statement(*statement);
@@ -157,10 +153,9 @@ processing_status macrodef_processor::get_macro_processing_status(
 
 void macrodef_processor::update_outer_position(const context::hlasm_statement& stmt)
 {
-    if (hlasm_ctx.current_copy_stack().size() != initial_copy_nest_)
+    if (hlasm_ctx.current_copy_stack().size() != copy_nest_limit.front())
         return;
-    if (const auto& scope = hlasm_ctx.current_scope();
-        scope.is_in_macro() && scope.this_macro->get_current_copy_nest().size() >= 2)
+    if (const auto* mac = hlasm_ctx.current_macro(); mac && mac->get_current_copy_nest().size() >= 2)
         return;
 
     curr_outer_position_ = stmt.statement_position();
@@ -172,7 +167,7 @@ bool macrodef_processor::process_statement(const context::hlasm_statement& state
 
     auto res_stmt = statement.access_resolved();
 
-    if (expecting_MACRO_)
+    if (copy_nest_limit.empty())
     {
         result_.definition_location = hlasm_ctx.current_statement_location();
 
@@ -185,7 +180,9 @@ bool macrodef_processor::process_statement(const context::hlasm_statement& state
             return false;
         }
         else
-            expecting_MACRO_ = false;
+        {
+            copy_nest_limit.push_back(hlasm_ctx.current_copy_stack().size());
+        }
     }
     else if (expecting_prototype_)
     {
@@ -393,18 +390,19 @@ macrodef_processor::process_table_t macrodef_processor::create_table()
 
 bool macrodef_processor::process_MACRO()
 {
-    ++macro_nest_;
+    copy_nest_limit.push_back(hlasm_ctx.current_copy_stack().size());
     bumped_macro_nest = true;
     return false;
 }
 
 bool macrodef_processor::process_MEND()
 {
-    assert(macro_nest_ != 0);
-    --macro_nest_;
+    assert(!copy_nest_limit.empty());
 
-    if (macro_nest_ == 0)
+    if (copy_nest_limit.size() <= 1) // we need to keep the initial copy nesting level
         finished_flag_ = true;
+    else
+        copy_nest_limit.pop_back();
 
     return false;
 }
@@ -502,7 +500,7 @@ bool macrodef_processor::process_SET(const resolved_statement& statement, contex
 void macrodef_processor::add_SET_sym_to_res(
     const semantics::variable_symbol* var, context::SET_t_enum set_type, bool global)
 {
-    if (macro_nest_ > 1)
+    if (copy_nest_limit.size() > 1)
         return;
     if (var->created)
         return;
@@ -519,7 +517,7 @@ void macrodef_processor::add_SET_sym_to_res(
 
 void macrodef_processor::process_sequence_symbol(const semantics::label_si& label)
 {
-    if (macro_nest_ == 1 && label.type == semantics::label_si_type::SEQ)
+    if (copy_nest_limit.size() == 1 && label.type == semantics::label_si_type::SEQ)
     {
         auto& seq = std::get<semantics::seq_sym>(label.value);
 
@@ -538,32 +536,58 @@ void macrodef_processor::process_sequence_symbol(const semantics::label_si& labe
     }
 }
 
+namespace {
+constexpr auto first_nest_level = [](const context::copy_nest_item& cni) { return cni.macro_nest_level <= 1; };
+size_t estimate_copy_nest_size(
+    size_t initial_nest, const std::vector<context::copy_member_invocation>& nest, const context::macro_invocation* mac)
+{
+    size_t result = 1;
+    if (initial_nest < nest.size())
+        result += nest.size() - initial_nest;
+
+    if (mac)
+        result += std::ranges::size(mac->get_current_copy_nest() | std::views::drop_while(first_nest_level));
+
+    return result;
+}
+} // namespace
+
 void macrodef_processor::add_correct_copy_nest()
 {
-    result_.nests.push_back({ context::copy_nest_item {
-        { curr_outer_position_, result_.definition_location.resource_loc }, result_.prototype.macro_name } });
+    const auto& current_copy_stack = hlasm_ctx.current_copy_stack();
+    const auto* mac = hlasm_ctx.current_macro();
 
-    for (size_t i = initial_copy_nest_; i < hlasm_ctx.current_copy_stack().size(); ++i)
+    auto& current_nest = result_.nests.emplace_back();
+    current_nest.reserve(estimate_copy_nest_size(copy_nest_limit.front(), current_copy_stack, mac));
+
+    current_nest.emplace_back(
+        location { curr_outer_position_, result_.definition_location.resource_loc }, result_.prototype.macro_name, 1);
+
+    for (size_t i = copy_nest_limit.front(), nest_id = 1; i < current_copy_stack.size(); ++i)
     {
-        const auto& nest = hlasm_ctx.current_copy_stack()[i];
-        result_.nests.back().emplace_back(context::copy_nest_item {
-            location { nest.current_statement_position(), nest.definition_location()->resource_loc }, nest.name() });
+        const auto& nest = current_copy_stack[i];
+        while (nest_id < copy_nest_limit.size() && i >= copy_nest_limit[nest_id])
+            ++nest_id;
+        current_nest.emplace_back(
+            location { nest.current_statement_position(), nest.definition_location()->resource_loc },
+            nest.name(),
+            nest_id);
     }
 
-    if (initial_copy_nest_ < hlasm_ctx.current_copy_stack().size())
-        result_.used_copy_members.insert(hlasm_ctx.current_copy_stack().back().copy_member_definition);
-
-    if (drop_copy_nest != skip_copy_nest)
+    if (mac)
     {
-        for (const auto& nest : hlasm_ctx.current_macro()->get_current_copy_nest() | std::views::drop(drop_copy_nest))
+        for (const auto& nest : mac->get_current_copy_nest() | std::views::drop_while(first_nest_level))
         {
             result_.used_copy_members.insert(hlasm_ctx.get_copy_member(nest.member_name));
-            result_.nests.back().push_back(nest);
+            current_nest.emplace_back(nest.loc, nest.member_name, nest.macro_nest_level - 1);
         }
     }
 
-    const bool in_inner_macro = macro_nest_ > 1 + bumped_macro_nest;
-    auto& [scope, start_new_slice] = result_.file_scopes[result_.nests.back().back().loc.resource_loc];
+    if (copy_nest_limit.front() < current_copy_stack.size())
+        result_.used_copy_members.insert(current_copy_stack.back().copy_member_definition);
+
+    const bool in_inner_macro = copy_nest_limit.size() > 1 + bumped_macro_nest;
+    auto& [scope, start_new_slice] = result_.file_scopes[current_nest.back().loc.resource_loc];
 
     const context::statement_id current_statement_id = { result_.definition.size() - 1 };
     if (scope.empty() || start_new_slice)
