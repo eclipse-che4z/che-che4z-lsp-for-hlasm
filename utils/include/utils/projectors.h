@@ -22,7 +22,7 @@ namespace hlasm_plugin::utils {
 struct
 {
     template<class T>
-    auto&& operator()(T&& t) const noexcept
+    constexpr auto&& operator()(T&& t) const noexcept
     {
         return std::forward<T>(t).first;
     }
@@ -31,7 +31,7 @@ struct
 struct
 {
     template<class T>
-    auto&& operator()(T&& t) const noexcept
+    constexpr auto&& operator()(T&& t) const noexcept
     {
         return std::forward<T>(t).second;
     }
@@ -40,7 +40,7 @@ struct
 struct
 {
     template<typename T>
-    auto&& operator()(T&& t) const noexcept
+    constexpr auto&& operator()(T&& t) const noexcept
     {
         return *std::forward<T>(t);
     }

@@ -48,6 +48,7 @@ class id_index
 
     friend class id_storage;
     friend class literal_pool;
+    friend class compressed_id;
 
 public:
     constexpr id_index() noexcept = default;

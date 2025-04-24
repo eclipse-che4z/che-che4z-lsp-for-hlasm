@@ -14,6 +14,7 @@ target_sources(parser_library PRIVATE
     code_scope.h
     common_types.cpp
     common_types.h
+    compressed_id.h
     copy_member.h
     hlasm_context.cpp
     hlasm_context.h

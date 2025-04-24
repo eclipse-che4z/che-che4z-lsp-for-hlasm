@@ -36,6 +36,7 @@
 #include "parse_lib_provider.h"
 #include "postponed_statement_impl.h"
 #include "processing/branching_provider.h"
+#include "processing/handler_map.h"
 #include "processing/opencode_provider.h"
 #include "processing/processing_manager.h"
 #include "processing/statement.h"
@@ -79,9 +80,54 @@ std::optional<int> try_get_number(std::string_view s)
     return std::nullopt;
 }
 
+template<auto ptr, auto... others>
+constexpr auto fn = +[](asm_processor* self, rebuilt_statement&& stmt) { (self->*ptr)(std::move(stmt), others...); };
 } // namespace
 
-void asm_processor::process_sect(const context::section_kind kind, rebuilt_statement&& stmt)
+struct asm_processor::handler_table
+{
+    using wk = context::id_storage::well_known;
+    using id_index = context::id_index;
+    using callback = void(asm_processor* self, rebuilt_statement&& stmt);
+    static constexpr auto value = make_handler_map<callback>({
+        { id_index("CSECT"), fn<&asm_processor::process_sect, context::section_kind::EXECUTABLE> },
+        { id_index("DSECT"), fn<&asm_processor::process_sect, context::section_kind::DUMMY> },
+        { id_index("RSECT"), fn<&asm_processor::process_sect, context::section_kind::READONLY> },
+        { id_index("COM"), fn<&asm_processor::process_sect, context::section_kind::COMMON> },
+        { id_index("LOCTR"), fn<&asm_processor::process_LOCTR> },
+        { id_index("EQU"), fn<&asm_processor::process_EQU> },
+        { id_index("DC"), fn<&asm_processor::process_DC> },
+        { id_index("DS"), fn<&asm_processor::process_DS> },
+        { wk::COPY, fn<&asm_processor::process_COPY> },
+        { id_index("EXTRN"), fn<&asm_processor::process_EXTRN> },
+        { id_index("WXTRN"), fn<&asm_processor::process_WXTRN> },
+        { id_index("ORG"), fn<&asm_processor::process_ORG> },
+        { id_index("OPSYN"), fn<&asm_processor::process_OPSYN> },
+        { id_index("AINSERT"), fn<&asm_processor::process_AINSERT> },
+        { id_index("CCW"), fn<&asm_processor::process_CCW> },
+        { id_index("CCW0"), fn<&asm_processor::process_CCW> },
+        { id_index("CCW1"), fn<&asm_processor::process_CCW> },
+        { id_index("CNOP"), fn<&asm_processor::process_CNOP> },
+        { id_index("START"), fn<&asm_processor::process_START> },
+        { id_index("ALIAS"), fn<&asm_processor::process_ALIAS> },
+        { id_index("END"), fn<&asm_processor::process_END> },
+        { id_index("LTORG"), fn<&asm_processor::process_LTORG> },
+        { id_index("USING"), fn<&asm_processor::process_USING> },
+        { id_index("DROP"), fn<&asm_processor::process_DROP> },
+        { id_index("PUSH"), fn<&asm_processor::process_PUSH> },
+        { id_index("POP"), fn<&asm_processor::process_POP> },
+        { id_index("MNOTE"), fn<&asm_processor::process_MNOTE> },
+        { id_index("CXD"), fn<&asm_processor::process_CXD> },
+        { id_index("TITLE"), fn<&asm_processor::process_TITLE> },
+        { id_index("PUNCH"), fn<&asm_processor::process_PUNCH> },
+        { id_index("CATTR"), fn<&asm_processor::process_CATTR> },
+        { id_index("XATTR"), fn<&asm_processor::process_XATTR> },
+    });
+
+    static constexpr auto find(id_index id) noexcept { return value.find(id); }
+};
+
+void asm_processor::process_sect(rebuilt_statement&& stmt, const context::section_kind kind)
 {
     auto sect_name = find_label_symbol(stmt);
 
@@ -717,7 +763,6 @@ asm_processor::asm_processor(const analyzing_context& ctx,
     output_handler* output,
     diagnosable_ctx& diag_ctx)
     : low_language_processor(ctx, branch_provider, lib_provider, parser, proc_mgr, diag_ctx)
-    , table_(create_table())
     , open_code_(&open_code)
     , output(output)
 {}
@@ -728,11 +773,9 @@ void asm_processor::process(std::shared_ptr<const processing::resolved_statement
 
     register_literals(rebuilt_stmt, context::no_align, hlasm_ctx.ord_ctx.next_unique_id());
 
-    auto it = table_.find(rebuilt_stmt.opcode_ref().value);
-    if (it != table_.end())
+    if (const auto handler = handler_table::find(rebuilt_stmt.opcode_ref().value))
     {
-        auto& [key, func] = *it;
-        func(std::move(rebuilt_stmt));
+        handler(this, std::move(rebuilt_stmt));
     }
     else
     {
@@ -742,6 +785,7 @@ void asm_processor::process(std::shared_ptr<const processing::resolved_statement
             std::move(dep_solver).derive_current_dependency_evaluation_context());
     }
 }
+
 std::optional<asm_processor::extract_copy_id_result> asm_processor::extract_copy_id(
     const processing::resolved_statement& stmt, diagnosable_ctx* diagnoser)
 {
@@ -791,50 +835,6 @@ bool asm_processor::common_copy_postprocess(
     hlasm_ctx.enter_copy_member(data.name);
 
     return true;
-}
-
-asm_processor::process_table_t asm_processor::create_table()
-{
-    process_table_t table;
-    table.emplace(context::id_index("CSECT"),
-        [this](rebuilt_statement&& stmt) { process_sect(context::section_kind::EXECUTABLE, std::move(stmt)); });
-    table.emplace(context::id_index("DSECT"),
-        [this](rebuilt_statement&& stmt) { process_sect(context::section_kind::DUMMY, std::move(stmt)); });
-    table.emplace(context::id_index("RSECT"),
-        [this](rebuilt_statement&& stmt) { process_sect(context::section_kind::READONLY, std::move(stmt)); });
-    table.emplace(context::id_index("COM"),
-        [this](rebuilt_statement&& stmt) { process_sect(context::section_kind::COMMON, std::move(stmt)); });
-    table.emplace(context::id_index("LOCTR"), [this](rebuilt_statement&& stmt) { process_LOCTR(std::move(stmt)); });
-    table.emplace(context::id_index("EQU"), [this](rebuilt_statement&& stmt) { process_EQU(std::move(stmt)); });
-    table.emplace(context::id_index("DC"), [this](rebuilt_statement&& stmt) { process_DC(std::move(stmt)); });
-    table.emplace(context::id_index("DS"), [this](rebuilt_statement&& stmt) { process_DS(std::move(stmt)); });
-    table.emplace(
-        context::id_storage::well_known::COPY, [this](rebuilt_statement&& stmt) { process_COPY(std::move(stmt)); });
-    table.emplace(context::id_index("EXTRN"), [this](rebuilt_statement&& stmt) { process_EXTRN(std::move(stmt)); });
-    table.emplace(context::id_index("WXTRN"), [this](rebuilt_statement&& stmt) { process_WXTRN(std::move(stmt)); });
-    table.emplace(context::id_index("ORG"), [this](rebuilt_statement&& stmt) { process_ORG(std::move(stmt)); });
-    table.emplace(context::id_index("OPSYN"), [this](rebuilt_statement&& stmt) { process_OPSYN(std::move(stmt)); });
-    table.emplace(context::id_index("AINSERT"), [this](rebuilt_statement&& stmt) { process_AINSERT(std::move(stmt)); });
-    table.emplace(context::id_index("CCW"), [this](rebuilt_statement&& stmt) { process_CCW(std::move(stmt)); });
-    table.emplace(context::id_index("CCW0"), [this](rebuilt_statement&& stmt) { process_CCW(std::move(stmt)); });
-    table.emplace(context::id_index("CCW1"), [this](rebuilt_statement&& stmt) { process_CCW(std::move(stmt)); });
-    table.emplace(context::id_index("CNOP"), [this](rebuilt_statement&& stmt) { process_CNOP(std::move(stmt)); });
-    table.emplace(context::id_index("START"), [this](rebuilt_statement&& stmt) { process_START(std::move(stmt)); });
-    table.emplace(context::id_index("ALIAS"), [this](rebuilt_statement&& stmt) { process_ALIAS(std::move(stmt)); });
-    table.emplace(context::id_index("END"), [this](rebuilt_statement&& stmt) { process_END(std::move(stmt)); });
-    table.emplace(context::id_index("LTORG"), [this](rebuilt_statement&& stmt) { process_LTORG(std::move(stmt)); });
-    table.emplace(context::id_index("USING"), [this](rebuilt_statement&& stmt) { process_USING(std::move(stmt)); });
-    table.emplace(context::id_index("DROP"), [this](rebuilt_statement&& stmt) { process_DROP(std::move(stmt)); });
-    table.emplace(context::id_index("PUSH"), [this](rebuilt_statement&& stmt) { process_PUSH(std::move(stmt)); });
-    table.emplace(context::id_index("POP"), [this](rebuilt_statement&& stmt) { process_POP(std::move(stmt)); });
-    table.emplace(context::id_index("MNOTE"), [this](rebuilt_statement&& stmt) { process_MNOTE(std::move(stmt)); });
-    table.emplace(context::id_index("CXD"), [this](rebuilt_statement&& stmt) { process_CXD(std::move(stmt)); });
-    table.emplace(context::id_index("TITLE"), [this](rebuilt_statement&& stmt) { process_TITLE(std::move(stmt)); });
-    table.emplace(context::id_index("PUNCH"), [this](rebuilt_statement&& stmt) { process_PUNCH(std::move(stmt)); });
-    table.emplace(context::id_index("CATTR"), [this](rebuilt_statement&& stmt) { process_CATTR(std::move(stmt)); });
-    table.emplace(context::id_index("XATTR"), [this](rebuilt_statement&& stmt) { process_XATTR(std::move(stmt)); });
-
-    return table;
 }
 
 context::id_index asm_processor::find_sequence_symbol(const rebuilt_statement& stmt)

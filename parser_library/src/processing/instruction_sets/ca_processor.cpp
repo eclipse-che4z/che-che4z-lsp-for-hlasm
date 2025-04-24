@@ -14,6 +14,7 @@
 
 #include "ca_processor.h"
 
+#include <stdexcept>
 #include <utility>
 
 #include "aread_time.h"
@@ -21,17 +22,53 @@
 #include "context/variables/set_symbol.h"
 #include "expressions/conditional_assembly/terms/ca_symbol.h"
 #include "processing/branching_provider.h"
+#include "processing/handler_map.h"
 #include "processing/opencode_provider.h"
 #include "processing/processing_state_listener.h"
 #include "semantics/operand_impls.h"
 #include "semantics/operand_visitor.h"
-#include "semantics/range_provider.h"
 #include "utils/projectors.h"
 #include "utils/task.h"
 #include "utils/time.h"
 
 using namespace hlasm_plugin::parser_library;
 using namespace processing;
+
+namespace {
+template<void (ca_processor::*ptr)(const resolved_statement&)>
+constexpr auto fn = +[](ca_processor* self, const resolved_statement& stmt) { (self->*ptr)(stmt); };
+} // namespace
+
+struct ca_processor::handler_table
+{
+    using wk = context::id_storage::well_known;
+    using callback = void(ca_processor*, const processing::resolved_statement&);
+    static constexpr auto value = make_handler_map<callback>({
+        { wk::SETA, fn<&ca_processor::process_SET<context::A_t>> },
+        { wk::SETB, fn<&ca_processor::process_SET<context::B_t>> },
+        { wk::SETC, fn<&ca_processor::process_SET<context::C_t>> },
+        { wk::LCLA, fn<&ca_processor::process_GBL_LCL<context::A_t, false>> },
+        { wk::LCLB, fn<&ca_processor::process_GBL_LCL<context::B_t, false>> },
+        { wk::LCLC, fn<&ca_processor::process_GBL_LCL<context::C_t, false>> },
+        { wk::GBLA, fn<&ca_processor::process_GBL_LCL<context::A_t, true>> },
+        { wk::GBLB, fn<&ca_processor::process_GBL_LCL<context::B_t, true>> },
+        { wk::GBLC, fn<&ca_processor::process_GBL_LCL<context::C_t, true>> },
+        { wk::ANOP, fn<&ca_processor::process_ANOP> },
+        { wk::ACTR, fn<&ca_processor::process_ACTR> },
+        { wk::AGO, fn<&ca_processor::process_AGO> },
+        { wk::AIF, fn<&ca_processor::process_AIF> },
+        { context::id_index(), fn<&ca_processor::process_empty> },
+        { wk::MACRO, fn<&ca_processor::process_MACRO> },
+        { wk::MEND, fn<&ca_processor::process_MEND> },
+        { wk::MEXIT, fn<&ca_processor::process_MEXIT> },
+        { wk::AREAD, fn<&ca_processor::process_AREAD> },
+        { wk::ASPACE, fn<&ca_processor::process_ASPACE> },
+        { wk::AEJECT, fn<&ca_processor::process_AEJECT> },
+        { wk::MHELP, fn<&ca_processor::process_MHELP> },
+    });
+
+    static constexpr auto find(context::id_index id) noexcept { return value.find(id); }
+};
 
 ca_processor::ca_processor(const analyzing_context& ctx,
     branching_provider& branch_provider,
@@ -40,7 +77,6 @@ ca_processor::ca_processor(const analyzing_context& ctx,
     opencode_provider& open_code,
     diagnosable_ctx& diag_ctx)
     : instruction_processor(ctx, branch_provider, lib_provider, diag_ctx)
-    , table_(create_table())
     , listener_(listener)
     , open_code_(&open_code)
 {}
@@ -49,37 +85,10 @@ void ca_processor::process(std::shared_ptr<const processing::resolved_statement>
 {
     register_literals(*stmt, context::no_align, hlasm_ctx.ord_ctx.next_unique_id());
 
-    auto& func = table_.at(stmt->opcode_ref().value);
-    func(*stmt);
-}
-
-ca_processor::process_table_t ca_processor::create_table()
-{
-    using wk = context::id_storage::well_known;
-    process_table_t table;
-    table.try_emplace(wk::SETA, std::bind_front(&ca_processor::process_SET<context::A_t>, this));
-    table.try_emplace(wk::SETB, std::bind_front(&ca_processor::process_SET<context::B_t>, this));
-    table.try_emplace(wk::SETC, std::bind_front(&ca_processor::process_SET<context::C_t>, this));
-    table.try_emplace(wk::LCLA, std::bind_front(&ca_processor::process_GBL_LCL<context::A_t, false>, this));
-    table.try_emplace(wk::LCLB, std::bind_front(&ca_processor::process_GBL_LCL<context::B_t, false>, this));
-    table.try_emplace(wk::LCLC, std::bind_front(&ca_processor::process_GBL_LCL<context::C_t, false>, this));
-    table.try_emplace(wk::GBLA, std::bind_front(&ca_processor::process_GBL_LCL<context::A_t, true>, this));
-    table.try_emplace(wk::GBLB, std::bind_front(&ca_processor::process_GBL_LCL<context::B_t, true>, this));
-    table.try_emplace(wk::GBLC, std::bind_front(&ca_processor::process_GBL_LCL<context::C_t, true>, this));
-    table.try_emplace(wk::ANOP, std::bind_front(&ca_processor::process_ANOP, this));
-    table.try_emplace(wk::ACTR, std::bind_front(&ca_processor::process_ACTR, this));
-    table.try_emplace(wk::AGO, std::bind_front(&ca_processor::process_AGO, this));
-    table.try_emplace(wk::AIF, std::bind_front(&ca_processor::process_AIF, this));
-    table.try_emplace(context::id_index(), std::bind_front(&ca_processor::process_empty, this));
-    table.try_emplace(wk::MACRO, std::bind_front(&ca_processor::process_MACRO, this));
-    table.try_emplace(wk::MEND, std::bind_front(&ca_processor::process_MEND, this));
-    table.try_emplace(wk::MEXIT, std::bind_front(&ca_processor::process_MEXIT, this));
-    table.try_emplace(wk::AREAD, std::bind_front(&ca_processor::process_AREAD, this));
-    table.try_emplace(wk::ASPACE, std::bind_front(&ca_processor::process_ASPACE, this));
-    table.try_emplace(wk::AEJECT, std::bind_front(&ca_processor::process_AEJECT, this));
-    table.try_emplace(wk::MHELP, std::bind_front(&ca_processor::process_MHELP, this));
-
-    return table;
+    if (const auto handler = handler_table::find(stmt->opcode_ref().value))
+        handler(this, *stmt);
+    else
+        throw std::out_of_range("ca_processor::handler_table");
 }
 
 void ca_processor::register_seq_sym(const processing::resolved_statement& stmt)

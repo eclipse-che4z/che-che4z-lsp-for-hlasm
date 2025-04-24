@@ -19,12 +19,46 @@
 
 #include "context/instruction.h"
 #include "processing/branching_provider.h"
+#include "processing/handler_map.h"
 #include "processing/instruction_sets/asm_processor.h"
 #include "processing/instruction_sets/macro_processor.h"
 #include "processing/processing_state_listener.h"
 #include "semantics/operand_impls.h"
 
 namespace hlasm_plugin::parser_library::processing {
+
+namespace {
+template<auto ptr, auto... others>
+constexpr auto fn = []() {
+    if constexpr (sizeof...(others) == 0 && requires(macrodef_processor* self) { (self->*ptr)(); })
+        return +[](macrodef_processor* self, const resolved_statement&) { return (self->*ptr)(); };
+    else
+        return +[](macrodef_processor* self, const resolved_statement& stmt) { return (self->*ptr)(stmt, others...); };
+}();
+} // namespace
+
+struct macrodef_processor::handler_table
+{
+    using wk = context::id_storage::well_known;
+    using callback = bool(macrodef_processor* self, const resolved_statement&);
+    using enum context::SET_t_enum;
+    static constexpr auto value = make_handler_map<callback>({
+        { wk::SETA, fn<&macrodef_processor::process_SET, A_TYPE> },
+        { wk::SETB, fn<&macrodef_processor::process_SET, B_TYPE> },
+        { wk::SETC, fn<&macrodef_processor::process_SET, C_TYPE> },
+        { wk::LCLA, fn<&macrodef_processor::process_LCL_GBL, A_TYPE, false> },
+        { wk::LCLB, fn<&macrodef_processor::process_LCL_GBL, B_TYPE, false> },
+        { wk::LCLC, fn<&macrodef_processor::process_LCL_GBL, C_TYPE, false> },
+        { wk::GBLA, fn<&macrodef_processor::process_LCL_GBL, A_TYPE, true> },
+        { wk::GBLB, fn<&macrodef_processor::process_LCL_GBL, B_TYPE, true> },
+        { wk::GBLC, fn<&macrodef_processor::process_LCL_GBL, C_TYPE, true> },
+        { wk::MACRO, fn<&macrodef_processor::process_MACRO> },
+        { wk::MEND, fn<&macrodef_processor::process_MEND> },
+        { wk::COPY, fn<&macrodef_processor::process_COPY> },
+    });
+
+    static constexpr auto find(context::id_index id) noexcept { return value.find(id); }
+};
 
 macrodef_processor::macrodef_processor(const analyzing_context& ctx,
     processing_state_listener& listener,
@@ -42,7 +76,6 @@ macrodef_processor::macrodef_processor(const analyzing_context& ctx,
           .external = start_.is_external,
           .invalid = true, // result starts invalid until mandatory statements are encountered
       })
-    , table_(create_table())
 {
     if (!start.is_external)
         copy_nest_limit.push_back(hlasm_ctx.current_copy_stack().size());
@@ -204,11 +237,8 @@ bool macrodef_processor::process_statement(const context::hlasm_statement& state
         {
             process_sequence_symbol(res_stmt->label_ref());
 
-            if (auto found = table_.find(res_stmt->opcode_ref().value); found != table_.end())
-            {
-                auto& [key, func] = *found;
-                return func(*res_stmt);
-            }
+            if (const auto handler = handler_table::find(res_stmt->opcode_ref().value))
+                return handler(this, *res_stmt);
         }
         else if (auto def_stmt = statement.access_deferred())
         {
@@ -357,35 +387,6 @@ bool macrodef_processor::test_varsym_validity(const semantics::variable_symbol* 
         return false;
     }
     return true;
-}
-
-macrodef_processor::process_table_t macrodef_processor::create_table()
-{
-    process_table_t table;
-    table.emplace(context::id_storage::well_known::SETA,
-        [this](const resolved_statement& stmt) { return process_SET(stmt, context::SET_t_enum::A_TYPE); });
-    table.emplace(context::id_storage::well_known::SETB,
-        [this](const resolved_statement& stmt) { return process_SET(stmt, context::SET_t_enum::B_TYPE); });
-    table.emplace(context::id_storage::well_known::SETC,
-        [this](const resolved_statement& stmt) { return process_SET(stmt, context::SET_t_enum::C_TYPE); });
-    table.emplace(context::id_storage::well_known::LCLA,
-        [this](const resolved_statement& stmt) { return process_LCL_GBL(stmt, context::SET_t_enum::A_TYPE, false); });
-    table.emplace(context::id_storage::well_known::LCLB,
-        [this](const resolved_statement& stmt) { return process_LCL_GBL(stmt, context::SET_t_enum::B_TYPE, false); });
-    table.emplace(context::id_storage::well_known::LCLC,
-        [this](const resolved_statement& stmt) { return process_LCL_GBL(stmt, context::SET_t_enum::C_TYPE, false); });
-    table.emplace(context::id_storage::well_known::GBLA,
-        [this](const resolved_statement& stmt) { return process_LCL_GBL(stmt, context::SET_t_enum::A_TYPE, true); });
-    table.emplace(context::id_storage::well_known::GBLB,
-        [this](const resolved_statement& stmt) { return process_LCL_GBL(stmt, context::SET_t_enum::B_TYPE, true); });
-    table.emplace(context::id_storage::well_known::GBLC,
-        [this](const resolved_statement& stmt) { return process_LCL_GBL(stmt, context::SET_t_enum::C_TYPE, true); });
-    table.emplace(
-        context::id_storage::well_known::MACRO, [this](const resolved_statement&) { return process_MACRO(); });
-    table.emplace(context::id_storage::well_known::MEND, [this](const resolved_statement&) { return process_MEND(); });
-    table.emplace(
-        context::id_storage::well_known::COPY, [this](const resolved_statement& stmt) { return process_COPY(stmt); });
-    return table;
 }
 
 bool macrodef_processor::process_MACRO()

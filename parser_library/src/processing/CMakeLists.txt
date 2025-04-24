@@ -14,6 +14,7 @@ target_sources(parser_library PRIVATE
     branching_provider.h
     error_statement.cpp
     error_statement.h
+    handler_map.h
     op_code.cpp
     op_code.h
     opencode_provider.cpp

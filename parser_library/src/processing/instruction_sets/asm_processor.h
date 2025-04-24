@@ -15,7 +15,6 @@
 #ifndef PROCESSING_ASM_PROCESSOR_H
 #define PROCESSING_ASM_PROCESSOR_H
 
-#include <functional>
 #include <memory>
 #include <optional>
 #include <unordered_map>
@@ -50,9 +49,7 @@ namespace hlasm_plugin::parser_library::processing {
 // processor of assembler instructions
 class asm_processor final : public low_language_processor
 {
-    using process_table_t = std::unordered_map<context::id_index, std::function<void(rebuilt_statement&&)>>;
-
-    const process_table_t table_;
+    struct handler_table;
 
 public:
     asm_processor(const analyzing_context& ctx,
@@ -81,11 +78,10 @@ public:
 private:
     opencode_provider* open_code_;
     output_handler* output;
-    process_table_t create_table();
 
     context::id_index find_sequence_symbol(const rebuilt_statement& stmt);
 
-    void process_sect(const context::section_kind kind, rebuilt_statement&& stmt);
+    void process_sect(rebuilt_statement&& stmt, const context::section_kind kind);
     void process_LOCTR(rebuilt_statement&& stmt);
     void process_EQU(rebuilt_statement&& stmt);
     void process_DC(rebuilt_statement&& stmt);

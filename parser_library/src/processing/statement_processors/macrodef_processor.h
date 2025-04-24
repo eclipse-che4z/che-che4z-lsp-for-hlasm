@@ -39,8 +39,7 @@ class macrodef_processor final : public statement_processor
 
     macrodef_processing_result result_;
 
-    using process_table_t = std::unordered_map<context::id_index, std::function<bool(const resolved_statement&)>>;
-    const process_table_t table_;
+    struct handler_table;
 
 public:
     macrodef_processor(const analyzing_context& ctx,
@@ -71,8 +70,6 @@ private:
         const std::vector<context::id_index>& param_names,
         range op_range,
         bool add_empty);
-
-    process_table_t create_table();
 
     bool process_MACRO();
     bool process_MEND();

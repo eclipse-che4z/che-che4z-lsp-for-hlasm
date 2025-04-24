@@ -21,7 +21,10 @@
 #include "expressions/mach_expr_term.h"
 #include "ordinary_processor.h"
 #include "processing/branching_provider.h"
+#include "processing/handler_map.h"
 #include "processing/instruction_sets/asm_processor.h"
+#include "processing/instruction_sets/instruction_processor.h"
+#include "processing/statement.h"
 #include "semantics/operand_impls.h"
 
 namespace hlasm_plugin::parser_library::processing {
@@ -121,7 +124,6 @@ lookahead_processor::lookahead_processor(const analyzing_context& ctx,
     , to_find_(std::move(start.targets))
     , target_(start.target)
     , action(start.action)
-    , asm_proc_table_(create_table())
 {}
 
 void lookahead_processor::process_MACRO() { ++macro_nest_; }
@@ -142,23 +144,32 @@ void lookahead_processor::process_COPY(const resolved_statement& statement)
     }
 }
 
-lookahead_processor::process_table_t lookahead_processor::create_table()
-{
-    process_table_t table;
-    using context::id_index;
-    table.try_emplace(id_index("CSECT"), std::bind_front(&lookahead_processor::assign_section_attributes, this));
-    table.try_emplace(id_index("DSECT"), std::bind_front(&lookahead_processor::assign_section_attributes, this));
-    table.try_emplace(id_index("RSECT"), std::bind_front(&lookahead_processor::assign_section_attributes, this));
-    table.try_emplace(id_index("COM"), std::bind_front(&lookahead_processor::assign_section_attributes, this));
-    table.try_emplace(id_index("DXD"), std::bind_front(&lookahead_processor::assign_section_attributes, this));
-    table.try_emplace(id_index("LOCTR"), std::bind_front(&lookahead_processor::assign_section_attributes, this));
-    table.try_emplace(id_index("EQU"), std::bind_front(&lookahead_processor::assign_EQU_attributes, this));
-    table.try_emplace(id_index("DC"), std::bind_front(&lookahead_processor::assign_data_def_attributes, this));
-    table.try_emplace(id_index("DS"), std::bind_front(&lookahead_processor::assign_data_def_attributes, this));
-    table.try_emplace(id_index("CXD"), std::bind_front(&lookahead_processor::assign_cxd_attributes, this));
+namespace {
+template<void (lookahead_processor::*ptr)(context::id_index, const resolved_statement&)>
+constexpr auto fn = +[](lookahead_processor* self, context::id_index name, const resolved_statement& stmt) {
+    (self->*ptr)(name, stmt);
+};
+} // namespace
 
-    return table;
-}
+struct lookahead_processor::handler_table
+{
+    using id_index = context::id_index;
+    using callback = void(lookahead_processor*, context::id_index, const resolved_statement&);
+    static constexpr auto value = make_handler_map<callback>({
+        { id_index("CSECT"), fn<&lookahead_processor::assign_section_attributes> },
+        { id_index("DSECT"), fn<&lookahead_processor::assign_section_attributes> },
+        { id_index("RSECT"), fn<&lookahead_processor::assign_section_attributes> },
+        { id_index("COM"), fn<&lookahead_processor::assign_section_attributes> },
+        { id_index("DXD"), fn<&lookahead_processor::assign_section_attributes> },
+        { id_index("LOCTR"), fn<&lookahead_processor::assign_section_attributes> },
+        { id_index("EQU"), fn<&lookahead_processor::assign_EQU_attributes> },
+        { id_index("DC"), fn<&lookahead_processor::assign_data_def_attributes> },
+        { id_index("DS"), fn<&lookahead_processor::assign_data_def_attributes> },
+        { id_index("CXD"), fn<&lookahead_processor::assign_cxd_attributes> },
+    });
+
+    static constexpr auto find(id_index id) noexcept { return value.find(id); }
+};
 
 void lookahead_processor::assign_EQU_attributes(context::id_index symbol_name, const resolved_statement& statement)
 {
@@ -274,12 +285,8 @@ void lookahead_processor::assign_machine_attributes(context::id_index symbol_nam
 void lookahead_processor::assign_assembler_attributes(
     context::id_index symbol_name, const resolved_statement& statement)
 {
-    auto it = asm_proc_table_.find(statement.opcode_ref().value);
-    if (it != asm_proc_table_.end())
-    {
-        auto& [key, func] = *it;
-        func(symbol_name, statement);
-    }
+    if (const auto handler = handler_table::find(statement.opcode_ref().value))
+        handler(this, symbol_name, statement);
     else
         register_attr_ref(symbol_name, context::symbol_attributes(context::symbol_origin::MACH, 'M'_ebcdic));
 }
