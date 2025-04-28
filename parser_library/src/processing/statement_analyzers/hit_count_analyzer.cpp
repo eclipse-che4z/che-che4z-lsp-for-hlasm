@@ -30,20 +30,18 @@ hit_count_analyzer::hit_count_analyzer(context::hlasm_context& ctx)
 {}
 
 namespace {
-constexpr auto get_core_stmt = [](const context::hlasm_statement* stmt)
-    -> std::optional<std::tuple<const range&, const semantics::instruction_si&>> {
-    if (!stmt)
-        return std::nullopt;
-
-    if (stmt->kind == context::statement_kind::RESOLVED)
+std::optional<std::tuple<const range&, const semantics::instruction_si&, const op_code*>> get_core_info(
+    const context::hlasm_statement& stmt)
+{
+    if (stmt.kind == context::statement_kind::RESOLVED)
     {
-        const auto& res = stmt->access_resolved();
-        return std::tie(res->stmt_range_ref(), res->instruction_ref());
+        const auto* res = stmt.access_resolved();
+        return std::make_tuple(std::cref(res->stmt_range_ref()), std::cref(res->instruction_ref()), &res->opcode_ref());
     }
-    else if (stmt->kind == context::statement_kind::DEFERRED)
+    else if (stmt.kind == context::statement_kind::DEFERRED)
     {
-        const auto& def = stmt->access_deferred();
-        return std::tie(def->stmt_range, def->instruction);
+        const auto* def = stmt.access_deferred();
+        return std::make_tuple(std::cref(def->stmt_range), std::cref(def->instruction), nullptr);
     }
 
     return std::nullopt;
@@ -76,10 +74,18 @@ hit_count_entry& hit_count_analyzer::get_hc_entry_reference(const utils::resourc
     return m_hit_count_map.try_emplace(rl).first->second;
 }
 
-hit_count_analyzer::statement_type hit_count_analyzer::get_stmt_type(const semantics::instruction_si& instr)
+hit_count_analyzer::statement_type hit_count_analyzer::get_stmt_type(
+    const semantics::instruction_si& instr, const op_code* op)
 {
     statement_type cur_stmt_type = m_next_stmt_type;
-    if (const auto instr_id = std::get_if<context::id_index>(&instr.value); instr_id)
+    if (op)
+    {
+        if (op->value == context::id_storage::well_known::MACRO)
+            cur_stmt_type = statement_type::MACRO_INIT;
+        else if (m_macro_level > 0 && op->value == context::id_storage::well_known::MEND)
+            cur_stmt_type = statement_type::MACRO_END;
+    }
+    else if (const auto instr_id = std::get_if<context::id_index>(&instr.value); instr_id)
     {
         if (*instr_id == context::id_storage::well_known::MACRO)
             cur_stmt_type = statement_type::MACRO_INIT;
@@ -121,13 +127,13 @@ hit_count_analyzer::statement_type hit_count_analyzer::get_stmt_type(const seman
 bool hit_count_analyzer::analyze(
     const context::hlasm_statement& statement, statement_provider_kind prov_kind, processing_kind proc_kind, bool)
 {
-    auto core_stmt_ptr = get_core_stmt(&statement);
-    if (!core_stmt_ptr)
+    const auto core_stmt_info = get_core_info(statement);
+    if (!core_stmt_info)
         return false;
 
-    const auto& [rng, instr] = *core_stmt_ptr;
+    const auto& [rng, instr, opcode] = *core_stmt_info;
 
-    auto stmt_type = get_stmt_type(instr);
+    auto stmt_type = get_stmt_type(instr, opcode);
     if (stmt_type != statement_type::REGULAR && stmt_type != statement_type::MACRO_BODY)
         return false;
 

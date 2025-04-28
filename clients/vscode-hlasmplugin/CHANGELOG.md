@@ -11,6 +11,7 @@
 - AREAD instruction handles multibyte UTF-8 sequences incorrectly
 - The language server crashes on an incomplete macro definition
 - Macro defined in a preprocessor output is allowed to have empty name
+- Inactive statement is incorrectly reported when using MACRO instruction alias
 
 #### Changed
 - Removed cpp-netlib/uri dependency

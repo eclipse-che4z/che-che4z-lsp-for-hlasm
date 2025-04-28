@@ -147,7 +147,7 @@ private:
     const utils::resource::resource_location& get_current_stmt_rl(processing_kind proc_kind) const;
     hit_count_entry& get_hc_entry_reference(const utils::resource::resource_location& rl);
 
-    statement_type get_stmt_type(const semantics::instruction_si& instr);
+    statement_type get_stmt_type(const semantics::instruction_si& instr, const op_code* op);
 };
 
 } // namespace hlasm_plugin::parser_library::processing

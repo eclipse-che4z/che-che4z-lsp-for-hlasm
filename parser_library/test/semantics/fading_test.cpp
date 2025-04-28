@@ -21,6 +21,7 @@
 #include "analyzer.h"
 #include "fade_messages.h"
 #include "preprocessor_options.h"
+#include "processing/statement_analyzers/hit_count_analyzer.h"
 
 using namespace hlasm_plugin::parser_library;
 using namespace hlasm_plugin::parser_library::semantics;
@@ -116,4 +117,36 @@ C   SQL TYPE                                                           X00000700
     EXPECT_TRUE(std::ranges::is_permutation(*fms, expected_fmsg, [](const auto& fmsg, const auto& expected_fmsg) {
         return fmsg.code == expected_fmsg.code && fmsg.r == expected_fmsg.r && fmsg.uri == expected_fmsg.uri;
     }));
+}
+
+TEST(fading, opsync)
+{
+    const std::string contents = R"(
+J        OPSYN MACRO
+         J
+         ABC
+         SAM31
+         MEND
+         ABC
+)";
+
+    analyzer a(contents);
+    processing::hit_count_analyzer hc_analyzer(a.hlasm_ctx());
+    a.register_stmt_analyzer(&hc_analyzer);
+    a.analyze();
+
+    EXPECT_TRUE(a.diags().empty());
+
+    auto hc = hc_analyzer.take_hit_count_map();
+
+    const auto& details = hc.at(resource_location()).details;
+
+    using processing::line_detail;
+    EXPECT_TRUE(std::ranges::equal(
+        details, std::array { false, true, false, false, true, true, true }, {}, &line_detail::contains_statement));
+    EXPECT_TRUE(std::ranges::equal(details, std::array { 0, 1, 0, 0, 1, 1, 1 }, {}, &line_detail::count));
+    EXPECT_TRUE(std::ranges::equal(
+        details, std::array { false, false, false, false, true, false, false }, {}, &line_detail::macro_body));
+    EXPECT_TRUE(std::ranges::equal(
+        details, std::array { false, false, true, false, false, false, false }, {}, &line_detail::macro_prototype));
 }
