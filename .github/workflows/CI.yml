@@ -182,18 +182,18 @@ jobs:
             toolchain: true
           - os: ubuntu-24.04
             native: wasm
-            container: emscripten/emsdk:4.0.1
+            container: emscripten/emsdk:4.0.7
             artifacts-ext: .*
-          - os: windows-2022
+          - os: windows-2025
             native: win32_x64
             artifacts-ext: .exe
-          - os: windows-2022
+          - os: windows-2025
             native: win32_arm64
             artifacts-ext: .exe
             skip-test: true
           - os: macos-13
             native: darwin_x64
-          - os: macos-14
+          - os: macos-15
             native: darwin_arm64
     container: ${{ matrix.container }}
     steps:
@@ -273,10 +273,16 @@ jobs:
           - os: windows-2022
             native: win32_x64
             chmod: false
+          - os: windows-2025
+            native: win32_x64
+            chmod: false
           - os: macos-13
             native: darwin_x64
             chmod: true
           - os: macos-14
+            native: darwin_arm64
+            chmod: true
+          - os: macos-15
             native: darwin_arm64
             chmod: true
 
@@ -523,7 +529,7 @@ jobs:
     needs: VSIX
     strategy:
       matrix:
-        theia: ["ghcr.io/eclipse-theia/theia-ide/theia-ide:1.57.100"]
+        theia: ["ghcr.io/eclipse-theia/theia-ide/theia-ide:1.60.100"]
 # theiaide images not supported anymore
     container:
       image: ${{ matrix.theia }}

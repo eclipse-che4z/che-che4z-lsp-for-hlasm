@@ -98,8 +98,8 @@
           "inherits": "ci",
           "cacheVariables": {
               "CMAKE_TOOLCHAIN_FILE": "/emsdk/upstream/emscripten/cmake/Modules/Platform/Emscripten.cmake",
-              "CMAKE_CXX_FLAGS": "-s USE_PTHREADS=1 -fwasm-exceptions",
-              "CMAKE_EXE_LINKER_FLAGS": "-s PTHREAD_POOL_SIZE=8 -s MAXIMUM_MEMORY=2147418112 -s INITIAL_MEMORY=268435456 -s ALLOW_MEMORY_GROWTH=1 -s PROXY_TO_PTHREAD=1 -s MODULARIZE=1 -s EXIT_RUNTIME=1 --bind -s STACK_SIZE=4MB -fwasm-exceptions --extern-post-js ${sourceDir}/cmake/wasm_post.js",
+              "CMAKE_CXX_FLAGS": "-pthread -s USE_PTHREADS=1 -fwasm-exceptions",
+              "CMAKE_EXE_LINKER_FLAGS": "-pthread -s SUPPORT_BIG_ENDIAN=1 -s PTHREAD_POOL_SIZE=8 -s MAXIMUM_MEMORY=2147418112 -s INITIAL_MEMORY=268435456 -s ALLOW_MEMORY_GROWTH=1 -s PROXY_TO_PTHREAD=1 -s MODULARIZE=1 -s EXIT_RUNTIME=1 --bind -s STACK_SIZE=4MB -fwasm-exceptions --extern-post-js ${sourceDir}/cmake/wasm_post.js",
               "CMAKE_CROSSCOMPILING_EMULATOR": "node",
               "gtest_disable_pthreads": {
                   "type": "BOOL",
