@@ -77,7 +77,7 @@ macrodef_processor::macrodef_processor(const analyzing_context& ctx,
           .invalid = true, // result starts invalid until mandatory statements are encountered
       })
 {
-    if (!start.is_external)
+    if (!start_.is_external)
         copy_nest_limit.push_back(hlasm_ctx.current_copy_stack().size());
 }
 

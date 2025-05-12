@@ -127,40 +127,30 @@ hit_count_analyzer::statement_type hit_count_analyzer::get_stmt_type(
 bool hit_count_analyzer::analyze(
     const context::hlasm_statement& statement, statement_provider_kind prov_kind, processing_kind proc_kind, bool)
 {
+    using enum statement_type;
     const auto core_stmt_info = get_core_info(statement);
     if (!core_stmt_info)
         return false;
 
     const auto& [rng, instr, opcode] = *core_stmt_info;
 
-    auto stmt_type = get_stmt_type(instr, opcode);
-    if (stmt_type != statement_type::REGULAR && stmt_type != statement_type::MACRO_BODY)
+    const auto stmt_type = get_stmt_type(instr, opcode);
+    const auto regular = stmt_type == REGULAR;
+    const auto macro = stmt_type == MACRO_BODY;
+    if (!regular && !macro)
         return false;
 
     auto stmt_lines_range = get_stmt_lines_range(rng, prov_kind, proc_kind, m_ctx);
     if (!stmt_lines_range)
         return false;
 
-    switch (stmt_type)
+    auto& hc_ref = get_hc_entry_reference(get_current_stmt_rl(proc_kind));
+
+    hc_ref.add(*stmt_lines_range, regular && proc_kind == processing::processing_kind::ORDINARY, macro);
+    if (regular)
     {
-        using enum statement_type;
-        case REGULAR: {
-            auto& hc_ref = get_hc_entry_reference(get_current_stmt_rl(proc_kind));
-            hc_ref.add(*stmt_lines_range, proc_kind == processing::processing_kind::ORDINARY, false);
-
-            if (auto mac_invo_loc = m_ctx.current_macro_definition_location(); mac_invo_loc)
-                hc_ref.emplace_prototype(mac_invo_loc->pos.line);
-
-            break;
-        }
-
-        case MACRO_BODY:
-            get_hc_entry_reference(get_current_stmt_rl(proc_kind)).add(*stmt_lines_range, false, true);
-            break;
-
-        default:
-            assert(false);
-            break;
+        if (auto mac_invo_loc = m_ctx.current_macro_definition_location(); mac_invo_loc)
+            hc_ref.emplace_prototype(mac_invo_loc->pos.line);
     }
 
     return false;

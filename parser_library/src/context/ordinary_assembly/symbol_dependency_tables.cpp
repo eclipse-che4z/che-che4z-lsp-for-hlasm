@@ -173,7 +173,7 @@ struct resolve_dependant_visitor
             else if (org == check_org_result::invalid_address)
                 add_diagnostic(diagnostic_op::error_A115_ORG_op_format);
 
-            (void)sym_ctx.current_section()->current_location_counter().restore_from_unresolved_value(sp);
+            (void)sym_ctx.current_section()->current_location_counter().restore_from_unresolved_value(std::move(sp));
             sym_ctx.set_location_counter(tmp_loctr_name);
             return;
         }

@@ -99,7 +99,7 @@ public:
     [[nodiscard]] bool create_symbol(
         id_index name, symbol_value value, symbol_attributes attributes, const library_info& li);
 
-    void add_symbol_reference(symbol sym, const library_info& li);
+    void add_symbol_reference(id_index name, symbol_attributes attributes, const library_info& li);
     const symbol* get_symbol_reference(context::id_index name) const;
 
     symbol* get_symbol(id_index name);

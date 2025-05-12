@@ -48,12 +48,7 @@ void macro_processor::process(std::shared_ptr<const processing::resolved_stateme
         if (valid && !hlasm_ctx.ord_ctx.get_symbol(id))
         {
             hlasm_ctx.ord_ctx.add_symbol_reference(
-                context::symbol(id,
-                    context::symbol_value(),
-                    context::symbol_attributes(context::symbol_origin::MACH, 'M'_ebcdic),
-                    location(),
-                    {}),
-                lib_info);
+                id, context::symbol_attributes(context::symbol_origin::MACH, 'M'_ebcdic), lib_info);
         }
     }
 

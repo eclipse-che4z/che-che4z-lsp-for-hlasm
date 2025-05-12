@@ -358,8 +358,7 @@ void lookahead_processor::find_ord(const resolved_statement& statement)
 void lookahead_processor::register_attr_ref(context::id_index name, context::symbol_attributes attributes)
 {
     library_info_transitional li(lib_provider_);
-    hlasm_ctx.ord_ctx.add_symbol_reference(
-        context::symbol(name, context::symbol_value(), attributes, location(), {}), li);
+    hlasm_ctx.ord_ctx.add_symbol_reference(name, attributes, li);
 }
 
 } // namespace hlasm_plugin::parser_library::processing

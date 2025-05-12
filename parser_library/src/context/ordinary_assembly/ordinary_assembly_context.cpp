@@ -82,9 +82,10 @@ bool ordinary_assembly_context::create_symbol(
     return ok;
 }
 
-void ordinary_assembly_context::add_symbol_reference(symbol sym, const library_info& li)
+void ordinary_assembly_context::add_symbol_reference(
+    id_index name, symbol_attributes attributes, const library_info& li)
 {
-    auto [it, _] = symbol_refs_.try_emplace(sym.name(), std::move(sym));
+    auto [it, _] = symbol_refs_.try_emplace(name, name, symbol_value(), attributes, location(), processing_stack_t());
     m_symbol_dependencies->add_defined(it->first, nullptr, li);
 }
 

@@ -119,20 +119,20 @@ SET_t symbol_attributes::default_ca_value(data_attr_kind attribute)
 }
 
 symbol_attributes::symbol_attributes(symbol_origin origin)
-    : origin_(origin)
-    , type_(undef_type)
-    , length_(undef_length)
-    , scale_(undef_scale)
+    : length_(undef_length)
     , integer_(undef_length)
+    , type_(undef_type)
+    , scale_(undef_scale)
+    , origin_(origin)
 {}
 
 symbol_attributes::symbol_attributes(
     symbol_origin origin, type_attr type, len_attr length, scale_attr scale, len_attr integer)
-    : origin_(origin)
-    , type_(type)
-    , length_(length)
-    , scale_(scale)
+    : length_(length)
     , integer_(integer)
+    , type_(type)
+    , scale_(scale)
+    , origin_(origin)
 {}
 
 void symbol_attributes::length(len_attr value)

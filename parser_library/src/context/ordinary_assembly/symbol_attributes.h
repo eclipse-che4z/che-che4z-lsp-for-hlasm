@@ -22,7 +22,7 @@
 namespace hlasm_plugin::parser_library::context {
 
 // enumeration of all data attributes
-enum class data_attr_kind
+enum class data_attr_kind : unsigned char
 {
     UNKNOWN,
     T,
@@ -40,7 +40,7 @@ enum class data_attr_kind
 // tells how symbol is created
 // whether it is section definition, machine label, equated, data definition symbol, or created by some other ASM
 // instruction
-enum class symbol_origin
+enum class symbol_origin : unsigned char
 {
     SECT,
     MACH,
@@ -107,11 +107,11 @@ struct symbol_attributes
 
 
 private:
-    symbol_origin origin_;
-    type_attr type_;
     len_attr length_;
-    scale_attr scale_;
     len_attr integer_;
+    type_attr type_;
+    scale_attr scale_;
+    symbol_origin origin_;
 };
 
 } // namespace hlasm_plugin::parser_library::context

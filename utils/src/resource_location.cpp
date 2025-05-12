@@ -382,7 +382,7 @@ resource_location resource_location::lexically_relative(const resource_location&
         this_it++;
     }
 
-    return resource_location(ret);
+    return resource_location(std::move(ret));
 }
 
 bool resource_location::lexically_out_of_scope() const
