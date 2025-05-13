@@ -31,11 +31,11 @@ struct alignment
 };
 
 // enumeration of common alignments
-static constexpr alignment no_align { 0, 1 };
-static constexpr alignment halfword { 0, 2 };
-static constexpr alignment fullword { 0, 4 };
-static constexpr alignment doubleword { 0, 8 };
-static constexpr alignment quadword { 0, 16 };
+constexpr alignment no_align { 0, 1 };
+constexpr alignment halfword { 0, 2 };
+constexpr alignment fullword { 0, 4 };
+constexpr alignment doubleword { 0, 8 };
+constexpr alignment quadword { 0, 16 };
 
 } // namespace hlasm_plugin::parser_library::context
 

@@ -204,10 +204,10 @@ void hlasm_context::add_global_system_variables(system_variable_map& sysvars)
         id_index("SYSSTMT"), std::make_unique<sysstmt_macro_param_data>(metrics, scope_stack_), true));
     sysvars.insert(create_system_variable(id_index("SYSTEM_ID"), asm_options_.system_id, true));
 
-    static constexpr const auto emulated_hlasm_sysver = "1.6.0";
+    static constexpr auto emulated_hlasm_sysver = "1.6.0";
     sysvars.insert(create_system_variable(id_index("SYSVER"), emulated_hlasm_sysver, true));
 
-    static constexpr const auto emulated_asm_name = "HIGH LEVEL ASSEMBLER";
+    static constexpr auto emulated_asm_name = "HIGH LEVEL ASSEMBLER";
     sysvars.insert(create_system_variable(id_index("SYSASM"), emulated_asm_name, true));
 
     sysvars.insert(create_system_variable(

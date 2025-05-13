@@ -55,7 +55,7 @@ int32_t data_def_dependency<instr_type>::get_operands_length(const semantics::op
 {
     data_def_dependency_solver solver(_solver, loctr);
 
-    constexpr const auto round_up_bytes = [](uint64_t& v, uint64_t bytes) { v = checking::round_up(v, bytes * 8); };
+    constexpr auto round_up_bytes = [](uint64_t& v, uint64_t bytes) { v = checking::round_up(v, bytes * 8); };
 
     for (auto it = b; it != e; ++it)
     {

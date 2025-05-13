@@ -32,7 +32,7 @@ struct u8string_with_newlines
 
 struct u8string_view_with_newlines
 {
-    static constexpr const char8_t EOL = (char8_t)-1;
+    static constexpr char8_t EOL = (char8_t)-1;
 
     std::string_view text;
 

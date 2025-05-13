@@ -61,7 +61,7 @@ inline nlohmann::json get_top_messages(const std::unordered_map<std::string, uns
 {
     std::vector<std::pair<std::string, unsigned>> top_msgs(limit);
 
-    constexpr const auto cmp_msg = [](const auto& a, const auto& b) { return a.second > b.second; };
+    constexpr auto cmp_msg = [](const auto& a, const auto& b) { return a.second > b.second; };
 
     const auto [_, last] = std::ranges::partial_sort_copy(msgs, top_msgs, cmp_msg);
     top_msgs.erase(last, top_msgs.end());

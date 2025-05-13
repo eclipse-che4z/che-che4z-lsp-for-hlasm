@@ -63,8 +63,6 @@ struct as_needed
 {};
 using implicit_length_t = std::variant<uint64_t, as_needed>;
 
-static const std::set<char> type_extensions({ 'A', 'E', 'U', 'H', 'B', 'D', 'Q', 'Y' });
-
 // Type of nominal value that various types of data definition expect.
 enum class nominal_value_type
 {

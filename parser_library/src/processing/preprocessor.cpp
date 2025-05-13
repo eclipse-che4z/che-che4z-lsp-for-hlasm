@@ -96,8 +96,8 @@ void preprocessor::do_highlighting(const semantics::preprocessor_statement_si& s
 {
     do_highlighting(stmt, src_proc, continue_column);
 
-    constexpr const auto continuation_column = lexing::default_ictl.end;
-    constexpr const auto ignore_column = lexing::default_ictl.end + 1;
+    constexpr auto continuation_column = lexing::default_ictl.end;
+    constexpr auto ignore_column = lexing::default_ictl.end + 1;
     for (size_t i = 0, lineno = stmt.m_details.stmt_r.start.line; i < ll.segments.size(); ++i, ++lineno)
     {
         const auto& segment = ll.segments[i];

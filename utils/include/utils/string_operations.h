@@ -71,7 +71,7 @@ size_t trim_left(T& b, const T& e, std::initializer_list<std::string_view> to_tr
     return result;
 }
 
-constexpr const auto upper_cased = []() {
+constexpr auto upper_cased = []() {
     std::array<char, std::numeric_limits<unsigned char>::max() + 1> result {};
     for (size_t i = 0; i < result.size(); ++i)
         result[i] = (char)i;

@@ -124,7 +124,7 @@ inline std::optional<int> as_int(std::string_view s, int base = 10)
 
 inline bool is_date(std::string_view to_test)
 {
-    static constexpr const char days_in_month[] = { 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 };
+    static constexpr char days_in_month[] = { 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 };
     if (to_test.size() != 8 || !has_all_digits(to_test))
         return false;
     const auto year_o = as_int(to_test.substr(0, 4));

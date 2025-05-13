@@ -102,7 +102,7 @@ public:
 };
 
 namespace {
-static const std::array<preprocessor_options, 3> preproc_options = {
+const std::array<preprocessor_options, 3> preproc_options = {
     endevor_preprocessor_options(),
     cics_preprocessor_options(),
     db2_preprocessor_options(),

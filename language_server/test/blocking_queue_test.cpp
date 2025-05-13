@@ -51,7 +51,7 @@ struct queue_data
 TEST(blocking_queue, simple_io)
 {
     blocking_queue<queue_data> queue;
-    constexpr const int limit = 1023;
+    constexpr int limit = 1023;
     for (int i = 0; i < limit; ++i)
     {
         if (i % 2)
@@ -85,7 +85,7 @@ TEST(blocking_queue, terminate)
 
 TEST(blocking_queue, multithreaded)
 {
-    constexpr const int message_limit = 1024 * 1024;
+    constexpr int message_limit = 1024 * 1024;
     blocking_queue<int> queue;
     std::thread reader([&]() {
         int counter = 0;

@@ -18,7 +18,7 @@
 
 namespace hlasm_plugin::parser_library::processing {
 
-constexpr const auto common_processing_status_cache_key_details = std::pair((unsigned char)1, (unsigned char)0);
+constexpr auto common_processing_status_cache_key_details = std::pair((unsigned char)1, (unsigned char)0);
 
 // (value of L'* expression, reladdr mask)
 inline std::pair<unsigned char, unsigned char> get_processing_status_cache_key_details(std::string_view id) noexcept

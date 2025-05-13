@@ -162,10 +162,10 @@ public:
 
 class workspace_configuration : public configuration_provider
 {
-    static constexpr const char FILENAME_PROC_GRPS[] = "proc_grps.json";
-    static constexpr const char FILENAME_PGM_CONF[] = "pgm_conf.json";
-    static constexpr const char HLASM_PLUGIN_FOLDER[] = ".hlasmplugin";
-    static constexpr const char B4G_CONF_FILE[] = ".bridge.json";
+    static constexpr char FILENAME_PROC_GRPS[] = "proc_grps.json";
+    static constexpr char FILENAME_PGM_CONF[] = "pgm_conf.json";
+    static constexpr char HLASM_PLUGIN_FOLDER[] = ".hlasmplugin";
+    static constexpr char B4G_CONF_FILE[] = ".bridge.json";
 
     file_manager& m_file_manager;
     utils::resource::resource_location m_location;

@@ -718,7 +718,7 @@ A
         analyzer a(t.opencode, analyzer_options { &libs, db2_preprocessor_options {} });
         a.analyze();
 
-        static constexpr const auto start_line = [](const auto& m) { return m.diag_range.start.line; };
+        static constexpr auto start_line = [](const auto& m) { return m.diag_range.start.line; };
         EXPECT_TRUE(matches_message_properties(a.diags(), { t.lineno }, start_line));
     }
 }

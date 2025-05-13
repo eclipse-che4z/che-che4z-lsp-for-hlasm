@@ -127,19 +127,6 @@ TEST(proc_grps, endevor_write)
     EXPECT_EQ(nlohmann::json(l), expected);
 }
 
-static void compare_proc_grps(const proc_grps& pg, const proc_grps& expected)
-{
-    ASSERT_EQ(pg.pgroups.size(), expected.pgroups.size());
-    for (size_t i = 0; i < pg.pgroups.size(); ++i)
-    {
-        EXPECT_EQ(pg.pgroups[i].name, expected.pgroups[i].name);
-        EXPECT_EQ(pg.pgroups[i].asm_options.profile, expected.pgroups[i].asm_options.profile);
-        EXPECT_EQ(pg.pgroups[i].asm_options.sysparm, expected.pgroups[i].asm_options.sysparm);
-        EXPECT_EQ(pg.pgroups[i].preprocessors, expected.pgroups[i].preprocessors);
-        EXPECT_EQ(pg.pgroups[i].libs, expected.pgroups[i].libs);
-    }
-}
-
 TEST(proc_grps, full_content_read)
 {
     const auto cases = {
@@ -204,7 +191,18 @@ TEST(proc_grps, full_content_read)
     };
 
     for (const auto& [input, expected] : cases)
-        compare_proc_grps(input.get<proc_grps>(), expected);
+    {
+        const auto& pg = input.get<proc_grps>();
+        ASSERT_EQ(pg.pgroups.size(), expected.pgroups.size());
+        for (size_t i = 0; i < pg.pgroups.size(); ++i)
+        {
+            EXPECT_EQ(pg.pgroups[i].name, expected.pgroups[i].name);
+            EXPECT_EQ(pg.pgroups[i].asm_options.profile, expected.pgroups[i].asm_options.profile);
+            EXPECT_EQ(pg.pgroups[i].asm_options.sysparm, expected.pgroups[i].asm_options.sysparm);
+            EXPECT_EQ(pg.pgroups[i].preprocessors, expected.pgroups[i].preprocessors);
+            EXPECT_EQ(pg.pgroups[i].libs, expected.pgroups[i].libs);
+        }
+    }
 }
 
 TEST(proc_grps, full_content_write)

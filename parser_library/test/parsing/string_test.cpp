@@ -224,8 +224,8 @@ INSTANTIATE_TEST_SUITE_P(parser,
         test_param_parser_data_attribute { "T", true, true }),
     stringer_test_param_parser_data_attribute());
 
-static const std::regex x("\\$x");
-static const std::regex y("\\$y");
+const std::regex x("\\$x");
+const std::regex y("\\$y");
 
 mock_parse_lib_provider lib_provider { []() {
     std::vector<std::pair<std::string, std::string>> macros;

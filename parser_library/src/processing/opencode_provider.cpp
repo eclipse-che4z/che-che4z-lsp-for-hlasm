@@ -237,7 +237,7 @@ void opencode_provider::feed_line(parsing::parser_holder& p, bool is_process, bo
 bool opencode_provider::is_comment()
 {
     using string_matcher = utils::text_matchers::basic_string_matcher<true, false>;
-    static constexpr const auto comment = utils::text_matchers::alt(string_matcher("*"), string_matcher(".*"));
+    static constexpr auto comment = utils::text_matchers::alt(string_matcher("*"), string_matcher(".*"));
 
     auto b = m_current_logical_line.segments.front().code;
     const auto e = m_current_logical_line.segments.front().continuation;

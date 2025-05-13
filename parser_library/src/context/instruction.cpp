@@ -513,7 +513,7 @@ enum class condition_code_explanation_id : unsigned char
 
 
 #define DEFINE_CC_SET(name, ...)                                                                                       \
-    constexpr const auto name = cc_index { static_cast<unsigned char>(condition_code_explanation_id::name) };
+    constexpr auto name = cc_index { static_cast<unsigned char>(condition_code_explanation_id::name) };
 #include "instruction_details.h"
 } // namespace
 
@@ -1970,10 +1970,9 @@ const mnemonic_code& instruction::get_mnemonic_codes(std::string_view name) noex
 
 std::span<const mnemonic_code> instruction::all_mnemonic_codes() noexcept { return mnemonic_codes; }
 
-namespace {
 constexpr std::size_t combined_machine_instruction_name_limit = 8;
-constexpr const auto combined_machine_instruction_table = []() {
-    constexpr const auto limit = combined_machine_instruction_name_limit;
+constexpr auto combined_machine_instruction_table = []() {
+    constexpr auto limit = combined_machine_instruction_name_limit;
     std::array<std::array<char, limit>, std::size(machine_instructions) + std::size(mnemonic_codes)> names {};
     std::array<short, std::size(machine_instructions) + std::size(mnemonic_codes)> offsets {};
 
@@ -2012,7 +2011,6 @@ constexpr const auto combined_machine_instruction_table = []() {
 
     return std::pair(names, offsets);
 }();
-} // namespace
 
 std::pair<const machine_instruction*, const mnemonic_code*> instruction::find_machine_instruction_or_mnemonic(
     std::string_view name) noexcept
@@ -2039,7 +2037,6 @@ std::pair<const machine_instruction*, const mnemonic_code*> instruction::find_ma
     return { mn.instruction(), &mn };
 }
 
-namespace {
 constexpr instruction_set_size compute_instruction_set_size(instruction_set_version v)
 {
     instruction_set_size result = {
@@ -2058,7 +2055,7 @@ constexpr instruction_set_size compute_instruction_set_size(instruction_set_vers
     return result;
 }
 
-constexpr const instruction_set_size instruction_set_sizes[] = {
+constexpr instruction_set_size instruction_set_sizes[] = {
     {},
     compute_instruction_set_size(instruction_set_version::ZOP),
     compute_instruction_set_size(instruction_set_version::YOP),
@@ -2076,8 +2073,6 @@ constexpr const instruction_set_size instruction_set_sizes[] = {
     compute_instruction_set_size(instruction_set_version::DOS),
     compute_instruction_set_size(instruction_set_version::UNI),
 };
-
-} // namespace
 
 const instruction_set_size& hlasm_plugin::parser_library::context::get_instruction_sizes(
     instruction_set_version v) noexcept

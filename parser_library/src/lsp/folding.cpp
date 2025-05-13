@@ -48,7 +48,7 @@ bool is_blank_comment(const logical_line& ll, unsigned char first_line_offset)
 
 bool is_separator(const logical_line& ll)
 {
-    static constexpr const auto threshold = 36;
+    static constexpr auto threshold = 36;
     return ll.segments.size() == 1
         && std::ranges::count_if(ll, [](unsigned char e) { return e != ' ' && !std::isalnum(e); }) > threshold;
 }
@@ -179,7 +179,7 @@ void folding_by_indentation(std::vector<fold_data>& data, std::span<const line_e
 
 void folding_by_comments(std::vector<fold_data>& data, std::span<const line_entry> lines)
 {
-    static constexpr const auto iscomment = [](const line_entry& le) { return le.comment; };
+    static constexpr auto iscomment = [](const line_entry& le) { return le.comment; };
     for (auto it = lines.begin(); (it = std::find_if(it, lines.end(), iscomment)) != lines.end();)
     {
         auto end = std::find_if(it, lines.end(), std::not_fn(iscomment));
@@ -193,7 +193,7 @@ void folding_by_comments(std::vector<fold_data>& data, std::span<const line_entr
 
 void folding_between_comments(std::vector<fold_data>& data, std::span<const line_entry> lines)
 {
-    static constexpr const auto isnotcomment = [](const line_entry& le) { return !le.comment; };
+    static constexpr auto isnotcomment = [](const line_entry& le) { return !le.comment; };
     for (auto it = lines.begin(); (it = std::find_if(it, lines.end(), isnotcomment)) != lines.end();)
     {
         auto end = std::find_if(it, lines.end(), std::not_fn(isnotcomment));

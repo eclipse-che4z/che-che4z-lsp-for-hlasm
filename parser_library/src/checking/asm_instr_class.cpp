@@ -221,8 +221,8 @@ bool assembler_instruction::check_typecheck_operands(const std::vector<std::uniq
 bool assembler_instruction::check_codepage_parameter(
     const one_operand& input, const diagnostic_collector& add_diagnostic) const
 {
-    static constexpr const int min_value = 0x0474;
-    static constexpr const int max_value = 0x047C;
+    static constexpr int min_value = 0x0474;
+    static constexpr int max_value = 0x047C;
 
     // hexa value
     const std::string& input_str = input.operand_identifier;

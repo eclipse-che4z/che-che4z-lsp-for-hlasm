@@ -254,10 +254,10 @@ struct logical_line_extractor_args
     bool eof_copy_rules;
 };
 
-constexpr const logical_line_extractor_args default_ictl = { 1, 71, 16, false, false };
-constexpr const logical_line_extractor_args default_ictl_dbcs = { 1, 71, 16, true, false };
-constexpr const logical_line_extractor_args default_ictl_copy = { 1, 71, 16, false, true };
-constexpr const logical_line_extractor_args default_ictl_dbcs_copy = { 1, 71, 16, true, true };
+constexpr logical_line_extractor_args default_ictl = { 1, 71, 16, false, false };
+constexpr logical_line_extractor_args default_ictl_dbcs = { 1, 71, 16, true, false };
+constexpr logical_line_extractor_args default_ictl_copy = { 1, 71, 16, false, true };
+constexpr logical_line_extractor_args default_ictl_dbcs_copy = { 1, 71, 16, true, true };
 
 // remove and return a single line from the input (terminated by LF, CRLF, CR, EOF)
 std::pair<std::string_view, logical_line_segment_eol> extract_line(std::string_view& input);

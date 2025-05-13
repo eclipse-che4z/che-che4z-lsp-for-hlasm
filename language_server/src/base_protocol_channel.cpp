@@ -30,9 +30,9 @@ base_protocol_channel::base_protocol_channel(std::istream& in, std::ostream& out
     , output(out)
 {}
 
-constexpr const std::string_view content_length_string = "Content-Length: ";
-constexpr const size_t message_size_limit = 1 << 30;
-constexpr const std::string_view lsp_header_end = "\r\n\r\n";
+constexpr std::string_view content_length_string = "Content-Length: ";
+constexpr size_t message_size_limit = 1 << 30;
+constexpr std::string_view lsp_header_end = "\r\n\r\n";
 
 void base_protocol_channel::write_message(const std::string& in)
 {

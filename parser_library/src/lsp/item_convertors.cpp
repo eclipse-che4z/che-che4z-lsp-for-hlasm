@@ -150,8 +150,8 @@ bool is_continued_line(std::string_view line)
 namespace {
 bool is_comment(std::string_view line) { return line.substr(0, 1) == "*" || line.substr(0, 2) == ".*"; }
 
-constexpr const std::string_view prolog("```hlasm");
-constexpr const std::string_view epilog("\n```\n");
+constexpr std::string_view prolog("```hlasm");
+constexpr std::string_view epilog("\n```\n");
 
 void add_line(std::string& str, std::string_view line)
 {
@@ -463,7 +463,9 @@ std::vector<completion_item> generate_completion(const std::pair<const context::
     return result;
 }
 
-constexpr const auto to_hex = [](unsigned long long n) {
+namespace {
+auto to_hex(unsigned long long n)
+{
     std::string s;
     do
     {
@@ -473,10 +475,11 @@ constexpr const auto to_hex = [](unsigned long long n) {
     std::ranges::reverse(s);
     return s;
 };
+} // namespace
 
 void append_hover_text(std::string& text, const context::using_context_description& u)
 {
-    static constexpr const std::string_view private_csect("(PC)");
+    static constexpr std::string_view private_csect("(PC)");
 
     bool named = !u.label.empty() || u.section.has_value();
 

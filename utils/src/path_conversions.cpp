@@ -133,7 +133,7 @@ constexpr char_type operator&(char_type l, char_type r) noexcept
 }
 
 
-constexpr const auto char_types = []() {
+constexpr auto char_types = []() {
     auto alpha = utils::create_truth_table(u8"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ", char_type::alpha);
     auto numbers = utils::create_truth_table(u8"0123456789", char_type::num);
     auto unreserved = utils::create_truth_table(u8"-._~", char_type::unreserved);

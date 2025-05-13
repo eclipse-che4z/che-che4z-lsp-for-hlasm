@@ -119,7 +119,7 @@ public:
     {
         reset();
 
-        static constexpr const auto include_statement = [](const auto& l) {
+        static constexpr auto include_statement = [](const auto& l) {
             return l.starts_with("-INC ") || l.starts_with("++INCLUDE ");
         };
         if (std::ranges::none_of(doc, include_statement, &document_line::text))

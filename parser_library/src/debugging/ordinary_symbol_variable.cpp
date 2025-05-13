@@ -18,12 +18,12 @@
 #include "variable.h"
 
 namespace hlasm_plugin::parser_library::debugging {
-static const std::string empty_string = "";
-static const std::string undef_string = "UNDEF";
-static const std::string reloc_string = "RELOC";
-static const std::string complex_string = "COMPLEX";
-
 namespace {
+const std::string empty_string = "";
+const std::string undef_string = "UNDEF";
+const std::string reloc_string = "RELOC";
+const std::string complex_string = "COMPLEX";
+
 std::string get_string_value(const context::symbol& symbol)
 {
     using enum context::symbol_value_kind;

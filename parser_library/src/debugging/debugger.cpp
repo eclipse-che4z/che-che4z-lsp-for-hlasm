@@ -291,7 +291,7 @@ public:
 
             continue_ = false;
 
-            static constexpr const std::string_view reasons[] = {
+            static constexpr std::string_view reasons[] = {
                 "entry",
                 "breakpoint",
                 "function breakpoint",
@@ -600,19 +600,19 @@ public:
         // unreachable
     }
 
-    static constexpr const processing::processing_status mach_status = {
+    static constexpr processing::processing_status mach_status = {
         processing::processing_format(processing::processing_kind::ORDINARY, processing::processing_form::MACH),
         processing::op_code()
     };
-    static constexpr const processing::processing_status seta_status = {
+    static constexpr processing::processing_status seta_status = {
         processing::processing_format(processing::processing_kind::ORDINARY, processing::processing_form::CA),
         processing::op_code(context::id_storage::well_known::SETA, context::instruction_type::CA, nullptr)
     };
-    static constexpr const processing::processing_status setb_status = {
+    static constexpr processing::processing_status setb_status = {
         processing::processing_format(processing::processing_kind::ORDINARY, processing::processing_form::CA),
         processing::op_code(context::id_storage::well_known::SETB, context::instruction_type::CA, nullptr)
     };
-    static constexpr const processing::processing_status setc_status = {
+    static constexpr processing::processing_status setc_status = {
         processing::processing_format(processing::processing_kind::ORDINARY, processing::processing_form::CA),
         processing::op_code(context::id_storage::well_known::SETC, context::instruction_type::CA, nullptr)
     };
@@ -679,7 +679,7 @@ public:
         if (expr.starts_with("&") && lexing::is_valid_symbol_name(expr.substr(1)))
             return evaluate_exact_match(utils::to_upper_copy(expr.substr(1)), scope, sysvars->second);
 
-        static constexpr const auto stringy_attribute = [](std::string_view s) {
+        static constexpr auto stringy_attribute = [](std::string_view s) {
             return s.starts_with("T'") || s.starts_with("O'") || s.starts_with("t'") || s.starts_with("o'");
         };
 

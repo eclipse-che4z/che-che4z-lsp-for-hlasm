@@ -62,13 +62,13 @@ std::vector<document_symbol_item> lsp_context::document_symbol(
     const utils::resource::resource_location& document_loc) const
 {
     using enum document_symbol_kind;
-    static constexpr const auto block = [](auto f, auto l) {
+    static constexpr auto block = [](auto f, auto l) {
         return range(position(f, 0), position(l, position::max_value));
     };
-    static constexpr const auto one_line = [](auto line) {
+    static constexpr auto one_line = [](auto line) {
         return range(position(line, 0), position(line, position::max_value));
     };
-    static constexpr const auto end_before = [](position& p, position s) {
+    static constexpr auto end_before = [](position& p, position s) {
         if (p.line < s.line)
             p.line = s.line - 1;
     };
@@ -184,7 +184,7 @@ std::vector<document_symbol_item> lsp_context::document_symbol(
         end_before(result.back().symbol_selection_range.end, position(lines, 0));
     }
 
-    static constexpr const auto same_symbol = [](const auto& l, const auto& r) {
+    static constexpr auto same_symbol = [](const auto& l, const auto& r) {
         return l.name == r.name && l.kind == r.kind;
     };
     for (auto it = result.begin(); it != result.end();)
@@ -211,7 +211,7 @@ std::vector<document_symbol_item> lsp_context::document_symbol(
 
     result.erase(std::ranges::unique(result, same_symbol).begin(), result.end());
 
-    static constexpr const auto is_title = [](const auto& s) { return s.kind == TITLE; };
+    static constexpr auto is_title = [](const auto& s) { return s.kind == TITLE; };
 
     for (auto it = result.rbegin(); it != result.rend();)
     {

@@ -148,7 +148,7 @@ library_local::files_collection_t library_local::load_files(
     size_t conflict_count = 0;
     std::string file_name_conflicts;
     const auto add_conflict = [&conflict_count, &file_name_conflicts](std::string_view file_name) {
-        constexpr const size_t max_conflict_count = 3;
+        constexpr size_t max_conflict_count = 3;
         if (conflict_count < max_conflict_count)
         {
             if (conflict_count)

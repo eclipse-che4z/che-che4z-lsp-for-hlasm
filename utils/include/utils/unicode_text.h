@@ -46,9 +46,9 @@ struct char_size
 extern constinit const std::array<char_size, 256> utf8_prefix_sizes;
 
 // Substitute character used by VSCode
-constexpr const char32_t substitute_character = 0xFFFD;
+constexpr char32_t substitute_character = 0xFFFD;
 
-constexpr const size_t max_utf8_sequence_length = 4;
+constexpr size_t max_utf8_sequence_length = 4;
 
 extern constinit const std::array<unsigned char, 128> utf8_valid_multibyte_prefix_table;
 

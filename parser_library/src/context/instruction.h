@@ -573,7 +573,7 @@ public:
         const range& stmt_range,
         const diagnostic_collector& add_diagnostic) const; // input vector is the vector of the actual incoming values
 
-    static constexpr const size_t max_operand_count = 16;
+    static constexpr size_t max_operand_count = 16;
 
     constexpr std::string_view fullname() const noexcept
     {

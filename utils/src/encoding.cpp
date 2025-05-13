@@ -107,12 +107,12 @@ bool try_to_parse_encoded(std::string& out, std::string_view& s)
 
     return true;
 }
-constexpr const auto unreserved =
+constexpr auto unreserved =
     utils::create_truth_table(u8"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-._~");
-constexpr const auto path_tolerable =
+constexpr auto path_tolerable =
     utils::create_truth_table(u8"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-._~/*?");
 using keep_table_t = decltype(unreserved);
-constexpr const auto invert_hex = []() {
+constexpr auto invert_hex = []() {
     std::array<signed char, std::numeric_limits<char8_t>::max() + 1> result {};
 
     std::ranges::fill(result, -1);

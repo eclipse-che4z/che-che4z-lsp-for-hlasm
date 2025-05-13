@@ -186,9 +186,9 @@ struct concat_chain_matcher
 };
 
 template<typename... Ts>
-constexpr const concat_chain_matcher<true, Ts...> concat_chain_matches;
+constexpr concat_chain_matcher<true, Ts...> concat_chain_matches;
 template<typename... Ts>
-constexpr const concat_chain_matcher<false, Ts...> concat_chain_starts_with;
+constexpr concat_chain_matcher<false, Ts...> concat_chain_starts_with;
 
 
 inline sublist_conc::sublist_conc(std::vector<concat_chain> list)

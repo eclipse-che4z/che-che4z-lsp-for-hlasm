@@ -56,7 +56,7 @@ template<typename T,
 void merge_sorted(
     std::vector<T>& sorted_vec, It it, const S ite, KeyComparator&& cmp = KeyComparator(), Merger&& m = Merger())
 {
-    constexpr const auto trivial_inserter = !std::invocable<Merger, typename std::iterator_traits<It>::reference>;
+    constexpr auto trivial_inserter = !std::invocable<Merger, typename std::iterator_traits<It>::reference>;
     auto&& p = [&m]() -> std::conditional_t<trivial_inserter, std::identity, Merger&> {
         if constexpr (trivial_inserter)
             return std::identity();
@@ -112,7 +112,7 @@ template<typename T,
 void merge_unsorted(
     std::vector<T>& sorted_vec, It it, const S ite, KeyComparator&& cmp = KeyComparator(), Merger&& m = Merger())
 {
-    constexpr const auto trivial_inserter = !std::invocable<Merger, typename std::iterator_traits<It>::reference>;
+    constexpr auto trivial_inserter = !std::invocable<Merger, typename std::iterator_traits<It>::reference>;
     auto&& p = [&m]() -> std::conditional_t<trivial_inserter, std::identity, Merger&> {
         if constexpr (trivial_inserter)
             return std::identity();

@@ -83,8 +83,8 @@ public:
 
     std::optional<T> pop()
     {
-        constexpr const auto drop = blocking_queue_termination_policy::drop_elements;
-        constexpr const auto process = blocking_queue_termination_policy::process_elements;
+        constexpr auto drop = blocking_queue_termination_policy::drop_elements;
+        constexpr auto process = blocking_queue_termination_policy::process_elements;
 
         std::unique_lock g(mutex);
         cond_var.wait(g, [this] { return queue.size() || terminated(); });

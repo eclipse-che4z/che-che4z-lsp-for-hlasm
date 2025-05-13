@@ -116,13 +116,6 @@ public:
     {}
 };
 
-namespace {
-static bool has_same_content(const std::vector<location>& a, const std::vector<location>& b)
-{
-    return std::ranges::is_permutation(a, b);
-}
-} // namespace
-
 TEST_F(lsp_context_endevor_preprocessor_test, go_to)
 {
     // no jump, instr -INC
@@ -164,28 +157,31 @@ TEST_F(lsp_context_endevor_preprocessor_test, refs)
     const std::vector<location> expected_blabla_locations {};
 
     // -INC/++INCLUDE reference
-    EXPECT_TRUE(has_same_content(expected_inc_locations, a.context().lsp_ctx->references(source_loc, position(1, 1))));
+    EXPECT_TRUE(std::ranges::is_permutation(
+        expected_inc_locations, a.context().lsp_ctx->references(source_loc, position(1, 1))));
     // -INC/++INCLUDE reference
-    EXPECT_TRUE(has_same_content(expected_inc_locations, a.context().lsp_ctx->references(source_loc, position(2, 5))));
+    EXPECT_TRUE(std::ranges::is_permutation(
+        expected_inc_locations, a.context().lsp_ctx->references(source_loc, position(2, 5))));
     // -INC/++INCLUDE reference
-    EXPECT_TRUE(has_same_content(expected_inc_locations, a.context().lsp_ctx->references(source_loc, position(3, 2))));
+    EXPECT_TRUE(std::ranges::is_permutation(
+        expected_inc_locations, a.context().lsp_ctx->references(source_loc, position(3, 2))));
 
     // MEMBER reference
-    EXPECT_TRUE(
-        has_same_content(expected_member_locations, a.context().lsp_ctx->references(source_loc, position(1, 8))));
+    EXPECT_TRUE(std::ranges::is_permutation(
+        expected_member_locations, a.context().lsp_ctx->references(source_loc, position(1, 8))));
     // MEMBER reference
-    EXPECT_TRUE(
-        has_same_content(expected_member_locations, a.context().lsp_ctx->references(source_loc, position(2, 14))));
+    EXPECT_TRUE(std::ranges::is_permutation(
+        expected_member_locations, a.context().lsp_ctx->references(source_loc, position(2, 14))));
     // MEMBER reference
-    EXPECT_TRUE(
-        has_same_content(expected_member2_locations, a.context().lsp_ctx->references(source_loc, position(3, 8))));
+    EXPECT_TRUE(std::ranges::is_permutation(
+        expected_member2_locations, a.context().lsp_ctx->references(source_loc, position(3, 8))));
 
     // blabla reference
-    EXPECT_TRUE(
-        has_same_content(expected_blabla_locations, a.context().lsp_ctx->references(source_loc, position(1, 15))));
+    EXPECT_TRUE(std::ranges::is_permutation(
+        expected_blabla_locations, a.context().lsp_ctx->references(source_loc, position(1, 15))));
     // blabla reference
-    EXPECT_TRUE(
-        has_same_content(expected_blabla_locations, a.context().lsp_ctx->references(source_loc, position(2, 21))));
+    EXPECT_TRUE(std::ranges::is_permutation(
+        expected_blabla_locations, a.context().lsp_ctx->references(source_loc, position(2, 21))));
 }
 
 class lsp_context_cics_preprocessor_test : public lsp_context_preprocessor_test
@@ -281,31 +277,31 @@ TEST_F(lsp_context_cics_preprocessor_test, refs_exec_cics)
     };
 
     // EXEC CICS ABEND reference
-    EXPECT_TRUE(has_same_content(
+    EXPECT_TRUE(std::ranges::is_permutation(
         expected_exec_cics_abend_locations, a.context().lsp_ctx->references(source_loc, position(1, 7))));
     // ABCODE('1234') reference
-    EXPECT_TRUE(
-        has_same_content(expected_abcode1234_locations, a.context().lsp_ctx->references(source_loc, position(1, 25))));
+    EXPECT_TRUE(std::ranges::is_permutation(
+        expected_abcode1234_locations, a.context().lsp_ctx->references(source_loc, position(1, 25))));
     // NODUMP reference
-    EXPECT_TRUE(
-        has_same_content(expected_nodump_locations, a.context().lsp_ctx->references(source_loc, position(1, 39))));
+    EXPECT_TRUE(std::ranges::is_permutation(
+        expected_nodump_locations, a.context().lsp_ctx->references(source_loc, position(1, 39))));
 
     // ABCODE('1234') reference - multiline
-    EXPECT_TRUE(
-        has_same_content(expected_abcode1234_locations, a.context().lsp_ctx->references(source_loc, position(4, 18))));
+    EXPECT_TRUE(std::ranges::is_permutation(
+        expected_abcode1234_locations, a.context().lsp_ctx->references(source_loc, position(4, 18))));
     // NODUMP reference
-    EXPECT_TRUE(
-        has_same_content(expected_nodump_locations, a.context().lsp_ctx->references(source_loc, position(4, 25))));
+    EXPECT_TRUE(std::ranges::is_permutation(
+        expected_nodump_locations, a.context().lsp_ctx->references(source_loc, position(4, 25))));
 
     // ALLOCATE reference
-    EXPECT_TRUE(has_same_content(
+    EXPECT_TRUE(std::ranges::is_permutation(
         expected_exec_cics_allocate_locations, a.context().lsp_ctx->references(source_loc, position(2, 18))));
     // SYSID('4321') reference
-    EXPECT_TRUE(
-        has_same_content(expected_sysid4321_locations, a.context().lsp_ctx->references(source_loc, position(2, 25))));
+    EXPECT_TRUE(std::ranges::is_permutation(
+        expected_sysid4321_locations, a.context().lsp_ctx->references(source_loc, position(2, 25))));
     // NOQUEUE reference
-    EXPECT_TRUE(
-        has_same_content(expected_noqueue_locations, a.context().lsp_ctx->references(source_loc, position(2, 42))));
+    EXPECT_TRUE(std::ranges::is_permutation(
+        expected_noqueue_locations, a.context().lsp_ctx->references(source_loc, position(2, 42))));
 }
 
 TEST_F(lsp_context_cics_preprocessor_test, refs_dfh)
@@ -331,14 +327,16 @@ TEST_F(lsp_context_cics_preprocessor_test, refs_dfh)
     };
 
     // LARL reference
-    EXPECT_TRUE(has_same_content(expected_larl_locations, a.context().lsp_ctx->references(source_loc, position(6, 7))));
+    EXPECT_TRUE(std::ranges::is_permutation(
+        expected_larl_locations, a.context().lsp_ctx->references(source_loc, position(6, 7))));
     // L reference
-    EXPECT_TRUE(has_same_content(expected_l_locations, a.context().lsp_ctx->references(source_loc, position(7, 5))));
+    EXPECT_TRUE(
+        std::ranges::is_permutation(expected_l_locations, a.context().lsp_ctx->references(source_loc, position(7, 5))));
     // DFHRESP(NORMAL) reference
-    EXPECT_TRUE(has_same_content(
+    EXPECT_TRUE(std::ranges::is_permutation(
         expected_dfhresp_normal_locations, a.context().lsp_ctx->references(source_loc, position(6, 16))));
     // DFHVALUE ( BUSY ) reference
-    EXPECT_TRUE(has_same_content(
+    EXPECT_TRUE(std::ranges::is_permutation(
         expected_dfhvalue_busy_locations, a.context().lsp_ctx->references(source_loc, position(7, 25))));
 }
 
@@ -417,11 +415,14 @@ TEST_F(lsp_context_db2_preprocessor_include_test, refs_label)
     };
 
     // A reference
-    EXPECT_TRUE(has_same_content(expected_a_locations, a.context().lsp_ctx->references(source_loc, position(1, 1))));
+    EXPECT_TRUE(
+        std::ranges::is_permutation(expected_a_locations, a.context().lsp_ctx->references(source_loc, position(1, 1))));
     // B reference
-    EXPECT_TRUE(has_same_content(expected_b_locations, a.context().lsp_ctx->references(source_loc, position(2, 0))));
+    EXPECT_TRUE(
+        std::ranges::is_permutation(expected_b_locations, a.context().lsp_ctx->references(source_loc, position(2, 0))));
     // C reference
-    EXPECT_TRUE(has_same_content(expected_c_locations, a.context().lsp_ctx->references(source_loc, position(3, 1))));
+    EXPECT_TRUE(
+        std::ranges::is_permutation(expected_c_locations, a.context().lsp_ctx->references(source_loc, position(3, 1))));
 }
 
 
@@ -434,14 +435,14 @@ TEST_F(lsp_context_db2_preprocessor_include_test, refs_exec_sql)
     };
 
     // EXEC SQL reference
-    EXPECT_TRUE(
-        has_same_content(expected_exec_sql_locations, a.context().lsp_ctx->references(source_loc, position(1, 12))));
+    EXPECT_TRUE(std::ranges::is_permutation(
+        expected_exec_sql_locations, a.context().lsp_ctx->references(source_loc, position(1, 12))));
     // EXEC SQL reference
-    EXPECT_TRUE(
-        has_same_content(expected_exec_sql_locations, a.context().lsp_ctx->references(source_loc, position(2, 12))));
+    EXPECT_TRUE(std::ranges::is_permutation(
+        expected_exec_sql_locations, a.context().lsp_ctx->references(source_loc, position(2, 12))));
     // EXEC SQL reference
-    EXPECT_TRUE(
-        has_same_content(expected_exec_sql_locations, a.context().lsp_ctx->references(source_loc, position(3, 12))));
+    EXPECT_TRUE(std::ranges::is_permutation(
+        expected_exec_sql_locations, a.context().lsp_ctx->references(source_loc, position(3, 12))));
 }
 
 TEST_F(lsp_context_db2_preprocessor_include_test, refs_include)
@@ -460,14 +461,14 @@ TEST_F(lsp_context_db2_preprocessor_include_test, refs_include)
     };
 
     // MEMBER reference
-    EXPECT_TRUE(
-        has_same_content(expected_member_locations, a.context().lsp_ctx->references(source_loc, position(1, 29))));
+    EXPECT_TRUE(std::ranges::is_permutation(
+        expected_member_locations, a.context().lsp_ctx->references(source_loc, position(1, 29))));
     // SQLCA reference
-    EXPECT_TRUE(
-        has_same_content(expected_sqlca_locations, a.context().lsp_ctx->references(source_loc, position(2, 29))));
+    EXPECT_TRUE(std::ranges::is_permutation(
+        expected_sqlca_locations, a.context().lsp_ctx->references(source_loc, position(2, 29))));
     // SQLDA reference
-    EXPECT_TRUE(
-        has_same_content(expected_sqlda_locations, a.context().lsp_ctx->references(source_loc, position(3, 29))));
+    EXPECT_TRUE(std::ranges::is_permutation(
+        expected_sqlda_locations, a.context().lsp_ctx->references(source_loc, position(3, 29))));
 }
 
 TEST_F(lsp_context_db2_preprocessor_include_test, hover_label)
@@ -540,16 +541,17 @@ TEST_F(lsp_context_db2_preprocessor_exec_sql_args_test, refs)
     };
 
     // XWV reference
-    EXPECT_TRUE(has_same_content(expected_xwv_locations, a.context().lsp_ctx->references(source_loc, position(6, 17))));
+    EXPECT_TRUE(std::ranges::is_permutation(
+        expected_xwv_locations, a.context().lsp_ctx->references(source_loc, position(6, 17))));
     // ABCDE reference
-    EXPECT_TRUE(
-        has_same_content(expected_abcde_locations, a.context().lsp_ctx->references(source_loc, position(6, 48))));
+    EXPECT_TRUE(std::ranges::is_permutation(
+        expected_abcde_locations, a.context().lsp_ctx->references(source_loc, position(6, 48))));
     // ZYXWV:ABCDE reference - ZYXWV part
-    EXPECT_TRUE(
-        has_same_content(expected_zyxwv_locations, a.context().lsp_ctx->references(source_loc, position(9, 32))));
+    EXPECT_TRUE(std::ranges::is_permutation(
+        expected_zyxwv_locations, a.context().lsp_ctx->references(source_loc, position(9, 32))));
     // ZYXWV:ABCDE reference - ABCDE part
-    EXPECT_TRUE(
-        has_same_content(expected_abcde_locations, a.context().lsp_ctx->references(source_loc, position(9, 39))));
+    EXPECT_TRUE(std::ranges::is_permutation(
+        expected_abcde_locations, a.context().lsp_ctx->references(source_loc, position(9, 39))));
 
     // ZY reference
     EXPECT_TRUE(a.context().lsp_ctx->references(source_loc, position(5, 70)).empty());

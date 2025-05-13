@@ -226,7 +226,7 @@ struct matcher_convertor
     }
 };
 template<typename DefaultStringMatcher>
-constexpr const matcher_convertor<DefaultStringMatcher> convert_matcher;
+constexpr matcher_convertor<DefaultStringMatcher> convert_matcher;
 
 template<typename DefaultStringMatcher = void, typename... Matchers>
 constexpr auto seq(Matchers&&... matchers)

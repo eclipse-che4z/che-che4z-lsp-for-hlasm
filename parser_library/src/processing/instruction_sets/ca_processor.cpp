@@ -549,7 +549,7 @@ void ca_processor::process_AREAD(const processing::resolved_statement& stmt)
     if (!set_symbol)
         return;
 
-    constexpr const auto since_midnight = []() -> std::chrono::nanoseconds {
+    constexpr auto since_midnight = []() -> std::chrono::nanoseconds {
         using namespace std::chrono;
 
         const auto now = utils::timestamp::now().value_or(utils::timestamp());

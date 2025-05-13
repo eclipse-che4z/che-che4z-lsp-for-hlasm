@@ -22,8 +22,8 @@
 #include "nlohmann/json_fwd.hpp"
 #include "utils/resource_location.h"
 
-constexpr const std::string_view pgm_conf_name(".hlasmplugin/pgm_conf.json");
-constexpr const std::string_view proc_grps_name(".hlasmplugin/proc_grps.json");
+constexpr std::string_view pgm_conf_name(".hlasmplugin/pgm_conf.json");
+constexpr std::string_view proc_grps_name(".hlasmplugin/proc_grps.json");
 inline const hlasm_plugin::utils::resource::resource_location empty_ws("ews:/");
 inline const hlasm_plugin::utils::resource::resource_location empty_pgm_conf_name("ews:/.hlasmplugin/pgm_conf.json");
 inline const hlasm_plugin::utils::resource::resource_location empty_proc_grps_name("ews:/.hlasmplugin/proc_grps.json");

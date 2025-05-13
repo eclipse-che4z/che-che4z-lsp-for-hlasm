@@ -1105,7 +1105,7 @@ INSTANTIATE_TEST_SUITE_P(mnote,
         mnote_test { 150, "test", diagnostic_severity::error },
         mnote_test { 255, "test", diagnostic_severity::error }));
 
-static constexpr const auto proj_cms = [](const auto& m) { return std::make_tuple(m.code, m.message, m.severity); };
+constexpr auto proj_cms = [](const auto& m) { return std::make_tuple(m.code, m.message, m.severity); };
 
 TEST_P(mnote_fixture, diagnostic_severity)
 {
@@ -1132,7 +1132,7 @@ TEST(mnote, substitution_first)
     analyzer a(input);
     a.analyze();
 
-    static constexpr const auto expected = std::make_tuple("MNOTE", "test message", diagnostic_severity::warning);
+    static constexpr auto expected = std::make_tuple("MNOTE", "test message", diagnostic_severity::warning);
     EXPECT_TRUE(matches_message_properties(a.diags(), { expected }, proj_cms));
 }
 
@@ -1147,7 +1147,7 @@ TEST(mnote, substitution_both)
     analyzer a(input);
     a.analyze();
 
-    static constexpr const auto expected = std::make_tuple("MNOTE", "test message", diagnostic_severity::error);
+    static constexpr auto expected = std::make_tuple("MNOTE", "test message", diagnostic_severity::error);
     EXPECT_TRUE(matches_message_properties(a.diags(), { expected }, proj_cms));
 }
 
@@ -1160,7 +1160,7 @@ TEST(mnote, empty_first_arg)
     analyzer a(input);
     a.analyze();
 
-    static constexpr const auto expected = std::make_tuple("MNOTE", "test message", diagnostic_severity::hint);
+    static constexpr auto expected = std::make_tuple("MNOTE", "test message", diagnostic_severity::hint);
     EXPECT_TRUE(matches_message_properties(a.diags(), { expected }, proj_cms));
 }
 

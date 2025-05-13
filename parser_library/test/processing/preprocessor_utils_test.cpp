@@ -25,7 +25,7 @@
 #include "semantics/statement.h"
 
 namespace {
-static constexpr const lexing::logical_line_extractor_args extract_opts { 1, 71, 2, false, false };
+constexpr lexing::logical_line_extractor_args extract_opts { 1, 71, 2, false, false };
 
 semantics::range_provider get_range_provider(size_t text_length, size_t lineno, size_t continue_column)
 {

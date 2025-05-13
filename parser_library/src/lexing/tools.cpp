@@ -21,7 +21,7 @@ namespace hlasm_plugin::parser_library::lexing {
 
 bool is_valid_symbol_name(std::string_view s, bool extended_names_allowed)
 {
-    static constexpr const auto allowed_symbols = []() {
+    static constexpr auto allowed_symbols = []() {
         std::array<bool, 256> result = {};
         for (unsigned char c = 'a'; c <= 'z'; ++c)
             result[c] = true;

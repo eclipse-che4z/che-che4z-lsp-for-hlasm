@@ -84,7 +84,7 @@ struct
         return result;
     }
 
-} static constexpr concat;
+} constexpr concat;
 
 } // namespace hlasm_plugin::utils
 

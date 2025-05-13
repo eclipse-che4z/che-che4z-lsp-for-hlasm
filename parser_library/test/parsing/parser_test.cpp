@@ -35,7 +35,7 @@ public:
         holder = std::make_unique<analyzer>(input);
     }
 
-    static constexpr const size_t size_t_zero = static_cast<size_t>(0);
+    static constexpr size_t size_t_zero = static_cast<size_t>(0);
 
 protected:
     std::unique_ptr<analyzer> holder;

@@ -75,7 +75,7 @@ void parser_holder::prepare_parser(lexing::u8string_view_with_newlines text,
     collector.prepare_for_next_statement();
 }
 
-constexpr const auto EOF_SYMBOL = (char8_t)-1;
+constexpr auto EOF_SYMBOL = (char8_t)-1;
 template<char8_t... chars>
 requires((chars != EOF_SYMBOL) && ...) struct group_t
 {
@@ -98,11 +98,9 @@ constexpr auto mach_attrs = group_from_string<{ u8"OSILTosilt" }>();
 constexpr auto all_attrs = group_from_string<{ u8"NKDOSILTnkdosilt" }>();
 constexpr auto attr_argument = group_from_string<{ u8"$_#@abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ&=*" }>();
 
-constexpr const auto ord_first =
-    utils::create_truth_table(u8"$_#@abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ");
-constexpr const auto ord =
-    utils::create_truth_table(u8"$_#@abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789");
-constexpr const auto numbers = utils::create_truth_table(u8"0123456789");
+constexpr auto ord_first = utils::create_truth_table(u8"$_#@abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ");
+constexpr auto ord = utils::create_truth_table(u8"$_#@abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789");
+constexpr auto numbers = utils::create_truth_table(u8"0123456789");
 
 [[nodiscard]] constexpr bool char_is_ord_first(char8_t c) noexcept { return c < ord_first.size() && ord_first[c]; }
 [[nodiscard]] constexpr bool char_is_ord(char8_t c) noexcept { return c < ord.size() && ord[c]; }
@@ -245,7 +243,7 @@ struct parser_range
 
 struct
 {
-} constexpr const failure = {};
+} constexpr failure = {};
 
 template<typename T = void>
 struct [[nodiscard]] result_t

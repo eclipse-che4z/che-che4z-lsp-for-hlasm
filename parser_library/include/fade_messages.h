@@ -25,7 +25,7 @@ struct fade_message
 {
     std::string code;
     std::string message;
-    static constexpr const std::string_view source = "HLASM Plugin";
+    static constexpr std::string_view source = "HLASM Plugin";
     std::string uri;
     range r;
 

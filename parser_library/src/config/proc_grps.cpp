@@ -339,10 +339,10 @@ struct preprocessor_list_generator;
 template<typename... Ts>
 struct preprocessor_list_generator<std::variant<Ts...>>
 {
-    static constexpr const std::array list = { generate_preprocessor_entry<Ts>()... };
+    static constexpr std::array list = { generate_preprocessor_entry<Ts>()... };
 };
 
-constexpr const auto preprocessor_list = preprocessor_list_generator<decltype(preprocessor_options::options)>::list;
+constexpr auto preprocessor_list = preprocessor_list_generator<decltype(preprocessor_options::options)>::list;
 
 constexpr auto find_preprocessor_deserializer(std::string_view name)
 {

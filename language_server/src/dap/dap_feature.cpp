@@ -63,7 +63,7 @@ std::string client_conformant_path(std::string_view uri, path_format client_path
     return generated_path;
 }
 
-constexpr const int THREAD_ID = 1;
+constexpr int THREAD_ID = 1;
 
 } // namespace
 

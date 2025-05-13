@@ -1014,7 +1014,7 @@ public:
         return true;
     }
 
-    static constexpr const lexing::logical_line_extractor_args cics_extract { 1, 71, 2, false, false };
+    static constexpr lexing::logical_line_extractor_args cics_extract { 1, 71, 2, false, false };
 
     static constexpr size_t valid_cols = 1 + lexing::default_ictl.end - (lexing::default_ictl.begin - 1);
     static auto create_line_preview(std::string_view input)
@@ -1267,7 +1267,7 @@ public:
 
     static bool is_process_line(std::string_view s)
     {
-        static constexpr const std::string_view PROCESS = "*PROCESS ";
+        static constexpr std::string_view PROCESS = "*PROCESS ";
         return s.size() >= PROCESS.size()
             && std::equal(PROCESS.begin(), PROCESS.end(), s.begin(), [](unsigned char l, unsigned char r) {
                    return l == toupper(r);
