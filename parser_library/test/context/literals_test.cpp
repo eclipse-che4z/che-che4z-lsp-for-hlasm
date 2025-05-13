@@ -625,3 +625,14 @@ TEST(literals, suppress_messages_from_DTO_attributes)
     EXPECT_EQ(get_var_value<context::C_t>(a.hlasm_ctx(), "XT"), "U");
     EXPECT_EQ(get_var_value<context::C_t>(a.hlasm_ctx(), "XO"), "U");
 }
+
+TEST(literals, check_single_symbol)
+{
+    std::string input = R"(
+    LARL 0,=V(A+1)
+)";
+    analyzer a(input);
+    a.analyze();
+
+    EXPECT_TRUE(matches_message_codes(a.diags(), { "D030" }));
+}

@@ -13,6 +13,7 @@
 - The language server crashes on an incomplete macro definition
 - Macro defined in a preprocessor output is allowed to have empty name
 - Inactive statement is incorrectly reported when using MACRO instruction alias
+- Literals are not checked for single symbol requirement
 
 #### Changed
 - Removed cpp-netlib/uri dependency

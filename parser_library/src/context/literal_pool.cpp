@@ -17,6 +17,7 @@
 #include <algorithm>
 #include <functional>
 
+#include "checking/diagnostic_collector.h"
 #include "context/ordinary_assembly/ordinary_assembly_context.h"
 #include "context/ordinary_assembly/ordinary_assembly_dependency_solver.h"
 #include "context/ordinary_assembly/postponed_statement.h"
@@ -209,6 +210,9 @@ void literal_pool::generate_pool(diagnosable_ctx& diags, index_t<using_collectio
             diags.add_diagnostic(diagnostic_op::error_E033(it->second.r));
         else
         {
+            // some types require operands that consist only of one symbol
+            (void)lit->check_single_symbol_ok(diagnostic_collector(&diags, lit_val.stack));
+
             ord_ctx.symbol_dependencies().add_postponed_statement(
                 std::make_unique<literal_postponed_statement>(lit, lit_val),
                 dependency_evaluation_context {
