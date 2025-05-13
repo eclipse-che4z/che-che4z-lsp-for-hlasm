@@ -145,13 +145,13 @@ TEST(context, OPSYN)
     auto st = ctx.ids().add(std::string_view("ST"));
     auto mv = ctx.ids().add(std::string_view("MV"));
 
-    ctx.add_mnemonic(lr, st);
+    EXPECT_TRUE(ctx.add_mnemonic(lr, st));
     EXPECT_EQ(ctx.get_operation_code(lr).opcode, st);
 
-    ctx.add_mnemonic(mv, lr);
+    EXPECT_TRUE(ctx.add_mnemonic(mv, lr));
     EXPECT_EQ(ctx.get_operation_code(mv).opcode, st);
 
-    ctx.remove_mnemonic(lr);
+    EXPECT_TRUE(ctx.remove_mnemonic(lr));
     EXPECT_EQ(ctx.get_operation_code(lr).opcode, id_index());
 
     EXPECT_EQ(ctx.get_operation_code(mvc).opcode, mvc);
@@ -339,7 +339,7 @@ TEST(context_macro, call_and_leave_macro)
     args.emplace_back(nullptr, op3);
 
     // prototype->|        MAC        &KEY=,&OP1,,&OP3
-    auto& m = *ctx.add_macro(idx, context::id_index(), std::move(args), {}, {}, {}, {}, {}, false);
+    auto m = ctx.add_macro(idx, context::id_index(), std::move(args), {}, {}, {}, {}, {}, false);
 
     // creating param data
     macro_data_ptr p2(std::make_unique<macro_param_data_single>("ada"));
@@ -353,10 +353,10 @@ TEST(context_macro, call_and_leave_macro)
     params.emplace_back(std::move(p4));
 
     // call->|        MAC        ada,mko,
-    auto [m2, t2] = ctx.enter_macro(idx, nullptr, std::move(params));
+    auto [m2, t2] = ctx.enter_macro(m.get(), nullptr, std::move(params));
 
     EXPECT_FALSE(t2);
-    ASSERT_TRUE(m.id == m2->id);
+    ASSERT_TRUE(m->id == m2->id);
     ASSERT_TRUE(ctx.is_in_macro());
     ASSERT_TRUE(ctx.current_macro() == m2);
 
@@ -402,7 +402,7 @@ TEST(context_macro, repeat_call_same_macro)
     args.emplace_back(nullptr, op3);
 
     // prototype->|&LBL        MAC        &KEY=,&OP1,,&OP3
-    ctx.add_macro(idx, lbl, std::move(args), {}, {}, {}, {}, {}, false);
+    auto m = ctx.add_macro(idx, lbl, std::move(args), {}, {}, {}, {}, {}, false);
 
     // creating param data
     macro_data_ptr lb(std::make_unique<macro_param_data_single>("lbl"));
@@ -418,7 +418,7 @@ TEST(context_macro, repeat_call_same_macro)
 
     // calling macro
     // call->|lbl        MAC        ada,mko,
-    auto [m2, t2] = ctx.enter_macro(idx, std::move(lb), std::move(params));
+    auto [m2, t2] = ctx.enter_macro(m.get(), std::move(lb), std::move(params));
 
     EXPECT_FALSE(t2);
     EXPECT_EQ(m2->named_params.find(lbl)->second->get_value(), "lbl");
@@ -446,7 +446,7 @@ TEST(context_macro, repeat_call_same_macro)
     params.emplace_back(std::move(dat));
 
     // call->|        MAC        ,KEY=cas,,(first,second,third)
-    auto [m3, t3] = ctx.enter_macro(idx, nullptr, std::move(params));
+    auto [m3, t3] = ctx.enter_macro(m.get(), nullptr, std::move(params));
 
     EXPECT_FALSE(t3);
 
@@ -494,7 +494,7 @@ TEST(context_macro, recurr_call)
     args.emplace_back(nullptr, op3);
 
     // prototype->|&LBL        MAC        &KEY=,&OP1,,&OP3
-    ctx.add_macro(idx, lbl, std::move(args), {}, {}, {}, {}, {}, false);
+    auto m = ctx.add_macro(idx, lbl, std::move(args), {}, {}, {}, {}, {}, false);
 
     // creating param data
     macro_data_ptr lb(std::make_unique<macro_param_data_single>("lbl"));
@@ -511,7 +511,7 @@ TEST(context_macro, recurr_call)
 
     // calling macro
     // call->|lbl        MAC        ada,mko,
-    auto [m2, t2] = ctx.enter_macro(idx, std::move(lb), std::move(params));
+    auto [m2, t2] = ctx.enter_macro(m.get(), std::move(lb), std::move(params));
 
     //*****created first macro call
 
@@ -540,7 +540,7 @@ TEST(context_macro, recurr_call)
     params.emplace_back(std::move(dat));
 
     // call->|        MAC        ,KEY=cas,,(first,second,third)
-    auto [m3, t3] = ctx.enter_macro(idx, nullptr, std::move(params));
+    auto [m3, t3] = ctx.enter_macro(m.get(), nullptr, std::move(params));
 
     //********called again the same macro without calling leave
     EXPECT_FALSE(t3);

@@ -4,6 +4,7 @@
 
 #### Added
 - Validate length of macro operands
+- Support instruction tagging
 
 #### Fixed
 - Incorrect processing stack in nested macros

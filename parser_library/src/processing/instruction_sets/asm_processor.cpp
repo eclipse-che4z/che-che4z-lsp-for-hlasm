@@ -735,16 +735,12 @@ void asm_processor::process_OPSYN(rebuilt_statement&& stmt)
 
     if (operand.empty())
     {
-        if (hlasm_ctx.get_operation_code(label))
-            hlasm_ctx.remove_mnemonic(label);
-        else
+        if (!hlasm_ctx.remove_mnemonic(label))
             add_diagnostic(diagnostic_op::error_E049(label.to_string_view(), stmt.label_ref().field_range));
     }
     else
     {
-        if (hlasm_ctx.get_operation_code(operand))
-            hlasm_ctx.add_mnemonic(label, operand);
-        else
+        if (!hlasm_ctx.add_mnemonic(label, operand))
             add_diagnostic(diagnostic_op::error_A246_OPSYN(operands.front()->operand_range));
     }
 

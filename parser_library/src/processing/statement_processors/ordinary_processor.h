@@ -75,7 +75,7 @@ public:
     bool finished() override;
 
     static std::optional<processing_status> get_instruction_processing_status(
-        context::id_index instruction, context::hlasm_context& hlasm_ctx);
+        context::id_index instruction, context::hlasm_context& hlasm_ctx, context::id_index* ext_suggestion);
 
 private:
     void process_postponed_statements(const std::vector<

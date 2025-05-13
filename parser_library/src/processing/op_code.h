@@ -30,17 +30,18 @@ namespace hlasm_plugin::parser_library::processing {
 // structure holding resolved operation code of the instruction (solving OPSYNs and so on)
 struct op_code
 {
-    constexpr op_code()
+    constexpr op_code() noexcept
         : type(context::instruction_type::UNDEF)
     {}
-    constexpr op_code(context::id_index value, context::instruction_type type, const context::macro_definition* mac_def)
+    constexpr op_code(
+        context::id_index value, context::instruction_type type, context::macro_definition* mac_def) noexcept
         : value(value)
         , mac_def(mac_def)
         , type(type)
     {}
 
     context::id_index value;
-    const context::macro_definition* mac_def = nullptr;
+    context::macro_definition* mac_def = nullptr;
     context::instruction_type type;
 };
 

@@ -326,7 +326,7 @@ void processing_manager::finish_opencode()
 std::optional<bool> processing_manager::request_external_processing(
     context::id_index name, processing_kind proc_kind, std::function<void(bool)> callback)
 {
-    const auto key = std::pair(name.to_string(), proc_kind);
+    const auto key = std::pair(name, proc_kind);
     if (auto it = m_external_requests.find(key); it != m_external_requests.end())
     {
         if (callback)

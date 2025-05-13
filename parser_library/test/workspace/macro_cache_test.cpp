@@ -190,7 +190,7 @@ TEST(macro_cache_test, opsyn_change)
     // generate OPSYN condition and parse macro
     {
         analyzing_context ctx = create_analyzing_context(opencode_file_name, ids);
-        ctx.hlasm_ctx->add_mnemonic(SETA, LR);
+        EXPECT_TRUE(ctx.hlasm_ctx->add_mnemonic(SETA, LR));
         save_dependency(macro_c, parse_dependency(macro_file, ctx, processing::processing_kind::MACRO));
     }
 
@@ -210,8 +210,8 @@ TEST(macro_cache_test, opsyn_change)
     // parse macro with extra opsyn
     {
         analyzing_context ctx = create_analyzing_context(opencode_file_name, ids);
-        ctx.hlasm_ctx->add_mnemonic(L, SETB);
-        ctx.hlasm_ctx->add_mnemonic(SETA, LR);
+        EXPECT_TRUE(ctx.hlasm_ctx->add_mnemonic(L, SETB));
+        EXPECT_TRUE(ctx.hlasm_ctx->add_mnemonic(SETA, LR));
         save_dependency(macro_c, parse_dependency(macro_file, ctx, processing::processing_kind::MACRO));
     }
 

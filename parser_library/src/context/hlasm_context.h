@@ -144,6 +144,10 @@ private:
     // return variable symbol from an arbitrary scope
     variable_symbol* get_var_sym(id_index name, const code_scope& scope, const system_variable_map& sysvars) const;
 
+    template<typename Pred, typename Proj = std::identity>
+    const opcode_t* search_opcodes(id_index name, Pred p, Proj proj = Proj()) const;
+    const opcode_t* search_opcodes(id_index name, opcode_generation gen) const;
+
 public:
     hlasm_context(utils::resource::resource_location file_loc = utils::resource::resource_location(""),
         asm_option asm_opts = {},
@@ -227,13 +231,13 @@ public:
     void decrement_branch_counter();
 
     // adds opsyn mnemonic
-    void add_mnemonic(id_index mnemo, id_index op_code);
+    bool add_mnemonic(id_index mnemo, id_index op_code);
     // removes opsyn mnemonic
-    void remove_mnemonic(id_index mnemo);
+    bool remove_mnemonic(id_index mnemo);
     const opcode_map& opcode_mnemo_storage() const;
 
     // checks whether the symbol is an operation code (is a valid instruction or a mnemonic)
-    opcode_t get_operation_code(id_index symbol, opcode_generation gen = opcode_generation::current) const;
+    opcode_t get_operation_code(id_index symbol, context::id_index* ext_suggestion = nullptr) const;
 
     // get data attribute value of ordinary symbol
     SET_t get_attribute_value_ord(data_attr_kind attribute, id_index symbol);
@@ -263,7 +267,7 @@ public:
     void add_macro(macro_def_ptr macro, bool external);
     // enters a macro with actual params
     std::pair<const macro_invocation*, bool> enter_macro(
-        id_index name, macro_data_ptr label_param_data, std::vector<macro_arg> params);
+        macro_definition* macro_def, macro_data_ptr label_param_data, std::vector<macro_arg> params);
     // leaves current macro
     void leave_macro();
 
@@ -322,7 +326,9 @@ public:
 
     bool next_statement() { return --m_statements_remaining >= 0; }
 
-    const opcode_t* find_opcode_mnemo(id_index name, opcode_generation gen) const;
+    const opcode_t* find_opcode_mnemo(id_index name,
+        opcode_generation gen = opcode_generation::current,
+        context::id_index* ext_suggestion = nullptr) const;
     const opcode_t* find_any_valid_opcode(id_index name) const;
 
     opcode_generation current_opcode_generation() const { return m_current_opcode_generation; }

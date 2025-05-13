@@ -109,7 +109,7 @@ private:
 
     std::shared_ptr<std::vector<fade_message>> m_fade_msgs;
 
-    std::map<std::pair<std::string, processing::processing_kind>, bool> m_external_requests;
+    std::map<std::pair<context::id_index, processing::processing_kind>, bool> m_external_requests;
 
     bool attr_lookahead_active() const;
     bool seq_lookahead_active() const;

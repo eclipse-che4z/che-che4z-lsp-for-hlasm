@@ -53,7 +53,7 @@ void macro_processor::process(std::shared_ptr<const processing::resolved_stateme
     }
 
     auto [named, symbolic] = get_args(*stmt);
-    auto [_, truncated] = hlasm_ctx.enter_macro(stmt->opcode_ref().value, std::move(named), std::move(symbolic));
+    auto [_, truncated] = hlasm_ctx.enter_macro(stmt->opcode_ref().mac_def, std::move(named), std::move(symbolic));
 
     if (truncated) // this should never happen in a real code
         add_diagnostic(diagnostic_op::error_E081(stmt->operands_ref().field_range));

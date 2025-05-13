@@ -42,7 +42,7 @@ std::optional<processing_status> lookahead_processor::get_processing_status(
     // Lookahead processor always returns value
     if (instruction.has_value() && !instruction->empty())
     {
-        auto status = ordinary_processor::get_instruction_processing_status(*instruction, hlasm_ctx);
+        auto status = ordinary_processor::get_instruction_processing_status(*instruction, hlasm_ctx, nullptr);
 
         if (status)
         {

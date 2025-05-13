@@ -18,8 +18,7 @@
 #include <functional>
 #include <optional>
 
-#include "context/id_storage.h"
-#include "context/ordinary_assembly/dependant.h"
+#include "context/id_index.h"
 #include "processing_format.h"
 #include "range.h"
 

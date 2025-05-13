@@ -40,10 +40,19 @@ struct opcode_t
     id_index opcode;
     opcode_variant opcode_detail;
 
-    explicit operator bool() const { return !std::holds_alternative<std::monostate>(opcode_detail); }
+    [[nodiscard]] constexpr bool empty() const noexcept
+    {
+        return std::holds_alternative<std::monostate>(opcode_detail);
+    }
 
-    bool is_macro() const noexcept { return std::holds_alternative<macro_definition*>(opcode_detail); }
-    macro_definition* get_macro_details() const noexcept
+    [[nodiscard]] constexpr bool is_macro() const noexcept
+    {
+        return std::holds_alternative<macro_definition*>(opcode_detail);
+    }
+
+    [[nodiscard]] constexpr bool is_asm() const noexcept { return !empty() && !is_macro(); }
+
+    [[nodiscard]] constexpr macro_definition* get_macro_details() const noexcept
     {
         if (std::holds_alternative<macro_definition*>(opcode_detail))
             return std::get<macro_definition*>(opcode_detail);
