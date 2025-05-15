@@ -138,4 +138,14 @@ std::string ordinary_assembly_dependency_solver::get_opcode_attr(id_index name) 
     return result;
 }
 
+const asm_option& ordinary_assembly_dependency_solver::get_options() const noexcept
+{
+    return ord_context.hlasm_ctx_.options();
+}
+
+const section* ordinary_assembly_dependency_solver::get_section(id_index name) const noexcept
+{
+    return ord_context.get_section(name);
+}
+
 } // namespace hlasm_plugin::parser_library::context

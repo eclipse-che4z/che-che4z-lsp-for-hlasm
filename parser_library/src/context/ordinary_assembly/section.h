@@ -34,6 +34,7 @@ enum class section_kind : std::uint8_t
     READONLY,
     EXTERNAL,
     WEAK_EXTERNAL,
+    EXTERNAL_DSECT,
 };
 
 class section;

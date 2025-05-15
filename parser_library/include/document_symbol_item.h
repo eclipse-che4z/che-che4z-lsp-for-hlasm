@@ -39,6 +39,7 @@ enum class document_symbol_kind
     EXTERNAL = 12,
     WEAK_EXTERNAL = 13,
     TITLE = 14,
+    EXTERNAL_DSECT = 15,
 };
 
 

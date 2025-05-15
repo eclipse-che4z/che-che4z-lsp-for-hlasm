@@ -345,6 +345,7 @@ public:
     friend variable_symbol* get_var_sym(const expressions::evaluation_context& eval_ctx, id_index name);
 
     bool goff() const noexcept { return asm_options_.sysopt_xobject; }
+    const auto& options() const noexcept { return asm_options_; }
 
     bool register_psect(id_index symbol, id_index psect);
     void validate_psect_registrations(diagnostic_consumer& diags);

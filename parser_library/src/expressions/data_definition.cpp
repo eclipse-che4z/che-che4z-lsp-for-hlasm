@@ -19,6 +19,9 @@
 #include "checking/data_definition/data_def_fields.h"
 #include "checking/data_definition/data_def_type_base.h"
 #include "checking/diagnostic_collector.h"
+#include "compiler_options.h"
+#include "context/ordinary_assembly/section.h"
+#include "context/ordinary_assembly/symbol.h"
 #include "context/using.h"
 #include "ebcdic_encoding.h"
 #include "mach_expr_term.h"
@@ -183,19 +186,18 @@ bool data_definition::expects_single_symbol() const
         return false;
 }
 
-bool data_definition::check_single_symbol_ok(const diagnostic_collector& add_diagnostic) const
+bool data_definition::check_single_symbol_ok(diagnostic_op_consumer& diags) const
 {
-    if (!expects_single_symbol() || !nominal_value)
-        return true;
-    if (!nominal_value->access_exprs())
+    const auto* exprs = nominal_value->access_exprs();
+    if (!exprs)
         return true;
 
     bool ret = true;
-    for (const auto& expr_or_addr : nominal_value->access_exprs()->exprs)
+    for (const auto& expr_or_addr : exprs->exprs)
     {
         if (!std::holds_alternative<mach_expr_ptr>(expr_or_addr))
         {
-            add_diagnostic(
+            diags.add_diagnostic(
                 diagnostic_op::error_D030({ std::get<address_nominal>(expr_or_addr).base->get_range().start,
                                               std::get<address_nominal>(expr_or_addr).base->get_range().end },
                     std::string(1, type)));
@@ -206,27 +208,11 @@ bool data_definition::check_single_symbol_ok(const diagnostic_collector& add_dia
         auto symbol = dynamic_cast<const mach_expr_symbol*>(expr);
         if (!symbol)
         {
-            add_diagnostic(diagnostic_op::error_D030(expr->get_range(), std::string(1, type)));
+            diags.add_diagnostic(diagnostic_op::error_D030(expr->get_range(), std::string(1, type)));
             ret = false;
         }
     }
     return ret;
-}
-
-std::vector<context::id_index> data_definition::get_single_symbol_names() const
-{
-    // expects that check_single_symbol_ok returned true
-    assert(check_single_symbol_ok(diagnostic_collector()));
-
-    std::vector<context::id_index> symbols;
-    symbols.reserve(nominal_value->access_exprs()->exprs.size());
-    for (const auto& expr_or_addr : nominal_value->access_exprs()->exprs)
-    {
-        const mach_expression* expr = std::get<mach_expr_ptr>(expr_or_addr).get();
-        const auto& symbol = dynamic_cast<const mach_expr_symbol&>(*expr);
-        symbols.push_back(symbol.value);
-    }
-    return symbols;
 }
 
 checking::data_def_field<int32_t> set_data_def_field(
@@ -368,7 +354,7 @@ struct extract_nominal_value_visitor
     }
 };
 
-inline checking::nominal_value_expressions extract_nominal_value_expressions(const expr_or_address_list& exprs,
+checking::nominal_value_expressions extract_nominal_value_expressions(const expr_or_address_list& exprs,
     context::dependency_solver& info,
     diagnostic_op_consumer& diags,
     nominal_eval_subtype type)
@@ -381,6 +367,55 @@ inline checking::nominal_value_expressions extract_nominal_value_expressions(con
     return values;
 }
 
+constexpr bool is_valid_external_symbol(const context::section& s) noexcept
+{
+    using enum context::section_kind;
+    return s.kind == DUMMY || s.kind == EXTERNAL_DSECT;
+}
+
+checking::nominal_value_expressions process_q_nominal(
+    const expr_or_address_list& exprs, context::dependency_solver& info, diagnostic_op_consumer& diags)
+{
+    static constexpr std::string_view type = "Q";
+    checking::nominal_value_expressions result;
+    result.reserve(exprs.size());
+
+    const auto goff = info.get_options().sysopt_xobject;
+
+    for (const auto& expr_or_addr : exprs)
+    {
+        result.emplace_back(checking::data_def_expr { .ignored = true }); // everything is solved here
+
+        if (!std::holds_alternative<mach_expr_ptr>(expr_or_addr))
+        {
+            diags.add_diagnostic(
+                diagnostic_op::error_D030({ std::get<address_nominal>(expr_or_addr).base->get_range().start,
+                                              std::get<address_nominal>(expr_or_addr).base->get_range().end },
+                    type));
+            continue;
+        }
+        const mach_expression* expr = std::get<mach_expr_ptr>(expr_or_addr).get();
+        const auto* symbol_expr = dynamic_cast<const mach_expr_symbol*>(expr);
+        if (!symbol_expr)
+        {
+            diags.add_diagnostic(diagnostic_op::error_D030(expr->get_range(), type));
+            continue;
+        }
+        if (goff)
+        {
+            if (const auto* s = info.get_symbol(symbol_expr->value);
+                s && s->attributes().origin() == context::symbol_origin::SECT)
+                continue;
+        }
+        else if (const auto* s = info.get_section(symbol_expr->value); s && is_valid_external_symbol(*s))
+            continue;
+
+        diags.add_diagnostic(diagnostic_op::error_D035(symbol_expr->get_range(), goff));
+    }
+
+    return result;
+}
+
 checking::nominal_value_t data_definition::evaluate_nominal_value(
     context::dependency_solver& info, diagnostic_op_consumer& diags) const
 {
@@ -389,18 +424,26 @@ checking::nominal_value_t data_definition::evaluate_nominal_value(
 
     checking::nominal_value_t nom;
     nom.present = true;
-    if (nominal_value->access_string())
+    if (const auto* str = nominal_value->access_string())
     {
-        nom.value = nominal_value->access_string()->value;
-        nom.rng = nominal_value->access_string()->value_range;
+        nom.value = str->value;
+        nom.rng = str->value_range;
     }
-    else if (nominal_value->access_exprs())
+    else if (const auto* exprs = nominal_value->access_exprs())
     {
-        nom.value = extract_nominal_value_expressions(nominal_value->access_exprs()->exprs,
-            info,
-            diags,
-            type != 'S' ? nominal_eval_subtype::none
-                        : (extension == 'Y' ? nominal_eval_subtype::SY_type : nominal_eval_subtype::S_type));
+        // TODO: yes, this needs to be cleaned up
+        if (type == 'Q')
+            nom.value = process_q_nominal(exprs->exprs, info, diags);
+        else
+        {
+            if (expects_single_symbol())
+                (void)check_single_symbol_ok(diags);
+            nom.value = extract_nominal_value_expressions(exprs->exprs,
+                info,
+                diags,
+                type != 'S' ? nominal_eval_subtype::none
+                            : (extension == 'Y' ? nominal_eval_subtype::SY_type : nominal_eval_subtype::S_type));
+        }
     }
     else
         assert(false);
@@ -415,14 +458,14 @@ checking::reduced_nominal_value_t data_definition::evaluate_reduced_nominal_valu
 
     checking::reduced_nominal_value_t nom;
     nom.present = true;
-    if (nominal_value->access_string())
+    if (const auto* str = nominal_value->access_string())
     {
-        nom.value = nominal_value->access_string()->value;
-        nom.rng = nominal_value->access_string()->value_range;
+        nom.value = str->value;
+        nom.rng = str->value_range;
     }
-    else if (nominal_value->access_exprs())
+    else if (const auto* exprs = nominal_value->access_exprs())
     {
-        nom.value = nominal_value->access_exprs()->exprs.size();
+        nom.value = exprs->exprs.size();
     }
     else
         assert(false);
@@ -474,9 +517,9 @@ void data_definition::apply(mach_expr_visitor& visitor) const
     if (exponent)
         exponent->apply(visitor);
 
-    if (nominal_value && nominal_value->access_exprs())
+    if (const auto* exprs = nominal_value ? nominal_value->access_exprs() : nullptr)
     {
-        for (const auto& val : nominal_value->access_exprs()->exprs)
+        for (const auto& val : exprs->exprs)
         {
             if (std::holds_alternative<expressions::mach_expr_ptr>(val))
                 std::get<expressions::mach_expr_ptr>(val)->apply(visitor);

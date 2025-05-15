@@ -87,6 +87,7 @@ private:
     void process_DC(rebuilt_statement&& stmt);
     void process_DS(rebuilt_statement&& stmt);
     void process_COPY(rebuilt_statement&& stmt);
+    void process_DXD(rebuilt_statement&& stmt);
     void process_EXTRN(rebuilt_statement&& stmt);
     void process_WXTRN(rebuilt_statement&& stmt);
     void process_ORG(rebuilt_statement&& stmt);

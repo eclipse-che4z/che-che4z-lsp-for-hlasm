@@ -581,6 +581,7 @@ const std::unordered_map<parser_library::document_symbol_kind, lsp_document_symb
         { parser_library::document_symbol_kind::READONLY, lsp_document_symbol_item_kind::Enum },
         { parser_library::document_symbol_kind::EXTERNAL, lsp_document_symbol_item_kind::Enum },
         { parser_library::document_symbol_kind::WEAK_EXTERNAL, lsp_document_symbol_item_kind::Enum },
+        { parser_library::document_symbol_kind::EXTERNAL_DSECT, lsp_document_symbol_item_kind::Interface },
         { parser_library::document_symbol_kind::MACRO, lsp_document_symbol_item_kind::Function },
         { parser_library::document_symbol_kind::TITLE, lsp_document_symbol_item_kind::Module },
     };

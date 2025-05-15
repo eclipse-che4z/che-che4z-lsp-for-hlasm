@@ -86,10 +86,7 @@ struct data_definition final : public context::dependable
     // symbol (like V or R)
     bool expects_single_symbol() const;
     // Returns true, if data definition does not violate the single symbol rule, if the type requires it.
-    bool check_single_symbol_ok(const diagnostic_collector& add_diagnostic) const;
-    // Returns list of symbol names written to nominal value.
-    // Expects that check_single_symbol_ok returned true.
-    std::vector<context::id_index> get_single_symbol_names() const;
+    bool check_single_symbol_ok(diagnostic_op_consumer& diags) const;
 
     // When any of the evaluated expressions have dependencies, resulting modifier will have data_def_field::present set
     // to false

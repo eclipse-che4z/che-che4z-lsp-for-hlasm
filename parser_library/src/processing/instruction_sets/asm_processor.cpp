@@ -99,6 +99,7 @@ struct asm_processor::handler_table
         { id_index("DC"), fn<&asm_processor::process_DC> },
         { id_index("DS"), fn<&asm_processor::process_DS> },
         { wk::COPY, fn<&asm_processor::process_COPY> },
+        { id_index("DXD"), fn<&asm_processor::process_DXD> },
         { id_index("EXTRN"), fn<&asm_processor::process_EXTRN> },
         { id_index("WXTRN"), fn<&asm_processor::process_WXTRN> },
         { id_index("ORG"), fn<&asm_processor::process_ORG> },
@@ -437,9 +438,6 @@ void asm_processor::process_data_instruction(rebuilt_statement&& stmt)
             current_alignment = op_align;
 
             has_length_dependencies |= data_op->get_length_dependencies(op_solver).contains_dependencies();
-
-            // some types require operands that consist only of one symbol
-            (void)data_op->value->check_single_symbol_ok(diagnostic_collector(&diag_ctx));
         }
 
         const auto* const b = std::to_address(start);
@@ -515,6 +513,21 @@ void asm_processor::process_COPY(rebuilt_statement&& stmt)
             std::make_unique<postponed_statement_impl>(std::move(stmt), hlasm_ctx.processing_stack()),
             std::move(dep_solver).derive_current_dependency_evaluation_context());
     }
+}
+
+void asm_processor::process_DXD(rebuilt_statement&& stmt)
+{
+    if (const auto name = find_label_symbol(stmt); name.empty())
+        add_diagnostic(diagnostic_op::error_E053(stmt.label_ref().field_range));
+    else if (hlasm_ctx.ord_ctx.symbol_defined(name))
+        add_diagnostic(diagnostic_op::error_E031("external symbol", stmt.label_ref().field_range));
+    else
+        hlasm_ctx.ord_ctx.create_external_section(name, context::section_kind::EXTERNAL_DSECT);
+
+    context::ordinary_assembly_dependency_solver dep_solver(hlasm_ctx.ord_ctx, lib_info);
+    hlasm_ctx.ord_ctx.symbol_dependencies().add_postponed_statement(
+        std::make_unique<postponed_statement_impl>(std::move(stmt), hlasm_ctx.processing_stack()),
+        std::move(dep_solver).derive_current_dependency_evaluation_context());
 }
 
 void asm_processor::process_EXTRN(rebuilt_statement&& stmt)
@@ -1486,6 +1499,25 @@ asm_processor::cattr_ops_result asm_processor::cattr_ops(const semantics::operan
     return { ops.value.size(), {}, {} };
 }
 
+namespace {
+constexpr bool can_switch_into_section(context::section_kind s) noexcept
+{
+    using enum context::section_kind;
+    switch (s)
+    {
+        case DUMMY:
+        case COMMON:
+        case EXECUTABLE:
+        case READONLY:
+            return true;
+        case EXTERNAL:
+        case WEAK_EXTERNAL:
+        case EXTERNAL_DSECT:
+            return false;
+    }
+}
+} // namespace
+
 void asm_processor::handle_cattr_ops(context::id_index class_name,
     context::id_index part_name,
     const range& part_rng,
@@ -1501,7 +1533,8 @@ void asm_processor::handle_cattr_ops(context::id_index class_name,
             add_diagnostic(diagnostic_op::error_A170_section_type_mismatch(part_rng));
         else if (op_count != 1)
             add_diagnostic(diagnostic_op::warn_A171_operands_ignored(stmt.operands_ref().field_range));
-        hlasm_ctx.ord_ctx.set_section(*part_name_sect);
+        if (can_switch_into_section(part_name_sect->kind))
+            hlasm_ctx.ord_ctx.set_section(*part_name_sect);
         return;
     }
 
@@ -1513,7 +1546,8 @@ void asm_processor::handle_cattr_ops(context::id_index class_name,
 
     if (class_name_sect)
     {
-        hlasm_ctx.ord_ctx.set_section(*class_name_sect);
+        if (can_switch_into_section(class_name_sect->kind))
+            hlasm_ctx.ord_ctx.set_section(*class_name_sect);
 
         if (!class_name_sect->goff || part_name.empty() && class_name_sect->goff->partitioned)
         {

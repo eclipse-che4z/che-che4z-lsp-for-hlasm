@@ -53,6 +53,7 @@ const std::unordered_map<context::section_kind, document_symbol_kind> document_s
     { context::section_kind::READONLY, document_symbol_kind::READONLY },
     { context::section_kind::EXTERNAL, document_symbol_kind::EXTERNAL },
     { context::section_kind::WEAK_EXTERNAL, document_symbol_kind::WEAK_EXTERNAL },
+    { context::section_kind::EXTERNAL_DSECT, document_symbol_kind::EXTERNAL_DSECT },
 };
 
 constexpr bool expand_block(const document_symbol_item& item) { return item.kind != document_symbol_kind::MACRO; }

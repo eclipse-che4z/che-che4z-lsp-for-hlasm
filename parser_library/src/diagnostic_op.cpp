@@ -1764,6 +1764,13 @@ diagnostic_op diagnostic_op::error_D034(const range& range)
     return diagnostic_op(diagnostic_severity::error, "D034", "Expression must evaluate into an absolute value", range);
 }
 
+diagnostic_op diagnostic_op::error_D035(const range& range, bool goff)
+{
+    return diagnostic_op(diagnostic_severity::error,
+        "D035",
+        goff ? "Only DXD, DSECT and external symbols allowed" : "Only DXD and DSECT symbols allowed",
+        range);
+}
 
 diagnostic_op diagnostic_op::error_M135(std::string_view instr_name, long long from, long long to, const range& range)
 {

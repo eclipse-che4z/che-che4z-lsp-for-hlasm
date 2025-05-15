@@ -110,13 +110,13 @@ const symbol* ordinary_assembly_context::get_symbol(id_index name) const
     return tmp == symbols_.end() ? nullptr : std::get_if<symbol>(&tmp->second);
 }
 
-section* ordinary_assembly_context::get_section(id_index name)
+section* ordinary_assembly_context::get_section(id_index name) const noexcept
 {
     for (auto& tmp : sections_)
     {
         if (tmp->name == name)
         {
-            return &(*tmp);
+            return std::to_address(tmp);
         }
     }
     return nullptr;
@@ -200,12 +200,15 @@ section* ordinary_assembly_context::set_section(section& s)
 void ordinary_assembly_context::create_external_section(id_index name, section_kind kind)
 {
     const auto attrs = [kind]() {
+        using enum section_kind;
         switch (kind)
         {
-            case section_kind::EXTERNAL:
+            case EXTERNAL:
                 return symbol_attributes::make_extrn_attrs();
-            case section_kind::WEAK_EXTERNAL:
+            case WEAK_EXTERNAL:
                 return symbol_attributes::make_wxtrn_attrs();
+            case EXTERNAL_DSECT:
+                return symbol_attributes::make_section_attrs();
         }
         assert(false);
     }();

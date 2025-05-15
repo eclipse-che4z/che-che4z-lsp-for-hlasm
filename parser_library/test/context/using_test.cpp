@@ -93,7 +93,9 @@ struct test_context : public dependency_solver
     {
         return get_symbol(name);
     }
-    std::string get_opcode_attr(id_index name) const { return hlasm_ctx.get_opcode_attr(name); }
+    std::string get_opcode_attr(id_index name) const override { return hlasm_ctx.get_opcode_attr(name); }
+    const asm_option& get_options() const noexcept override { return hlasm_ctx.options(); }
+    const section* get_section(id_index name) const noexcept override { return asm_ctx.get_section(name); }
 };
 
 std::unique_ptr<mach_expression> operator+(std::unique_ptr<mach_expression> l, std::unique_ptr<mach_expression> r)

@@ -106,7 +106,7 @@ public:
     const symbol* get_symbol(id_index name) const;
 
     // gets section by name
-    section* get_section(id_index name);
+    section* get_section(id_index name) const noexcept;
 
     // access current section
     const section* current_section() const;
