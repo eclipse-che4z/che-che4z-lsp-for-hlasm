@@ -77,25 +77,22 @@ std::optional<processing_status> ordinary_processor::get_processing_status(
 
     if (suggestion.empty())
         return std::make_pair(processing_format(processing_kind::ORDINARY, processing_form::UNKNOWN),
-            op_code(id, context::instruction_type::UNDEF, nullptr));
+            op_code(id, context::instruction_type::UNDEF));
 
     auto found = branch_provider_.request_external_processing(suggestion, processing_kind::MACRO, {});
     if (!found.has_value())
         return std::nullopt;
 
-    processing_form f = processing_form::UNKNOWN;
-    context::instruction_type t = context::instruction_type::UNDEF;
-    context::macro_definition* mac_ptr = nullptr;
-    if (found.value())
-    {
-        f = processing_form::MAC;
-        if (auto mp = hlasm_ctx.find_macro(suggestion))
-        {
-            t = context::instruction_type::MAC;
-            mac_ptr = mp->get();
-        }
-    }
-    return std::make_pair(processing_format(processing_kind::ORDINARY, f), op_code(suggestion, t, mac_ptr));
+    if (!found.value())
+        return std::make_pair(processing_format(processing_kind::ORDINARY, processing_form::UNKNOWN),
+            op_code(suggestion, context::instruction_type::UNDEF));
+
+    if (const auto mp = hlasm_ctx.find_macro(suggestion))
+        return std::make_pair(
+            processing_format(processing_kind::ORDINARY, processing_form::MAC), op_code(suggestion, mp->get()));
+    else
+        return std::make_pair(processing_format(processing_kind::ORDINARY, processing_form::MAC),
+            op_code(suggestion, context::instruction_type::UNDEF));
 }
 
 void ordinary_processor::process_statement(context::shared_stmt_ptr s)
@@ -139,6 +136,7 @@ void ordinary_processor::process_statement(context::shared_stmt_ptr s)
             asm_proc_.process(std::move(statement));
             return;
         case context::instruction_type::MACH:
+        case context::instruction_type::MNEMO:
             mach_proc_.process(std::move(statement));
             return;
         default:
@@ -200,15 +198,14 @@ bool ordinary_processor::finished() { return finished_flag_; }
 struct processing_status_visitor
 {
     context::id_index id;
-    context::hlasm_context& hlasm_ctx;
 
-    std::optional<processing_status> return_value(
-        processing_form f, operand_occurrence o, context::instruction_type t) const noexcept
+    std::optional<processing_status> return_value(processing_form f, bool no_ops, auto arg) const noexcept
     {
+        const auto o = no_ops ? operand_occurrence::ABSENT : operand_occurrence::PRESENT;
         return std::optional<processing_status> {
             std::in_place,
             processing_format(processing_kind::ORDINARY, f, o),
-            op_code(id, t, nullptr),
+            op_code(id, arg),
         };
     }
 
@@ -217,34 +214,23 @@ struct processing_status_visitor
         const auto f = id == context::id_index("DC") || id == context::id_index("DS") || id == context::id_index("DXD")
             ? processing_form::DAT
             : processing_form::ASM;
-        const auto o = i->max_operands() == 0 ? operand_occurrence::ABSENT : operand_occurrence::PRESENT;
-        return return_value(f, o, context::instruction_type::ASM);
+        return return_value(f, i->max_operands() == 0, context::instruction_type::ASM);
     }
     std::optional<processing_status> operator()(const context::machine_instruction* i) const noexcept
     {
-        return return_value(processing_form::MACH,
-            i->operands().empty() ? operand_occurrence::ABSENT : operand_occurrence::PRESENT,
-            context::instruction_type::MACH);
+        return return_value(processing_form::MACH, i->operands().empty(), i);
     }
     std::optional<processing_status> operator()(const context::ca_instruction* i) const noexcept
     {
-        return return_value(processing_form::CA,
-            i->operandless() ? operand_occurrence::ABSENT : operand_occurrence::PRESENT,
-            context::instruction_type::CA);
+        return return_value(processing_form::CA, i->operandless(), context::instruction_type::CA);
     }
     std::optional<processing_status> operator()(const context::mnemonic_code* i) const noexcept
     {
-        return return_value(processing_form::MACH,
-            i->operand_count().second == 0 ? operand_occurrence::ABSENT : operand_occurrence::PRESENT,
-            context::instruction_type::MACH);
+        return return_value(processing_form::MACH, i->operand_count().second == 0, i);
     }
     std::optional<processing_status> operator()(context::macro_definition* mac) const noexcept
     {
-        return std::optional<processing_status> {
-            std::in_place,
-            processing_format(processing_kind::ORDINARY, processing_form::MAC),
-            op_code(id, context::instruction_type::MAC, mac),
-        };
+        return return_value(processing_form::MAC, false, mac);
     }
     std::optional<processing_status> operator()(std::monostate) const noexcept { return std::nullopt; }
 };
@@ -255,11 +241,11 @@ std::optional<processing_status> ordinary_processor::get_instruction_processing_
     if (instruction.empty())
         return std::make_pair(
             processing_format(processing_kind::ORDINARY, processing_form::CA, operand_occurrence::ABSENT),
-            op_code(context::id_index(), context::instruction_type::CA, nullptr));
+            op_code(context::id_index(), context::instruction_type::CA));
 
     const auto code = hlasm_ctx.get_operation_code(instruction, ext_suggestion);
 
-    return std::visit(processing_status_visitor { code.opcode, hlasm_ctx }, code.opcode_detail);
+    return std::visit(processing_status_visitor { code.opcode }, code.opcode_detail);
 }
 
 namespace {
@@ -490,29 +476,34 @@ void ordinary_processor::check_postponed_statements(
 
         operand_vector.clear();
 
-        std::string_view instruction_name = rs->opcode_ref().value.to_string_view();
+        const auto& opcode = rs->opcode_ref();
+        const auto instruction_name = opcode.value.to_string_view();
 
-        if (const auto [mi, mn] = context::instruction::find_machine_instruction_or_mnemonic(instruction_name); mn)
-        {
-            if (!transform_mnemonic(operand_vector, *rs, dep_solver, *mn, collector))
-                continue;
-        }
-        else
-        {
-            if (!transform_default(operand_vector, *rs, dep_solver, collector, mi))
-                continue;
-        }
-
-        switch (const auto& opcode = rs->opcode_ref(); opcode.type)
+        switch (opcode.type)
         {
             case hlasm_plugin::parser_library::context::instruction_type::MACH:
+                if (!transform_default(operand_vector, *rs, dep_solver, collector, opcode.instr_mach))
+                    continue;
                 operand_mach_vector.clear();
                 for (const auto& op : operand_vector)
                     operand_mach_vector.push_back(dynamic_cast<const checking::machine_operand*>(op.get()));
-                checking::check_mach_ops(instruction_name, operand_mach_vector, rs->stmt_range_ref(), collector);
+                opcode.instr_mach->check(instruction_name, operand_mach_vector, rs->stmt_range_ref(), collector);
+                break;
+
+            case hlasm_plugin::parser_library::context::instruction_type::MNEMO:
+                if (!transform_mnemonic(operand_vector, *rs, dep_solver, *opcode.instr_mnemo, collector))
+                    continue;
+                operand_mach_vector.clear();
+                for (const auto& op : operand_vector)
+                    operand_mach_vector.push_back(dynamic_cast<const checking::machine_operand*>(op.get()));
+                opcode.instr_mnemo->instruction()->check(
+                    instruction_name, operand_mach_vector, rs->stmt_range_ref(), collector);
+
                 break;
 
             case hlasm_plugin::parser_library::context::instruction_type::ASM:
+                if (!transform_default(operand_vector, *rs, dep_solver, collector, nullptr))
+                    continue;
                 operand_asm_vector.clear();
                 for (const auto& op : operand_vector)
                     operand_asm_vector.push_back(dynamic_cast<const checking::asm_operand*>(op.get()));

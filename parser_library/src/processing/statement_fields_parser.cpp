@@ -73,7 +73,7 @@ statement_fields_parser::parse_result statement_fields_parser::parse_operand_fie
             case processing::processing_form::MACH:
                 if (auto ops = h.op_rem_body_mach(true, !after_substitution); ops)
                     line = std::move(*ops);
-                transform_reloc_imm_operands(line.operands, opcode.value);
+                transform_reloc_imm_operands(line.operands, opcode);
                 literals = h.collector.take_literals();
                 break;
             case processing::processing_form::DAT:

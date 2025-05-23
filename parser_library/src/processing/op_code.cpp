@@ -21,29 +21,33 @@ namespace hlasm_plugin::parser_library::processing {
 constexpr auto common_processing_status_cache_key_details = std::pair((unsigned char)1, (unsigned char)0);
 
 // (value of L'* expression, reladdr mask)
-inline std::pair<unsigned char, unsigned char> get_processing_status_cache_key_details(std::string_view id) noexcept
+std::pair<unsigned char, unsigned char> get_processing_status_cache_key_details(const op_code& op) noexcept
 {
-    if (!id.empty())
+    switch (op.type)
     {
-        const auto [mi, mn] = context::instruction::find_machine_instruction_or_mnemonic(id);
-
-        if (mn)
-            return std::pair(static_cast<unsigned char>(mi->size_in_bits() / 8), mn->reladdr_mask().mask());
-        if (mi)
-            return std::pair(static_cast<unsigned char>(mi->size_in_bits() / 8), mi->reladdr_mask().mask());
+        case context::instruction_type::MACH:
+            return std::pair(
+                static_cast<unsigned char>(op.instr_mach->size_in_bits() / 8), op.instr_mach->reladdr_mask().mask());
+        case context::instruction_type::MNEMO:
+            return std::pair(
+                static_cast<unsigned char>(op.instr_mnemo->size_in_bits() / 8), op.instr_mnemo->reladdr_mask().mask());
+        default:
+            return common_processing_status_cache_key_details;
     }
-    return common_processing_status_cache_key_details;
 }
 
 // Generates value of L'* expression
-unsigned char processing_status_cache_key::generate_loctr_len(std::string_view id) noexcept
+unsigned char processing_status_cache_key::generate_loctr_len(const op_code& op) noexcept
 {
-    if (!id.empty())
+    switch (op.type)
     {
-        if (const auto [mi, _] = context::instruction::find_machine_instruction_or_mnemonic(id); mi)
-            return static_cast<unsigned char>(mi->size_in_bits() / 8);
+        case context::instruction_type::MACH:
+            return static_cast<unsigned char>(op.instr_mach->size_in_bits() / 8);
+        case context::instruction_type::MNEMO:
+            return static_cast<unsigned char>(op.instr_mnemo->size_in_bits() / 8);
+        default:
+            return 1;
     }
-    return 1;
 }
 
 processing_status_cache_key::processing_status_cache_key(
@@ -56,9 +60,7 @@ processing_status_cache_key::processing_status_cache_key(
 {}
 
 processing_status_cache_key::processing_status_cache_key(const processing_status& s) noexcept
-    : processing_status_cache_key(s,
-          s.second.type != context::instruction_type::MACH
-              ? common_processing_status_cache_key_details
-              : get_processing_status_cache_key_details(s.second.value.to_string_view()))
+    : processing_status_cache_key(s, get_processing_status_cache_key_details(s.second))
 {}
+
 } // namespace hlasm_plugin::parser_library::processing

@@ -15,6 +15,7 @@
 #include "gtest/gtest.h"
 
 #include "../common_testing.h"
+#include "context/hlasm_context.h"
 #include "context/instruction.h"
 #include "processing/op_code.h"
 
@@ -233,15 +234,16 @@ TEST(mach_instr_processing, rel_addr_bitmask)
 
 TEST(mach_instr_processing, instr_size)
 {
-    for (const auto& [instr, expected] : std::initializer_list<std::pair<std::string, int>> {
-             { "LARL", 6 },
-             { "LA", 4 },
-             { "CLIJ", 6 },
-             { "BR", 2 },
-             { "DC", 1 },
+    for (const auto& [instr, expected] : std::initializer_list<std::pair<op_code, int>> {
+             { op_code(id_index("LARL"), &instruction::get_machine_instructions("LARL")), 6 },
+             { op_code(id_index("LA"), &instruction::get_machine_instructions("LA")), 4 },
+             { op_code(id_index("CLIJ"), &instruction::get_machine_instructions("CLIJ")), 6 },
+             { op_code(id_index("BR"), &instruction::get_mnemonic_codes("BR")), 2 },
+             { op_code(id_index("DC"), instruction_type::ASM), 1 },
          })
     {
-        EXPECT_EQ(processing::processing_status_cache_key::generate_loctr_len(instr), expected) << instr;
+        EXPECT_EQ(processing::processing_status_cache_key::generate_loctr_len(instr), expected)
+            << instr.value.to_string_view();
     }
 }
 
@@ -354,25 +356,6 @@ A   LARL 0,A+-00000000000
     a.analyze();
 
     EXPECT_TRUE(matches_message_codes(a.diags(), { "CE007" }));
-}
-
-TEST(mach_instr_processing, check_combined_lookup)
-{
-    for (const auto& orig_mi : context::instruction::all_machine_instructions())
-    {
-        const auto [mi, mn] = context::instruction::find_machine_instruction_or_mnemonic(orig_mi.name());
-
-        EXPECT_EQ(mi, &orig_mi);
-        EXPECT_FALSE(mn);
-    }
-
-    for (const auto& orig_mn : context::instruction::all_mnemonic_codes())
-    {
-        const auto [mi, mn] = context::instruction::find_machine_instruction_or_mnemonic(orig_mn.name());
-
-        EXPECT_EQ(mi, orig_mn.instruction());
-        EXPECT_EQ(mn, &orig_mn);
-    }
 }
 
 TEST(mach_instr_processing, validate_even_odd)

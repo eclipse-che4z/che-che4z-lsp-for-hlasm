@@ -110,18 +110,4 @@ bool check_asm_ops(std::string_view instruction_name,
     return it->second->check(ops, stmt_range, add_diagnostic);
 }
 
-bool check_mach_ops(std::string_view instruction_name,
-    std::span<const machine_operand* const> ops,
-    const range& stmt_range,
-    const diagnostic_collector& add_diagnostic)
-{
-    // instruction name is the mnemonic name in case of a mnemonic instruction
-
-    auto [mi, _] = context::instruction::find_machine_instruction_or_mnemonic(instruction_name);
-
-    assert(mi);
-
-    return mi->check(instruction_name, ops, stmt_range, add_diagnostic);
-}
-
 } // namespace hlasm_plugin::parser_library::checking

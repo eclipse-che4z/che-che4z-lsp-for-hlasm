@@ -25,15 +25,9 @@ struct range;
 
 namespace hlasm_plugin::parser_library::checking {
 class asm_operand;
-class machine_operand;
 
 bool check_asm_ops(std::string_view instruction_name,
     std::span<const asm_operand* const> operand_vector,
-    const range& stmt_range,
-    const diagnostic_collector& add_diagnostic);
-
-bool check_mach_ops(std::string_view instruction_name,
-    std::span<const machine_operand* const> operand_vector,
     const range& stmt_range,
     const diagnostic_collector& add_diagnostic);
 

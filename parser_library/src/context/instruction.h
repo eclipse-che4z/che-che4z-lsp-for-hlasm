@@ -544,9 +544,9 @@ public:
         : machine_instruction(name, ifd.format, ifd.op_format, page_no, instr_set_affiliation, d)
     {}
 
-    constexpr std::string_view name() const { return m_name.to_string_view(); }
-    mach_format format() const { return m_format; }
-    constexpr size_t size_in_bits() const
+    constexpr std::string_view name() const noexcept { return m_name.to_string_view(); }
+    mach_format format() const noexcept { return m_format; }
+    constexpr size_t size_in_bits() const noexcept
     {
         switch (static_cast<size_identifier>(m_size_identifier))
         {
@@ -560,13 +560,16 @@ public:
                 return 48;
         }
     }
-    constexpr reladdr_transform_mask reladdr_mask() const { return m_reladdr_mask; }
-    constexpr std::span<const checking::machine_operand_format> operands() const
+    constexpr reladdr_transform_mask reladdr_mask() const noexcept { return m_reladdr_mask; }
+    constexpr std::span<const checking::machine_operand_format> operands() const noexcept
     {
         return std::span<const checking::machine_operand_format>(m_operands, m_operand_len);
     }
-    constexpr size_t optional_operand_count() const { return m_optional_op_count; }
-    constexpr const instruction_set_affiliation& instr_set_affiliation() const { return m_instr_set_affiliation; };
+    constexpr size_t optional_operand_count() const noexcept { return m_optional_op_count; }
+    constexpr const instruction_set_affiliation& instr_set_affiliation() const noexcept
+    {
+        return m_instr_set_affiliation;
+    };
 
     bool check(std::string_view name_of_instruction,
         std::span<const checking::machine_operand* const> operands,
@@ -745,15 +748,19 @@ public:
             assert(!r.has_source() || r.source < m_op_max);
     }
 
-    constexpr const machine_instruction* instruction() const { return m_instruction; }
-    constexpr std::span<const mnemonic_transformation> operand_transformations() const
+    constexpr const machine_instruction* instruction() const noexcept { return m_instruction; }
+    constexpr size_t size_in_bits() const noexcept { return instruction()->size_in_bits(); }
+    constexpr std::span<const mnemonic_transformation> operand_transformations() const noexcept
     {
         return { m_transform.data(), m_transform_count };
     }
-    constexpr std::pair<size_t, size_t> operand_count() const { return { m_op_min, m_op_max }; }
-    constexpr reladdr_transform_mask reladdr_mask() const { return m_reladdr_mask; }
-    constexpr std::string_view name() const { return m_name.to_string_view(); }
-    constexpr const instruction_set_affiliation& instr_set_affiliation() const { return m_instr_set_affiliation; };
+    constexpr std::pair<size_t, size_t> operand_count() const noexcept { return { m_op_min, m_op_max }; }
+    constexpr reladdr_transform_mask reladdr_mask() const noexcept { return m_reladdr_mask; }
+    constexpr std::string_view name() const noexcept { return m_name.to_string_view(); }
+    constexpr const instruction_set_affiliation& instr_set_affiliation() const noexcept
+    {
+        return m_instr_set_affiliation;
+    };
 };
 
 // machine instruction common representation
@@ -811,9 +818,6 @@ public:
     static const mnemonic_code& get_mnemonic_codes(std::string_view name) noexcept;
     static const mnemonic_code* find_mnemonic_codes(std::string_view name) noexcept;
     static std::span<const mnemonic_code> all_mnemonic_codes() noexcept;
-
-    static std::pair<const machine_instruction*, const mnemonic_code*> find_machine_instruction_or_mnemonic(
-        std::string_view name) noexcept;
 
     static std::string_view mach_format_to_string(mach_format) noexcept;
 };

@@ -18,10 +18,14 @@
 #include <memory>
 #include <vector>
 
-#include "context/id_storage.h"
+#include "context/id_index.h"
 #include "range.h"
 
 // the file contains structures representing operands in the operand field of statement
+
+namespace hlasm_plugin::parser_library::processing {
+struct op_code;
+}
 
 namespace hlasm_plugin::parser_library::semantics {
 
@@ -92,7 +96,7 @@ struct operand
     virtual ~operand() = default;
 };
 
-void transform_reloc_imm_operands(semantics::operand_list& op_list, context::id_index instruction);
+void transform_reloc_imm_operands(semantics::operand_list& op_list, const processing::op_code& op);
 
 } // namespace hlasm_plugin::parser_library::semantics
 

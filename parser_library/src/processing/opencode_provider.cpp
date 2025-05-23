@@ -418,7 +418,7 @@ std::shared_ptr<const context::hlasm_statement> opencode_provider::process_ordin
                             std::move(ops->operands), std::move(ops->remarks), ops->line_range);
                     }
                     if (h.collector.has_operands())
-                        transform_reloc_imm_operands(h.collector.current_operands().value, opcode.value);
+                        transform_reloc_imm_operands(h.collector.current_operands().value, opcode);
                     break;
                 case processing_form::DAT:
                     if (auto ops = h.op_rem_body_dat(false, true); ops)

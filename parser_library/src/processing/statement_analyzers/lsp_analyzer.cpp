@@ -30,6 +30,7 @@
 #include "lsp/lsp_context.h"
 #include "lsp/text_data_view.h"
 #include "occurrence_collector.h"
+#include "processing/op_code.h"
 #include "processing/statement.h"
 #include "processing/statement_analyzers/occurrence_collector.h"
 #include "processing/statement_processors/copy_processing_info.h"
@@ -350,7 +351,9 @@ void lsp_analyzer::collect_occurrence(
             if (!opcode.opcode.empty() || opcode.is_macro())
                 collector.occurrences.emplace_back(opcode.opcode, opcode.get_macro_details(), instruction.field_range);
         }
-        else if (!op->value.empty() && op->type != context::instruction_type::MAC || op->mac_def)
+        else if (!op->value.empty() && op->type != context::instruction_type::MAC)
+            collector.occurrences.emplace_back(op->value, nullptr, instruction.field_range);
+        else if (op->type == context::instruction_type::MAC && op->mac_def)
             collector.occurrences.emplace_back(op->value, op->mac_def, instruction.field_range);
     }
     else if (instruction.type == semantics::instruction_si_type::ORD
@@ -540,12 +543,17 @@ std::optional<std::pair<int, int>> get_branch_operand(const context::mnemonic_co
 
     return ba;
 }
-std::optional<std::pair<int, int>> get_branch_operand(context::id_index id) noexcept
+std::optional<std::pair<int, int>> get_branch_operand(const op_code& op) noexcept
 {
-    if (const auto [mi, mn] = context::instruction::find_machine_instruction_or_mnemonic(id.to_string_view()); mn)
-        return get_branch_operand(mn);
-    else
-        return get_branch_operand(mi);
+    switch (op.type)
+    {
+        case context::instruction_type::MACH:
+            return get_branch_operand(op.instr_mach);
+        case context::instruction_type::MNEMO:
+            return get_branch_operand(op.instr_mnemo);
+        default:
+            return std::nullopt;
+    }
 }
 
 context::processing_stack_t get_opencode_stackframe(context::processing_stack_t sf)
@@ -626,11 +634,8 @@ void lsp_analyzer::collect_branch_info(
             continue;
 
         const auto* rs = stmt->resolved_stmt;
-        const auto& opcode = rs->opcode_ref();
-        if (opcode.type != context::instruction_type::MACH)
-            continue;
 
-        const auto transfer = get_branch_operand(opcode.value);
+        const auto transfer = get_branch_operand(rs->opcode_ref());
 
         if (!transfer.has_value())
             continue;

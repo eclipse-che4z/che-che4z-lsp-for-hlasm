@@ -21,6 +21,7 @@ namespace hlasm_plugin::parser_library::context {
 enum class instruction_type
 {
     MACH,
+    MNEMO,
     ASM,
     MAC,
     CA,

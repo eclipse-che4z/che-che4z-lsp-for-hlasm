@@ -273,13 +273,10 @@ void lookahead_processor::assign_section_attributes(context::id_index symbol_nam
     register_attr_ref(symbol_name, context::symbol_attributes::make_section_attrs());
 }
 
-void lookahead_processor::assign_machine_attributes(context::id_index symbol_name, const resolved_statement& statement)
+void lookahead_processor::assign_machine_attributes(context::id_index symbol_name, size_t len)
 {
-    const auto [mi, _] =
-        context::instruction::find_machine_instruction_or_mnemonic(statement.opcode_ref().value.to_string_view());
-
-    register_attr_ref(symbol_name,
-        context::symbol_attributes::make_machine_attrs((context::symbol_attributes::len_attr)mi->size_in_bits() / 8));
+    using context::symbol_attributes;
+    register_attr_ref(symbol_name, symbol_attributes::make_machine_attrs((symbol_attributes::len_attr)len));
 }
 
 void lookahead_processor::assign_assembler_attributes(
@@ -332,17 +329,20 @@ void lookahead_processor::find_ord(const resolved_statement& statement)
     // find attributes
     // if found ord symbol on CA, macro or undefined instruction, only type attribute is assigned
     // 'U' for CA and 'M' for undefined and macro
-    switch (statement.opcode_ref().type)
+    switch (const auto& opcode = statement.opcode_ref(); opcode.type)
     {
         case context::instruction_type::CA:
+            register_attr_ref(id, context::symbol_attributes(context::symbol_origin::MACH, 'U'_ebcdic));
+            break;
         case context::instruction_type::UNDEF:
         case context::instruction_type::MAC:
-            register_attr_ref(id,
-                context::symbol_attributes(context::symbol_origin::MACH,
-                    statement.opcode_ref().type == context::instruction_type::CA ? 'U'_ebcdic : 'M'_ebcdic));
+            register_attr_ref(id, context::symbol_attributes(context::symbol_origin::MACH, 'M'_ebcdic));
             break;
         case context::instruction_type::MACH:
-            assign_machine_attributes(id, statement);
+            assign_machine_attributes(id, opcode.instr_mach->size_in_bits() / 8);
+            break;
+        case context::instruction_type::MNEMO:
+            assign_machine_attributes(id, opcode.instr_mnemo->size_in_bits() / 8);
             break;
         case context::instruction_type::ASM:
             assign_assembler_attributes(id, statement);

@@ -768,7 +768,7 @@ std::optional<int> parser2::maybe_loctr_len()
     if (!holder->proc_status.has_value())
         return std::nullopt;
     const auto& [_, opcode] = *holder->proc_status;
-    return processing::processing_status_cache_key::generate_loctr_len(opcode.value.to_string_view());
+    return processing::processing_status_cache_key::generate_loctr_len(opcode);
 }
 
 [[nodiscard]] constexpr bool parser2::before_nl() const noexcept

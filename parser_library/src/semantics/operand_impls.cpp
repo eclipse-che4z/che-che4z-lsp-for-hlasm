@@ -784,14 +784,22 @@ struct request_halfword_alignment final : public expressions::mach_expr_visitor
     void visit(const expressions::mach_expr_literal& expr) override { expr.referenced_by_reladdr(); }
 };
 
-void transform_reloc_imm_operands(semantics::operand_list& op_list, context::id_index instruction)
+void transform_reloc_imm_operands(semantics::operand_list& op_list, const processing::op_code& op)
 {
-    if (instruction.empty())
-        return;
+    unsigned char mask = 0;
 
-    const auto [mi, mn] = context::instruction::find_machine_instruction_or_mnemonic(instruction.to_string_view());
+    switch (op.type)
+    {
+        case context::instruction_type::MACH:
+            mask = op.instr_mach->reladdr_mask().mask();
+            break;
+        case context::instruction_type::MNEMO:
+            mask = op.instr_mnemo->reladdr_mask().mask();
+            break;
+        default:
+            return;
+    }
 
-    unsigned char mask = mn ? mn->reladdr_mask().mask() : mi->reladdr_mask().mask();
     decltype(mask) top_bit = 1 << (std::numeric_limits<decltype(mask)>::digits - 1);
 
     for (const auto& operand : op_list)
