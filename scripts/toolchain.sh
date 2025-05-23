@@ -20,7 +20,7 @@ echo "TARGET = $1" >> config.mak
 echo "OUTPUT = /toolchain/" >> config.mak
 echo "BINUTILS_VER = 2.41" >> config.mak
 echo "GCC_VER = 14.2.0" >> config.mak
-echo "DL_CMD = curl -C - -L -o" >> config.mak
+echo "DL_CMD = curl --retry 20 --retry-max-time 120 -C - -L -o" >> config.mak
 echo "COMMON_CONFIG += CFLAGS=\"-fdata-sections -ffunction-sections -O2 -g0\" CXXFLAGS=\"-fdata-sections -ffunction-sections -O2 -g0\"" >> config.mak
 echo "BINUTILS_CONFIG = --enable-gprofng=no" >> config.mak
 
