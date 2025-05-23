@@ -16,7 +16,7 @@
 
 #include <algorithm>
 #include <array>
-#include <limits>
+#include <cassert>
 #include <memory>
 #include <utility>
 
@@ -27,30 +27,26 @@ using namespace hlasm_plugin::parser_library::checking;
 using namespace hlasm_plugin::parser_library;
 
 namespace {
-constexpr z_arch_affiliation operator|(z_arch_affiliation a, z_arch_affiliation b)
-{
-    if (a != z_arch_affiliation::NO_AFFILIATION && b != z_arch_affiliation::NO_AFFILIATION)
-    {
-        return std::min(a, b);
-    }
-    else
-    {
-        return std::max(a, b);
-    }
-}
 
-constexpr instruction_set_affiliation operator|(instruction_set_affiliation a, z_arch_affiliation z_affil)
+consteval instruction_set_affiliation operator|(instruction_set_affiliation a, z_arch_affiliation z_affil) noexcept
 {
-    a.z_arch = a.z_arch | z_affil;
+    using enum z_arch_affiliation;
+    assert(a.z_arch == NO_AFFILIATION && a.z_arch_removed == NO_AFFILIATION);
+
+    a.z_arch = z_affil;
+    a.z_arch_removed = LAST;
 
     return a;
 }
 
-constexpr instruction_set_affiliation operator|(instruction_set_affiliation a, instruction_set_affiliation b)
+consteval instruction_set_affiliation operator|(instruction_set_affiliation a, instruction_set_affiliation b) noexcept
 {
+    assert(a.z_arch == z_arch_affiliation::NO_AFFILIATION);
+    assert(b.z_arch == z_arch_affiliation::NO_AFFILIATION);
+
     instruction_set_affiliation result {};
 
-    result.z_arch = a.z_arch | b.z_arch;
+    result.z_arch = z_arch_affiliation::NO_AFFILIATION;
     result.esa = a.esa | b.esa;
     result.xa = a.xa | b.xa;
     result._370 = a._370 | b._370;
@@ -61,32 +57,34 @@ constexpr instruction_set_affiliation operator|(instruction_set_affiliation a, i
 }
 
 // clang-format off
-constexpr auto ESA       = instruction_set_affiliation{z_arch_affiliation::NO_AFFILIATION, 1, 0, 0, 0, 0};
-constexpr auto XA        = instruction_set_affiliation{z_arch_affiliation::NO_AFFILIATION, 0, 1, 0, 0, 0};
-constexpr auto _370      = instruction_set_affiliation{z_arch_affiliation::NO_AFFILIATION, 0, 0, 1, 0, 0};
-constexpr auto DOS       = instruction_set_affiliation{z_arch_affiliation::NO_AFFILIATION, 0, 0, 0, 1, 0};
-constexpr auto UNI       = instruction_set_affiliation{z_arch_affiliation::NO_AFFILIATION, 0, 0, 0, 0, 1};
+constexpr auto ESA       = instruction_set_affiliation{z_arch_affiliation::NO_AFFILIATION, z_arch_affiliation::NO_AFFILIATION, 1, 0, 0, 0, 0};
+constexpr auto XA        = instruction_set_affiliation{z_arch_affiliation::NO_AFFILIATION, z_arch_affiliation::NO_AFFILIATION, 0, 1, 0, 0, 0};
+constexpr auto _370      = instruction_set_affiliation{z_arch_affiliation::NO_AFFILIATION, z_arch_affiliation::NO_AFFILIATION, 0, 0, 1, 0, 0};
+constexpr auto DOS       = instruction_set_affiliation{z_arch_affiliation::NO_AFFILIATION, z_arch_affiliation::NO_AFFILIATION, 0, 0, 0, 1, 0};
+constexpr auto UNI       = instruction_set_affiliation{z_arch_affiliation::NO_AFFILIATION, z_arch_affiliation::NO_AFFILIATION, 0, 0, 0, 0, 1};
 
 constexpr auto ESA_XA                       = ESA | XA;
 constexpr auto ESA_XA_370                   = ESA | XA | _370;
 constexpr auto UNI_370                      = UNI | _370;
 constexpr auto UNI_370_DOS                  = UNI | _370 | DOS;
-constexpr auto UNI_ESA_SINCE_ZOP            = UNI | ESA | z_arch_affiliation::SINCE_ZOP;
-constexpr auto UNI_ESA_XA_370_DOS_SINCE_ZOP = UNI | ESA | XA | _370 | DOS | z_arch_affiliation::SINCE_ZOP;
-constexpr auto UNI_ESA_XA_370_SINCE_Z13     = UNI | ESA | XA | _370 | z_arch_affiliation::SINCE_Z13;
-constexpr auto UNI_ESA_XA_370_SINCE_Z15     = UNI | ESA | XA | _370 | z_arch_affiliation::SINCE_Z15;
-constexpr auto UNI_ESA_XA_370_SINCE_ZOP     = UNI | ESA | XA | _370 | z_arch_affiliation::SINCE_ZOP;
-constexpr auto UNI_ESA_XA_SINCE_ZOP         = UNI | ESA | XA | z_arch_affiliation::SINCE_ZOP;
-constexpr auto UNI_SINCE_YOP                = UNI | z_arch_affiliation::SINCE_YOP;
-constexpr auto UNI_SINCE_Z10                = UNI | z_arch_affiliation::SINCE_Z10;
-constexpr auto UNI_SINCE_Z11                = UNI | z_arch_affiliation::SINCE_Z11;
-constexpr auto UNI_SINCE_Z12                = UNI | z_arch_affiliation::SINCE_Z12;
-constexpr auto UNI_SINCE_Z13                = UNI | z_arch_affiliation::SINCE_Z13;
-constexpr auto UNI_SINCE_Z14                = UNI | z_arch_affiliation::SINCE_Z14;
-constexpr auto UNI_SINCE_Z15                = UNI | z_arch_affiliation::SINCE_Z15;
-constexpr auto UNI_SINCE_Z16                = UNI | z_arch_affiliation::SINCE_Z16;
-constexpr auto UNI_SINCE_Z9                 = UNI | z_arch_affiliation::SINCE_Z9;
-constexpr auto UNI_SINCE_ZOP                = UNI | z_arch_affiliation::SINCE_ZOP;
+constexpr auto UNI_ESA_SINCE_ZOP            = UNI | ESA | z_arch_affiliation::ZOP;
+constexpr auto UNI_ESA_XA_370_DOS_SINCE_ZOP = UNI | ESA | XA | _370 | DOS | z_arch_affiliation::ZOP;
+constexpr auto UNI_ESA_XA_370_SINCE_Z13     = UNI | ESA | XA | _370 | z_arch_affiliation::Z13;
+constexpr auto UNI_ESA_XA_370_SINCE_Z15     = UNI | ESA | XA | _370 | z_arch_affiliation::Z15;
+constexpr auto UNI_ESA_XA_370_SINCE_ZOP     = UNI | ESA | XA | _370 | z_arch_affiliation::ZOP;
+constexpr auto UNI_ESA_XA_SINCE_ZOP         = UNI | ESA | XA | z_arch_affiliation::ZOP;
+constexpr auto UNI_SINCE_YOP                = UNI | z_arch_affiliation::YOP;
+constexpr auto UNI_SINCE_Z10                = UNI | z_arch_affiliation::Z10;
+constexpr auto UNI_SINCE_Z11                = UNI | z_arch_affiliation::Z11;
+constexpr auto UNI_SINCE_Z12                = UNI | z_arch_affiliation::Z12;
+constexpr auto UNI_SINCE_Z13                = UNI | z_arch_affiliation::Z13;
+constexpr auto UNI_SINCE_Z14                = UNI | z_arch_affiliation::Z14;
+constexpr auto UNI_SINCE_Z15                = UNI | z_arch_affiliation::Z15;
+constexpr auto UNI_SINCE_Z16                = UNI | z_arch_affiliation::Z16;
+constexpr auto UNI_SINCE_Z17                = UNI | z_arch_affiliation::Z17;
+constexpr auto UNI_SINCE_Z9                 = UNI | z_arch_affiliation::Z9;
+constexpr auto UNI_SINCE_ZOP                = UNI | z_arch_affiliation::ZOP;
+constexpr auto SINCE_YOP_TILL_Z17           = instruction_set_affiliation{z_arch_affiliation::YOP, z_arch_affiliation::Z17, 0, 0, 0, 0, 0};
 // clang-format on
 } // namespace
 
@@ -174,6 +172,8 @@ std::string_view instruction::mach_format_to_string(mach_format f) noexcept
             return "RXY-a";
         case mach_format::RXY_b:
             return "RXY-b";
+        case mach_format::RXY_c:
+            return "RXY-c";
         case mach_format::S:
             return "S";
         case mach_format::SI:
@@ -220,6 +220,12 @@ std::string_view instruction::mach_format_to_string(mach_format f) noexcept
             return "VRI-h";
         case mach_format::VRI_i:
             return "VRI-i";
+        case mach_format::VRI_j:
+            return "VRI-j";
+        case mach_format::VRI_k:
+            return "VRI-k";
+        case mach_format::VRI_l:
+            return "VRI-l";
         case mach_format::VRR_a:
             return "VRR-a";
         case mach_format::VRR_b:
@@ -256,10 +262,9 @@ std::string_view instruction::mach_format_to_string(mach_format f) noexcept
             return "VRV";
         case mach_format::VRX:
             return "VRX";
-        default:
-            assert(false);
-            return "";
     }
+    assert(false);
+    return "";
 }
 
 constexpr ca_instruction ca_instructions[] = {
@@ -450,7 +455,7 @@ struct is_branch_argument_t<branch_argument_t<arg, nonzero>> : std::true_type
 };
 
 template<int... arg, int... nonzero>
-constexpr branch_info_argument select_branch_argument(branch_argument_t<arg, nonzero>...)
+consteval branch_info_argument select_branch_argument(branch_argument_t<arg, nonzero>...)
 {
     constexpr auto res = []() {
         const int args[] = { arg..., 0 };
@@ -491,12 +496,12 @@ struct make_machine_instruction_details_args_validator
 
 struct
 {
-    constexpr unsigned char operator()(const cc_index& val) const noexcept { return val.value; }
-    constexpr unsigned char operator()(const auto&) const noexcept { return 0; }
+    consteval unsigned char operator()(const cc_index& val) const noexcept { return val.value; }
+    consteval unsigned char operator()(const auto&) const noexcept { return 0; }
 } constexpr cc_visitor;
 
 template<size_t n, typename... Args>
-constexpr machine_instruction_details make_machine_instruction_details(const char (&name)[n], Args&&... args) noexcept
+consteval machine_instruction_details make_machine_instruction_details(const char (&name)[n], Args&&... args) noexcept
     requires(n > 1 && n < 256 && make_machine_instruction_details_args_validator<std::decay_t<Args>...>::value)
 {
     using A = make_machine_instruction_details_args_validator<std::decay_t<Args>...>;
@@ -534,6 +539,47 @@ constexpr machine_instruction machine_instructions[] = {
 
 static_assert(std::ranges::is_sorted(machine_instructions, {}, &machine_instruction::name));
 
+namespace {
+consteval bool check_machine_instruction_overlap(std::span<const machine_instruction> instrs)
+{
+    for (size_t i = 0; i < instrs.size() - 1; ++i)
+    {
+        const auto initial_name = instrs[i].name();
+        if (initial_name != instrs[i + 1].name())
+            continue;
+        bool archs[1 << arch_bitfield_width] = {};
+        bool esa = false;
+        bool xa = false;
+        bool s370 = false;
+        bool dos = false;
+        bool uni = false;
+        for (; i < instrs.size() && instrs[i].name() == initial_name; ++i)
+        {
+            const auto af = instrs[i].instr_set_affiliation();
+            if (af.esa && std::exchange(esa, true))
+                return false;
+            if (af.xa && std::exchange(xa, true))
+                return false;
+            if (af._370 && std::exchange(s370, true))
+                return false;
+            if (af.dos && std::exchange(dos, true))
+                return false;
+            if (af.uni && std::exchange(uni, true))
+                return false;
+
+            for (auto j = (int)af.z_arch; j < (int)af.z_arch_removed; ++j)
+                if (std::exchange(archs[j], true))
+                    return false;
+        }
+        --i;
+    }
+
+    return true;
+}
+} // namespace
+
+static_assert(check_machine_instruction_overlap(machine_instructions), "Overlap detected in machine instruction list");
+
 const machine_instruction* instruction::find_machine_instructions(std::string_view name) noexcept
 {
     auto it = std::ranges::lower_bound(machine_instructions, name, {}, &machine_instruction::name);
@@ -542,7 +588,7 @@ const machine_instruction* instruction::find_machine_instructions(std::string_vi
     return std::to_address(it);
 }
 
-constexpr const machine_instruction* find_mi(std::string_view name)
+consteval const machine_instruction* find_mi(std::string_view name) noexcept
 {
     auto it = std::ranges::lower_bound(machine_instructions, name, {}, &machine_instruction::name);
     assert(it != std::ranges::end(machine_instructions) && it->name() == name);
@@ -1970,7 +2016,7 @@ const mnemonic_code& instruction::get_mnemonic_codes(std::string_view name) noex
 
 std::span<const mnemonic_code> instruction::all_mnemonic_codes() noexcept { return mnemonic_codes; }
 
-constexpr instruction_set_size compute_instruction_set_size(instruction_set_version v)
+consteval instruction_set_size compute_instruction_set_size(instruction_set_version v)
 {
     instruction_set_size result = {
         0,
@@ -1988,29 +2034,36 @@ constexpr instruction_set_size compute_instruction_set_size(instruction_set_vers
     return result;
 }
 
+template<instruction_set_version v>
+struct instruction_set_size_generator
+{
+    static constexpr auto value = compute_instruction_set_size(v);
+};
+
 constexpr instruction_set_size instruction_set_sizes[] = {
     {},
-    compute_instruction_set_size(instruction_set_version::ZOP),
-    compute_instruction_set_size(instruction_set_version::YOP),
-    compute_instruction_set_size(instruction_set_version::Z9),
-    compute_instruction_set_size(instruction_set_version::Z10),
-    compute_instruction_set_size(instruction_set_version::Z11),
-    compute_instruction_set_size(instruction_set_version::Z12),
-    compute_instruction_set_size(instruction_set_version::Z13),
-    compute_instruction_set_size(instruction_set_version::Z14),
-    compute_instruction_set_size(instruction_set_version::Z15),
-    compute_instruction_set_size(instruction_set_version::Z16),
-    compute_instruction_set_size(instruction_set_version::ESA),
-    compute_instruction_set_size(instruction_set_version::XA),
-    compute_instruction_set_size(instruction_set_version::_370),
-    compute_instruction_set_size(instruction_set_version::DOS),
-    compute_instruction_set_size(instruction_set_version::UNI),
+    instruction_set_size_generator<instruction_set_version::ZOP>::value,
+    instruction_set_size_generator<instruction_set_version::YOP>::value,
+    instruction_set_size_generator<instruction_set_version::Z9>::value,
+    instruction_set_size_generator<instruction_set_version::Z10>::value,
+    instruction_set_size_generator<instruction_set_version::Z11>::value,
+    instruction_set_size_generator<instruction_set_version::Z12>::value,
+    instruction_set_size_generator<instruction_set_version::Z13>::value,
+    instruction_set_size_generator<instruction_set_version::Z14>::value,
+    instruction_set_size_generator<instruction_set_version::Z15>::value,
+    instruction_set_size_generator<instruction_set_version::Z16>::value,
+    instruction_set_size_generator<instruction_set_version::Z17>::value,
+    instruction_set_size_generator<instruction_set_version::ESA>::value,
+    instruction_set_size_generator<instruction_set_version::XA>::value,
+    instruction_set_size_generator<instruction_set_version::_370>::value,
+    instruction_set_size_generator<instruction_set_version::DOS>::value,
+    instruction_set_size_generator<instruction_set_version::UNI>::value,
 };
 
 const instruction_set_size& hlasm_plugin::parser_library::context::get_instruction_sizes(
     instruction_set_version v) noexcept
 {
-    auto idx = static_cast<int>(v);
+    const auto idx = static_cast<unsigned char>(v);
     assert(0 < idx && idx < std::size(instruction_set_sizes));
     return instruction_set_sizes[idx];
 }

@@ -950,6 +950,7 @@ constexpr const utils::bk_tree<std::string_view, utils::levenshtein_distance_t<1
     &get_instruction_bk_tree<instruction_set_version::Z14>,
     &get_instruction_bk_tree<instruction_set_version::Z15>,
     &get_instruction_bk_tree<instruction_set_version::Z16>,
+    &get_instruction_bk_tree<instruction_set_version::Z17>,
     &get_instruction_bk_tree<instruction_set_version::ESA>,
     &get_instruction_bk_tree<instruction_set_version::XA>,
     &get_instruction_bk_tree<instruction_set_version::_370>,

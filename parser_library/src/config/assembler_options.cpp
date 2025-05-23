@@ -27,7 +27,7 @@ namespace hlasm_plugin::parser_library::config {
 namespace {
 using instr_set_equivalent_pair = std::pair<std::string_view, instruction_set_version>;
 
-constexpr std::array<instr_set_equivalent_pair, 25> instr_set_optable_equivalents = { {
+constexpr instr_set_equivalent_pair instr_set_optable_equivalents[] = {
     { std::string_view("370"), instruction_set_version::_370 },
     { std::string_view("DOS"), instruction_set_version::DOS },
     { std::string_view("ESA"), instruction_set_version::ESA },
@@ -41,6 +41,7 @@ constexpr std::array<instr_set_equivalent_pair, 25> instr_set_optable_equivalent
     { std::string_view("Z14"), instruction_set_version::Z14 },
     { std::string_view("Z15"), instruction_set_version::Z15 },
     { std::string_view("Z16"), instruction_set_version::Z16 },
+    { std::string_view("Z17"), instruction_set_version::Z17 },
     { std::string_view("Z9"), instruction_set_version::Z9 },
     { std::string_view("ZOP"), instruction_set_version::ZOP },
     { std::string_view("ZS1"), instruction_set_version::ZOP },
@@ -53,11 +54,12 @@ constexpr std::array<instr_set_equivalent_pair, 25> instr_set_optable_equivalent
     { std::string_view("ZS8"), instruction_set_version::Z14 },
     { std::string_view("ZS9"), instruction_set_version::Z15 },
     { std::string_view("ZSA"), instruction_set_version::Z16 },
-} };
+    { std::string_view("ZSB"), instruction_set_version::Z17 },
+};
 
 static_assert(std::ranges::is_sorted(instr_set_optable_equivalents, {}, &instr_set_equivalent_pair::first));
 
-constexpr std::array<instr_set_equivalent_pair, 58> instr_set_machine_equivalents = { {
+constexpr instr_set_equivalent_pair instr_set_machine_equivalents[] = {
     { std::string_view("ARCH-0"), instruction_set_version::XA },
     { std::string_view("ARCH-1"), instruction_set_version::ESA },
     { std::string_view("ARCH-10"), instruction_set_version::Z12 },
@@ -65,6 +67,7 @@ constexpr std::array<instr_set_equivalent_pair, 58> instr_set_machine_equivalent
     { std::string_view("ARCH-12"), instruction_set_version::Z14 },
     { std::string_view("ARCH-13"), instruction_set_version::Z15 },
     { std::string_view("ARCH-14"), instruction_set_version::Z16 },
+    { std::string_view("ARCH-15"), instruction_set_version::Z17 },
     { std::string_view("ARCH-2"), instruction_set_version::ESA },
     { std::string_view("ARCH-3"), instruction_set_version::ESA },
     { std::string_view("ARCH-4"), instruction_set_version::ESA },
@@ -97,6 +100,7 @@ constexpr std::array<instr_set_equivalent_pair, 58> instr_set_machine_equivalent
     { std::string_view("ZS"), instruction_set_version::ZOP },
     { std::string_view("ZS-1"), instruction_set_version::ZOP },
     { std::string_view("ZS-10"), instruction_set_version::Z16 },
+    { std::string_view("ZS-11"), instruction_set_version::Z17 },
     { std::string_view("ZS-2"), instruction_set_version::YOP },
     { std::string_view("ZS-3"), instruction_set_version::Z9 },
     { std::string_view("ZS-4"), instruction_set_version::Z10 },
@@ -108,6 +112,7 @@ constexpr std::array<instr_set_equivalent_pair, 58> instr_set_machine_equivalent
     { std::string_view("ZSERIES"), instruction_set_version::ZOP },
     { std::string_view("ZSERIES-1"), instruction_set_version::ZOP },
     { std::string_view("ZSERIES-10"), instruction_set_version::Z16 },
+    { std::string_view("ZSERIES-11"), instruction_set_version::Z17 },
     { std::string_view("ZSERIES-2"), instruction_set_version::YOP },
     { std::string_view("ZSERIES-3"), instruction_set_version::Z9 },
     { std::string_view("ZSERIES-4"), instruction_set_version::Z10 },
@@ -116,7 +121,7 @@ constexpr std::array<instr_set_equivalent_pair, 58> instr_set_machine_equivalent
     { std::string_view("ZSERIES-7"), instruction_set_version::Z13 },
     { std::string_view("ZSERIES-8"), instruction_set_version::Z14 },
     { std::string_view("ZSERIES-9"), instruction_set_version::Z15 },
-} };
+};
 
 static_assert(std::ranges::is_sorted(instr_set_machine_equivalents, {}, &instr_set_equivalent_pair::first));
 

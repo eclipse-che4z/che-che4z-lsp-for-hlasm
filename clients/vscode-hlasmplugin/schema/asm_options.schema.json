@@ -17,6 +17,7 @@
                 "ARCH-12",
                 "ARCH-13",
                 "ARCH-14",
+                "ARCH-15",
                 "ARCH-2",
                 "ARCH-3",
                 "ARCH-4",
@@ -41,6 +42,7 @@
                 "ZS-8",
                 "ZS-9",
                 "ZS-10",
+                "ZS-11",
                 "z10",
                 "z11",
                 "z114",
@@ -49,6 +51,7 @@
                 "z14",
                 "z15",
                 "z16",
+                "z17",
                 "z196",
                 "z800",
                 "z890",
@@ -67,7 +70,8 @@
                 "zSeries-7",
                 "zSeries-8",
                 "zSeries-9",
-                "zSeries-10"
+                "zSeries-10",
+                "zSeries-11"
             ]
         },
         "OPTABLE": {
@@ -98,7 +102,9 @@
                 "Z15",
                 "ZS9",
                 "Z16",
-                "ZSA"
+                "ZSA",
+                "Z17",
+                "ZSB"
             ]
         },
         "SYSPARM": {

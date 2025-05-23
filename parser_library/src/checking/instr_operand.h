@@ -66,11 +66,12 @@ enum class machine_operand_type : uint8_t
     MASK,
     REG,
     IMM,
-    DISPLC,
+    DISP,
+    DISP_IDX,
     BASE,
     LENGTH,
     VEC_REG,
-    DIS_REG,
+    IDX_REG,
     RELOC_IMM,
 };
 

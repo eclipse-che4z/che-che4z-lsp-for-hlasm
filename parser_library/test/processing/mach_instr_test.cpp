@@ -383,3 +383,45 @@ TEST(mach_instr_processing, validate_minimal)
 
     EXPECT_TRUE(matches_message_codes(a.diags(), { "M120" }));
 }
+
+TEST(mach_instr_processing, operand_versioning_1)
+
+{
+    std::string input = R"(
+    KIMD 2,4
+    KIMD 2,4,0
+)";
+
+    analyzer a(input);
+    a.analyze();
+
+    EXPECT_TRUE(a.diags().empty());
+}
+
+TEST(mach_instr_processing, operand_versioning_2)
+
+{
+    std::string input = R"(
+    KIMD 2,4
+    KIMD 2,4,0
+)";
+
+    analyzer a(input, analyzer_options(asm_option { .instr_set = instruction_set_version::Z17 }));
+    a.analyze();
+
+    EXPECT_TRUE(a.diags().empty());
+}
+
+TEST(mach_instr_processing, operand_versioning_3)
+
+{
+    std::string input = R"(
+    KIMD 2,4
+    KIMD 2,4,0
+)";
+
+    analyzer a(input, analyzer_options(asm_option { .instr_set = instruction_set_version::Z16 }));
+    a.analyze();
+
+    EXPECT_TRUE(matches_message_codes(a.diags(), { "M000" }));
+}

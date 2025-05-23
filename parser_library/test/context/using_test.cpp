@@ -1387,12 +1387,13 @@ TEST(using, dispy_out_of_range)
 A     CSECT
       USING  (A,A+8000),1
       LAY    0,A+1000000
+      LLXAB  0,A+1000000
 )";
 
     analyzer a(input);
     a.analyze();
 
-    EXPECT_TRUE(matches_message_codes(a.diags(), { "ME008" }));
+    EXPECT_TRUE(matches_message_codes(a.diags(), { "ME008", "ME008" }));
 }
 
 TEST(using, dispy_in_range)
@@ -1403,6 +1404,9 @@ A     CSECT
       LAY    0,A+10000
       LAY    0,A+5000
       LAY    0,A-5000
+      LLXAB  0,A+10000
+      LLXAB  0,A+5000
+      LLXAB  0,A-5000
 )";
 
     analyzer a(input);

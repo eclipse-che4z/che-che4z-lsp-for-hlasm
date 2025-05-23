@@ -97,7 +97,7 @@ diagnostic_op address_operand::get_first_parameter_error(machine_operand_type op
     {
         case machine_operand_type::LENGTH: // D(L,B)
             return diagnostic_op::error_M132(instr_name, from, to, operand_range);
-        case machine_operand_type::DIS_REG: // D(X,B)
+        case machine_operand_type::IDX_REG: // D(X,B)
             return diagnostic_op::error_M135(instr_name, from, to, operand_range);
         case machine_operand_type::REG: // D(R,B)
             return diagnostic_op::error_M133(instr_name, from, to, operand_range);
@@ -354,8 +354,12 @@ std::string parameter::to_string() const
         }
         case machine_operand_type::NONE:
             return "";
-        case machine_operand_type::DISPLC: {
+        case machine_operand_type::DISP: {
             ret_val = "D";
+            break;
+        }
+        case machine_operand_type::DISP_IDX: {
+            ret_val = "DX";
             break;
         }
         case machine_operand_type::BASE:
@@ -370,7 +374,7 @@ std::string parameter::to_string() const
         }
         case machine_operand_type::VEC_REG:
             return "V";
-        case machine_operand_type::DIS_REG:
+        case machine_operand_type::IDX_REG:
             return "X";
     }
     ret_val += std::to_string(size);

@@ -106,6 +106,8 @@ TEST(processor_group, asm_options_optable_valid)
         std::make_pair("ZS9", instruction_set_version::Z15),
         std::make_pair("Z16", instruction_set_version::Z16),
         std::make_pair("ZSA", instruction_set_version::Z16),
+        std::make_pair("Z17", instruction_set_version::Z17),
+        std::make_pair("ZSB", instruction_set_version::Z17),
         std::make_pair("UNI", instruction_set_version::UNI),
         std::make_pair("DOS", instruction_set_version::DOS),
         std::make_pair("370", instruction_set_version::_370),
@@ -147,6 +149,7 @@ TEST(processor_group, asm_options_machine_valid)
         std::make_pair("ARCH-12", instruction_set_version::Z14),
         std::make_pair("ARCH-13", instruction_set_version::Z15),
         std::make_pair("ARCH-14", instruction_set_version::Z16),
+        std::make_pair("ARCH-15", instruction_set_version::Z17),
         std::make_pair("ARCH-2", instruction_set_version::ESA),
         std::make_pair("ARCH-3", instruction_set_version::ESA),
         std::make_pair("ARCH-4", instruction_set_version::ESA),
@@ -170,6 +173,8 @@ TEST(processor_group, asm_options_machine_valid)
         std::make_pair("ZS-7", instruction_set_version::Z13),
         std::make_pair("ZS-8", instruction_set_version::Z14),
         std::make_pair("ZS-9", instruction_set_version::Z15),
+        std::make_pair("ZS-10", instruction_set_version::Z16),
+        std::make_pair("ZS-11", instruction_set_version::Z17),
         std::make_pair("z10", instruction_set_version::Z10),
         std::make_pair("z11", instruction_set_version::Z11),
         std::make_pair("z114", instruction_set_version::Z11),
@@ -197,6 +202,7 @@ TEST(processor_group, asm_options_machine_valid)
         std::make_pair("zSeries-8", instruction_set_version::Z14),
         std::make_pair("zSeries-9", instruction_set_version::Z15),
         std::make_pair("zSeries-10", instruction_set_version::Z16),
+        std::make_pair("zSeries-11", instruction_set_version::Z17),
     };
 
     for (const auto& [input, expected] : cases)

@@ -17,29 +17,32 @@
 #include "../common_testing.h"
 #include "../mock_parse_lib_provider.h"
 #include "context/hlasm_context.h"
-#include "context/instruction.h"
+#include "instruction_set_version.h"
 
 // clang-format off
 std::unordered_map<std::string, const std::set<instruction_set_version>> instruction_compatibility_matrix = {
-    { "ADDFRR", { {instruction_set_version::ESA }, {instruction_set_version::XA } } },
-    { "VACD", { {instruction_set_version::ESA }, { instruction_set_version::XA }, { instruction_set_version::_370 } } },
-    { "CLRCH", { {instruction_set_version::UNI }, { instruction_set_version::_370 } } },
-    { "CLRIO", { {instruction_set_version::UNI }, { instruction_set_version::_370 }, { instruction_set_version::DOS } } },
-    { "DFLTCC", { {instruction_set_version::UNI }, { instruction_set_version::Z15 } } },
-    { "VLER", { {instruction_set_version::UNI }, { instruction_set_version::Z15 }, { instruction_set_version::ESA }, { instruction_set_version::XA }, { instruction_set_version::_370 } } },
-    { "AGH", { {instruction_set_version::UNI }, { instruction_set_version::Z15 }, { instruction_set_version::Z14 } } },
-    { "CDPT", { {instruction_set_version::UNI }, { instruction_set_version::Z15 }, { instruction_set_version::Z14 }, { instruction_set_version::Z13 } } },
-    { "VA", { {instruction_set_version::UNI }, { instruction_set_version::Z15 }, { instruction_set_version::Z14 }, { instruction_set_version::Z13 }, { instruction_set_version::ESA }, { instruction_set_version::XA }, { instruction_set_version::_370 } } },
-    { "BPP", { {instruction_set_version::UNI }, { instruction_set_version::Z15 }, { instruction_set_version::Z14 }, { instruction_set_version::Z13 }, { instruction_set_version::Z12 } } },
-    { "ADTRA", { {instruction_set_version::UNI }, { instruction_set_version::Z15 }, { instruction_set_version::Z14 }, { instruction_set_version::Z13 }, { instruction_set_version::Z12 }, { instruction_set_version::Z11 } } },
-    { "AGSI", { {instruction_set_version::UNI }, { instruction_set_version::Z15 }, { instruction_set_version::Z14 }, { instruction_set_version::Z13 }, { instruction_set_version::Z12 }, { instruction_set_version::Z11 }, { instruction_set_version::Z10 } } },
-    { "ADTR", { {instruction_set_version::UNI }, { instruction_set_version::Z15 }, { instruction_set_version::Z14 }, { instruction_set_version::Z13 }, { instruction_set_version::Z12 }, { instruction_set_version::Z11 }, { instruction_set_version::Z10 }, { instruction_set_version::Z9 } } },
-    { "CDSY", { {instruction_set_version::UNI }, { instruction_set_version::Z15 }, { instruction_set_version::Z14 }, { instruction_set_version::Z13 }, { instruction_set_version::Z12 }, { instruction_set_version::Z11 }, { instruction_set_version::Z10 }, { instruction_set_version::Z9 }, { instruction_set_version::YOP } } },
-    { "AG", { {instruction_set_version::UNI }, { instruction_set_version::Z15 }, { instruction_set_version::Z14 }, { instruction_set_version::Z13 }, { instruction_set_version::Z12 }, { instruction_set_version::Z11 }, { instruction_set_version::Z10 }, { instruction_set_version::Z9 }, { instruction_set_version::YOP }, { instruction_set_version::ZOP } } },
-    { "ADB", { {instruction_set_version::UNI }, { instruction_set_version::Z15 }, { instruction_set_version::Z14 }, { instruction_set_version::Z13 }, { instruction_set_version::Z12 }, { instruction_set_version::Z11 }, { instruction_set_version::Z10 }, { instruction_set_version::Z9 }, { instruction_set_version::YOP }, { instruction_set_version::ZOP }, { instruction_set_version::ESA } } },
-    { "BASSM", { {instruction_set_version::UNI }, { instruction_set_version::Z15 }, { instruction_set_version::Z14 }, { instruction_set_version::Z13 }, { instruction_set_version::Z12 }, { instruction_set_version::Z11 }, { instruction_set_version::Z10 }, { instruction_set_version::Z9 }, { instruction_set_version::YOP }, { instruction_set_version::ZOP }, { instruction_set_version::ESA }, { instruction_set_version::XA } } },
-    { "BAS", { {instruction_set_version::UNI }, { instruction_set_version::Z15 }, { instruction_set_version::Z14 }, { instruction_set_version::Z13 }, { instruction_set_version::Z12 }, { instruction_set_version::Z11 }, { instruction_set_version::Z10 }, { instruction_set_version::Z9 }, { instruction_set_version::YOP }, { instruction_set_version::ZOP }, { instruction_set_version::ESA }, { instruction_set_version::XA }, { instruction_set_version::_370 } } },
-    { "A", { {instruction_set_version::UNI }, { instruction_set_version::Z15 }, { instruction_set_version::Z14 }, { instruction_set_version::Z13 }, { instruction_set_version::Z12 }, { instruction_set_version::Z11 }, { instruction_set_version::Z10 }, { instruction_set_version::Z9 }, { instruction_set_version::YOP }, { instruction_set_version::ZOP }, { instruction_set_version::ESA }, { instruction_set_version::XA }, { instruction_set_version::_370 }, { instruction_set_version::DOS } } },
+    { "ADDFRR", { instruction_set_version::ESA, instruction_set_version::XA } },
+    { "VACD", { instruction_set_version::ESA, instruction_set_version::XA, instruction_set_version::_370 } },
+    { "CLRCH", { instruction_set_version::UNI, instruction_set_version::_370 } },
+    { "CLRIO", { instruction_set_version::UNI, instruction_set_version::_370, instruction_set_version::DOS } },
+    { "VEVAL", { instruction_set_version::UNI, instruction_set_version::Z17 } },
+    { "NNPA", { instruction_set_version::UNI, instruction_set_version::Z17, instruction_set_version::Z16 } },
+    { "DFLTCC", { instruction_set_version::UNI, instruction_set_version::Z17, instruction_set_version::Z16, instruction_set_version::Z15 } },
+    { "VLER", { instruction_set_version::UNI, instruction_set_version::Z17, instruction_set_version::Z16, instruction_set_version::Z15, instruction_set_version::ESA, instruction_set_version::XA, instruction_set_version::_370 } },
+    { "AGH", { instruction_set_version::UNI, instruction_set_version::Z17, instruction_set_version::Z16, instruction_set_version::Z15, instruction_set_version::Z14 } },
+    { "CDPT", { instruction_set_version::UNI, instruction_set_version::Z17, instruction_set_version::Z16, instruction_set_version::Z15, instruction_set_version::Z14, instruction_set_version::Z13 } },
+    { "VA", { instruction_set_version::UNI, instruction_set_version::Z17, instruction_set_version::Z16, instruction_set_version::Z15, instruction_set_version::Z14, instruction_set_version::Z13, instruction_set_version::ESA, instruction_set_version::XA, instruction_set_version::_370 } },
+    { "BPP", { instruction_set_version::UNI, instruction_set_version::Z17, instruction_set_version::Z16, instruction_set_version::Z15, instruction_set_version::Z14, instruction_set_version::Z13, instruction_set_version::Z12 } },
+    { "ADTRA", { instruction_set_version::UNI, instruction_set_version::Z17, instruction_set_version::Z16, instruction_set_version::Z15, instruction_set_version::Z14, instruction_set_version::Z13, instruction_set_version::Z12, instruction_set_version::Z11 } },
+    { "AGSI", { instruction_set_version::UNI, instruction_set_version::Z17, instruction_set_version::Z16, instruction_set_version::Z15, instruction_set_version::Z14, instruction_set_version::Z13, instruction_set_version::Z12, instruction_set_version::Z11, instruction_set_version::Z10 } },
+    { "ADTR", { instruction_set_version::UNI, instruction_set_version::Z17, instruction_set_version::Z16, instruction_set_version::Z15, instruction_set_version::Z14, instruction_set_version::Z13, instruction_set_version::Z12, instruction_set_version::Z11, instruction_set_version::Z10, instruction_set_version::Z9 } },
+    { "CDSY", { instruction_set_version::UNI, instruction_set_version::Z17, instruction_set_version::Z16, instruction_set_version::Z15, instruction_set_version::Z14, instruction_set_version::Z13, instruction_set_version::Z12, instruction_set_version::Z11, instruction_set_version::Z10, instruction_set_version::Z9, instruction_set_version::YOP } },
+    { "KIMD", { instruction_set_version::UNI, instruction_set_version::Z17, instruction_set_version::Z16, instruction_set_version::Z15, instruction_set_version::Z14, instruction_set_version::Z13, instruction_set_version::Z12, instruction_set_version::Z11, instruction_set_version::Z10, instruction_set_version::Z9, instruction_set_version::YOP } },
+    { "AG", { instruction_set_version::UNI, instruction_set_version::Z17, instruction_set_version::Z16, instruction_set_version::Z15, instruction_set_version::Z14, instruction_set_version::Z13, instruction_set_version::Z12, instruction_set_version::Z11, instruction_set_version::Z10, instruction_set_version::Z9, instruction_set_version::YOP, instruction_set_version::ZOP } },
+    { "ADB", { instruction_set_version::UNI, instruction_set_version::Z17, instruction_set_version::Z16, instruction_set_version::Z15, instruction_set_version::Z14, instruction_set_version::Z13, instruction_set_version::Z12, instruction_set_version::Z11, instruction_set_version::Z10, instruction_set_version::Z9, instruction_set_version::YOP, instruction_set_version::ZOP, instruction_set_version::ESA } },
+    { "BASSM", { instruction_set_version::UNI, instruction_set_version::Z17, instruction_set_version::Z16, instruction_set_version::Z15, instruction_set_version::Z14, instruction_set_version::Z13, instruction_set_version::Z12, instruction_set_version::Z11, instruction_set_version::Z10, instruction_set_version::Z9, instruction_set_version::YOP, instruction_set_version::ZOP, instruction_set_version::ESA, instruction_set_version::XA } },
+    { "BAS", { instruction_set_version::UNI, instruction_set_version::Z17, instruction_set_version::Z16, instruction_set_version::Z15, instruction_set_version::Z14, instruction_set_version::Z13, instruction_set_version::Z12, instruction_set_version::Z11, instruction_set_version::Z10, instruction_set_version::Z9, instruction_set_version::YOP, instruction_set_version::ZOP, instruction_set_version::ESA, instruction_set_version::XA, instruction_set_version::_370 } },
+    { "A", { instruction_set_version::UNI, instruction_set_version::Z17, instruction_set_version::Z16, instruction_set_version::Z15, instruction_set_version::Z14, instruction_set_version::Z13, instruction_set_version::Z12, instruction_set_version::Z11, instruction_set_version::Z10, instruction_set_version::Z9, instruction_set_version::YOP, instruction_set_version::ZOP, instruction_set_version::ESA, instruction_set_version::XA, instruction_set_version::_370, instruction_set_version::DOS } },
 };
 // clang-format on
 
@@ -73,6 +76,8 @@ INSTANTIATE_TEST_SUITE_P(instruction_test,
         instruction_sets_compatibility_params::set_instr_set(instruction_set_version::Z13),
         instruction_sets_compatibility_params::set_instr_set(instruction_set_version::Z14),
         instruction_sets_compatibility_params::set_instr_set(instruction_set_version::Z15),
+        instruction_sets_compatibility_params::set_instr_set(instruction_set_version::Z16),
+        instruction_sets_compatibility_params::set_instr_set(instruction_set_version::Z17),
         instruction_sets_compatibility_params::set_instr_set(instruction_set_version::UNI),
         instruction_sets_compatibility_params::set_instr_set(instruction_set_version::DOS),
         instruction_sets_compatibility_params::set_instr_set(instruction_set_version::_370),
@@ -89,7 +94,7 @@ TEST_P(instruction_sets_fixture, instruction_set_loading)
     {
         auto id = a.hlasm_ctx().ids().find(instr.first);
 
-        if (instr.second.find(instr_set) == instr.second.end())
+        if (!instr.second.contains(instr_set))
         {
             EXPECT_TRUE(
                 !id.has_value() || !a.hlasm_ctx().find_opcode_mnemo(id.value(), context::opcode_generation::zero))
