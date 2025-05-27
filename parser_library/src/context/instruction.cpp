@@ -646,6 +646,7 @@ constexpr auto mi_CRJ = find_mi("CRJ");
 constexpr auto mi_CRT = find_mi("CRT");
 constexpr auto mi_IILF = find_mi("IILF");
 constexpr auto mi_LLILF = find_mi("LLILF");
+constexpr auto mi_LLILL = find_mi("LLILL");
 constexpr auto mi_LOC = find_mi("LOC");
 constexpr auto mi_LOCFH = find_mi("LOCFH");
 constexpr auto mi_LOCFHR = find_mi("LOCFHR");
@@ -676,6 +677,7 @@ constexpr auto mi_VACC = find_mi("VACC");
 constexpr auto mi_VACCC = find_mi("VACCC");
 constexpr auto mi_VAVG = find_mi("VAVG");
 constexpr auto mi_VAVGL = find_mi("VAVGL");
+constexpr auto mi_VBLEND = find_mi("VBLEND");
 constexpr auto mi_VCEQ = find_mi("VCEQ");
 constexpr auto mi_VCFPL = find_mi("VCFPL");
 constexpr auto mi_VCFPS = find_mi("VCFPS");
@@ -685,6 +687,8 @@ constexpr auto mi_VCLFP = find_mi("VCLFP");
 constexpr auto mi_VCLZ = find_mi("VCLZ");
 constexpr auto mi_VCSFP = find_mi("VCSFP");
 constexpr auto mi_VCTZ = find_mi("VCTZ");
+constexpr auto mi_VD = find_mi("VD");
+constexpr auto mi_VDL = find_mi("VDL");
 constexpr auto mi_VEC = find_mi("VEC");
 constexpr auto mi_VECL = find_mi("VECL");
 constexpr auto mi_VERIM = find_mi("VERIM");
@@ -719,6 +723,7 @@ constexpr auto mi_VFS = find_mi("VFS");
 constexpr auto mi_VFSQ = find_mi("VFSQ");
 constexpr auto mi_VFTCI = find_mi("VFTCI");
 constexpr auto mi_VGBM = find_mi("VGBM");
+constexpr auto mi_VGEM = find_mi("VGEM");
 constexpr auto mi_VGFM = find_mi("VGFM");
 constexpr auto mi_VGFMA = find_mi("VGFMA");
 constexpr auto mi_VGM = find_mi("VGM");
@@ -759,6 +764,8 @@ constexpr auto mi_VPK = find_mi("VPK");
 constexpr auto mi_VPKLS = find_mi("VPKLS");
 constexpr auto mi_VPKS = find_mi("VPKS");
 constexpr auto mi_VPOPCT = find_mi("VPOPCT");
+constexpr auto mi_VR = find_mi("VR");
+constexpr auto mi_VRL = find_mi("VRL");
 constexpr auto mi_VREP = find_mi("VREP");
 constexpr auto mi_VREPI = find_mi("VREPI");
 constexpr auto mi_VS = find_mi("VS");
@@ -1067,6 +1074,7 @@ constexpr mnemonic_code mnemonic_codes[] = {
     { "LLCHLR", mi_RISBHG, { { 2, 24 }, { 0, 0x80 + 31 }, { 32 } }, UNI_SINCE_Z11 },
     { "LLCLHR", mi_RISBLG, { { 2, 24 }, { 0, 0x80 + 31 }, { 32 } }, UNI_SINCE_Z11 },
     { "LLGFI", mi_LLILF, {}, UNI_SINCE_Z16 },
+    { "LLGHI", mi_LLILL, {}, UNI_SINCE_Z17 },
     { "LLHFR", mi_RISBLG, { { 2, 0 }, { 31 }, { 32 } }, UNI_SINCE_Z11 },
     { "LLHHHR", mi_RISBHG, { { 2, 16 }, { 0, 0x80 + 31 } }, UNI_SINCE_Z11 },
     { "LLHHLR", mi_RISBHG, { { 2, 16 }, { 0, 0x80 + 31 }, { 32 } }, UNI_SINCE_Z11 },
@@ -1386,6 +1394,13 @@ constexpr mnemonic_code mnemonic_codes[] = {
     { "VAVGLF", mi_VAVGL, { { 3, 2 } }, UNI_SINCE_Z13 },
     { "VAVGLG", mi_VAVGL, { { 3, 3 } }, UNI_SINCE_Z13 },
     { "VAVGLH", mi_VAVGL, { { 3, 1 } }, UNI_SINCE_Z13 },
+    { "VAVGLQ", mi_VAVGL, { { 3, 4 } }, UNI_SINCE_Z17 },
+    { "VAVGQ", mi_VAVG, { { 3, 4 } }, UNI_SINCE_Z17 },
+    { "VBLENDB", mi_VBLEND, { { 4, 0 } }, UNI_SINCE_Z17 },
+    { "VBLENDF", mi_VBLEND, { { 4, 2 } }, UNI_SINCE_Z17 },
+    { "VBLENDG", mi_VBLEND, { { 4, 3 } }, UNI_SINCE_Z17 },
+    { "VBLENDH", mi_VBLEND, { { 4, 1 } }, UNI_SINCE_Z17 },
+    { "VBLENDQ", mi_VBLEND, { { 4, 4 } }, UNI_SINCE_Z17 },
     { "VCDG", mi_VCFPS, {}, UNI_SINCE_Z13 },
     { "VCDGB", mi_VCFPS, { { 2, 3 } }, UNI_SINCE_Z13 },
     { "VCDLG", mi_VCFPL, {}, UNI_SINCE_Z13 },
@@ -1400,6 +1415,8 @@ constexpr mnemonic_code mnemonic_codes[] = {
     { "VCEQGS", mi_VCEQ, { { 3, 3 }, { 1 } }, UNI_SINCE_Z13 },
     { "VCEQH", mi_VCEQ, { { 3, 1 }, { 0 } }, UNI_SINCE_Z13 },
     { "VCEQHS", mi_VCEQ, { { 3, 1 }, { 1 } }, UNI_SINCE_Z13 },
+    { "VCEQQ", mi_VCEQ, { { 3, 4 }, { 0 } }, UNI_SINCE_Z17 },
+    { "VCEQQS", mi_VCEQ, { { 3, 4 }, { 1 } }, UNI_SINCE_Z17 },
     { "VCFEB", mi_VCSFP, { { 2, 2 } }, UNI_SINCE_Z15 },
     { "VCGD", mi_VCSFP, {}, UNI_SINCE_Z13 },
     { "VCGDB", mi_VCSFP, { { 2, 3 } }, UNI_SINCE_Z13 },
@@ -1419,6 +1436,10 @@ constexpr mnemonic_code mnemonic_codes[] = {
     { "VCHLGS", mi_VCHL, { { 3, 3 }, { 1 } }, UNI_SINCE_Z13 },
     { "VCHLH", mi_VCHL, { { 3, 1 }, { 0 } }, UNI_SINCE_Z13 },
     { "VCHLHS", mi_VCHL, { { 3, 1 }, { 1 } }, UNI_SINCE_Z13 },
+    { "VCHLQ", mi_VCHL, { { 3, 4 }, { 0 } }, UNI_SINCE_Z17 },
+    { "VCHLQS", mi_VCHL, { { 3, 4 }, { 1 } }, UNI_SINCE_Z17 },
+    { "VCHQ", mi_VCH, { { 3, 4 }, { 0 } }, UNI_SINCE_Z17 },
+    { "VCHQS", mi_VCH, { { 3, 4 }, { 1 } }, UNI_SINCE_Z17 },
     { "VCLFEB", mi_VCLFP, { { 2, 0 } }, UNI_SINCE_Z15 },
     { "VCLGD", mi_VCLFP, {}, UNI_SINCE_Z13 },
     { "VCLGDB", mi_VCLFP, { { 2, 3 } }, UNI_SINCE_Z13 },
@@ -1426,10 +1447,18 @@ constexpr mnemonic_code mnemonic_codes[] = {
     { "VCLZF", mi_VCLZ, { { 2, 2 } }, UNI_SINCE_Z13 },
     { "VCLZG", mi_VCLZ, { { 2, 3 } }, UNI_SINCE_Z13 },
     { "VCLZH", mi_VCLZ, { { 2, 1 } }, UNI_SINCE_Z13 },
+    { "VCLZQ", mi_VCLZ, { { 2, 4 } }, UNI_SINCE_Z17 },
     { "VCTZB", mi_VCTZ, { { 2, 0 } }, UNI_SINCE_Z13 },
     { "VCTZF", mi_VCTZ, { { 2, 2 } }, UNI_SINCE_Z13 },
     { "VCTZG", mi_VCTZ, { { 2, 3 } }, UNI_SINCE_Z13 },
     { "VCTZH", mi_VCTZ, { { 2, 1 } }, UNI_SINCE_Z13 },
+    { "VCTZQ", mi_VCTZ, { { 2, 4 } }, UNI_SINCE_Z17 },
+    { "VDF", mi_VD, { { 3, 2 } }, UNI_SINCE_Z17 },
+    { "VDG", mi_VD, { { 3, 3 } }, UNI_SINCE_Z17 },
+    { "VDLF", mi_VDL, { { 3, 2 } }, UNI_SINCE_Z17 },
+    { "VDLG", mi_VDL, { { 3, 3 } }, UNI_SINCE_Z17 },
+    { "VDLQ", mi_VDL, { { 3, 4 } }, UNI_SINCE_Z17 },
+    { "VDQ", mi_VD, { { 3, 4 } }, UNI_SINCE_Z17 },
     { "VECB", mi_VEC, { { 2, 0 } }, UNI_SINCE_Z13 },
     { "VECF", mi_VEC, { { 2, 2 } }, UNI_SINCE_Z13 },
     { "VECG", mi_VEC, { { 2, 3 } }, UNI_SINCE_Z13 },
@@ -1438,6 +1467,8 @@ constexpr mnemonic_code mnemonic_codes[] = {
     { "VECLF", mi_VECL, { { 2, 2 } }, UNI_SINCE_Z13 },
     { "VECLG", mi_VECL, { { 2, 3 } }, UNI_SINCE_Z13 },
     { "VECLH", mi_VECL, { { 2, 1 } }, UNI_SINCE_Z13 },
+    { "VECLQ", mi_VECL, { { 2, 4 } }, UNI_SINCE_Z17 },
+    { "VECQ", mi_VEC, { { 2, 4 } }, UNI_SINCE_Z17 },
     { "VERIMB", mi_VERIM, { { 4, 0 } }, UNI_SINCE_Z13 },
     { "VERIMF", mi_VERIM, { { 4, 2 } }, UNI_SINCE_Z13 },
     { "VERIMG", mi_VERIM, { { 4, 3 } }, UNI_SINCE_Z13 },
@@ -1597,6 +1628,11 @@ constexpr mnemonic_code mnemonic_codes[] = {
     { "VFSSB", mi_VFS, { { 2, 2 }, { 0 } }, UNI_SINCE_Z14 },
     { "VFTCIDB", mi_VFTCI, { { 3, 3 }, { 0 } }, UNI_SINCE_Z13 },
     { "VFTCISB", mi_VFTCI, { { 3, 2 }, { 0 } }, UNI_SINCE_Z14 },
+    { "VGEMB", mi_VGEM, { { 2, 0 } }, UNI_SINCE_Z17 },
+    { "VGEMF", mi_VGEM, { { 2, 2 } }, UNI_SINCE_Z17 },
+    { "VGEMG", mi_VGEM, { { 2, 3 } }, UNI_SINCE_Z17 },
+    { "VGEMH", mi_VGEM, { { 2, 1 } }, UNI_SINCE_Z17 },
+    { "VGEMQ", mi_VGEM, { { 2, 4 } }, UNI_SINCE_Z17 },
     { "VGFMAB", mi_VGFMA, { { 4, 0 } }, UNI_SINCE_Z13 },
     { "VGFMAF", mi_VGFMA, { { 4, 2 } }, UNI_SINCE_Z13 },
     { "VGFMAG", mi_VGFMA, { { 4, 3 } }, UNI_SINCE_Z13 },
@@ -1626,6 +1662,7 @@ constexpr mnemonic_code mnemonic_codes[] = {
     { "VLCF", mi_VLC, { { 2, 2 } }, UNI_SINCE_Z13 },
     { "VLCG", mi_VLC, { { 2, 3 } }, UNI_SINCE_Z13 },
     { "VLCH", mi_VLC, { { 2, 1 } }, UNI_SINCE_Z13 },
+    { "VLCQ", mi_VLC, { { 2, 4 } }, UNI_SINCE_Z17 },
     { "VLDE", mi_VFLL, {}, UNI_SINCE_Z13 },
     { "VLDEB", mi_VFLL, { { 2, 2 }, { 0 } }, UNI_SINCE_Z13 },
     { "VLED", mi_VFLR, {}, UNI_SINCE_Z13 },
@@ -1650,6 +1687,7 @@ constexpr mnemonic_code mnemonic_codes[] = {
     { "VLPF", mi_VLP, { { 2, 2 } }, UNI_SINCE_Z13 },
     { "VLPG", mi_VLP, { { 2, 3 } }, UNI_SINCE_Z13 },
     { "VLPH", mi_VLP, { { 2, 1 } }, UNI_SINCE_Z13 },
+    { "VLPQ", mi_VLP, { { 2, 4 } }, UNI_SINCE_Z17 },
     { "VLREPB", mi_VLREP, { { 2, 0 } }, UNI_SINCE_Z13 },
     { "VLREPF", mi_VLREP, { { 2, 2 } }, UNI_SINCE_Z13 },
     { "VLREPG", mi_VLREP, { { 2, 3 } }, UNI_SINCE_Z13 },
@@ -1660,43 +1698,62 @@ constexpr mnemonic_code mnemonic_codes[] = {
     { "VLVGH", mi_VLVG, { { 3, 1 } }, UNI_SINCE_Z13 },
     { "VMAEB", mi_VMAE, { { 4, 0 } }, UNI_SINCE_Z13 },
     { "VMAEF", mi_VMAE, { { 4, 2 } }, UNI_SINCE_Z13 },
+    { "VMAEG", mi_VMAE, { { 4, 3 } }, UNI_SINCE_Z17 },
     { "VMAEH", mi_VMAE, { { 4, 1 } }, UNI_SINCE_Z13 },
     { "VMAHB", mi_VMAH, { { 4, 0 } }, UNI_SINCE_Z13 },
     { "VMAHF", mi_VMAH, { { 4, 2 } }, UNI_SINCE_Z13 },
+    { "VMAHG", mi_VMAH, { { 4, 3 } }, UNI_SINCE_Z17 },
     { "VMAHH", mi_VMAH, { { 4, 1 } }, UNI_SINCE_Z13 },
+    { "VMAHQ", mi_VMAH, { { 4, 4 } }, UNI_SINCE_Z17 },
     { "VMALB", mi_VMAL, { { 4, 0 } }, UNI_SINCE_Z13 },
     { "VMALEB", mi_VMALE, { { 4, 0 } }, UNI_SINCE_Z13 },
     { "VMALEF", mi_VMALE, { { 4, 2 } }, UNI_SINCE_Z13 },
+    { "VMALEG", mi_VMALE, { { 4, 3 } }, UNI_SINCE_Z17 },
     { "VMALEH", mi_VMALE, { { 4, 1 } }, UNI_SINCE_Z13 },
     { "VMALF", mi_VMAL, { { 4, 2 } }, UNI_SINCE_Z13 },
+    { "VMALG", mi_VMAL, { { 4, 3 } }, UNI_SINCE_Z17 },
     { "VMALHB", mi_VMALH, { { 4, 0 } }, UNI_SINCE_Z13 },
     { "VMALHF", mi_VMALH, { { 4, 2 } }, UNI_SINCE_Z13 },
+    { "VMALHG", mi_VMALH, { { 4, 3 } }, UNI_SINCE_Z17 },
     { "VMALHH", mi_VMALH, { { 4, 1 } }, UNI_SINCE_Z13 },
+    { "VMALHQ", mi_VMALH, { { 4, 4 } }, UNI_SINCE_Z17 },
     { "VMALHW", mi_VMAL, { { 4, 1 } }, UNI_SINCE_Z13 },
     { "VMALOB", mi_VMALO, { { 4, 0 } }, UNI_SINCE_Z13 },
     { "VMALOF", mi_VMALO, { { 4, 2 } }, UNI_SINCE_Z13 },
+    { "VMALOG", mi_VMALO, { { 4, 3 } }, UNI_SINCE_Z17 },
     { "VMALOH", mi_VMALO, { { 4, 1 } }, UNI_SINCE_Z13 },
+    { "VMALQ", mi_VMAL, { { 4, 4 } }, UNI_SINCE_Z17 },
     { "VMAOB", mi_VMAO, { { 4, 0 } }, UNI_SINCE_Z13 },
     { "VMAOF", mi_VMAO, { { 4, 2 } }, UNI_SINCE_Z13 },
+    { "VMAOG", mi_VMAO, { { 4, 3 } }, UNI_SINCE_Z17 },
     { "VMAOH", mi_VMAO, { { 4, 1 } }, UNI_SINCE_Z13 },
     { "VMEB", mi_VME, { { 3, 0 } }, UNI_SINCE_Z13 },
     { "VMEF", mi_VME, { { 3, 2 } }, UNI_SINCE_Z13 },
+    { "VMEG", mi_VME, { { 3, 3 } }, UNI_SINCE_Z17 },
     { "VMEH", mi_VME, { { 3, 1 } }, UNI_SINCE_Z13 },
     { "VMHB", mi_VMH, { { 3, 0 } }, UNI_SINCE_Z13 },
     { "VMHF", mi_VMH, { { 3, 2 } }, UNI_SINCE_Z13 },
+    { "VMHG", mi_VMH, { { 3, 3 } }, UNI_SINCE_Z17 },
     { "VMHH", mi_VMH, { { 3, 1 } }, UNI_SINCE_Z13 },
+    { "VMHQ", mi_VMH, { { 3, 4 } }, UNI_SINCE_Z17 },
     { "VMLB", mi_VML, { { 3, 0 } }, UNI_SINCE_Z13 },
     { "VMLEB", mi_VMLE, { { 3, 0 } }, UNI_SINCE_Z13 },
     { "VMLEF", mi_VMLE, { { 3, 2 } }, UNI_SINCE_Z13 },
+    { "VMLEG", mi_VMLE, { { 3, 3 } }, UNI_SINCE_Z17 },
     { "VMLEH", mi_VMLE, { { 3, 1 } }, UNI_SINCE_Z13 },
     { "VMLF", mi_VML, { { 3, 2 } }, UNI_SINCE_Z13 },
+    { "VMLG", mi_VML, { { 3, 3 } }, UNI_SINCE_Z17 },
     { "VMLHB", mi_VMLH, { { 3, 0 } }, UNI_SINCE_Z13 },
     { "VMLHF", mi_VMLH, { { 3, 2 } }, UNI_SINCE_Z13 },
+    { "VMLHG", mi_VMLH, { { 3, 3 } }, UNI_SINCE_Z17 },
     { "VMLHH", mi_VMLH, { { 3, 1 } }, UNI_SINCE_Z13 },
+    { "VMLHQ", mi_VMLH, { { 3, 4 } }, UNI_SINCE_Z17 },
     { "VMLHW", mi_VML, { { 3, 1 } }, UNI_SINCE_Z13 },
     { "VMLOB", mi_VMLO, { { 3, 0 } }, UNI_SINCE_Z13 },
     { "VMLOF", mi_VMLO, { { 3, 2 } }, UNI_SINCE_Z13 },
+    { "VMLOG", mi_VMLO, { { 3, 3 } }, UNI_SINCE_Z17 },
     { "VMLOH", mi_VMLO, { { 3, 1 } }, UNI_SINCE_Z13 },
+    { "VMLQ", mi_VML, { { 3, 4 } }, UNI_SINCE_Z17 },
     { "VMNB", mi_VMN, { { 3, 0 } }, UNI_SINCE_Z13 },
     { "VMNF", mi_VMN, { { 3, 2 } }, UNI_SINCE_Z13 },
     { "VMNG", mi_VMN, { { 3, 3 } }, UNI_SINCE_Z13 },
@@ -1705,8 +1762,11 @@ constexpr mnemonic_code mnemonic_codes[] = {
     { "VMNLF", mi_VMNL, { { 3, 2 } }, UNI_SINCE_Z13 },
     { "VMNLG", mi_VMNL, { { 3, 3 } }, UNI_SINCE_Z13 },
     { "VMNLH", mi_VMNL, { { 3, 1 } }, UNI_SINCE_Z13 },
+    { "VMNLQ", mi_VMNL, { { 3, 4 } }, UNI_SINCE_Z17 },
+    { "VMNQ", mi_VMN, { { 3, 4 } }, UNI_SINCE_Z17 },
     { "VMOB", mi_VMO, { { 3, 0 } }, UNI_SINCE_Z13 },
     { "VMOF", mi_VMO, { { 3, 2 } }, UNI_SINCE_Z13 },
+    { "VMOG", mi_VMO, { { 3, 3 } }, UNI_SINCE_Z17 },
     { "VMOH", mi_VMO, { { 3, 1 } }, UNI_SINCE_Z13 },
     { "VMRHB", mi_VMRH, { { 3, 0 } }, UNI_SINCE_Z13 },
     { "VMRHF", mi_VMRH, { { 3, 2 } }, UNI_SINCE_Z13 },
@@ -1725,6 +1785,8 @@ constexpr mnemonic_code mnemonic_codes[] = {
     { "VMXLF", mi_VMXL, { { 3, 2 } }, UNI_SINCE_Z13 },
     { "VMXLG", mi_VMXL, { { 3, 3 } }, UNI_SINCE_Z13 },
     { "VMXLH", mi_VMXL, { { 3, 1 } }, UNI_SINCE_Z13 },
+    { "VMXLQ", mi_VMXL, { { 3, 4 } }, UNI_SINCE_Z17 },
+    { "VMXQ", mi_VMX, { { 3, 4 } }, UNI_SINCE_Z17 },
     { "VNOT", mi_VNO, { mnemonic_transformation(2, mnemonic_transformation_kind::copy, 1) }, UNI_SINCE_Z13 },
     { "VONE", mi_VGBM, { { 1, 65535 } }, UNI_SINCE_Z13 },
     { "VPKF", mi_VPK, { { 3, 2 } }, UNI_SINCE_Z13 },
@@ -1754,6 +1816,12 @@ constexpr mnemonic_code mnemonic_codes[] = {
     { "VREPIF", mi_VREPI, { { 2, 2 } }, UNI_SINCE_Z13 },
     { "VREPIG", mi_VREPI, { { 2, 3 } }, UNI_SINCE_Z13 },
     { "VREPIH", mi_VREPI, { { 2, 1 } }, UNI_SINCE_Z13 },
+    { "VRF", mi_VR, { { 3, 2 } }, UNI_SINCE_Z17 },
+    { "VRG", mi_VR, { { 3, 3 } }, UNI_SINCE_Z17 },
+    { "VRLF", mi_VRL, { { 3, 2 } }, UNI_SINCE_Z17 },
+    { "VRLG", mi_VRL, { { 3, 3 } }, UNI_SINCE_Z17 },
+    { "VRLQ", mi_VRL, { { 3, 4 } }, UNI_SINCE_Z17 },
+    { "VRQ", mi_VR, { { 3, 4 } }, UNI_SINCE_Z17 },
     { "VSB", mi_VS, { { 3, 0 } }, UNI_SINCE_Z13 },
     { "VSBCBIQ", mi_VSBCBI, { { 4, 4 } }, UNI_SINCE_Z13 },
     { "VSBIQ", mi_VSBI, { { 4, 4 } }, UNI_SINCE_Z13 },
@@ -1832,15 +1900,19 @@ constexpr mnemonic_code mnemonic_codes[] = {
     { "VSUMQG", mi_VSUMQ, { { 3, 3 } }, UNI_SINCE_Z13 },
     { "VUPHB", mi_VUPH, { { 2, 0 } }, UNI_SINCE_Z13 },
     { "VUPHF", mi_VUPH, { { 2, 2 } }, UNI_SINCE_Z13 },
+    { "VUPHG", mi_VUPH, { { 2, 3 } }, UNI_SINCE_Z17 },
     { "VUPHH", mi_VUPH, { { 2, 1 } }, UNI_SINCE_Z13 },
     { "VUPLB", mi_VUPL, { { 2, 0 } }, UNI_SINCE_Z13 },
     { "VUPLF", mi_VUPL, { { 2, 2 } }, UNI_SINCE_Z13 },
+    { "VUPLG", mi_VUPL, { { 2, 3 } }, UNI_SINCE_Z17 },
     { "VUPLHB", mi_VUPLH, { { 2, 0 } }, UNI_SINCE_Z13 },
     { "VUPLHF", mi_VUPLH, { { 2, 2 } }, UNI_SINCE_Z13 },
+    { "VUPLHG", mi_VUPLH, { { 2, 3 } }, UNI_SINCE_Z17 },
     { "VUPLHH", mi_VUPLH, { { 2, 1 } }, UNI_SINCE_Z13 },
     { "VUPLHW", mi_VUPL, { { 2, 1 } }, UNI_SINCE_Z13 },
     { "VUPLLB", mi_VUPLL, { { 2, 0 } }, UNI_SINCE_Z13 },
     { "VUPLLF", mi_VUPLL, { { 2, 2 } }, UNI_SINCE_Z13 },
+    { "VUPLLG", mi_VUPLL, { { 2, 3 } }, UNI_SINCE_Z17 },
     { "VUPLLH", mi_VUPLL, { { 2, 1 } }, UNI_SINCE_Z13 },
     { "VZERO", mi_VGBM, { { 1 } }, UNI_SINCE_Z13 },
     { "WCDGB",

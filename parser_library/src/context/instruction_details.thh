@@ -1096,6 +1096,7 @@ DEFINE_INSTRUCTION(PALB, RRE_0, 1139, UNI_ESA_SINCE_ZOP, "Purge ALB", privileged
 DEFINE_INSTRUCTION(PC, S_1_u, 1113, UNI_ESA_XA_370_SINCE_ZOP, "Program Call", privileged_conditionally, branch_argument_unknown)
 DEFINE_INSTRUCTION(PCC, RRE_0, 824, UNI_SINCE_Z11, "Perform Cryptographic Computation", pcc_special)
 DEFINE_INSTRUCTION(PCKMO, RRE_0, 1094, UNI_SINCE_Z10, "Perform Crypto. Key Mgmt. Operations", privileged, has_parameter_list)
+DEFINE_INSTRUCTION(PFCR, RSY_a_3, 0, UNI_SINCE_Z17, "Perform functions with concurrent results")
 DEFINE_INSTRUCTION(PFD, RXY_b_2, 874, UNI_SINCE_Z10, "Prefetch Data")
 DEFINE_INSTRUCTION(PFDRL, RIL_c_2, 874, UNI_SINCE_Z10, "Prefetch Data Relative Long")
 DEFINE_INSTRUCTION(PFMF, RRE_2, 1100, UNI_SINCE_Z10, "Perform Frame Management Function", privileged)
