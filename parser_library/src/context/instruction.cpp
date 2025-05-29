@@ -85,6 +85,7 @@ constexpr auto UNI_SINCE_Z17                = UNI | z_arch_affiliation::Z17;
 constexpr auto UNI_SINCE_Z9                 = UNI | z_arch_affiliation::Z9;
 constexpr auto UNI_SINCE_ZOP                = UNI | z_arch_affiliation::ZOP;
 constexpr auto SINCE_YOP_TILL_Z17           = instruction_set_affiliation{z_arch_affiliation::YOP, z_arch_affiliation::Z17, 0, 0, 0, 0, 0};
+constexpr auto SINCE_Z14_TILL_Z17           = instruction_set_affiliation{z_arch_affiliation::Z14, z_arch_affiliation::Z17, 0, 0, 0, 0, 0};
 // clang-format on
 } // namespace
 
