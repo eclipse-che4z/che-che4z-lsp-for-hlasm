@@ -15,30 +15,15 @@
 #ifndef HLASMPLUGIN_PARSERLIBRARY_INSTRUCTION_COMPLETIONS_H
 #define HLASMPLUGIN_PARSERLIBRARY_INSTRUCTION_COMPLETIONS_H
 
-#include <set>
+#include <utility>
+#include <vector>
 
 #include "completion_item.h"
+#include "context/instruction.h"
 
 namespace hlasm_plugin::parser_library::lsp {
 
-struct completion_label_comparer
-{
-    using is_transparent = void;
-
-    bool operator()(const completion_item& l, const completion_item& r) const { return l.label < r.label; }
-    template<typename L>
-    bool operator()(const L& l, const completion_item& r) const
-    {
-        return l < r.label;
-    }
-    template<typename R>
-    bool operator()(const completion_item& l, const R& r) const
-    {
-        return l.label < r;
-    }
-};
-
-extern const std::set<completion_item, completion_label_comparer> instruction_completion_items;
+extern const std::vector<std::pair<completion_item, context::instruction_set_affiliation>> instruction_completion_items;
 
 } // namespace hlasm_plugin::parser_library::lsp
 

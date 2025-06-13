@@ -335,6 +335,7 @@ std::vector<completion_item> generate_completion(const completion_list_instructi
     assert(cli.lsp_ctx);
 
     const auto& hlasm_ctx = cli.lsp_ctx->get_related_hlasm_context();
+    const auto instruction_set = hlasm_ctx.options().instr_set;
 
     std::vector<std::pair<std::string, bool>> suggestions;
     suggestions.reserve(cli.additional_instructions.size());
@@ -349,24 +350,21 @@ std::vector<completion_item> generate_completion(const completion_list_instructi
     std::vector<completion_item> result;
 
     // Store only instructions from the currently active instruction set
-    for (const auto& instr : instruction_completion_items)
+    for (const auto& [instr, aff] : instruction_completion_items)
     {
-        auto id = hlasm_ctx.ids().find(instr.label);
-        // TODO: we could provide more precise results here if actual generation is provided
-        if (id.has_value() && hlasm_ctx.find_opcode_mnemo(id.value(), context::opcode_generation::zero))
+        if (!context::instruction_available(aff, instruction_set))
+            continue;
+        auto& i = result.emplace_back(instr);
+        if (auto space = i.insert_text.find(' '); space != std::string::npos)
         {
-            auto& i = result.emplace_back(instr);
-            if (auto space = i.insert_text.find(' '); space != std::string::npos)
-            {
-                if (auto col_pos = cli.completed_text_start_column + space; col_pos < 15)
-                    i.insert_text.insert(i.insert_text.begin() + space, 15 - col_pos, ' ');
-            }
-            if (auto* suggestion = locate_suggestion(i.label);
-                suggestion && !suggestion->first.starts_with(cli.completed_text))
-            {
-                i.suggestion_for = cli.completed_text;
-                suggestion->second = true;
-            }
+            if (auto col_pos = cli.completed_text_start_column + space; col_pos < 15)
+                i.insert_text.insert(i.insert_text.begin() + space, 15 - col_pos, ' ');
+        }
+        if (auto* suggestion = locate_suggestion(i.label);
+            suggestion && !suggestion->first.starts_with(cli.completed_text))
+        {
+            i.suggestion_for = cli.completed_text;
+            suggestion->second = true;
         }
     }
 

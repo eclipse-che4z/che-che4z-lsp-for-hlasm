@@ -2140,3 +2140,14 @@ const instruction_set_size& hlasm_plugin::parser_library::context::get_instructi
     assert(0 < idx && idx < std::size(instruction_set_sizes));
     return instruction_set_sizes[idx];
 }
+
+const instruction_set_size& hlasm_plugin::parser_library::context::get_instruction_sizes() noexcept
+{
+    static constexpr instruction_set_size result = {
+        std::size(mnemonic_codes),
+        std::size(machine_instructions),
+        std::size(ca_instructions),
+        std::size(assembler_instructions),
+    };
+    return result;
+}

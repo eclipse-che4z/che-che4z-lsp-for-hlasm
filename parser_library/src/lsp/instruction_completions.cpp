@@ -16,6 +16,7 @@
 
 #include <algorithm>
 #include <bitset>
+#include <tuple>
 
 #include "context/instruction.h"
 #include "utils/concat.h"
@@ -23,6 +24,10 @@
 namespace hlasm_plugin::parser_library::lsp {
 
 namespace {
+
+constexpr context::instruction_set_affiliation all_sets {
+    context::z_arch_affiliation::ZOP, context::z_arch_affiliation::LAST, 1, 1, 1, 1, 1
+};
 
 struct operand_formatter
 {
@@ -145,8 +150,8 @@ std::string_view get_implicit_parameters_text(bool has_some)
         return "";
 }
 
-void process_machine_instruction(
-    const context::machine_instruction& machine_instr, std::set<completion_item, completion_label_comparer>& items)
+void process_machine_instruction(const context::machine_instruction& machine_instr,
+    std::vector<std::pair<completion_item, context::instruction_set_affiliation>>& items)
 {
     operand_formatter detail; // operands used for hover - e.g. V,D12U(X,B)[,M]
     operand_formatter autocomplete; // operands used for autocomplete - e.g. V,D12U(X,B) [,M]
@@ -186,32 +191,36 @@ void process_machine_instruction(
 
     auto operands = detail.take();
 
-    items.emplace(std::string(machine_instr.name()),
-        std::move(operands),
-        utils::concat(machine_instr.name(), " ${", snippet_id++, ":}", autocomplete.take()),
-        utils::concat("**",
-            machine_instr.fullname(),
-            "**",
-            "\n\nMachine instruction, format: ",
-            context::instruction::mach_format_to_string(machine_instr.format()),
-            "\n\nOperands: ",
-            operands,
-            get_implicit_parameters_text(machine_instr.has_parameter_list()),
-            get_privileged_status_text(machine_instr.privileged()),
-            generate_cc_explanation(machine_instr.cc_explanation()),
-            get_page_text(machine_instr.page_in_pop())),
-        completion_item_kind::mach_instr,
-        true);
+    items.emplace_back(std::piecewise_construct,
+        std::forward_as_tuple(std::string(machine_instr.name()),
+            std::move(operands),
+            utils::concat(machine_instr.name(), " ${", snippet_id++, ":}", autocomplete.take()),
+            utils::concat("**",
+                machine_instr.fullname(),
+                "**",
+                "\n\nMachine instruction, format: ",
+                context::instruction::mach_format_to_string(machine_instr.format()),
+                "\n\nOperands: ",
+                operands,
+                get_implicit_parameters_text(machine_instr.has_parameter_list()),
+                get_privileged_status_text(machine_instr.privileged()),
+                generate_cc_explanation(machine_instr.cc_explanation()),
+                get_page_text(machine_instr.page_in_pop())),
+            completion_item_kind::mach_instr,
+            true),
+        std::forward_as_tuple(machine_instr.instr_set_affiliation()));
 }
 
-void process_assembler_instruction(
-    const context::assembler_instruction& asm_instr, std::set<completion_item, completion_label_comparer>& items)
+void process_assembler_instruction(const context::assembler_instruction& asm_instr,
+    std::vector<std::pair<completion_item, context::instruction_set_affiliation>>& items)
 {
-    items.emplace(std::string(asm_instr.name()),
-        utils::concat(asm_instr.name(), "   ", asm_instr.description()),
-        std::string(asm_instr.name()) + "   " /*+ description*/,
-        "Assembler instruction",
-        completion_item_kind::asm_instr);
+    items.emplace_back(std::piecewise_construct,
+        std::forward_as_tuple(std::string(asm_instr.name()),
+            utils::concat(asm_instr.name(), "   ", asm_instr.description()),
+            std::string(asm_instr.name()) + "   " /*+ description*/,
+            "Assembler instruction",
+            completion_item_kind::asm_instr),
+        std::forward_as_tuple(all_sets));
 }
 
 std::array<unsigned char, context::machine_instruction::max_operand_count> compute_corrected_ids(
@@ -233,8 +242,8 @@ std::array<unsigned char, context::machine_instruction::max_operand_count> compu
     return r;
 }
 
-void process_mnemonic_code(
-    const context::mnemonic_code& mnemonic_instr, std::set<completion_item, completion_label_comparer>& items)
+void process_mnemonic_code(const context::mnemonic_code& mnemonic_instr,
+    std::vector<std::pair<completion_item, context::instruction_set_affiliation>>& items)
 {
     operand_formatter subs_ops_mnems;
     operand_formatter subs_ops_nomnems;
@@ -352,40 +361,46 @@ void process_mnemonic_code(
         subs_ops_nomnems.append(brackets, ']').append("}");
         subs_ops_nomnems_no_snippets.append(brackets, ']');
     }
-    items.emplace(std::string(mnemonic_instr.name()),
-        subs_ops_nomnems_no_snippets.take(),
-        utils::concat(mnemonic_instr.name(), " ${", snippet_id++, ":}", subs_ops_nomnems.take()),
-        utils::concat("**",
-            mnemonic_instr.instruction()->fullname(),
-            "**",
-            "\n\nMnemonic code for ",
-            mnemonic_instr.instruction()->name(),
-            " instruction, format: ",
-            context::instruction::mach_format_to_string(mnemonic_instr.instruction()->format()),
-            "\n\nSubstituted operands: ",
-            subs_ops_mnems.take(),
-            get_implicit_parameters_text(mnemonic_instr.instruction()->has_parameter_list()),
-            get_privileged_status_text(mnemonic_instr.instruction()->privileged()),
-            generate_cc_explanation(mnemonic_instr.instruction()->cc_explanation()),
-            get_page_text(mnemonic_instr.instruction()->page_in_pop())),
-        completion_item_kind::mach_instr,
-        true);
+    items.emplace_back(std::piecewise_construct,
+        std::forward_as_tuple(std::string(mnemonic_instr.name()),
+            subs_ops_nomnems_no_snippets.take(),
+            utils::concat(mnemonic_instr.name(), " ${", snippet_id++, ":}", subs_ops_nomnems.take()),
+            utils::concat("**",
+                mnemonic_instr.instruction()->fullname(),
+                "**",
+                "\n\nMnemonic code for ",
+                mnemonic_instr.instruction()->name(),
+                " instruction, format: ",
+                context::instruction::mach_format_to_string(mnemonic_instr.instruction()->format()),
+                "\n\nSubstituted operands: ",
+                subs_ops_mnems.take(),
+                get_implicit_parameters_text(mnemonic_instr.instruction()->has_parameter_list()),
+                get_privileged_status_text(mnemonic_instr.instruction()->privileged()),
+                generate_cc_explanation(mnemonic_instr.instruction()->cc_explanation()),
+                get_page_text(mnemonic_instr.instruction()->page_in_pop())),
+            completion_item_kind::mach_instr,
+            true),
+        std::forward_as_tuple(mnemonic_instr.instr_set_affiliation()));
 }
 
-void process_ca_instruction(
-    const context::ca_instruction& ca_instr, std::set<completion_item, completion_label_comparer>& items)
+void process_ca_instruction(const context::ca_instruction& ca_instr,
+    std::vector<std::pair<completion_item, context::instruction_set_affiliation>>& items)
 {
-    items.emplace(std::string(ca_instr.name()),
-        "",
-        std::string(ca_instr.name()),
-        "Conditional Assembly",
-        completion_item_kind::ca_instr);
+    items.emplace_back(std::piecewise_construct,
+        std::forward_as_tuple(std::string(ca_instr.name()),
+            "",
+            std::string(ca_instr.name()),
+            "Conditional Assembly",
+            completion_item_kind::ca_instr),
+        std::forward_as_tuple(all_sets));
 }
 
 } // namespace
 
-const std::set<completion_item, completion_label_comparer> instruction_completion_items = [] {
-    std::set<completion_item, completion_label_comparer> result;
+const std::vector<std::pair<completion_item, context::instruction_set_affiliation>> instruction_completion_items = [] {
+    std::vector<std::pair<completion_item, context::instruction_set_affiliation>> result;
+
+    result.reserve(context::get_instruction_sizes().total());
 
     for (const auto& instr : context::instruction::all_ca_instructions())
     {
@@ -406,6 +421,8 @@ const std::set<completion_item, completion_label_comparer> instruction_completio
     {
         process_mnemonic_code(instr, result);
     }
+
+    std::ranges::sort(result, {}, [](const auto& e) -> decltype(auto) { return e.first.label; });
 
     return result;
 }();

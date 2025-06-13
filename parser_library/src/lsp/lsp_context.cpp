@@ -25,6 +25,7 @@
 
 #include "completion_item.h"
 #include "completion_trigger_kind.h"
+#include "context/instruction.h"
 #include "context/macro.h"
 #include "context/using.h"
 #include "item_convertors.h"
@@ -683,10 +684,21 @@ std::string lsp_context::hover_for_macro(const macro_info& macro) const
 }
 std::string lsp_context::hover_for_instruction(context::id_index name) const
 {
-    auto it = instruction_completion_items.find(name.to_string_view());
-    if (it == instruction_completion_items.end())
-        return "";
-    return it->documentation;
+    const auto iset = m_hlasm_ctx->options().instr_set;
+    const auto iname = name.to_string_view();
+    const auto& ici = instruction_completion_items;
+
+    static constexpr auto label = [](const auto& e) -> decltype(auto) { return e.first.label; };
+
+    for (auto it = std::ranges::lower_bound(ici, iname, {}, label); it != ici.end(); ++it)
+    {
+        if (it->first.label != iname)
+            return "";
+        if (context::instruction_available(it->second, iset))
+            return it->first.documentation;
+    }
+
+    return "";
 }
 
 bool lsp_context::have_suggestions_for_instr_like(context::id_index name) const

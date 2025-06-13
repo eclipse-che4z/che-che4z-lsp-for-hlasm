@@ -110,6 +110,7 @@ struct instruction_set_size
 };
 
 const instruction_set_size& get_instruction_sizes(instruction_set_version v) noexcept;
+const instruction_set_size& get_instruction_sizes() noexcept;
 
 // all mach_format types for operands of machine instructions:
 // formats with length 16 are arranged in range (0,2),formats with length 32 are arranged in range(3,20),formats with
