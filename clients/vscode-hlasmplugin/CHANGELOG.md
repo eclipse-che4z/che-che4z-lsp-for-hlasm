@@ -7,6 +7,7 @@
 - Support instruction tagging
 - Support external dummy sections
 - Enhance hover text and completion list accuracy
+- Support z17 instructions
 
 #### Fixed
 - Incorrect processing stack in nested macros
