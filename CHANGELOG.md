@@ -1,3 +1,45 @@
+## [1.18.0](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/compare/1.17.0...1.18.0) (2025-06-20)
+
+### Features
+
+* Enhance hover text and completion list accuracy ([243d9bb](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/243d9bbfa6e7b09cc907f362ac0026f53df2f979))
+* Support external dummy sections ([1af6c8f](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/1af6c8f9e0d9689aba4cbaffbc297fc25ad270df))
+* Support instruction tagging ([688a0bf](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/688a0bf51097bb8dcf34818cb33500536f11efa8))
+* Support Z17 instructions ([89b9607](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/89b9607f607a9c1eb2a6cc15001e79efdc8e4434))
+* Update instruction documentation ([9fdafa0](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/9fdafa0a85a021dc67f26e345e9596eaa368b910))
+* Validate length of macro operands ([6e03e3a](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/6e03e3a7982155670ce69c733efe5de69a9d498d))
+* Z17 extended mnemonics ([1bfe20f](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/1bfe20f5a48d1a217de046aa7d584df0211ae4df))
+
+### Fixes
+
+* AREAD instruction handles multibyte UTF-8 sequences incorrectly ([4fbdac1](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/4fbdac1523d458f188844e90b14ac47f4416a79f))
+* Duplicate semantic tokens ([13a6a05](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/13a6a05645a9d18927dd8afc3bdcc711ca48f075))
+* Inactive statement is incorrectly reported when using MACRO instruction alias ([7dabce1](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/7dabce1e6160365bcc466c3ce0f75bfdee6b80fd))
+* Incorrect processing stack in nested macros ([0fe0c10](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/0fe0c10f719a113de27c326bfc2d62a9edfbfad2))
+* Literals are not checked for single symbol requirement ([f673360](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/f673360c7a0436ecc5a4ec3b0dafcb0ed95142f0))
+* Macro defined in a preprocessor output is allowed to have empty name ([76a4037](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/76a4037281f1245f98a24943c1ea37df253306fb))
+* Rework tracking of copybook nesting in macros ([dec45ff](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/dec45ff00b378edda7c54ba6c53c6f529e9046dc))
+* The language server crashes on an incomplete macro definition ([e85057b](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/e85057b23d0227f3ad6eacf855704c704d0a5883))
+* Unhandled error while reading configuration ([cf34af8](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/cf34af807f62421fc1a534fac561ba285282cc43))
+* VTP instruction update ([fbad383](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/fbad3834955b058c7aef180d3c80e34fae2c1b1b))
+
+### Other changes
+
+* Avoid shared_ptr copies ([245bd39](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/245bd39f12c710dc0a5c37f2638f03651fd0fecf))
+* Cleanup static and const ([f9db30d](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/f9db30dc48b5bafafc71ccd6a3135b6653098d21))
+* Handling of patterns in configuration files ([6b15eb2](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/6b15eb2865d9f6b7a93c16c357f163196dd4db4a))
+* Instruction handler tables can be constants ([3f07245](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/3f07245559c09d807d8cf7e03a48a31977a55222))
+* Lexical normalization ([c5a4460](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/c5a44604b9bf20e3138adad962153ff61fff5966))
+* Remove combined instruction lookup ([4ba1b60](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/4ba1b6035c6a794bedd44d67421e6b4070617e6b))
+* Replace percent encoding ([54fc44c](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/54fc44c375cc152ba35a8935cdaa9511bc6805e7))
+* Retry downloads ([39bed50](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/39bed502f821f7c7ae41e170627134d91d5b5af7))
+* Static analysis suggestions ([313f82d](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/313f82d2813fd54b14b28c8b40d2ae87af065a83))
+* Ubuntu 20.04 deprecated ([bf7d944](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/bf7d9443b5e837c4096d7d3402a4987f104e2717))
+* Unify macro operand handling ([dc538c3](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/dc538c3fe0e09518704ee131ce7d665a0e502f04))
+* Update CI images ([7c01318](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/7c013187685679a3dfb8fb9ac6d5921303013638))
+* URI display string ([29d970b](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/29d970bdeb62525ae6ec29663eb35d860f411c68))
+* Windows 2019 deprecated ([1cfb2e1](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/1cfb2e1b49f99b0fe1fe755be1aada94ee5d2aee))
+* Workspace configuration URI generation ([ef49e0c](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/ef49e0c60e44cecc53bee4fbf61688998d38aaf6))
 ## [1.17.0](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/compare/1.16.0...1.17.0) (2025-03-31)
 
 ### Features
