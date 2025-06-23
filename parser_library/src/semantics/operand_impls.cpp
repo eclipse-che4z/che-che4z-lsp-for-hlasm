@@ -16,13 +16,13 @@
 
 #include <limits>
 
-#include "context/instruction.h"
 #include "context/ordinary_assembly/section.h"
 #include "context/using.h"
 #include "expressions/conditional_assembly/terms/ca_var_sym.h"
 #include "expressions/mach_expr_term.h"
 #include "expressions/mach_expr_visitor.h"
 #include "expressions/mach_operator.h"
+#include "instructions/instruction.h"
 #include "operand_visitor.h"
 
 namespace hlasm_plugin::parser_library::semantics {
@@ -113,20 +113,20 @@ address_machine_operand* machine_operand::access_address()
     return kind == mach_kind::ADDR ? static_cast<address_machine_operand*>(this) : nullptr;
 }
 
-constexpr bool is_dipl_like(checking::machine_operand_type type)
+constexpr bool is_dipl_like(instructions::machine_operand_type type)
 {
-    using enum checking::machine_operand_type;
+    using enum instructions::machine_operand_type;
     return type == DISP || type == DISP_IDX;
 }
 
-constexpr bool is_long_disp(checking::machine_operand_format f)
+constexpr bool is_long_disp(instructions::machine_operand_format f)
 {
-    return f.identifier == context::dis_20s || f.identifier == context::dis_idx_20s;
+    return f.identifier == instructions::dis_20s || f.identifier == instructions::dis_idx_20s;
 }
 
 std::unique_ptr<checking::operand> make_check_operand(context::dependency_solver& info,
     const expressions::mach_expression& expr,
-    const checking::machine_operand_format& mach_op_type,
+    const instructions::machine_operand_format& mach_op_type,
     diagnostic_op_consumer& diags)
 {
     auto res = expr.evaluate(info, diags);
@@ -195,14 +195,14 @@ expr_machine_operand::expr_machine_operand(expressions::mach_expr_ptr expression
 std::unique_ptr<checking::operand> expr_machine_operand::get_operand_value(
     context::dependency_solver& info, diagnostic_op_consumer& diags) const
 {
-    return make_check_operand(info, *expression, { context::empty, context::empty, context::empty, false }, diags);
+    return make_check_operand(info, *expression, instructions::machine_operand_format::empty, diags);
 }
 
 std::unique_ptr<checking::operand> expr_machine_operand::get_operand_value(context::dependency_solver& info,
-    const checking::machine_operand_format& mach_op_type,
+    const instructions::machine_operand_format& mach_op_type,
     diagnostic_op_consumer& diags) const
 {
-    if (mach_op_type.identifier.type == checking::machine_operand_type::RELOC_IMM)
+    if (mach_op_type.identifier.type == instructions::machine_operand_type::RELOC_IMM)
     {
         return make_rel_imm_operand(info, *expression, diags);
     }
@@ -271,7 +271,7 @@ bool address_machine_operand::has_error(context::dependency_solver& info) const
 std::unique_ptr<checking::operand> address_machine_operand::get_operand_value(
     context::dependency_solver& info, diagnostic_op_consumer& diags) const
 {
-    return get_operand_value(info, { context::empty, context::empty, context::empty, false }, diags);
+    return get_operand_value(info, instructions::machine_operand_format::empty, diags);
 }
 
 namespace {
@@ -291,7 +291,7 @@ std::pair<std::optional<context::symbol_value::abs_value_t>, bool> evaluate_abs_
 } // namespace
 
 std::unique_ptr<checking::operand> address_machine_operand::get_operand_value(context::dependency_solver& info,
-    const checking::machine_operand_format& mach_op_format,
+    const instructions::machine_operand_format& mach_op_format,
     diagnostic_op_consumer& diags) const
 {
     std::optional<context::symbol_value::abs_value_t> displ_v;
@@ -801,10 +801,10 @@ void transform_reloc_imm_operands(semantics::operand_list& op_list, const proces
     switch (op.type)
     {
         case context::instruction_type::MACH:
-            mask = op.instr_mach->reladdr_mask().mask();
+            mask = (unsigned char)op.instr_mach->reladdr_mask();
             break;
         case context::instruction_type::MNEMO:
-            mask = op.instr_mnemo->reladdr_mask().mask();
+            mask = (unsigned char)op.instr_mnemo->reladdr_mask();
             break;
         default:
             return;

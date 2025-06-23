@@ -21,6 +21,7 @@
 #include <utility>
 
 #include "context/compressed_id.h"
+#include "utils/insist.h"
 #include "utils/projectors.h"
 
 namespace hlasm_plugin::parser_library::processing {
@@ -45,7 +46,7 @@ public:
 
     explicit constexpr handler_map(const std::pair<context::id_index, Callback*> (&ar)[n]) noexcept
     {
-        assert(std::ranges::all_of(ar, context::compressed_id::can_compress, utils::first_element));
+        utils::insist(std::ranges::all_of(ar, context::compressed_id::can_compress, utils::first_element));
         std::ranges::transform(ar, ids.begin(), [](const auto& p) { return context::compressed_id(p.first); });
         std::ranges::transform(ar, handlers.begin(), utils::second_element);
     }

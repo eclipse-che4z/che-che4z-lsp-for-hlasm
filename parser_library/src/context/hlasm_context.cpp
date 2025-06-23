@@ -24,7 +24,7 @@
 #include "ebcdic_encoding.h"
 #include "expressions/evaluation_context.h"
 #include "expressions/mach_expression.h"
-#include "instruction.h"
+#include "instructions/instruction.h"
 #include "lexing/tools.h"
 #include "ordinary_assembly/location_counter.h"
 #include "using.h"
@@ -43,7 +43,7 @@ const code_scope* hlasm_context::curr_scope() const { return &scope_stack_.back(
 
 void hlasm_context::init_instruction_map(opcode_map& opcodes, id_storage& ids, instruction_set_version active_instr_set)
 {
-    for (const auto& instr : instruction::all_machine_instructions())
+    for (const auto& instr : instructions::all_machine_instructions())
     {
         if (!instruction_available(instr.instr_set_affiliation(), active_instr_set))
             continue;
@@ -51,17 +51,17 @@ void hlasm_context::init_instruction_map(opcode_map& opcodes, id_storage& ids, i
         auto id = ids.add(instr.name());
         opcodes[id].emplace_back(opcode_t { id, &instr }, opcode_generation::zero);
     }
-    for (const auto& instr : instruction::all_assembler_instructions())
+    for (const auto& instr : instructions::all_assembler_instructions())
     {
         auto id = ids.add(instr.name());
         opcodes[id].emplace_back(opcode_t { id, &instr }, opcode_generation::zero);
     }
-    for (const auto& instr : instruction::all_ca_instructions())
+    for (const auto& instr : instructions::all_ca_instructions())
     {
         auto id = ids.add(instr.name());
         opcodes[id].emplace_back(opcode_t { id, &instr }, opcode_generation::zero);
     }
-    for (const auto& instr : instruction::all_mnemonic_codes())
+    for (const auto& instr : instructions::all_mnemonic_codes())
     {
         if (!instruction_available(instr.instr_set_affiliation(), active_instr_set))
             continue;
@@ -840,10 +840,10 @@ SET_t hlasm_context::get_attribute_value_ord(data_attr_kind attribute, const sym
 
 struct opcode_attr_visitor
 {
-    std::string operator()(const assembler_instruction*) const { return "A"; }
-    std::string operator()(const ca_instruction*) const { return "A"; }
-    std::string operator()(const mnemonic_code*) const { return "E"; }
-    std::string operator()(const machine_instruction*) const { return "O"; }
+    std::string operator()(const instructions::assembler_instruction*) const { return "A"; }
+    std::string operator()(const instructions::ca_instruction*) const { return "A"; }
+    std::string operator()(const instructions::mnemonic_code*) const { return "E"; }
+    std::string operator()(const instructions::machine_instruction*) const { return "O"; }
     std::string operator()(macro_definition*) const { return "M"; }
     std::string operator()(std::monostate) const { return "U"; }
 };

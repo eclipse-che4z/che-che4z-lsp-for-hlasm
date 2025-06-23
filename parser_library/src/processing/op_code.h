@@ -21,9 +21,12 @@
 #include "context/instruction_type.h"
 #include "processing_format.h"
 
-namespace hlasm_plugin::parser_library::context {
+namespace hlasm_plugin::parser_library::instructions {
 class mnemonic_code;
 class machine_instruction;
+} // namespace hlasm_plugin::parser_library::instructions
+
+namespace hlasm_plugin::parser_library::context {
 class macro_definition;
 } // namespace hlasm_plugin::parser_library::context
 
@@ -47,12 +50,12 @@ struct op_code
         , mac_def(mac_def)
         , type(context::instruction_type::MAC)
     {}
-    constexpr op_code(context::id_index value, const context::machine_instruction* mach_instr) noexcept
+    constexpr op_code(context::id_index value, const instructions::machine_instruction* mach_instr) noexcept
         : value(value)
         , instr_mach(mach_instr)
         , type(context::instruction_type::MACH)
     {}
-    constexpr op_code(context::id_index value, const context::mnemonic_code* mach_mnemo) noexcept
+    constexpr op_code(context::id_index value, const instructions::mnemonic_code* mach_mnemo) noexcept
         : value(value)
         , instr_mnemo(mach_mnemo)
         , type(context::instruction_type::MNEMO)
@@ -63,8 +66,8 @@ struct op_code
     {
         const void* _empty = nullptr;
         context::macro_definition* mac_def;
-        const context::machine_instruction* instr_mach;
-        const context::mnemonic_code* instr_mnemo;
+        const instructions::machine_instruction* instr_mach;
+        const instructions::mnemonic_code* instr_mnemo;
     };
     context::instruction_type type;
 };

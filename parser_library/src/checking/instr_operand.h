@@ -24,6 +24,12 @@
 #include "diagnostic_op.h"
 #include "operand.h"
 
+namespace hlasm_plugin::parser_library::instructions {
+struct parameter;
+struct machine_operand_format;
+enum class machine_operand_type : uint8_t;
+} // namespace hlasm_plugin::parser_library::instructions
+
 namespace hlasm_plugin::parser_library::checking {
 class data_def_type;
 
@@ -60,66 +66,6 @@ public:
     complex_operand(std::string operand_identifier, std::vector<std::unique_ptr<asm_operand>> operand_params);
 };
 
-enum class machine_operand_type : uint8_t
-{
-    NONE,
-    MASK,
-    REG,
-    IMM,
-    DISP,
-    DISP_IDX,
-    BASE,
-    LENGTH,
-    VEC_REG,
-    IDX_REG,
-    RELOC_IMM,
-};
-
-enum class even_odd_register : uint8_t
-{
-    NONE,
-    ODD,
-    EVEN,
-};
-
-// Describes a component of machine operand format. Specifies allowed values.
-struct parameter
-{
-    bool is_signed : 1;
-    uint8_t size : 7;
-    machine_operand_type type : 4;
-    even_odd_register evenodd : 2 = even_odd_register::NONE;
-    uint8_t min_register : 2 = 0;
-
-    bool operator==(const parameter&) const = default;
-
-    constexpr bool is_empty() const { return *this == parameter {}; }
-
-    std::string to_string() const;
-};
-
-// Representation of machine operand formats and serves as a template for the checker.
-// Consists of 1 parameter when only simple operand is allowed and of 3 parameters when address operand is allowed
-// D(F,S)
-struct machine_operand_format
-{
-    parameter identifier; // used as displacement operand in address operand
-    parameter first; // empty when simple operand
-    parameter second; // empty when simple operand
-    bool optional = false;
-
-    constexpr machine_operand_format(parameter id, parameter first, parameter second, bool optional = false)
-        : identifier(id)
-        , first(first)
-        , second(second)
-        , optional(optional)
-    {
-        assert(!second.is_empty() || first.is_empty());
-    };
-
-    std::string to_string(std::optional<size_t> i = std::nullopt) const;
-};
-
 // Abstract class that represents a machine operand suitable for checking.
 class machine_operand : public virtual operand
 {
@@ -128,15 +74,16 @@ public:
 
     // check whether the operand satisfies its format
     virtual std::optional<diagnostic_op> check(
-        machine_operand_format to_check, std::string_view instr_name, const range& stmt_range) const = 0;
+        instructions::machine_operand_format to_check, std::string_view instr_name, const range& stmt_range) const = 0;
 
-    diagnostic_op get_simple_operand_expected(
-        const machine_operand_format& op_format, std::string_view instr_name, const range& stmt_range) const;
+    diagnostic_op get_simple_operand_expected(const instructions::machine_operand_format& op_format,
+        std::string_view instr_name,
+        const range& stmt_range) const;
 
     static bool is_size_corresponding_signed(int operand, int size);
     static bool is_size_corresponding_unsigned(int operand, int size);
-    static bool is_operand_corresponding(int operand, parameter param);
-    static bool is_simple_operand(const machine_operand_format& operand);
+    static bool is_operand_corresponding(int operand, instructions::parameter param);
+    static bool is_simple_operand(const instructions::machine_operand_format& operand);
 };
 
 // Represents address operand D(B) or D(F,B)
@@ -152,14 +99,14 @@ public:
     address_operand(address_state state, int displacement, int first, int second);
     address_operand(address_state state, int displacement, int first, int second, operand_state op_state);
 
-    diagnostic_op get_first_parameter_error(machine_operand_type op_type,
+    diagnostic_op get_first_parameter_error(instructions::machine_operand_type op_type,
         std::string_view instr_name,
         long long from,
         long long to,
         const range& stmt_range) const;
 
     std::optional<diagnostic_op> check(
-        machine_operand_format to_check, std::string_view instr_name, const range& range) const override;
+        instructions::machine_operand_format to_check, std::string_view instr_name, const range& range) const override;
 
     bool is_length_corresponding(int param_value, int length_size) const;
 };
@@ -187,8 +134,9 @@ public:
 
     one_operand(const one_operand& op);
 
-    std::optional<diagnostic_op> check(
-        machine_operand_format to_check, std::string_view instr_name, const range& stmt_range) const override;
+    std::optional<diagnostic_op> check(instructions::machine_operand_format to_check,
+        std::string_view instr_name,
+        const range& stmt_range) const override;
 };
 
 class empty_operand final : public machine_operand, public asm_operand
@@ -197,8 +145,9 @@ public:
     empty_operand();
     explicit empty_operand(range r);
 
-    std::optional<diagnostic_op> check(
-        machine_operand_format to_check, std::string_view instr_name, const range& stmt_range) const override;
+    std::optional<diagnostic_op> check(instructions::machine_operand_format to_check,
+        std::string_view instr_name,
+        const range& stmt_range) const override;
 };
 
 } // namespace hlasm_plugin::parser_library::checking

@@ -23,11 +23,11 @@
 #include "analyzer.h"
 #include "completion_item.h"
 #include "completion_trigger_kind.h"
-#include "context/instruction.h"
 #include "document_symbol_item.h"
 #include "fade_messages.h"
 #include "file.h"
 #include "file_manager.h"
+#include "instructions/instruction.h"
 #include "lsp/folding.h"
 #include "lsp/item_convertors.h"
 #include "lsp/lsp_context.h"
@@ -914,16 +914,16 @@ auto generate_instruction_bk_tree(instruction_set_version version)
 {
     utils::bk_tree<std::string_view, utils::levenshtein_distance_t<16>> result;
 
-    result.reserve(context::get_instruction_sizes(version).total());
+    result.reserve(instructions::get_instruction_sizes(version).total());
 
-    for (const auto& i : context::instruction::all_assembler_instructions())
+    for (const auto& i : instructions::all_assembler_instructions())
         result.insert(i.name());
-    for (const auto& i : context::instruction::all_ca_instructions())
+    for (const auto& i : instructions::all_ca_instructions())
         result.insert(i.name());
-    for (const auto& i : context::instruction::all_machine_instructions())
+    for (const auto& i : instructions::all_machine_instructions())
         if (instruction_available(i.instr_set_affiliation(), version))
             result.insert(i.name());
-    for (const auto& i : context::instruction::all_mnemonic_codes())
+    for (const auto& i : instructions::all_mnemonic_codes())
         if (instruction_available(i.instr_set_affiliation(), version))
             result.insert(i.name());
 

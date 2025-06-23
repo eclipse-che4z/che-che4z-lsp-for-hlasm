@@ -20,8 +20,8 @@
 
 #include "../mock_parse_lib_provider.h"
 #include "analyzer.h"
-#include "context/instruction.h"
 #include "empty_parse_lib_provider.h"
+#include "instructions/instruction.h"
 #include "location.h"
 #include "lsp/lsp_context.h"
 #include "parse_lib_provider.h"

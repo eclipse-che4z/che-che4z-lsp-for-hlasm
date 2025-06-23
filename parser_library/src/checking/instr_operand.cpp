@@ -18,9 +18,9 @@
 #include <algorithm>
 
 #include "data_definition/data_def_type_base.h"
+#include "instructions/instruction.h"
 
-using namespace hlasm_plugin::parser_library;
-using namespace hlasm_plugin::parser_library::checking;
+namespace hlasm_plugin::parser_library::checking {
 
 complex_operand::complex_operand() = default;
 
@@ -31,7 +31,7 @@ complex_operand::complex_operand(
 
 machine_operand::machine_operand() = default;
 
-bool machine_operand::is_operand_corresponding(int operand, parameter param)
+bool machine_operand::is_operand_corresponding(int operand, instructions::parameter param)
 {
     if (param.is_signed && is_size_corresponding_signed(operand, param.size))
         return true;
@@ -52,25 +52,26 @@ bool machine_operand::is_size_corresponding_unsigned(int operand, int size)
 }
 
 namespace {
-bool check_value_parity(int operand, even_odd_register reg)
+bool check_value_parity(int operand, instructions::even_odd_register reg)
 {
+    using enum instructions::even_odd_register;
     switch (reg)
     {
-        case even_odd_register::NONE:
+        case NONE:
             return true;
-        case even_odd_register::ODD:
+        case ODD:
             return !!(operand & 1);
-        case even_odd_register::EVEN:
+        case EVEN:
             return !(operand & 1);
     }
 }
 } // namespace
 
-bool machine_operand::is_simple_operand(const machine_operand_format& operand)
+bool machine_operand::is_simple_operand(const instructions::machine_operand_format& operand)
 {
+    using enum instructions::machine_operand_type;
     return (operand.first.is_signed == false && operand.first.size == 0 && operand.second.is_signed == false
-        && operand.second.size == 0 && operand.first.type == machine_operand_type::NONE
-        && operand.second.type == machine_operand_type::NONE);
+        && operand.second.size == 0 && operand.first.type == NONE && operand.second.type == NONE);
 }
 
 address_operand::address_operand(address_state state, int displacement, int first, int second)
@@ -87,21 +88,22 @@ address_operand::address_operand(address_state state, int displacement, int firs
     , second_op(second)
     , op_state(op_state) {};
 
-diagnostic_op address_operand::get_first_parameter_error(machine_operand_type op_type,
+diagnostic_op address_operand::get_first_parameter_error(instructions::machine_operand_type op_type,
     std::string_view instr_name,
     long long from,
     long long to,
     const range& stmt_range) const
 {
+    using enum instructions::machine_operand_type;
     switch (op_type)
     {
-        case machine_operand_type::LENGTH: // D(L,B)
+        case LENGTH: // D(L,B)
             return diagnostic_op::error_M132(instr_name, from, to, operand_range);
-        case machine_operand_type::IDX_REG: // D(X,B)
+        case IDX_REG: // D(X,B)
             return diagnostic_op::error_M135(instr_name, from, to, operand_range);
-        case machine_operand_type::REG: // D(R,B)
+        case REG: // D(R,B)
             return diagnostic_op::error_M133(instr_name, from, to, operand_range);
-        case machine_operand_type::VEC_REG: // D(V,B)
+        case VEC_REG: // D(V,B)
             return diagnostic_op::error_M134(instr_name, from, to, operand_range);
     }
     assert(false);
@@ -109,7 +111,7 @@ diagnostic_op address_operand::get_first_parameter_error(machine_operand_type op
 }
 
 std::optional<diagnostic_op> address_operand::check(
-    machine_operand_format to_check, std::string_view instr_name, const range& stmt_range) const
+    instructions::machine_operand_format to_check, std::string_view instr_name, const range& stmt_range) const
 {
     if (is_simple_operand(to_check))
     {
@@ -175,15 +177,14 @@ std::optional<diagnostic_op> address_operand::check(
                     actual_val = second_op;
                 // check whether value is corresponding
 
+                using enum instructions::machine_operand_type;
                 // length parameters can have +1 values specified
-                if (to_check.first.type == machine_operand_type::LENGTH
-                    && !is_length_corresponding(first_op, to_check.first.size))
+                if (to_check.first.type == LENGTH && !is_length_corresponding(first_op, to_check.first.size))
                 {
                     return get_first_parameter_error(
                         to_check.first.type, instr_name, 0, 1ll << to_check.first.size, stmt_range);
                 }
-                if (to_check.first.type != machine_operand_type::LENGTH
-                    && !is_operand_corresponding(first_op, to_check.first))
+                if (to_check.first.type != LENGTH && !is_operand_corresponding(first_op, to_check.first))
                 {
                     assert(!to_check.first.is_signed);
                     return get_first_parameter_error(
@@ -205,19 +206,20 @@ bool hlasm_plugin::parser_library::checking::address_operand::is_length_correspo
 };
 
 diagnostic_op machine_operand::get_simple_operand_expected(
-    const machine_operand_format& op_format, std::string_view instr_name, const range& stmt_range) const
+    const instructions::machine_operand_format& op_format, std::string_view instr_name, const range& stmt_range) const
 {
+    using enum instructions::machine_operand_type;
     switch (op_format.identifier.type)
     {
-        case machine_operand_type::REG: // R
+        case REG: // R
             return diagnostic_op::error_M110(instr_name, operand_range);
-        case machine_operand_type::MASK: // M
+        case MASK: // M
             return diagnostic_op::error_M111(instr_name, operand_range);
-        case machine_operand_type::IMM: // I
+        case IMM: // I
             return diagnostic_op::error_M112(instr_name, operand_range);
-        case machine_operand_type::VEC_REG: // V
+        case VEC_REG: // V
             return diagnostic_op::error_M114(instr_name, operand_range);
-        case machine_operand_type::RELOC_IMM: // RI
+        case RELOC_IMM: // RI
             return diagnostic_op::error_M113(instr_name, operand_range);
     }
     assert(false);
@@ -269,7 +271,7 @@ one_operand::one_operand(const one_operand& op)
     , is_default(op.is_default) {};
 
 std::optional<diagnostic_op> one_operand::check(
-    machine_operand_format to_check, std::string_view instr_name, const range&) const
+    instructions::machine_operand_format to_check, std::string_view instr_name, const range&) const
 {
     if (!is_simple_operand(to_check))
     {
@@ -288,15 +290,16 @@ std::optional<diagnostic_op> one_operand::check(
             return diagnostic_op::error_M130(instr_name, 0, (1ll << to_check.identifier.size) - 1, operand_range);
     }
 
+    using enum instructions::machine_operand_type;
     // it is a simple operand
     if (to_check.identifier.is_signed && !is_size_corresponding_signed(value, to_check.identifier.size))
     {
-        auto boundary = 1ll << (to_check.identifier.size - 1);
+        const auto boundary = 1ll << (to_check.identifier.size - 1);
         switch (to_check.identifier.type)
         {
-            case machine_operand_type::IMM:
+            case IMM:
                 return diagnostic_op::warn_M137(instr_name, -boundary, boundary - 1, operand_range);
-            case machine_operand_type::RELOC_IMM:
+            case RELOC_IMM:
                 return diagnostic_op::error_M123(instr_name, -boundary, boundary - 1, operand_range);
             default:
                 assert(false);
@@ -306,20 +309,20 @@ std::optional<diagnostic_op> one_operand::check(
         && (!is_size_corresponding_unsigned(value, to_check.identifier.size)
             || !check_value_parity(value, to_check.identifier.evenodd) || value < to_check.identifier.min_register))
     {
-        auto boundary = (1ll << to_check.identifier.size) - 1;
+        const auto boundary = (1ll << to_check.identifier.size) - 1;
         static constexpr std::string_view reg_qual[] = { "", "odd", "even" };
         switch (to_check.identifier.type)
         {
-            case machine_operand_type::REG:
+            case REG:
                 return diagnostic_op::error_M120(instr_name,
                     operand_range,
                     reg_qual[(int)to_check.identifier.evenodd],
                     to_check.identifier.min_register);
-            case machine_operand_type::MASK:
+            case MASK:
                 return diagnostic_op::error_M121(instr_name, operand_range);
-            case machine_operand_type::IMM:
+            case IMM:
                 return diagnostic_op::warn_M137(instr_name, 0, boundary, operand_range);
-            case machine_operand_type::VEC_REG:
+            case VEC_REG:
                 return diagnostic_op::error_M124(instr_name, operand_range);
             default:
                 assert(false);
@@ -334,67 +337,8 @@ empty_operand::empty_operand(range r)
 {}
 
 std::optional<diagnostic_op> empty_operand::check(
-    machine_operand_format, std::string_view instr_name, const range&) const
+    instructions::machine_operand_format, std::string_view instr_name, const range&) const
 {
     return diagnostic_op::error_M003(instr_name, operand_range);
 }
-
-std::string parameter::to_string() const
-{
-    std::string ret_val = "";
-    switch (type)
-    {
-        case machine_operand_type::MASK:
-            return "M";
-        case machine_operand_type::REG:
-            return "R";
-        case machine_operand_type::IMM: {
-            ret_val = "I";
-            break;
-        }
-        case machine_operand_type::NONE:
-            return "";
-        case machine_operand_type::DISP: {
-            ret_val = "D";
-            break;
-        }
-        case machine_operand_type::DISP_IDX: {
-            ret_val = "DX";
-            break;
-        }
-        case machine_operand_type::BASE:
-            return "B";
-        case machine_operand_type::LENGTH: {
-            ret_val = "L";
-            break;
-        }
-        case machine_operand_type::RELOC_IMM: {
-            ret_val = "RI";
-            break;
-        }
-        case machine_operand_type::VEC_REG:
-            return "V";
-        case machine_operand_type::IDX_REG:
-            return "X";
-    }
-    ret_val += std::to_string(size);
-    if (is_signed)
-        ret_val += "S";
-    else
-        ret_val += "U";
-    return ret_val;
-}
-
-std::string machine_operand_format::to_string(std::optional<size_t> i) const
-{
-    const auto index = i.has_value() ? std::to_string(i.value()) : std::string();
-    std::string ret_val = identifier.to_string() + index;
-    if (!first.is_empty() || !second.is_empty())
-    {
-        ret_val.append("(");
-        if (!first.is_empty()) // only second cannot be empty
-            ret_val.append(first.to_string()).append(index).append(",");
-        ret_val.append(second.to_string()).append(index).append(")");
-    }
-    return ret_val;
-}
+} // namespace hlasm_plugin::parser_library::checking

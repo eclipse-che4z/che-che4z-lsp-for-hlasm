@@ -14,6 +14,7 @@ target_sources(hlasm_utils PUBLIC
     FILE_SET public_headers TYPE HEADERS FILES
     utils/async_busy_wait.h
     utils/bk_tree.h
+    utils/insist.h
     utils/content_loader.h
     utils/encoding.h
     utils/error_codes.h

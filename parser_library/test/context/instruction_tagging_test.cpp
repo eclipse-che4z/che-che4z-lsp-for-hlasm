@@ -232,7 +232,7 @@ ABC OPSYN SAM31
     EXPECT_TRUE(a.diags().empty());
 }
 
-TEST(instruction_tagging, deleted_instruciton)
+TEST(instruction_tagging, deleted_instruction)
 {
     std::string input = R"(
 SAM31 OPSYN

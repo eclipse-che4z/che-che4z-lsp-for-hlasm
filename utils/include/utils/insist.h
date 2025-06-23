@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019 Broadcom.
+ * Copyright (c) 2025 Broadcom.
  * The term "Broadcom" refers to Broadcom Inc. and/or its subsidiaries.
  *
  * This program and the accompanying materials are made
@@ -12,22 +12,19 @@
  *   Broadcom, Inc. - initial API and implementation
  */
 
-#ifndef HLASMPLUGIN_PARSERLIBRARY_INSTRUCTIONS_CONTEXT_TYPE_H
-#define HLASMPLUGIN_PARSERLIBRARY_INSTRUCTIONS_CONTEXT_TYPE_H
+#ifndef HLASMPLUGIN_UTILS_INSIST_H
+#define HLASMPLUGIN_UTILS_INSIST_H
 
-namespace hlasm_plugin::parser_library::context {
+namespace hlasm_plugin::utils {
 
-// enum class for all instruction types
-enum class instruction_type
+[[noreturn]] void insist_fail(const char* explanation) noexcept;
+
+constexpr void insist(bool test, const char* explanation = nullptr) noexcept
 {
-    MACH,
-    MNEMO,
-    ASM,
-    MAC,
-    CA,
-    UNDEF
-};
+    if (!test)
+        insist_fail(explanation);
+}
 
-} // namespace hlasm_plugin::parser_library::context
+} // namespace hlasm_plugin::utils
 
 #endif

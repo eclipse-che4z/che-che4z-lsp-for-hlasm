@@ -20,12 +20,12 @@
 
 #include "context/hlasm_context.h"
 #include "context/id_storage.h"
-#include "context/instruction.h"
 #include "context/ordinary_assembly/ordinary_assembly_dependency_solver.h"
 #include "context/ordinary_assembly/postponed_statement.h"
 #include "context/ordinary_assembly/symbol_dependency_tables.h"
 #include "context/source_context.h"
 #include "context/special_instructions.h"
+#include "instructions/instruction.h"
 #include "library_info_transitional.h"
 #include "lsp/lsp_context.h"
 #include "lsp/text_data_view.h"
@@ -495,7 +495,7 @@ lsp_analyzer::collection_info_t lsp_analyzer::get_active_collection(
 }
 
 namespace {
-std::optional<std::pair<int, int>> get_branch_operand(const context::machine_instruction* m) noexcept
+std::optional<std::pair<int, int>> get_branch_operand(const instructions::machine_instruction* m) noexcept
 {
     auto ba = m->branch_argument();
     if (!ba.valid())
@@ -503,7 +503,7 @@ std::optional<std::pair<int, int>> get_branch_operand(const context::machine_ins
 
     return std::make_pair(ba.unknown_target() ? -1 : ba.target(), ba.branches_if_nonzero() ? ba.nonzero_arg() : -1);
 }
-std::optional<std::pair<int, int>> get_branch_operand(const context::mnemonic_code* m) noexcept
+std::optional<std::pair<int, int>> get_branch_operand(const instructions::mnemonic_code* m) noexcept
 {
     auto ba = get_branch_operand(m->instruction());
     if (!ba)
@@ -517,7 +517,7 @@ std::optional<std::pair<int, int>> get_branch_operand(const context::mnemonic_co
             if (pos < t.skip)
                 break;
             pos -= t.skip;
-            if (pos == 0 && t.insert && t.type == context::mnemonic_transformation_kind::value)
+            if (pos == 0 && t.insert && t.type == instructions::mnemonic_transformation_kind::value)
             {
                 if (t.value)
                 {

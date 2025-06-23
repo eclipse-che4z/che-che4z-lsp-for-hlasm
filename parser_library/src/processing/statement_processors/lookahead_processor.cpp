@@ -15,10 +15,10 @@
 #include "lookahead_processor.h"
 
 #include "context/hlasm_context.h"
-#include "context/instruction.h"
 #include "context/ordinary_assembly/ordinary_assembly_dependency_solver.h"
 #include "ebcdic_encoding.h"
 #include "expressions/mach_expr_term.h"
+#include "instructions/instruction.h"
 #include "ordinary_processor.h"
 #include "processing/branching_provider.h"
 #include "processing/handler_map.h"
@@ -329,22 +329,23 @@ void lookahead_processor::find_ord(const resolved_statement& statement)
     // find attributes
     // if found ord symbol on CA, macro or undefined instruction, only type attribute is assigned
     // 'U' for CA and 'M' for undefined and macro
+    using enum context::instruction_type;
     switch (const auto& opcode = statement.opcode_ref(); opcode.type)
     {
-        case context::instruction_type::CA:
+        case CA:
             register_attr_ref(id, context::symbol_attributes(context::symbol_origin::MACH, 'U'_ebcdic));
             break;
-        case context::instruction_type::UNDEF:
-        case context::instruction_type::MAC:
+        case UNDEF:
+        case MAC:
             register_attr_ref(id, context::symbol_attributes(context::symbol_origin::MACH, 'M'_ebcdic));
             break;
-        case context::instruction_type::MACH:
+        case MACH:
             assign_machine_attributes(id, opcode.instr_mach->size_in_bits() / 8);
             break;
-        case context::instruction_type::MNEMO:
+        case MNEMO:
             assign_machine_attributes(id, opcode.instr_mnemo->size_in_bits() / 8);
             break;
-        case context::instruction_type::ASM:
+        case ASM:
             assign_assembler_attributes(id, statement);
             break;
         default:

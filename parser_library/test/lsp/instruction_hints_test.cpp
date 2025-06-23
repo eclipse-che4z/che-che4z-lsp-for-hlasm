@@ -17,8 +17,8 @@
 #include "gtest/gtest.h"
 
 #include "completion_item.h"
-#include "context/instruction.h"
 #include "instruction_set_version.h"
+#include "instructions/instruction.h"
 #include "lsp/instruction_completions.h"
 #include "utils/concat.h"
 
@@ -64,7 +64,7 @@ TEST_P(instr_hint_test_fixture, instructions)
     auto [name, operands, snippet, substitution, version] = GetParam();
 
     const auto it = std::ranges::find_if(instruction_completion_items,
-        [&](const auto& e) { return e.first.label == name && context::instruction_available(e.second, version); });
+        [&](const auto& e) { return e.first.label == name && instructions::instruction_available(e.second, version); });
     ASSERT_NE(it, instruction_completion_items.end());
 
     const auto& item = it->first;

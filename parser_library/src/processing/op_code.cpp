@@ -14,7 +14,7 @@
 
 #include "op_code.h"
 
-#include "context/instruction.h"
+#include "instructions/instruction.h"
 
 namespace hlasm_plugin::parser_library::processing {
 
@@ -26,11 +26,10 @@ std::pair<unsigned char, unsigned char> get_processing_status_cache_key_details(
     switch (op.type)
     {
         case context::instruction_type::MACH:
-            return std::pair(
-                static_cast<unsigned char>(op.instr_mach->size_in_bits() / 8), op.instr_mach->reladdr_mask().mask());
+            return { (unsigned char)(op.instr_mach->size_in_bits() / 8), (unsigned char)op.instr_mach->reladdr_mask() };
         case context::instruction_type::MNEMO:
-            return std::pair(
-                static_cast<unsigned char>(op.instr_mnemo->size_in_bits() / 8), op.instr_mnemo->reladdr_mask().mask());
+            return { (unsigned char)(op.instr_mnemo->size_in_bits() / 8),
+                (unsigned char)op.instr_mnemo->reladdr_mask() };
         default:
             return common_processing_status_cache_key_details;
     }

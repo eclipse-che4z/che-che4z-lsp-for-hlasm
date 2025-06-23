@@ -18,7 +18,7 @@
 
 #include "checking/asm_instr_check.h"
 #include "checking/asm_instr_class.h"
-#include "context/instruction.h"
+#include "instructions/instruction.h"
 
 namespace hlasm_plugin::parser_library::checking {
 

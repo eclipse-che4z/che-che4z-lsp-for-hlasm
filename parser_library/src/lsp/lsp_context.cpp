@@ -25,9 +25,9 @@
 
 #include "completion_item.h"
 #include "completion_trigger_kind.h"
-#include "context/instruction.h"
 #include "context/macro.h"
 #include "context/using.h"
+#include "instructions/instruction.h"
 #include "item_convertors.h"
 #include "lsp/instruction_completions.h"
 #include "lsp/macro_info.h"
@@ -694,7 +694,7 @@ std::string lsp_context::hover_for_instruction(context::id_index name) const
     {
         if (it->first.label != iname)
             return "";
-        if (context::instruction_available(it->second, iset))
+        if (instructions::instruction_available(it->second, iset))
             return it->first.documentation;
     }
 

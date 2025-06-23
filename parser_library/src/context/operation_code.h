@@ -19,11 +19,14 @@
 
 #include "id_index.h"
 
-namespace hlasm_plugin::parser_library::context {
+namespace hlasm_plugin::parser_library::instructions {
 class ca_instruction;
 class assembler_instruction;
 class machine_instruction;
 class mnemonic_code;
+} // namespace hlasm_plugin::parser_library::instructions
+
+namespace hlasm_plugin::parser_library::context {
 class macro_definition;
 
 
@@ -31,10 +34,10 @@ class macro_definition;
 struct opcode_t
 {
     using opcode_variant = std::variant<std::monostate,
-        const ca_instruction*,
-        const assembler_instruction*,
-        const machine_instruction*,
-        const mnemonic_code*,
+        const instructions::ca_instruction*,
+        const instructions::assembler_instruction*,
+        const instructions::machine_instruction*,
+        const instructions::mnemonic_code*,
         macro_definition*>;
 
     id_index opcode;

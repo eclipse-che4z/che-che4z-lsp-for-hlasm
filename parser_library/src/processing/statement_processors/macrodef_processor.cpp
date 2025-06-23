@@ -17,7 +17,7 @@
 #include <functional>
 #include <ranges>
 
-#include "context/instruction.h"
+#include "instructions/instruction.h"
 #include "processing/branching_provider.h"
 #include "processing/handler_map.h"
 #include "processing/instruction_sets/asm_processor.h"
@@ -157,7 +157,7 @@ processing_status macrodef_processor::get_macro_processing_status(
     if (instruction && !instruction->empty())
     {
         auto code = hlasm_ctx.get_operation_code(*instruction);
-        if (auto** ca_instr = std::get_if<const context::ca_instruction*>(&code.opcode_detail); ca_instr)
+        if (auto** ca_instr = std::get_if<const instructions::ca_instruction*>(&code.opcode_detail); ca_instr)
         {
             processing_format format(processing_kind::MACRO,
                 processing_form::CA,

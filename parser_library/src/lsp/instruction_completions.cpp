@@ -16,17 +16,19 @@
 
 #include <algorithm>
 #include <bitset>
+#include <cassert>
+#include <numeric>
 #include <tuple>
 
-#include "context/instruction.h"
+#include "instructions/instruction.h"
 #include "utils/concat.h"
 
 namespace hlasm_plugin::parser_library::lsp {
 
 namespace {
 
-constexpr context::instruction_set_affiliation all_sets {
-    context::z_arch_affiliation::ZOP, context::z_arch_affiliation::LAST, 1, 1, 1, 1, 1
+constexpr instructions::instruction_set_affiliation all_sets {
+    instructions::z_arch_affiliation::ZOP, instructions::z_arch_affiliation::LAST, 1, 1, 1, 1, 1
 };
 
 struct operand_formatter
@@ -86,14 +88,14 @@ struct operand_formatter
 };
 
 
-std::string generate_cc_explanation(const context::condition_code_explanation& cc)
+std::string generate_cc_explanation(const instructions::condition_code_explanation& cc)
 {
     const auto qual = cc.cc_qualification();
     std::string result =
         qual.empty() ? std::string("\n\nCondition Code: ") : utils::concat("\n\nCondition Code (", qual, "): ");
 
     const auto cc_translate = [&cc](int v) {
-        auto r = cc.tranlate_cc(static_cast<context::condition_code>(v));
+        auto r = cc.tranlate_cc(static_cast<instructions::condition_code>(v));
         if (r.empty())
             r = "\\--"; // otherwise a horizontal line is generated
         return r;
@@ -110,9 +112,9 @@ std::string generate_cc_explanation(const context::condition_code_explanation& c
     return result;
 }
 
-std::string_view get_privileged_status_text(context::privilege_status p)
+std::string_view get_privileged_status_text(instructions::privilege_status p)
 {
-    using enum context::privilege_status;
+    using enum instructions::privilege_status;
     switch (p)
     {
         case not_privileged:
@@ -150,8 +152,69 @@ std::string_view get_implicit_parameters_text(bool has_some)
         return "";
 }
 
-void process_machine_instruction(const context::machine_instruction& machine_instr,
-    std::vector<std::pair<completion_item, context::instruction_set_affiliation>>& items)
+std::string to_string(instructions::parameter p)
+{
+    using enum instructions::machine_operand_type;
+    std::string ret_val = "";
+    switch (p.type)
+    {
+        case MASK:
+            return "M";
+        case REG:
+            return "R";
+        case IMM: {
+            ret_val = "I";
+            break;
+        }
+        case NONE:
+            return "";
+        case DISP: {
+            ret_val = "D";
+            break;
+        }
+        case DISP_IDX: {
+            ret_val = "DX";
+            break;
+        }
+        case BASE:
+            return "B";
+        case LENGTH: {
+            ret_val = "L";
+            break;
+        }
+        case RELOC_IMM: {
+            ret_val = "RI";
+            break;
+        }
+        case VEC_REG:
+            return "V";
+        case IDX_REG:
+            return "X";
+    }
+    ret_val += std::to_string(p.size);
+    if (p.is_signed)
+        ret_val += "S";
+    else
+        ret_val += "U";
+    return ret_val;
+}
+
+std::string to_string(instructions::machine_operand_format f, size_t i)
+{
+    const auto index = std::to_string(i);
+    std::string ret_val = to_string(f.identifier) + index;
+    if (!f.first.is_empty() || !f.second.is_empty())
+    {
+        ret_val.append("(");
+        if (!f.first.is_empty()) // only second cannot be empty
+            ret_val.append(to_string(f.first)).append(index).append(",");
+        ret_val.append(to_string(f.second)).append(index).append(")");
+    }
+    return ret_val;
+}
+
+void process_machine_instruction(const instructions::machine_instruction& machine_instr,
+    std::vector<std::pair<completion_item, instructions::instruction_set_affiliation>>& items)
 {
     operand_formatter detail; // operands used for hover - e.g. V,D12U(X,B)[,M]
     operand_formatter autocomplete; // operands used for autocomplete - e.g. V,D12U(X,B) [,M]
@@ -176,7 +239,7 @@ void process_machine_instruction(const context::machine_instruction& machine_ins
         if (!op.optional)
             autocomplete.append("${").append(snippet_id++).append(":");
 
-        const auto formatted_op = op.to_string(++i);
+        const auto formatted_op = to_string(op, ++i);
         detail.append(formatted_op);
         autocomplete.append(formatted_op);
 
@@ -199,7 +262,7 @@ void process_machine_instruction(const context::machine_instruction& machine_ins
                 machine_instr.fullname(),
                 "**",
                 "\n\nMachine instruction, format: ",
-                context::instruction::mach_format_to_string(machine_instr.format()),
+                instructions::mach_format_to_string(machine_instr.format()),
                 "\n\nOperands: ",
                 operands,
                 get_implicit_parameters_text(machine_instr.has_parameter_list()),
@@ -211,8 +274,8 @@ void process_machine_instruction(const context::machine_instruction& machine_ins
         std::forward_as_tuple(machine_instr.instr_set_affiliation()));
 }
 
-void process_assembler_instruction(const context::assembler_instruction& asm_instr,
-    std::vector<std::pair<completion_item, context::instruction_set_affiliation>>& items)
+void process_assembler_instruction(const instructions::assembler_instruction& asm_instr,
+    std::vector<std::pair<completion_item, instructions::instruction_set_affiliation>>& items)
 {
     items.emplace_back(std::piecewise_construct,
         std::forward_as_tuple(std::string(asm_instr.name()),
@@ -223,10 +286,10 @@ void process_assembler_instruction(const context::assembler_instruction& asm_ins
         std::forward_as_tuple(all_sets));
 }
 
-std::array<unsigned char, context::machine_instruction::max_operand_count> compute_corrected_ids(
-    std::span<const context::mnemonic_transformation> ts)
+std::array<unsigned char, instructions::machine_instruction::max_operand_count> compute_corrected_ids(
+    std::span<const instructions::mnemonic_transformation> ts)
 {
-    std::array<unsigned char, context::machine_instruction::max_operand_count> r;
+    std::array<unsigned char, instructions::machine_instruction::max_operand_count> r;
     std::iota(r.begin(), r.end(), (unsigned char)0);
 
     unsigned char correction = 0;
@@ -242,8 +305,8 @@ std::array<unsigned char, context::machine_instruction::max_operand_count> compu
     return r;
 }
 
-void process_mnemonic_code(const context::mnemonic_code& mnemonic_instr,
-    std::vector<std::pair<completion_item, context::instruction_set_affiliation>>& items)
+void process_mnemonic_code(const instructions::mnemonic_code& mnemonic_instr,
+    std::vector<std::pair<completion_item, instructions::instruction_set_affiliation>>& items)
 {
     operand_formatter subs_ops_mnems;
     operand_formatter subs_ops_nomnems;
@@ -258,7 +321,7 @@ void process_mnemonic_code(const context::mnemonic_code& mnemonic_instr,
 
     auto transforms = mnemonic_instr.operand_transformations();
 
-    std::bitset<context::machine_instruction::max_operand_count> ops_used_by_replacement;
+    std::bitset<instructions::machine_instruction::max_operand_count> ops_used_by_replacement;
     const auto ids = compute_corrected_ids(transforms);
 
     for (const auto& r : transforms)
@@ -278,29 +341,30 @@ void process_mnemonic_code(const context::mnemonic_code& mnemonic_instr,
                 processed = 0;
                 // replace current for mnemonic
                 subs_ops_mnems.start_operand();
+                using enum instructions::mnemonic_transformation_kind;
                 switch (replacement.type)
                 {
-                    case context::mnemonic_transformation_kind::value:
+                    case value:
                         subs_ops_mnems.append_imm(replacement.value);
                         break;
-                    case context::mnemonic_transformation_kind::copy:
+                    case copy:
                         break;
-                    case context::mnemonic_transformation_kind::or_with:
+                    case or_with:
                         subs_ops_mnems.append_imm(replacement.value).append("|");
                         break;
-                    case context::mnemonic_transformation_kind::add_to:
+                    case add_to:
                         subs_ops_mnems.append_imm(replacement.value).append("+");
                         break;
-                    case context::mnemonic_transformation_kind::subtract_from:
+                    case subtract_from:
                         subs_ops_mnems.append_imm(replacement.value).append("-");
                         break;
-                    case context::mnemonic_transformation_kind::complement:
+                    case complement:
                         subs_ops_mnems.append("-");
                         break;
                 }
                 if (replacement.has_source())
                 {
-                    const auto op_string = mach_operands[replacement.source].to_string(1 + ids[replacement.source]);
+                    const auto op_string = to_string(mach_operands[replacement.source], 1 + ids[replacement.source]);
                     subs_ops_mnems.append(op_string);
                     if (ops_used_by_replacement.test(replacement.source))
                     {
@@ -334,7 +398,7 @@ void process_mnemonic_code(const context::mnemonic_code& mnemonic_instr,
         subs_ops_nomnems.start_operand();
         subs_ops_nomnems_no_snippets.start_operand();
 
-        const auto op_string = mach_operands[i].to_string(i + 1);
+        const auto op_string = to_string(mach_operands[i], i + 1);
         if (!is_optional)
         {
             subs_ops_mnems.append(op_string);
@@ -371,7 +435,7 @@ void process_mnemonic_code(const context::mnemonic_code& mnemonic_instr,
                 "\n\nMnemonic code for ",
                 mnemonic_instr.instruction()->name(),
                 " instruction, format: ",
-                context::instruction::mach_format_to_string(mnemonic_instr.instruction()->format()),
+                instructions::mach_format_to_string(mnemonic_instr.instruction()->format()),
                 "\n\nSubstituted operands: ",
                 subs_ops_mnems.take(),
                 get_implicit_parameters_text(mnemonic_instr.instruction()->has_parameter_list()),
@@ -383,8 +447,8 @@ void process_mnemonic_code(const context::mnemonic_code& mnemonic_instr,
         std::forward_as_tuple(mnemonic_instr.instr_set_affiliation()));
 }
 
-void process_ca_instruction(const context::ca_instruction& ca_instr,
-    std::vector<std::pair<completion_item, context::instruction_set_affiliation>>& items)
+void process_ca_instruction(const instructions::ca_instruction& ca_instr,
+    std::vector<std::pair<completion_item, instructions::instruction_set_affiliation>>& items)
 {
     items.emplace_back(std::piecewise_construct,
         std::forward_as_tuple(std::string(ca_instr.name()),
@@ -395,29 +459,32 @@ void process_ca_instruction(const context::ca_instruction& ca_instr,
         std::forward_as_tuple(all_sets));
 }
 
+using instruction_completion_items_t =
+    std::vector<std::pair<completion_item, instructions::instruction_set_affiliation>>;
+
 } // namespace
 
-const std::vector<std::pair<completion_item, context::instruction_set_affiliation>> instruction_completion_items = [] {
-    std::vector<std::pair<completion_item, context::instruction_set_affiliation>> result;
+const instruction_completion_items_t instruction_completion_items = []() {
+    std::vector<std::pair<completion_item, instructions::instruction_set_affiliation>> result;
 
-    result.reserve(context::get_instruction_sizes().total());
+    result.reserve(instructions::get_instruction_sizes().total());
 
-    for (const auto& instr : context::instruction::all_ca_instructions())
+    for (const auto& instr : instructions::all_ca_instructions())
     {
         process_ca_instruction(instr, result);
     }
 
-    for (const auto& instr : context::instruction::all_assembler_instructions())
+    for (const auto& instr : instructions::all_assembler_instructions())
     {
         process_assembler_instruction(instr, result);
     }
 
-    for (const auto& instr : context::instruction::all_machine_instructions())
+    for (const auto& instr : instructions::all_machine_instructions())
     {
         process_machine_instruction(instr, result);
     }
 
-    for (const auto& instr : context::instruction::all_mnemonic_codes())
+    for (const auto& instr : instructions::all_mnemonic_codes())
     {
         process_mnemonic_code(instr, result);
     }

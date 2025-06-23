@@ -19,11 +19,12 @@
 #include <vector>
 
 #include "completion_item.h"
-#include "context/instruction.h"
+#include "instructions/instruction.h"
 
 namespace hlasm_plugin::parser_library::lsp {
 
-extern const std::vector<std::pair<completion_item, context::instruction_set_affiliation>> instruction_completion_items;
+extern const std::vector<std::pair<completion_item, instructions::instruction_set_affiliation>>
+    instruction_completion_items;
 
 } // namespace hlasm_plugin::parser_library::lsp
 

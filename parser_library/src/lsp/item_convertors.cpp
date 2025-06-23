@@ -352,7 +352,7 @@ std::vector<completion_item> generate_completion(const completion_list_instructi
     // Store only instructions from the currently active instruction set
     for (const auto& [instr, aff] : instruction_completion_items)
     {
-        if (!context::instruction_available(aff, instruction_set))
+        if (!instructions::instruction_available(aff, instruction_set))
             continue;
         auto& i = result.emplace_back(instr);
         if (auto space = i.insert_text.find(' '); space != std::string::npos)

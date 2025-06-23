@@ -103,7 +103,7 @@ struct machine_operand : virtual evaluable_operand
 
     using evaluable_operand::get_operand_value;
     virtual std::unique_ptr<checking::operand> get_operand_value(context::dependency_solver& info,
-        const checking::machine_operand_format& mach_op_format,
+        const instructions::machine_operand_format& mach_op_format,
         diagnostic_op_consumer& diags) const = 0;
 
     const mach_kind kind;
@@ -119,7 +119,7 @@ struct expr_machine_operand final : machine_operand, simple_expr_operand
     std::unique_ptr<checking::operand> get_operand_value(
         context::dependency_solver& info, diagnostic_op_consumer& diags) const override;
     std::unique_ptr<checking::operand> get_operand_value(context::dependency_solver& info,
-        const checking::machine_operand_format& mach_op_format,
+        const instructions::machine_operand_format& mach_op_format,
         diagnostic_op_consumer& diags) const override;
 
     bool has_dependencies(
@@ -154,7 +154,7 @@ struct address_machine_operand final : machine_operand
     std::unique_ptr<checking::operand> get_operand_value(
         context::dependency_solver& info, diagnostic_op_consumer& diags) const override;
     std::unique_ptr<checking::operand> get_operand_value(context::dependency_solver& info,
-        const checking::machine_operand_format& mach_op_format,
+        const instructions::machine_operand_format& mach_op_format,
         diagnostic_op_consumer& diags) const override;
 
     void apply(operand_visitor& visitor) const override;

@@ -125,7 +125,7 @@ public:
 };
 
 const processing::op_code literal_pool::literal_postponed_statement::op_code(
-    context::id_index("DC"), instruction_type::ASM);
+    context::id_index("DC"), context::instruction_type::ASM);
 const semantics::remarks_si literal_pool::literal_postponed_statement::empty_remarks({});
 const semantics::label_si literal_pool::literal_postponed_statement::empty_label(range {});
 const semantics::instruction_si literal_pool::literal_postponed_statement::empty_instr(range {});

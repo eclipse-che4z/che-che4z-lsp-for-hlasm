@@ -23,6 +23,8 @@
 #include <string>
 #include <string_view>
 
+#include "utils/insist.h"
+
 namespace hlasm_plugin::parser_library::context {
 
 class id_index
@@ -56,7 +58,7 @@ public:
     explicit consteval id_index(const char (&s)[n]) requires(n <= buffer_size)
         : id_index(std::string_view(s, n - 1))
     {
-        assert(s[n - 1] == 0
+        utils::insist(s[n - 1] == 0
             && std::string_view(s, n - 1).find_first_of("abcdefghijklmnopqrstuvwxyz") == std::string_view::npos);
     }
 

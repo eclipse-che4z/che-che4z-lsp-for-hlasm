@@ -16,7 +16,7 @@
 
 #include "../common_testing.h"
 #include "context/hlasm_context.h"
-#include "context/instruction.h"
+#include "instructions/instruction.h"
 #include "processing/op_code.h"
 
 TEST(mach_instr_processing, reloc_imm_expected)
@@ -212,34 +212,35 @@ SYM  DS   CL1
 
 TEST(mach_instr_processing, rel_addr_bitmask)
 {
-    for (const auto& [instr, expected] : std::initializer_list<std::pair<std::string, int>> {
-             { "LARL", 0x40 },
-             { "LA", 0x00 },
-             { "CLIJ", 0x10 },
-             { "BPRP", 0x60 },
+    using instructions::reladdr_transform_mask;
+    for (const auto& [instr, expected] : std::initializer_list<std::pair<std::string, reladdr_transform_mask>> {
+             { "LARL", (reladdr_transform_mask)0x40 },
+             { "LA", (reladdr_transform_mask)0x00 },
+             { "CLIJ", (reladdr_transform_mask)0x10 },
+             { "BPRP", (reladdr_transform_mask)0x60 },
          })
     {
-        EXPECT_EQ(context::instruction::get_machine_instructions(instr).reladdr_mask().mask(), expected) << instr;
+        EXPECT_EQ(instructions::get_machine_instructions(instr).reladdr_mask(), expected) << instr;
     }
 
-    for (const auto& [instr, expected] : std::initializer_list<std::pair<std::string, int>> {
-             { "CLIJE", 0x20 },
-             { "BNE", 0x00 },
-             { "JNE", 0x80 },
+    for (const auto& [instr, expected] : std::initializer_list<std::pair<std::string, reladdr_transform_mask>> {
+             { "CLIJE", (reladdr_transform_mask)0x20 },
+             { "BNE", (reladdr_transform_mask)0x00 },
+             { "JNE", (reladdr_transform_mask)0x80 },
          })
     {
-        EXPECT_EQ(context::instruction::get_mnemonic_codes(instr).reladdr_mask().mask(), expected) << instr;
+        EXPECT_EQ(instructions::get_mnemonic_codes(instr).reladdr_mask(), expected) << instr;
     }
 }
 
 TEST(mach_instr_processing, instr_size)
 {
     for (const auto& [instr, expected] : std::initializer_list<std::pair<op_code, int>> {
-             { op_code(id_index("LARL"), &instruction::get_machine_instructions("LARL")), 6 },
-             { op_code(id_index("LA"), &instruction::get_machine_instructions("LA")), 4 },
-             { op_code(id_index("CLIJ"), &instruction::get_machine_instructions("CLIJ")), 6 },
-             { op_code(id_index("BR"), &instruction::get_mnemonic_codes("BR")), 2 },
-             { op_code(id_index("DC"), instruction_type::ASM), 1 },
+             { op_code(id_index("LARL"), &instructions::get_machine_instructions("LARL")), 6 },
+             { op_code(id_index("LA"), &instructions::get_machine_instructions("LA")), 4 },
+             { op_code(id_index("CLIJ"), &instructions::get_machine_instructions("CLIJ")), 6 },
+             { op_code(id_index("BR"), &instructions::get_mnemonic_codes("BR")), 2 },
+             { op_code(id_index("DC"), context::instruction_type::ASM), 1 },
          })
     {
         EXPECT_EQ(processing::processing_status_cache_key::generate_loctr_len(instr), expected)
