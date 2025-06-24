@@ -54,7 +54,7 @@ public:
 
 class tcp_setup final : public server_streams
 {
-    asio::io_service io_service;
+    asio::io_context io_context;
     asio::ip::tcp::acceptor acceptor;
     asio::ip::tcp::socket socket;
     asio::ip::tcp::iostream stream;
@@ -63,8 +63,8 @@ class tcp_setup final : public server_streams
 
 public:
     explicit tcp_setup(uint16_t port)
-        : acceptor(io_service, asio::ip::tcp::endpoint(asio::ip::address::from_string("127.0.0.1"), port))
-        , socket(io_service)
+        : acceptor(io_context, asio::ip::tcp::endpoint(asio::ip::address_v4::loopback(), port))
+        , socket(io_context)
         , channel(stream, stream)
     {
         acceptor.accept(stream.socket());

@@ -16,7 +16,7 @@ message("Populating ASIO")
 FetchContent_Declare(
   boost_ext
   GIT_REPOSITORY https://github.com/chriskohlhoff/asio.git
-  GIT_TAG        asio-1-21-0
+  GIT_TAG        asio-1-34-2
   GIT_SHALLOW    ON
   LOG_DOWNLOAD   ON
   GIT_PROGRESS   1
