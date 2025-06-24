@@ -52,7 +52,7 @@ bool contains_fade_messages(const std::vector<fade_message>& a, const std::vecto
 
 const section* get_section(hlasm_context& ctx, std::string name)
 {
-    auto sect = ctx.ids().find(name);
+    auto sect = ctx.find_id(name);
     if (!sect.has_value())
         return nullptr;
 
@@ -61,7 +61,7 @@ const section* get_section(hlasm_context& ctx, std::string name)
 
 const symbol* get_symbol(hlasm_context& ctx, std::string name)
 {
-    auto symbol = ctx.ids().find(name);
+    auto symbol = ctx.find_id(name);
     if (!symbol.has_value())
         return nullptr;
 
@@ -70,7 +70,7 @@ const symbol* get_symbol(hlasm_context& ctx, std::string name)
 
 std::optional<symbol_value::abs_value_t> get_symbol_abs(hlasm_context& ctx, std::string name)
 {
-    auto symbol = ctx.ids().find(name);
+    auto symbol = ctx.find_id(name);
     if (!symbol.has_value())
         return std::nullopt;
 
@@ -83,7 +83,7 @@ std::optional<symbol_value::abs_value_t> get_symbol_abs(hlasm_context& ctx, std:
 
 std::optional<symbol_value::reloc_value_t> get_symbol_reloc(hlasm_context& ctx, std::string name)
 {
-    auto symbol = ctx.ids().find(name);
+    auto symbol = ctx.find_id(name);
     if (!symbol.has_value())
         return std::nullopt;
 
@@ -96,7 +96,7 @@ std::optional<symbol_value::reloc_value_t> get_symbol_reloc(hlasm_context& ctx, 
 
 std::optional<std::pair<int, std::string>> get_symbol_address(hlasm_context& ctx, std::string name)
 {
-    auto symbol = ctx.ids().find(name);
+    auto symbol = ctx.find_id(name);
     if (!symbol.has_value())
         return std::nullopt;
 
@@ -114,7 +114,7 @@ std::optional<std::pair<int, std::string>> get_symbol_address(hlasm_context& ctx
 template<typename T>
 std::optional<std::unordered_map<size_t, T>> get_var_vector_map(hlasm_context& ctx, std::string name)
 {
-    auto id = ctx.ids().find(name);
+    auto id = ctx.find_id(name);
     if (!id.has_value())
         return std::nullopt;
 
@@ -154,7 +154,7 @@ template std::optional<std::unordered_map<size_t, context::C_t>> get_var_vector_
 template<typename T>
 std::optional<std::vector<T>> get_var_vector(hlasm_context& ctx, std::string name)
 {
-    auto id = ctx.ids().find(name);
+    auto id = ctx.find_id(name);
     if (!id.has_value())
         return std::nullopt;
 
@@ -195,7 +195,7 @@ template std::optional<std::vector<context::C_t>> get_var_vector(hlasm_context& 
 template<typename T>
 std::optional<T> get_var_value(hlasm_context& ctx, std::string name)
 {
-    auto id = ctx.ids().find(name);
+    auto id = ctx.find_id(name);
     if (!id.has_value())
         return std::nullopt;
 
@@ -223,7 +223,7 @@ template std::optional<context::C_t> get_var_value(hlasm_context& ctx, std::stri
 template<typename T>
 std::optional<T> get_global_var_value(hlasm_context& ctx, std::string name)
 {
-    auto id = ctx.ids().find(name);
+    auto id = ctx.find_id(name);
     if (!id.has_value())
         return std::nullopt;
 

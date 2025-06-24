@@ -16,10 +16,6 @@
 #define LSP_FILE_INFO_H
 
 #include <compare>
-#include <functional>
-#include <map>
-#include <memory>
-#include <span>
 #include <utility>
 #include <variant>
 #include <vector>

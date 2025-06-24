@@ -16,6 +16,7 @@
 
 #include <typeinfo>
 
+#include "context/ordinary_assembly/symbol_value.h"
 #include "mach_expr_term.h"
 
 using namespace hlasm_plugin::parser_library;

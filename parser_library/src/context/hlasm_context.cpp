@@ -20,6 +20,8 @@
 #include <numeric>
 #include <ranges>
 
+#include "context/id_storage.h"
+#include "context/well_known.h"
 #include "diagnostic_tools.h"
 #include "ebcdic_encoding.h"
 #include "expressions/evaluation_context.h"
@@ -429,10 +431,9 @@ void hlasm_context::pop_statement_processing()
         source_stack_.pop_back();
 }
 
-id_storage& hlasm_context::ids() { return *ids_; }
-const id_storage& hlasm_context::ids() const { return *ids_; }
-
-std::shared_ptr<id_storage> hlasm_context::ids_ptr() { return ids_; }
+id_index hlasm_context::add_id(std::string&& s) { return ids_->add(std::move(s)); }
+id_index hlasm_context::add_id(std::string_view s) { return ids_->add(s); }
+std::optional<id_index> hlasm_context::find_id(std::string_view s) const { return ids_->find(s); }
 
 processing_stack_t hlasm_context::processing_stack()
 {
@@ -925,11 +926,10 @@ std::pair<const macro_invocation*, bool> hlasm_context::enter_macro(
     if (label_param_data)
     {
         if (auto label = label_param_data->get_value(); lexing::is_valid_symbol_name(label))
-            ord_ctx.symbol_mentioned_on_macro(ids().add(std::move(label)));
+            ord_ctx.symbol_mentioned_on_macro(add_id(std::move(label)));
     }
 
-    auto [invo, truncated] =
-        macro_def->call(std::move(label_param_data), std::move(params), id_storage::well_known::SYSLIST);
+    auto [invo, truncated] = macro_def->call(std::move(label_param_data), std::move(params), well_known::SYSLIST);
     auto* const result = invo.get();
 
     auto& new_scope = scope_stack_.emplace_back(std::move(invo));
@@ -1116,7 +1116,7 @@ hlasm_context::name_result hlasm_context::try_get_symbol_name(std::string_view s
     if (!lexing::is_ord_symbol(symbol))
         return std::make_pair(false, context::id_index());
 
-    return std::make_pair(true, ids().add(symbol));
+    return std::make_pair(true, add_id(symbol));
 }
 
 hlasm_context::name_result hlasm_context::try_get_symbol_name(id_index symbol) const
@@ -1258,4 +1258,7 @@ bool test_symbol_for_read(const variable_symbol* var,
 
     return var->can_read(subscript, symbol_range, diags);
 }
+
+std::shared_ptr<id_storage> hlasm_context::make_default_id_storage() { return std::make_shared<id_storage>(); }
+
 } // namespace hlasm_plugin::parser_library::context

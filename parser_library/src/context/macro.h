@@ -16,11 +16,10 @@
 #define CONTEXT_MACRO_H
 
 #include <cassert>
-#include <string>
 #include <unordered_map>
-#include <variant>
+#include <unordered_set>
+#include <vector>
 
-#include "common_types.h"
 #include "sequence_symbol.h"
 #include "statement_cache.h"
 #include "statement_id.h"

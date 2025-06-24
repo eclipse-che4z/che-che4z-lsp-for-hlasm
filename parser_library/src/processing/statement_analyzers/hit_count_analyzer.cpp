@@ -20,6 +20,7 @@
 #include <variant>
 
 #include "context/hlasm_context.h"
+#include "context/well_known.h"
 #include "processing/statement.h"
 #include "semantics/statement.h"
 
@@ -80,16 +81,16 @@ hit_count_analyzer::statement_type hit_count_analyzer::get_stmt_type(
     statement_type cur_stmt_type = m_next_stmt_type;
     if (op)
     {
-        if (op->value == context::id_storage::well_known::MACRO)
+        if (op->value == context::well_known::MACRO)
             cur_stmt_type = statement_type::MACRO_INIT;
-        else if (m_macro_level > 0 && op->value == context::id_storage::well_known::MEND)
+        else if (m_macro_level > 0 && op->value == context::well_known::MEND)
             cur_stmt_type = statement_type::MACRO_END;
     }
     else if (const auto instr_id = std::get_if<context::id_index>(&instr.value); instr_id)
     {
-        if (*instr_id == context::id_storage::well_known::MACRO)
+        if (*instr_id == context::well_known::MACRO)
             cur_stmt_type = statement_type::MACRO_INIT;
-        else if (m_macro_level > 0 && *instr_id == context::id_storage::well_known::MEND)
+        else if (m_macro_level > 0 && *instr_id == context::well_known::MEND)
             cur_stmt_type = statement_type::MACRO_END;
     }
 

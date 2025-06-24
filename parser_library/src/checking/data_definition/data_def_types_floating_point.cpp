@@ -15,23 +15,21 @@
 // This file contains implementation of the data_def_type for
 // floating point types: E, D, L
 
-#include <span>
+#include <array>
 #include <string_view>
 
 #include "checking/checker_helper.h"
 #include "checking/diagnostic_collector.h"
 #include "data_def_types.h"
 
-using namespace hlasm_plugin::parser_library::checking;
-using namespace hlasm_plugin::parser_library::context;
-using namespace hlasm_plugin::parser_library;
+namespace hlasm_plugin::parser_library::checking {
 
 data_def_type_E_D_L::data_def_type_E_D_L(char type,
     char extension,
     modifier_spec bit_length_spec,
     modifier_spec length_spec,
     modifier_spec scale_spec,
-    alignment align,
+    context::alignment align,
     uint64_t implicit_length)
     : data_def_type(type,
           extension,
@@ -44,7 +42,23 @@ data_def_type_E_D_L::data_def_type_E_D_L(char type,
           implicit_length)
 {}
 
-const std::set<std::pair<char, std::string_view>> allowed_round_modes = {
+namespace {
+struct round_mode
+{
+    static constexpr size_t max_length = 3;
+
+    std::array<char, max_length + 1> data = {};
+
+    constexpr round_mode(char type, std::string_view len) noexcept
+        : data { type }
+    {
+        utils::insist(len.size() <= max_length);
+        std::ranges::copy(len, data.begin() + 1);
+    }
+
+    constexpr bool operator==(const round_mode&) const noexcept = default;
+};
+constexpr round_mode allowed_round_modes[] = {
     { 'B', "1" },
     { 'B', "4" },
     { 'B', "5" },
@@ -64,6 +78,7 @@ const std::set<std::pair<char, std::string_view>> allowed_round_modes = {
     { 'D', "14" },
     { 'D', "15" },
 };
+} // namespace
 
 class E_D_L_number_spec
 {
@@ -201,7 +216,9 @@ bool data_def_type_E_D_L::check(
                 ++i;
             }
 
-            if (!allowed_round_modes.contains(std::pair<char, std::string_view>(extension, round_mode_s)))
+            if (round_mode_s.size() > round_mode::max_length
+                || std::ranges::find(allowed_round_modes, round_mode(extension, round_mode_s))
+                    == std::ranges::end(allowed_round_modes))
             {
                 add_diagnostic(diagnostic_op::error_D026(op.nominal_value.rng));
                 return false;
@@ -231,59 +248,89 @@ int32_t data_def_type_E_D_L::get_integer_attribute_impl(uint32_t length, int32_t
 
 data_def_type_E::data_def_type_E()
     : data_def_type_E_D_L(
-          'E', '\0', modifier_bound { 1, 64 }, modifier_bound { 1, 8 }, modifier_bound { 0, 5 }, fullword, 4)
+          'E', '\0', modifier_bound { 1, 64 }, modifier_bound { 1, 8 }, modifier_bound { 0, 5 }, context::fullword, 4)
 {}
 
 data_def_type_EH::data_def_type_EH()
     : data_def_type_E_D_L(
-          'E', 'H', modifier_bound { 12, 64 }, modifier_bound { 1, 8 }, modifier_bound { 0, 5 }, fullword, 4)
+          'E', 'H', modifier_bound { 12, 64 }, modifier_bound { 1, 8 }, modifier_bound { 0, 5 }, context::fullword, 4)
 {}
 
 data_def_type_ED::data_def_type_ED()
-    : data_def_type_E_D_L('E', 'D', modifier_bound { 32, 32 }, modifier_bound { 4, 4 }, ignored(), fullword, 4)
+    : data_def_type_E_D_L('E', 'D', modifier_bound { 32, 32 }, modifier_bound { 4, 4 }, ignored(), context::fullword, 4)
 {}
 
 data_def_type_EB::data_def_type_EB()
-    : data_def_type_E_D_L('E', 'B', modifier_bound { 32, 32 }, modifier_bound { 4, 4 }, ignored(), fullword, 4)
+    : data_def_type_E_D_L('E', 'B', modifier_bound { 32, 32 }, modifier_bound { 4, 4 }, ignored(), context::fullword, 4)
 {}
 
 data_def_type_D::data_def_type_D()
-    : data_def_type_E_D_L(
-          'D', '\0', modifier_bound { 1, 64 }, modifier_bound { 1, 8 }, modifier_bound { 0, 13 }, doubleword, 8)
+    : data_def_type_E_D_L('D',
+          '\0',
+          modifier_bound { 1, 64 },
+          modifier_bound { 1, 8 },
+          modifier_bound { 0, 13 },
+          context::doubleword,
+          8)
 {}
 
 data_def_type_DH::data_def_type_DH()
-    : data_def_type_E_D_L(
-          'D', 'H', modifier_bound { 12, 64 }, modifier_bound { 1, 8 }, modifier_bound { 0, 13 }, doubleword, 8)
+    : data_def_type_E_D_L('D',
+          'H',
+          modifier_bound { 12, 64 },
+          modifier_bound { 1, 8 },
+          modifier_bound { 0, 13 },
+          context::doubleword,
+          8)
 {}
 
 data_def_type_DB::data_def_type_DB()
-    : data_def_type_E_D_L('D', 'B', modifier_bound { 64, 64 }, modifier_bound { 8, 8 }, ignored(), doubleword, 8)
+    : data_def_type_E_D_L(
+          'D', 'B', modifier_bound { 64, 64 }, modifier_bound { 8, 8 }, ignored(), context::doubleword, 8)
 {}
 
 data_def_type_DD::data_def_type_DD()
-    : data_def_type_E_D_L('D', 'D', modifier_bound { 64, 64 }, modifier_bound { 8, 8 }, ignored(), doubleword, 8)
+    : data_def_type_E_D_L(
+          'D', 'D', modifier_bound { 64, 64 }, modifier_bound { 8, 8 }, ignored(), context::doubleword, 8)
 {}
 
 data_def_type_L::data_def_type_L()
-    : data_def_type_E_D_L(
-          'L', '\0', modifier_bound { 1, 128 }, modifier_bound { 1, 16 }, modifier_bound { 0, 27 }, doubleword, 16)
+    : data_def_type_E_D_L('L',
+          '\0',
+          modifier_bound { 1, 128 },
+          modifier_bound { 1, 16 },
+          modifier_bound { 0, 27 },
+          context::doubleword,
+          16)
 {}
 
 data_def_type_LH::data_def_type_LH()
-    : data_def_type_E_D_L(
-          'L', 'H', modifier_bound { 12, 128 }, modifier_bound { 1, 16 }, modifier_bound { 0, 27 }, doubleword, 16)
+    : data_def_type_E_D_L('L',
+          'H',
+          modifier_bound { 12, 128 },
+          modifier_bound { 1, 16 },
+          modifier_bound { 0, 27 },
+          context::doubleword,
+          16)
 {}
 
 data_def_type_LQ::data_def_type_LQ()
-    : data_def_type_E_D_L(
-          'L', 'Q', modifier_bound { 12, 128 }, modifier_bound { 1, 16 }, modifier_bound { 0, 27 }, quadword, 16)
+    : data_def_type_E_D_L('L',
+          'Q',
+          modifier_bound { 12, 128 },
+          modifier_bound { 1, 16 },
+          modifier_bound { 0, 27 },
+          context::quadword,
+          16)
 {}
 
 data_def_type_LD::data_def_type_LD()
-    : data_def_type_E_D_L('L', 'D', modifier_bound { 128, 128 }, modifier_bound { 16, 16 }, ignored(), doubleword, 16)
+    : data_def_type_E_D_L(
+          'L', 'D', modifier_bound { 128, 128 }, modifier_bound { 16, 16 }, ignored(), context::doubleword, 16)
 {}
 
 data_def_type_LB::data_def_type_LB()
-    : data_def_type_E_D_L('L', 'B', modifier_bound { 128, 128 }, modifier_bound { 16, 16 }, ignored(), doubleword, 16)
+    : data_def_type_E_D_L(
+          'L', 'B', modifier_bound { 128, 128 }, modifier_bound { 16, 16 }, ignored(), context::doubleword, 16)
 {}
+} // namespace hlasm_plugin::parser_library::checking

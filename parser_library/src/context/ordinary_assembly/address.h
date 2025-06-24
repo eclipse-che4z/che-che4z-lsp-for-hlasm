@@ -19,11 +19,10 @@
 #include <memory>
 #include <span>
 #include <utility>
-#include <variant>
 #include <vector>
 
 #include "alignment.h"
-#include "context/id_storage.h"
+#include "context/id_index.h"
 
 namespace hlasm_plugin::parser_library::context {
 

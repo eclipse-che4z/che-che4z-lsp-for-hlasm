@@ -16,10 +16,8 @@
 #define HLASMPLUGIN_PARSERLIBRARY_CHECKING_DATA_DEF_TYPE_BASE_H
 
 #include <cstdint>
-#include <functional>
 #include <map>
 #include <memory>
-#include <set>
 #include <variant>
 
 #include "context/ordinary_assembly/alignment.h"

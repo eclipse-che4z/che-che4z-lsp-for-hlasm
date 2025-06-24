@@ -20,6 +20,7 @@
 #include "aread_time.h"
 #include "context/hlasm_context.h"
 #include "context/variables/set_symbol.h"
+#include "context/well_known.h"
 #include "expressions/conditional_assembly/terms/ca_symbol.h"
 #include "processing/branching_provider.h"
 #include "processing/handler_map.h"
@@ -41,7 +42,7 @@ constexpr auto fn = +[](ca_processor* self, const resolved_statement& stmt) { (s
 
 struct ca_processor::handler_table
 {
-    using wk = context::id_storage::well_known;
+    using wk = context::well_known;
     using callback = void(ca_processor*, const processing::resolved_statement&);
     static constexpr auto value = make_handler_map<callback>({
         { wk::SETA, fn<&ca_processor::process_SET<context::A_t>> },

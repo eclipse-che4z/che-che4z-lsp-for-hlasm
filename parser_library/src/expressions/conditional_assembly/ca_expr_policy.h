@@ -18,7 +18,6 @@
 #include <variant>
 
 #include "context/common_types.h"
-#include "context/id_storage.h"
 
 // the file contains policy classes for retrieving properties
 // of built-in functions and function operators

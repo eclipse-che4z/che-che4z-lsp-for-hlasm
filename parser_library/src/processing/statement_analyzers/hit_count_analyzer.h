@@ -16,7 +16,6 @@
 #define PROCESSING_HIT_COUNT_ANALYZER_H
 
 #include <algorithm>
-#include <functional>
 #include <string_view>
 #include <unordered_map>
 #include <utility>

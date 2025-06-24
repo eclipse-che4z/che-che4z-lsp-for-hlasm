@@ -15,7 +15,6 @@
 #ifndef HLASMPLUGIN_UTILS_GENERAL_HASHERS_H
 #define HLASMPLUGIN_UTILS_GENERAL_HASHERS_H
 
-#include <functional>
 #include <string_view>
 
 namespace hlasm_plugin::utils::hashers {

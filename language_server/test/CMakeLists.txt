@@ -18,7 +18,6 @@ set_target_properties(server_test PROPERTIES CXX_EXTENSIONS OFF)
 
 target_sources(server_test PRIVATE
     blocking_queue_test.cpp
-    channel_test.cpp
     external_file_reader_test.cpp
     json_channel_mock.h
     message_router_test.cpp
@@ -26,12 +25,18 @@ target_sources(server_test PRIVATE
     response_provider_mock.h
     send_message_provider_mock.h
     server_options_test.cpp
-    stream_helper_test.cpp
     ws_mngr_mock.h
     ws_mngr_req_mock.h
     telemetry_test.cpp
     virtual_file_provider_test.cpp
 )
+
+if (NOT EMSCRIPTEN)
+    target_sources(server_test PRIVATE
+        channel_test.cpp
+        stream_helper_test.cpp
+    )
+endif()
 
 add_subdirectory(dap)
 add_subdirectory(lsp)

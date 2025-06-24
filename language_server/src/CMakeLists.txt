@@ -45,7 +45,7 @@ target_sources(hlasm_language_server_base PRIVATE
 if(EMSCRIPTEN)
     target_sources(hlasm_language_server_base PRIVATE emscripten_server_streams.cpp)
 else()
-    target_sources(hlasm_language_server_base PRIVATE native_server_streams.cpp)
+    target_sources(hlasm_language_server_base PRIVATE native_server_streams.cpp stream_helper.cpp)
 endif()
 
 target_sources(hlasm_language_server PRIVATE

@@ -136,7 +136,7 @@ context::A_t ca_constant::self_defining_term_or_abs_symbol(
         return self_defining_term("D", value, add_diagnostic);
     else
     {
-        if (auto symbol = eval_ctx.hlasm_ctx.ids().find(value); symbol.has_value())
+        if (auto symbol = eval_ctx.hlasm_ctx.find_id(value); symbol.has_value())
         {
             if (auto s = eval_ctx.hlasm_ctx.ord_ctx.get_symbol(symbol.value());
                 s && s->kind() == context::symbol_value_kind::ABS)

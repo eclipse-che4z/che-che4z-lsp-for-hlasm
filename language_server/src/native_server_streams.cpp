@@ -17,7 +17,6 @@
 #include "server_options.h"
 #include "server_streams.h"
 #include "stream_helper.h"
-#include "utils/platform.h"
 
 #define ASIO_STANDALONE
 #include "asio.hpp"
@@ -45,7 +44,7 @@ public:
     {
         SET_BINARY_MODE(stdin);
         SET_BINARY_MODE(stdout);
-        newline_is_space::imbue_stream(std::cin);
+        imbue_stream_newline_is_space(std::cin);
     }
 
     json_sink& get_response_stream() & override { return channel; }
@@ -70,7 +69,7 @@ public:
     {
         acceptor.accept(stream.socket());
 
-        newline_is_space::imbue_stream(stream);
+        imbue_stream_newline_is_space(stream);
     }
 
     ~tcp_setup() { stream.close(); }

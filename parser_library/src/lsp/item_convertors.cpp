@@ -19,6 +19,8 @@
 #include <limits>
 
 #include "completion_item.h"
+#include "context/hlasm_context.h"
+#include "context/ordinary_assembly/section.h"
 #include "context/ordinary_assembly/symbol.h"
 #include "context/sequence_symbol.h"
 #include "context/using.h"

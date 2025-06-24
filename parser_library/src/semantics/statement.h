@@ -18,12 +18,10 @@
 #include <optional>
 #include <span>
 #include <string>
-#include <utility>
 #include <vector>
 
 #include "context/hlasm_statement.h"
-#include "context/id_storage.h"
-#include "diagnostic.h"
+#include "diagnostic_op.h"
 #include "range.h"
 #include "statement_fields.h"
 
@@ -40,15 +38,7 @@ struct deferred_statement final : public context::hlasm_statement
         instruction_si instruction,
         deferred_operands_si deferred_operands,
         std::vector<diagnostic_op>&& diags,
-        size_t operand_diags_start_index)
-        : context::hlasm_statement(context::statement_kind::DEFERRED)
-        , label(std::move(label))
-        , instruction(std::move(instruction))
-        , deferred_operands(std::move(deferred_operands))
-        , statement_diagnostics(std::make_move_iterator(diags.begin()), std::make_move_iterator(diags.end()))
-        , operand_diags_start_index(operand_diags_start_index)
-        , stmt_range(stmt_range)
-    {}
+        size_t operand_diags_start_index);
 
     label_si label;
     instruction_si instruction;
@@ -98,10 +88,7 @@ struct preprocessor_statement_si
     preproc_details m_details;
     const bool m_copylike;
 
-    preprocessor_statement_si(preproc_details details, bool copylike = false)
-        : m_details(std::move(details))
-        , m_copylike(copylike)
-    {}
+    preprocessor_statement_si(preproc_details details, bool copylike = false);
 };
 
 struct endevor_statement_si : public preprocessor_statement_si

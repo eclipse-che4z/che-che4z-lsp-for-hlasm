@@ -17,7 +17,7 @@
 
 #include <vector>
 
-#include "id_storage.h"
+#include "id_index.h"
 #include "location.h"
 #include "statement_id.h"
 

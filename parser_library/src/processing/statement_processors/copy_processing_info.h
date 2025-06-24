@@ -16,7 +16,7 @@
 #define PROCESSING_COPY_PROCESSING_INFO_H
 
 #include "context/hlasm_statement.h"
-#include "context/id_storage.h"
+#include "context/id_index.h"
 #include "location.h"
 #include "utils/resource_location.h"
 

@@ -27,6 +27,7 @@
 #include "context/ordinary_assembly/location_counter.h"
 #include "context/ordinary_assembly/ordinary_assembly_dependency_solver.h"
 #include "context/ordinary_assembly/symbol_dependency_tables.h"
+#include "context/well_known.h"
 #include "data_def_postponed_statement.h"
 #include "diagnosable_ctx.h"
 #include "ebcdic_encoding.h"
@@ -86,7 +87,7 @@ constexpr auto fn = +[](asm_processor* self, rebuilt_statement&& stmt) { (self->
 
 struct asm_processor::handler_table
 {
-    using wk = context::id_storage::well_known;
+    using wk = context::well_known;
     using id_index = context::id_index;
     using callback = void(asm_processor* self, rebuilt_statement&& stmt);
     static constexpr auto value = make_handler_map<callback>({
@@ -575,7 +576,7 @@ void asm_processor::process_external(rebuilt_statement&& stmt, external_type t)
                 if (const auto* string_val =
                         dynamic_cast<const semantics::complex_assembler_operand::string_value_t*>(nested.get());
                     string_val && !string_val->value.empty())
-                    add_external(hlasm_ctx.ids().add(string_val->value), string_val->op_range);
+                    add_external(hlasm_ctx.add_id(string_val->value), string_val->op_range);
             }
         }
     }

@@ -15,7 +15,6 @@
 #ifndef HLASMPLUGIN_PARSERLIBRARY_LSP_ITEM_CONVERTORS_H
 #define HLASMPLUGIN_PARSERLIBRARY_LSP_ITEM_CONVERTORS_H
 
-#include <functional>
 #include <span>
 #include <string>
 #include <string_view>

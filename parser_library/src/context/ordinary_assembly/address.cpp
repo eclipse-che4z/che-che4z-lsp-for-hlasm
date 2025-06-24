@@ -15,6 +15,7 @@
 #include "address.h"
 
 #include <algorithm>
+#include <array>
 #include <cassert>
 #include <concepts>
 #include <memory_resource>

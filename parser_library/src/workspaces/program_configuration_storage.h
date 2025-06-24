@@ -15,9 +15,7 @@
 #ifndef HLASMPLUGIN_PARSERLIBRARY_PROGRAM_CONFIGURATION_STORAGE_H
 #define HLASMPLUGIN_PARSERLIBRARY_PROGRAM_CONFIGURATION_STORAGE_H
 
-#include <functional>
 #include <map>
-#include <optional>
 #include <regex>
 #include <string>
 #include <unordered_map>

@@ -29,6 +29,7 @@
 #include "context/hlasm_context.h"
 #include "context/ordinary_assembly/ordinary_assembly_dependency_solver.h"
 #include "context/variables/system_variable.h"
+#include "context/well_known.h"
 #include "debug_lib_provider.h"
 #include "debug_types.h"
 #include "debugger_configuration.h"
@@ -606,15 +607,15 @@ public:
     };
     static constexpr processing::processing_status seta_status = {
         processing::processing_format(processing::processing_kind::ORDINARY, processing::processing_form::CA),
-        processing::op_code(context::id_storage::well_known::SETA, context::instruction_type::CA)
+        processing::op_code(context::well_known::SETA, context::instruction_type::CA)
     };
     static constexpr processing::processing_status setb_status = {
         processing::processing_format(processing::processing_kind::ORDINARY, processing::processing_form::CA),
-        processing::op_code(context::id_storage::well_known::SETB, context::instruction_type::CA)
+        processing::op_code(context::well_known::SETB, context::instruction_type::CA)
     };
     static constexpr processing::processing_status setc_status = {
         processing::processing_format(processing::processing_kind::ORDINARY, processing::processing_form::CA),
-        processing::op_code(context::id_storage::well_known::SETC, context::instruction_type::CA)
+        processing::op_code(context::well_known::SETC, context::instruction_type::CA)
     };
 
     evaluated_expression evaluate_exact_match(

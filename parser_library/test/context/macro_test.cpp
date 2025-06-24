@@ -18,7 +18,7 @@
 #include "../mock_parse_lib_provider.h"
 #include "context/common_types.h"
 #include "context/hlasm_context.h"
-#include "context/variables/set_symbol.h"
+#include "context/well_known.h"
 #include "processing/instruction_sets/macro_processor.h"
 
 // tests for macro feature:
@@ -350,8 +350,7 @@ TEST(macro, macro_name_param_repetition)
         std::vector<macro_arg> args;
         args.emplace_back(std::make_unique<macro_param_data_single>("2"));
         args.emplace_back(std::make_unique<macro_param_data_single>("3"));
-        auto [invo, t] =
-            m1->call(std::make_unique<macro_param_data_single>("1"), std::move(args), id_storage::well_known::SYSLIST);
+        auto [invo, t] = m1->call(std::make_unique<macro_param_data_single>("1"), std::move(args), well_known::SYSLIST);
         auto n = id_index("N");
         auto b = id_index("B");
         EXPECT_FALSE(t);
@@ -363,13 +362,13 @@ TEST(macro, macro_name_param_repetition)
         std::vector<macro_arg> args;
         args.emplace_back(std::make_unique<macro_param_data_single>("1"));
         args.emplace_back(std::make_unique<macro_param_data_single>("2"));
-        auto [invo, t] = m2->call(nullptr, std::move(args), id_storage::well_known::SYSLIST);
+        auto [invo, t] = m2->call(nullptr, std::move(args), well_known::SYSLIST);
         auto n = id_index("A");
         auto b = id_index("B");
         EXPECT_FALSE(t);
         EXPECT_EQ(invo->named_params.find(n)->second->get_value(), "1");
         EXPECT_EQ(invo->named_params.find(b)->second->get_value(), "2");
-        EXPECT_EQ(invo->named_params.find(id_storage::well_known::SYSLIST)->second->get_value(1), "1");
+        EXPECT_EQ(invo->named_params.find(well_known::SYSLIST)->second->get_value(1), "1");
     }
 
     {
@@ -377,7 +376,7 @@ TEST(macro, macro_name_param_repetition)
         args.emplace_back(std::make_unique<macro_param_data_single>("1"));
         args.emplace_back(std::make_unique<macro_param_data_single>("2"));
         args.emplace_back(std::make_unique<macro_param_data_single>("3"));
-        auto [invo, t] = m3->call(nullptr, std::move(args), id_storage::well_known::SYSLIST);
+        auto [invo, t] = m3->call(nullptr, std::move(args), well_known::SYSLIST);
         auto n = id_index("A");
         auto b = id_index("B");
         EXPECT_FALSE(t);

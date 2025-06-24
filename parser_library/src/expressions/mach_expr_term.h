@@ -15,8 +15,7 @@
 #ifndef HLASMPLUGIN_PARSERLIBRARY_EXPRESSIONS_MACH_EXPR_TERM_H
 #define HLASMPLUGIN_PARSERLIBRARY_EXPRESSIONS_MACH_EXPR_TERM_H
 
-#include "context/id_storage.h"
-#include "context/ordinary_assembly/symbol_value.h"
+#include "context/id_index.h"
 #include "mach_expression.h"
 #include "semantics/statement_fields.h"
 

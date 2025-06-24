@@ -24,7 +24,7 @@ TEST(stream_helper, stream_helper)
 {
     std::stringstream ss(
         "Spaces must not be treated\nas whitespaces and \n\r\n newlines must be \t treated as whitespaces.");
-    newline_is_space::imbue_stream(ss);
+    imbue_stream_newline_is_space(ss);
     std::vector<std::string> lines;
     std::string line;
     while (ss >> line)

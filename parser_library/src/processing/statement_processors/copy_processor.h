@@ -15,7 +15,6 @@
 #ifndef PROCESSING_COPY_PROCESSOR_H
 #define PROCESSING_COPY_PROCESSOR_H
 
-#include "context/hlasm_context.h"
 #include "copy_processing_info.h"
 #include "processing/processing_state_listener.h"
 #include "statement_processor.h"

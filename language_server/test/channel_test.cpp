@@ -70,7 +70,7 @@ TEST_P(channel_fixture, from_strings)
 {
     std::stringstream ss_i(GetParam().lsp_message);
     std::stringstream ss_o;
-    newline_is_space::imbue_stream(ss_i);
+    imbue_stream_newline_is_space(ss_i);
     base_protocol_channel ch(ss_i, ss_o);
 
     for (const auto& msg_e : GetParam().jsons)
@@ -130,7 +130,7 @@ TEST_P(channel_bad_fixture, from_strings)
     std::string input = replace_lf_with_crlf(GetParam());
     std::stringstream ss_i(input);
     std::stringstream ss_o;
-    newline_is_space::imbue_stream(ss_i);
+    imbue_stream_newline_is_space(ss_i);
     base_protocol_channel ch(ss_i, ss_o);
 
     ASSERT_FALSE(ch.read().has_value());

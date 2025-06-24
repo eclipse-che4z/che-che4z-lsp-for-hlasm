@@ -15,6 +15,8 @@
 #ifndef CONTEXT_LOCATION_COUNTER_H
 #define CONTEXT_LOCATION_COUNTER_H
 
+#include <variant>
+
 #include "../id_index.h"
 #include "location_counter_data.h"
 

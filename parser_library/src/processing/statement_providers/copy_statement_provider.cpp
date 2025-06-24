@@ -14,6 +14,8 @@
 
 #include "copy_statement_provider.h"
 
+#include "context/hlasm_context.h"
+
 namespace hlasm_plugin::parser_library::processing {
 
 copy_statement_provider::copy_statement_provider(const analyzing_context& ctx,

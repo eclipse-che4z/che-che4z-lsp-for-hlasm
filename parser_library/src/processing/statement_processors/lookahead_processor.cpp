@@ -16,6 +16,7 @@
 
 #include "context/hlasm_context.h"
 #include "context/ordinary_assembly/ordinary_assembly_dependency_solver.h"
+#include "context/well_known.h"
 #include "ebcdic_encoding.h"
 #include "expressions/mach_expr_term.h"
 #include "instructions/instruction.h"
@@ -70,19 +71,19 @@ void lookahead_processor::process_statement(context::shared_stmt_ptr statement)
             find_seq(resolved->label_ref());
             find_ord(*resolved);
         }
-        if (opcode == context::id_storage::well_known::MACRO)
+        if (opcode == context::well_known::MACRO)
         {
             process_MACRO();
         }
-        else if (opcode == context::id_storage::well_known::MEND)
+        else if (opcode == context::well_known::MEND)
         {
             process_MEND();
         }
-        else if (macro_nest_ == 0 && opcode == context::id_storage::well_known::COPY)
+        else if (macro_nest_ == 0 && opcode == context::well_known::COPY)
         {
             process_COPY(*resolved);
         }
-        else if (opcode == context::id_storage::well_known::END)
+        else if (opcode == context::well_known::END)
         {
             finished_flag_ = true;
         }

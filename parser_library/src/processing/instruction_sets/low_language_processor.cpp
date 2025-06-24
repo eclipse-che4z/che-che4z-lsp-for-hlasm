@@ -91,13 +91,13 @@ low_language_processor::preprocessed_part low_language_processor::preprocess_inn
     using namespace semantics;
     preprocessed_part result;
 
-    const auto label_inserter = [&result, &ids = hlasm_ctx.ids()](std::string&& label, const range& r) {
+    const auto label_inserter = [&result, this](std::string&& label, const range& r) {
         label.erase(label.find_last_not_of(' ') + 1);
         if (label.empty())
             result.label.emplace(r);
         else
         {
-            auto ord_id = ids.add(label);
+            auto ord_id = hlasm_ctx.add_id(label);
             result.label.emplace(r, ord_symbol_string { ord_id, std::move(label) });
         }
     };

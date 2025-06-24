@@ -21,7 +21,9 @@
 #include "../common_testing.h"
 #include "../workspace/empty_configs.h"
 #include "analyzer.h"
+#include "context/hlasm_context.h"
 #include "context/id_storage.h"
+#include "context/well_known.h"
 #include "library_mock.h"
 #include "lsp/lsp_context.h"
 #include "lsp/opencode_info.h"
@@ -59,7 +61,7 @@ analyzing_context create_analyzing_context(std::string file_name, std::shared_pt
 auto parse_dependency(std::shared_ptr<file> f, analyzing_context ctx, processing::processing_kind proc_kind)
 {
     auto filename = f->get_location().filename();
-    auto filename_id = ctx.hlasm_ctx->ids().add(filename);
+    auto filename_id = ctx.hlasm_ctx->add_id(filename);
     std::pair result {
         std::make_unique<analyzer>(f->get_text(),
             analyzer_options {
@@ -144,7 +146,7 @@ TEST(macro_cache_test, copy_from_macro)
     file_mngr.did_change_file(macro_file_loc, 0, std::span(&simple_change, 1));
 
     // After macro change, copy should still be cached
-    analyzing_context ctx_macro_changed = create_analyzing_context(opencode_file_name, new_ctx.hlasm_ctx->ids_ptr());
+    analyzing_context ctx_macro_changed = create_analyzing_context(opencode_file_name, ids);
     EXPECT_TRUE(copy_c.load_from_cache(copy_key, ctx_macro_changed));
     EXPECT_NE(ctx_macro_changed.hlasm_ctx->get_copy_member(copy_id), nullptr);
     EXPECT_FALSE(macro_c.load_from_cache(macro_key, ctx_macro_changed));
@@ -199,7 +201,7 @@ TEST(macro_cache_test, opsyn_change)
     macro_cache_key macro_key_one_opsyn {
         processing::processing_kind::MACRO,
         macro_id,
-        { cached_opsyn_mnemo { context::id_storage::well_known::SETA, LR, false } },
+        { cached_opsyn_mnemo { context::well_known::SETA, LR, false } },
     };
     {
         analyzing_context ctx = create_analyzing_context(opencode_file_name, ids);
@@ -224,7 +226,7 @@ TEST(macro_cache_test, opsyn_change)
     // new cache entry is present as well
     {
         macro_cache_key macro_key_two_opsyns = macro_key_one_opsyn;
-        macro_key_two_opsyns.opsyn_state.push_back({ L, context::id_storage::well_known::SETB, false });
+        macro_key_two_opsyns.opsyn_state.push_back({ L, context::well_known::SETB, false });
         macro_cache_key::sort_opsyn_state(macro_key_two_opsyns.opsyn_state);
 
         analyzing_context ctx = create_analyzing_context(opencode_file_name, ids);
@@ -288,10 +290,10 @@ MAC OPSYN AREAD
     constexpr context::id_index LR("LR");
     constexpr context::id_index MAC("MAC");
     std::vector<cached_opsyn_mnemo> expected {
-        { context::id_storage::well_known::SETA, LR, false },
-        { L, context::id_storage::well_known::SETB, false },
-        { context::id_storage::well_known::SETC, context::id_storage::well_known::SETC, true },
-        { MAC, context::id_storage::well_known::AREAD, false },
+        { context::well_known::SETA, LR, false },
+        { L, context::well_known::SETB, false },
+        { context::well_known::SETC, context::well_known::SETC, true },
+        { MAC, context::well_known::AREAD, false },
     };
 
     macro_cache_key::sort_opsyn_state(expected);

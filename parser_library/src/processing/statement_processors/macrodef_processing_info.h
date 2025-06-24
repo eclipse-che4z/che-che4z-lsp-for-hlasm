@@ -20,11 +20,10 @@
 
 #include "context/copy_member.h"
 #include "context/hlasm_statement.h"
-#include "context/id_storage.h"
+#include "context/id_index.h"
 #include "context/macro.h"
 #include "location.h"
 #include "lsp/macro_info.h"
-#include "protocol.h"
 
 namespace hlasm_plugin::parser_library::processing {
 

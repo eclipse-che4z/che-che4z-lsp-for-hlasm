@@ -15,7 +15,6 @@
 #include "parser_impl.h"
 
 #include <algorithm>
-#include <cctype>
 #include <charconv>
 #include <concepts>
 #include <cstdint>
@@ -23,6 +22,7 @@
 
 #include "context/hlasm_context.h"
 #include "context/literal_pool.h"
+#include "context/well_known.h"
 #include "expressions/conditional_assembly/ca_expr_policy.h"
 #include "expressions/conditional_assembly/ca_expr_visitor.h"
 #include "expressions/conditional_assembly/ca_expression.h"
@@ -922,12 +922,12 @@ context::id_index parser2::parse_identifier(std::string value, range id_range) c
     if (value.size() > 63 && holder->diagnostic_collector)
         holder->diagnostic_collector->add_diagnostic(diagnostic_op::error_S100(value, id_range));
 
-    return holder->hlasm_ctx->ids().add(std::move(value));
+    return holder->hlasm_ctx->add_id(std::move(value));
 }
 
 // TODO: This should be changed, so the id_index is always valid ordinary symbol
-context::id_index parser2::add_id(std::string value) const { return holder->hlasm_ctx->ids().add(std::move(value)); }
-context::id_index parser2::add_id(std::string_view value) const { return holder->hlasm_ctx->ids().add(value); }
+context::id_index parser2::add_id(std::string value) const { return holder->hlasm_ctx->add_id(std::move(value)); }
+context::id_index parser2::add_id(std::string_view value) const { return holder->hlasm_ctx->add_id(value); }
 
 class [[nodiscard]] parser2::literal_controller
 {
@@ -1024,7 +1024,7 @@ void parser2::resolve_expression(expressions::ca_expr_ptr& expr) const
     });
     using enum context::SET_t_enum;
     auto [_, opcode] = *holder->proc_status;
-    using wk = context::id_storage::well_known;
+    using wk = context::well_known;
     if (opcode.value == wk::SETA || opcode.value == wk::ACTR || opcode.value == wk::ASPACE || opcode.value == wk::AGO
         || opcode.value == wk::MHELP)
         expr->resolve_expression_tree({ A_TYPE, A_TYPE, true }, diags);

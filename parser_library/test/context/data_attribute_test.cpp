@@ -12,6 +12,8 @@
  *   Broadcom, Inc. - initial API and implementation
  */
 
+#include <array>
+
 #include "gtest/gtest.h"
 
 #include "../common_testing.h"

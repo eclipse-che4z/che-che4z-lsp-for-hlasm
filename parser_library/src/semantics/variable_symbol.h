@@ -20,7 +20,7 @@
 #include <vector>
 
 #include "concatenation.h"
-#include "context/id_storage.h"
+#include "context/id_index.h"
 #include "expressions/conditional_assembly/ca_expression.h"
 #include "range.h"
 

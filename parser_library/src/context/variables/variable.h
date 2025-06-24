@@ -15,11 +15,10 @@
 #ifndef CONTEXT_VARIABLE_H
 #define CONTEXT_VARIABLE_H
 
-#include <memory>
 #include <span>
 
 #include "context/common_types.h"
-#include "context/id_storage.h"
+#include "context/id_index.h"
 
 namespace hlasm_plugin::parser_library {
 struct diagnostic_op;

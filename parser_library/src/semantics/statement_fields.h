@@ -18,7 +18,7 @@
 #include <string>
 #include <variant>
 
-#include "context/id_storage.h"
+#include "context/id_index.h"
 #include "expressions/data_definition.h"
 #include "lexing/string_with_newlines.h"
 #include "operand.h"

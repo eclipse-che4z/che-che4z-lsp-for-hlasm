@@ -22,6 +22,7 @@
 #include "context/literal_pool.h"
 #include "context/ordinary_assembly/ordinary_assembly_dependency_solver.h"
 #include "context/variables/set_symbol.h"
+#include "context/well_known.h"
 #include "diagnostic_consumer.h"
 #include "ebcdic_encoding.h"
 #include "expressions/conditional_assembly/ca_expr_visitor.h"
@@ -229,7 +230,7 @@ context::C_t get_current_macro_name_field(const context::code_scope& scope)
 {
     if (!scope.is_in_macro())
         return {};
-    return scope.this_macro->named_params.at(context::id_storage::well_known::SYSLIST)
+    return scope.this_macro->named_params.at(context::well_known::SYSLIST)
         ->get_data(std::array<context::A_t, 1> { 0 })
         ->get_value();
 }
@@ -386,7 +387,7 @@ context::SET_t ca_symbol_attribute::evaluate_varsym(
             if (auto res = expressions::ca_constant::try_self_defining_term(var_value))
                 return "N";
 
-            auto symbol_name = eval_ctx.hlasm_ctx.ids().add(var_value);
+            auto symbol_name = eval_ctx.hlasm_ctx.add_id(var_value);
 
             if (auto tmp_symbol = eval_ctx.hlasm_ctx.ord_ctx.get_symbol(symbol_name))
                 return ebcdic_encoding::to_ascii((unsigned char)tmp_symbol->attributes().type());

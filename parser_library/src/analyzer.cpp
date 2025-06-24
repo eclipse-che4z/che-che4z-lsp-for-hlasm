@@ -14,6 +14,7 @@
 
 #include "analyzer.h"
 
+#include "context/hlasm_context.h"
 #include "context/id_storage.h"
 #include "diagnosable_ctx.h"
 #include "empty_parse_lib_provider.h"

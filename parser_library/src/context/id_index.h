@@ -19,7 +19,6 @@
 #include <cassert>
 #include <compare>
 #include <cstring>
-#include <functional>
 #include <string>
 #include <string_view>
 

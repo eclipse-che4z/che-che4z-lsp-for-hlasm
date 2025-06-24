@@ -15,9 +15,12 @@
 #ifndef PROCESSING_MACRODEF_PROCESSOR_H
 #define PROCESSING_MACRODEF_PROCESSOR_H
 
-#include "context/hlasm_context.h"
 #include "macrodef_processing_info.h"
 #include "statement_processor.h"
+
+namespace hlasm_plugin::parser_library::context {
+class hlasm_context;
+} // namespace hlasm_plugin::parser_library::context
 
 namespace hlasm_plugin::parser_library::processing {
 class branching_provider;

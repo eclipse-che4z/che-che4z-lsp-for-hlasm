@@ -15,9 +15,7 @@
 #ifndef LSP_SYMBOL_OCCURRENCE_H
 #define LSP_SYMBOL_OCCURRENCE_H
 
-#include <vector>
-
-#include "context/id_storage.h"
+#include "context/id_index.h"
 #include "context/macro.h"
 #include "range.h"
 

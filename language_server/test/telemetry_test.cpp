@@ -12,7 +12,6 @@
  *   Broadcom, Inc. - initial API and implementation
  */
 
-#include <sstream>
 #include <thread>
 
 #include "gmock/gmock.h"
@@ -21,7 +20,6 @@
 #include "lsp/lsp_server.h"
 #include "nlohmann/json.hpp"
 #include "send_message_provider_mock.h"
-#include "stream_helper.h"
 #include "telemetry_broker.h"
 #include "workspace_manager.h"
 

@@ -15,7 +15,6 @@
 #ifndef LSP_OPENCODE_INFO_H
 #define LSP_OPENCODE_INFO_H
 
-#include "context/hlasm_context.h"
 #include "macro_info.h"
 
 namespace hlasm_plugin::parser_library::lsp {

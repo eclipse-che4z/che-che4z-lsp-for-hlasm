@@ -17,7 +17,6 @@
 
 #include <atomic>
 #include <compare>
-#include <functional>
 #include <memory>
 #include <string>
 #include <string_view>
@@ -110,9 +109,8 @@ private:
 
 } // namespace hlasm_plugin::utils::resource
 
-namespace std {
 template<>
-class hash<::hlasm_plugin::utils::resource::resource_location>
+class std::hash<::hlasm_plugin::utils::resource::resource_location>
 {
 public:
     std::size_t operator()(const ::hlasm_plugin::utils::resource::resource_location& rl) const noexcept
@@ -120,6 +118,5 @@ public:
         return rl.hash();
     }
 };
-} // namespace std
 
 #endif

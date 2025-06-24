@@ -18,7 +18,6 @@
 #include <cassert>
 #include <charconv>
 #include <cstring>
-#include <iostream>
 #include <optional>
 #include <string>
 #include <string_view>
@@ -35,6 +34,7 @@
 #include "lsp/lsp_context.h"
 #include "parse_lib_provider.h"
 #include "preprocessor_options.h"
+#include "utils/platform.h"
 #include "utils/resource_location.h"
 #include "utils/unicode_text.h"
 
@@ -177,7 +177,7 @@ extern "C" int LLVMFuzzerInitialize(int* argc_, char*** argv_)
         if (const auto [ptr, err] = std::from_chars(p, pe, result); err != std::errc {} || ptr != pe)
             continue;
 
-        std::cerr << "INFO: Using " << it->first << result << '\n';
+        hlasm_plugin::utils::platform::log("INFO: Using ", it->first, std::to_string(result));
 
         *it->second = result;
     }

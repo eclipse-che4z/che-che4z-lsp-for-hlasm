@@ -16,7 +16,6 @@
 
 #include <memory>
 
-#include "common_types.h"
 #include "utils/string_operations.h"
 
 using namespace hlasm_plugin::parser_library::context;

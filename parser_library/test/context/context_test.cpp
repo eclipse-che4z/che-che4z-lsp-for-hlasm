@@ -12,6 +12,7 @@
  *   Broadcom, Inc. - initial API and implementation
  */
 
+#include <array>
 #include <string>
 
 #include "gtest/gtest.h"
@@ -19,8 +20,10 @@
 #include "../common_testing.h"
 #include "analyzer.h"
 #include "context/hlasm_context.h"
+#include "context/id_storage.h"
 #include "context/variables/set_symbol.h"
 #include "context/variables/system_variable.h"
+#include "context/well_known.h"
 
 // tests for hlasm_ctx class:
 // id_storage
@@ -42,11 +45,11 @@ TEST(context_id_storage, add)
 {
     hlasm_context ctx;
 
-    ASSERT_TRUE(ctx.ids().find("").has_value());
+    ASSERT_TRUE(ctx.find_id("").has_value());
 
-    auto it1 = ctx.ids().add(std::string_view("var"));
-    auto it2 = ctx.ids().find("var");
-    auto it3 = ctx.ids().add(std::string_view("var"));
+    auto it1 = ctx.add_id(std::string_view("var"));
+    auto it2 = ctx.find_id("var");
+    auto it3 = ctx.add_id(std::string_view("var"));
     ASSERT_TRUE(it1 == it2);
     ASSERT_TRUE(it1 == it3);
 }
@@ -55,9 +58,9 @@ TEST(context_id_storage, case_insensitive)
 {
     hlasm_context ctx;
 
-    auto it1 = ctx.ids().add(std::string_view("var"));
-    auto it2 = ctx.ids().add(std::string_view("vaR"));
-    auto it3 = ctx.ids().add(std::string_view("Var"));
+    auto it1 = ctx.add_id(std::string_view("var"));
+    auto it2 = ctx.add_id(std::string_view("vaR"));
+    auto it3 = ctx.add_id(std::string_view("Var"));
     ASSERT_TRUE(it1 == it2);
     ASSERT_TRUE(it1 == it3);
 }
@@ -67,7 +70,7 @@ TEST(context, create_global_var)
     hlasm_context ctx;
     diagnostic_op_consumer_container diag;
 
-    auto idx = ctx.ids().add(std::string_view("var"));
+    auto idx = ctx.add_id(std::string_view("var"));
 
     auto glob = ctx.create_global_variable<C_t>(idx, true);
 
@@ -87,7 +90,7 @@ TEST(context, create_global_var_different_types)
     hlasm_context ctx;
     diagnostic_op_consumer_container diag;
 
-    auto idx = ctx.ids().add(std::string_view("var"));
+    auto idx = ctx.add_id(std::string_view("var"));
     auto glob_a = ctx.create_global_variable<A_t>(idx, true);
     auto glob_b = ctx.create_global_variable<B_t>(idx, true);
     auto found = ctx.get_var_sym(idx);
@@ -107,7 +110,7 @@ TEST(context, find_system_var)
     hlasm_context ctx;
 
 
-    auto idx = ctx.ids().find("SYSDATC");
+    auto idx = ctx.find_id("SYSDATC");
 
     ASSERT_TRUE(idx.has_value());
 
@@ -123,7 +126,7 @@ TEST(context, create_local_var)
     hlasm_context ctx;
 
 
-    auto idx = ctx.ids().add(std::string_view("var"));
+    auto idx = ctx.add_id(std::string_view("var"));
 
     auto loc = ctx.create_local_variable<int>(idx, true);
 
@@ -140,10 +143,10 @@ TEST(context, OPSYN)
     hlasm_context ctx;
 
 
-    auto lr = ctx.ids().add(std::string_view("LR"));
-    auto mvc = ctx.ids().add(std::string_view("MVC"));
-    auto st = ctx.ids().add(std::string_view("ST"));
-    auto mv = ctx.ids().add(std::string_view("MV"));
+    auto lr = ctx.add_id(std::string_view("LR"));
+    auto mvc = ctx.add_id(std::string_view("MVC"));
+    auto st = ctx.add_id(std::string_view("ST"));
+    auto mv = ctx.add_id(std::string_view("MV"));
 
     EXPECT_TRUE(ctx.add_mnemonic(lr, st));
     EXPECT_EQ(ctx.get_operation_code(lr).opcode, st);
@@ -162,7 +165,7 @@ TEST(context_set_vars, set_scalar)
     hlasm_context ctx;
 
 
-    auto idx = ctx.ids().add(std::string_view("var"));
+    auto idx = ctx.add_id(std::string_view("var"));
 
     set_symbol<int> var(idx, true);
 
@@ -188,7 +191,7 @@ TEST(context_set_vars, set_non_scalar)
     hlasm_context ctx;
 
 
-    auto idx = ctx.ids().add(std::string_view("var"));
+    auto idx = ctx.add_id(std::string_view("var"));
 
     set_symbol<std::string> var(idx, false);
 
@@ -289,11 +292,11 @@ TEST(context_macro, add_macro)
 
 
     // creating names of params
-    auto idx = ctx.ids().add(std::string_view("mac"));
-    auto lbl = ctx.ids().add(std::string_view("lbl"));
-    auto key = ctx.ids().add(std::string_view("key"));
-    auto op1 = ctx.ids().add(std::string_view("op1"));
-    auto op3 = ctx.ids().add(std::string_view("op3"));
+    auto idx = ctx.add_id(std::string_view("mac"));
+    auto lbl = ctx.add_id(std::string_view("lbl"));
+    auto key = ctx.add_id(std::string_view("key"));
+    auto op1 = ctx.add_id(std::string_view("op1"));
+    auto op3 = ctx.add_id(std::string_view("op3"));
 
     // creating data of params
     macro_data_ptr p1(std::make_unique<macro_param_data_single>(""));
@@ -322,10 +325,10 @@ TEST(context_macro, call_and_leave_macro)
 
 
     // creating names of params
-    auto idx = ctx.ids().add(std::string_view("mac"));
-    auto key = ctx.ids().add(std::string_view("key"));
-    auto op1 = ctx.ids().add(std::string_view("op1"));
-    auto op3 = ctx.ids().add(std::string_view("op3"));
+    auto idx = ctx.add_id(std::string_view("mac"));
+    auto key = ctx.add_id(std::string_view("key"));
+    auto op1 = ctx.add_id(std::string_view("op1"));
+    auto op3 = ctx.add_id(std::string_view("op3"));
 
     // creating data of params
     macro_data_ptr p1(std::make_unique<macro_param_data_single>(""));
@@ -360,7 +363,7 @@ TEST(context_macro, call_and_leave_macro)
     ASSERT_TRUE(ctx.is_in_macro());
     ASSERT_TRUE(ctx.current_macro() == m2);
 
-    auto SYSLIST = m2->named_params.find(id_storage::well_known::SYSLIST)->second->access_system_variable();
+    auto SYSLIST = m2->named_params.find(well_known::SYSLIST)->second->access_system_variable();
     ASSERT_TRUE(SYSLIST);
     // testing syslist
     EXPECT_EQ(SYSLIST->get_value((size_t)0), "");
@@ -384,11 +387,11 @@ TEST(context_macro, repeat_call_same_macro)
 
 
     // creating names of params
-    auto idx = ctx.ids().add(std::string_view("mac"));
-    auto key = ctx.ids().add(std::string_view("key"));
-    auto op1 = ctx.ids().add(std::string_view("op1"));
-    auto op3 = ctx.ids().add(std::string_view("op3"));
-    auto lbl = ctx.ids().add(std::string_view("lbl"));
+    auto idx = ctx.add_id(std::string_view("mac"));
+    auto key = ctx.add_id(std::string_view("key"));
+    auto op1 = ctx.add_id(std::string_view("op1"));
+    auto op3 = ctx.add_id(std::string_view("op3"));
+    auto lbl = ctx.add_id(std::string_view("lbl"));
 
     // creating data of params
     macro_data_ptr p1(std::make_unique<macro_param_data_single>(""));
@@ -450,7 +453,7 @@ TEST(context_macro, repeat_call_same_macro)
 
     EXPECT_FALSE(t3);
 
-    auto SYSLIST = m3->named_params.find(id_storage::well_known::SYSLIST)->second->access_system_variable();
+    auto SYSLIST = m3->named_params.find(well_known::SYSLIST)->second->access_system_variable();
     ASSERT_TRUE(SYSLIST);
 
     for (auto i = 0; i < 3; i++)
@@ -476,11 +479,11 @@ TEST(context_macro, recurr_call)
 
 
     // creating names of params
-    auto idx = ctx.ids().add(std::string_view("mac"));
-    auto key = ctx.ids().add(std::string_view("key"));
-    auto op1 = ctx.ids().add(std::string_view("op1"));
-    auto op3 = ctx.ids().add(std::string_view("op3"));
-    auto lbl = ctx.ids().add(std::string_view("lbl"));
+    auto idx = ctx.add_id(std::string_view("mac"));
+    auto key = ctx.add_id(std::string_view("key"));
+    auto op1 = ctx.add_id(std::string_view("op1"));
+    auto op3 = ctx.add_id(std::string_view("op3"));
+    auto lbl = ctx.add_id(std::string_view("lbl"));
 
     // creating data of params
     macro_data_ptr p1(std::make_unique<macro_param_data_single>(""));
@@ -548,9 +551,9 @@ TEST(context_macro, recurr_call)
     ASSERT_TRUE(ctx.is_in_macro());
     ASSERT_FALSE(m2 == m3);
 
-    auto SYSLIST2 = m2->named_params.find(id_storage::well_known::SYSLIST)->second->access_system_variable();
+    auto SYSLIST2 = m2->named_params.find(well_known::SYSLIST)->second->access_system_variable();
     ASSERT_TRUE(SYSLIST2);
-    auto SYSLIST3 = m3->named_params.find(id_storage::well_known::SYSLIST)->second->access_system_variable();
+    auto SYSLIST3 = m3->named_params.find(well_known::SYSLIST)->second->access_system_variable();
     ASSERT_TRUE(SYSLIST3);
 
     for (context::A_t i = 0; i < 2; i++)

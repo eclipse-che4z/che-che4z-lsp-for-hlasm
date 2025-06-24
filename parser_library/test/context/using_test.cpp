@@ -40,10 +40,10 @@ struct test_context : public dependency_solver
     std::map<id_index, symbol> m_symbols;
     std::optional<address> m_loctr;
 
-    id_index id(const std::string& s) { return hlasm_ctx.ids().add(s); }
+    id_index id(const std::string& s) { return hlasm_ctx.add_id(s); }
     id_index label(const std::string& s)
     {
-        auto label = hlasm_ctx.ids().add(s);
+        auto label = hlasm_ctx.add_id(s);
         asm_ctx.register_using_label(label);
         return label;
     }

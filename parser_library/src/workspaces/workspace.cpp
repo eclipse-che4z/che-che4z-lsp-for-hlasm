@@ -23,6 +23,7 @@
 #include "analyzer.h"
 #include "completion_item.h"
 #include "completion_trigger_kind.h"
+#include "context/hlasm_context.h"
 #include "document_symbol_item.h"
 #include "fade_messages.h"
 #include "file.h"
@@ -47,6 +48,43 @@
 using hlasm_plugin::utils::resource::resource_location;
 
 namespace hlasm_plugin::parser_library::workspaces {
+
+struct workspace::dependency_cache
+{
+    dependency_cache(version_t version, const file_manager& fm, std::shared_ptr<file> file)
+        : version(version)
+        , cache(fm, std::move(file))
+    {}
+    version_t version;
+    macro_cache cache;
+};
+
+struct workspace::processor_file_compoments
+{
+    std::shared_ptr<file> m_file;
+    std::unique_ptr<parsing_results> m_last_results = std::make_unique<parsing_results>();
+
+    std::map<resource_location, std::variant<std::shared_ptr<dependency_cache>, virtual_file_handle>, std::less<>>
+        m_dependencies;
+    std::map<std::string, resource_location, std::less<>> m_member_map;
+
+    resource_location m_alternative_config = resource_location();
+
+    bool m_opened = false;
+    bool m_collect_perf_metrics = false;
+
+    bool m_last_opencode_analyzer_with_lsp = false;
+    bool m_last_macro_analyzer_with_lsp = false;
+    std::shared_ptr<context::id_storage> m_last_opencode_id_storage;
+
+    index_t<processor_group, unsigned long long> m_group_id;
+
+    explicit processor_file_compoments(std::shared_ptr<file> file)
+        : m_file(std::move(file))
+    {}
+
+    [[nodiscard]] utils::task update_source_if_needed(file_manager& fm);
+};
 
 struct parsing_results
 {
@@ -206,7 +244,7 @@ struct workspace_parse_lib_provider final : public parse_lib_provider
 
         auto& macro_pfc = co_await ws.add_processor_file_impl(file);
 
-        auto cache_key = macro_cache_key::create_from_context(*ctx.hlasm_ctx, kind, ctx.hlasm_ctx->ids().add(library));
+        auto cache_key = macro_cache_key::create_from_context(*ctx.hlasm_ctx, kind, ctx.hlasm_ctx->add_id(library));
 
         auto& mc = get_cache(url, file);
 
@@ -560,7 +598,7 @@ utils::value_task<parse_file_result> workspace::parse_file(resource_location* se
     assert(comp.m_opened);
 
     if (!comp.m_last_opencode_id_storage)
-        comp.m_last_opencode_id_storage = std::make_shared<context::id_storage>();
+        comp.m_last_opencode_id_storage = context::hlasm_context::make_default_id_storage();
 
     return [](processor_file_compoments& comp, workspace& self) -> utils::value_task<parse_file_result> {
         const auto& url = comp.m_file->get_location();
@@ -1067,15 +1105,6 @@ bool workspace::is_dependency(const resource_location& file_location) const
     }
     return false;
 }
-
-workspace::processor_file_compoments::processor_file_compoments(std::shared_ptr<file> file)
-    : m_file(std::move(file))
-    , m_last_results(std::make_unique<parsing_results>())
-{}
-workspace::processor_file_compoments::processor_file_compoments(processor_file_compoments&&) noexcept = default;
-workspace::processor_file_compoments& workspace::processor_file_compoments::operator=(
-    processor_file_compoments&&) noexcept = default;
-workspace::processor_file_compoments::~processor_file_compoments() = default;
 
 utils::task workspace::processor_file_compoments::update_source_if_needed(file_manager& fm)
 {

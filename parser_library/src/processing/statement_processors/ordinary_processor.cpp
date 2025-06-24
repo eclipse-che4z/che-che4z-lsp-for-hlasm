@@ -617,7 +617,7 @@ context::id_index ordinary_processor::resolve_instruction_concat_chain(
         return context::id_index();
     }
 
-    return hlasm_ctx.ids().add(std::move(tmp));
+    return hlasm_ctx.add_id(std::move(tmp));
 }
 
 } // namespace hlasm_plugin::parser_library::processing

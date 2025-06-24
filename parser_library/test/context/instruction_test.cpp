@@ -92,7 +92,7 @@ TEST_P(instruction_sets_fixture, instruction_set_loading)
 
     for (const auto& instr : instruction_compatibility_matrix)
     {
-        auto id = a.hlasm_ctx().ids().find(instr.first);
+        auto id = a.hlasm_ctx().find_id(instr.first);
 
         if (!instr.second.contains(instr_set))
         {

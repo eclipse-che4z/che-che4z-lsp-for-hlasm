@@ -16,8 +16,6 @@
 #define LSP_CONTEXT_H
 
 #include <memory>
-#include <span>
-#include <string_view>
 #include <unordered_map>
 #include <utility>
 #include <vector>
@@ -26,6 +24,8 @@
 #include "completion_list_source.h"
 #include "context/id_index.h"
 #include "context/macro.h"
+#include "context/opcode_generation.h"
+#include "context/source_context.h"
 #include "document_symbol_item.h"
 #include "file_info.h"
 #include "location.h"
@@ -37,6 +37,10 @@ namespace hlasm_plugin::parser_library {
 enum class completion_trigger_kind;
 class parse_lib_provider;
 } // namespace hlasm_plugin::parser_library
+
+namespace hlasm_plugin::parser_library::context {
+class hlasm_context;
+} // namespace hlasm_plugin::parser_library::context
 
 namespace hlasm_plugin::parser_library::lsp {
 

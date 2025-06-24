@@ -46,6 +46,8 @@ class using_collection;
 
 namespace hlasm_plugin::parser_library::context {
 
+class id_storage;
+
 class system_variable_map
 {
     std::unordered_map<id_index, std::pair<std::shared_ptr<system_variable>, bool>> map;
@@ -149,9 +151,11 @@ private:
     const opcode_t* search_opcodes(id_index name, opcode_generation gen) const;
 
 public:
+    static std::shared_ptr<id_storage> make_default_id_storage();
+
     hlasm_context(utils::resource::resource_location file_loc = utils::resource::resource_location(""),
         asm_option asm_opts = {},
-        std::shared_ptr<id_storage> init_ids = std::make_shared<id_storage>());
+        std::shared_ptr<id_storage> init_ids = make_default_id_storage());
     ~hlasm_context();
 
     // gets opencode file location
@@ -201,9 +205,9 @@ public:
     const code_scope& current_scope() const;
 
     // index storage
-    id_storage& ids();
-    const id_storage& ids() const;
-    std::shared_ptr<id_storage> ids_ptr();
+    id_index add_id(std::string&& s);
+    id_index add_id(std::string_view s);
+    std::optional<id_index> find_id(std::string_view s) const;
 
     // field that accessed ordinary assembly context
     ordinary_assembly_context ord_ctx;

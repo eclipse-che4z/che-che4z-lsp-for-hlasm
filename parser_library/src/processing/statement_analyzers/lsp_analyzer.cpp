@@ -19,12 +19,12 @@
 #include <utility>
 
 #include "context/hlasm_context.h"
-#include "context/id_storage.h"
 #include "context/ordinary_assembly/ordinary_assembly_dependency_solver.h"
 #include "context/ordinary_assembly/postponed_statement.h"
 #include "context/ordinary_assembly/symbol_dependency_tables.h"
 #include "context/source_context.h"
 #include "context/special_instructions.h"
+#include "context/well_known.h"
 #include "instructions/instruction.h"
 #include "library_info_transitional.h"
 #include "lsp/lsp_context.h"
@@ -35,7 +35,6 @@
 #include "processing/statement_analyzers/occurrence_collector.h"
 #include "processing/statement_processors/copy_processing_info.h"
 #include "processing/statement_processors/macrodef_processing_info.h"
-#include "processing/statement_processors/macrodef_processor.h"
 #include "range.h"
 #include "semantics/operand_impls.h"
 #include "semantics/statement.h"
@@ -55,18 +54,18 @@ struct LCL_GBL_instr
 };
 
 constexpr std::array<LCL_GBL_instr, 6> LCL_GBL_instructions_ { {
-    { context::id_storage::well_known::LCLA, context::SET_t_enum::A_TYPE, false },
-    { context::id_storage::well_known::LCLB, context::SET_t_enum::B_TYPE, false },
-    { context::id_storage::well_known::LCLC, context::SET_t_enum::C_TYPE, false },
-    { context::id_storage::well_known::GBLA, context::SET_t_enum::A_TYPE, true },
-    { context::id_storage::well_known::GBLB, context::SET_t_enum::B_TYPE, true },
-    { context::id_storage::well_known::GBLC, context::SET_t_enum::C_TYPE, true },
+    { context::well_known::LCLA, context::SET_t_enum::A_TYPE, false },
+    { context::well_known::LCLB, context::SET_t_enum::B_TYPE, false },
+    { context::well_known::LCLC, context::SET_t_enum::C_TYPE, false },
+    { context::well_known::GBLA, context::SET_t_enum::A_TYPE, true },
+    { context::well_known::GBLB, context::SET_t_enum::B_TYPE, true },
+    { context::well_known::GBLC, context::SET_t_enum::C_TYPE, true },
 } };
 
 constexpr std::array<std::pair<context::id_index, context::SET_t_enum>, 3> SET_instructions_ { {
-    { context::id_storage::well_known::SETA, context::SET_t_enum::A_TYPE },
-    { context::id_storage::well_known::SETB, context::SET_t_enum::B_TYPE },
-    { context::id_storage::well_known::SETC, context::SET_t_enum::C_TYPE },
+    { context::well_known::SETA, context::SET_t_enum::A_TYPE },
+    { context::well_known::SETB, context::SET_t_enum::B_TYPE },
+    { context::well_known::SETC, context::SET_t_enum::C_TYPE },
 } };
 
 } // namespace
@@ -164,7 +163,7 @@ void lsp_analyzer::analyze(const semantics::preprocessor_statement_si& statement
     collect_occurrences(lsp::occurrence_kind::ORD, statement, ci);
 
     if (const auto& operands = statement.m_details.operands; statement.m_copylike && operands.size() == 1)
-        add_copy_operand(hlasm_ctx_.ids().add(operands.front().name), operands.front().r, ci);
+        add_copy_operand(hlasm_ctx_.add_id(operands.front().name), operands.front().r, ci);
 }
 
 
@@ -304,16 +303,16 @@ void lsp_analyzer::collect_occurrences(
     const auto& details = statement.m_details;
 
     collector.occurrences.emplace_back(
-        lsp::occurrence_kind::ORD, hlasm_ctx_.ids().add(details.label.name), details.label.r, ci.evaluated_model);
+        lsp::occurrence_kind::ORD, hlasm_ctx_.add_id(details.label.name), details.label.r, ci.evaluated_model);
 
     collector.occurrences.emplace_back(lsp::occurrence_kind::INSTR,
-        hlasm_ctx_.ids().add(details.instruction.nr.name),
+        hlasm_ctx_.add_id(details.instruction.nr.name),
         details.instruction.nr.r,
         ci.evaluated_model);
 
     for (const auto& ops : details.operands)
         collector.occurrences.emplace_back(
-            lsp::occurrence_kind::ORD, hlasm_ctx_.ids().add(ops.name), ops.r, ci.evaluated_model);
+            lsp::occurrence_kind::ORD, hlasm_ctx_.add_id(ops.name), ops.r, ci.evaluated_model);
 }
 
 void lsp_analyzer::collect_occurrence(const semantics::label_si& label, occurrence_collector& collector)
@@ -417,7 +416,7 @@ void lsp_analyzer::collect_var_definition(const processing::resolved_statement& 
 void lsp_analyzer::collect_copy_operands(
     const processing::resolved_statement& statement, const collection_info_t& collection_info)
 {
-    if (statement.opcode_ref().value != context::id_storage::well_known::COPY)
+    if (statement.opcode_ref().value != context::well_known::COPY)
         return;
     if (auto sym_expr = get_single_mach_symbol(statement.operands_ref().value))
         add_copy_operand(sym_expr->value, sym_expr->get_range(), collection_info);
@@ -481,9 +480,9 @@ void lsp_analyzer::add_copy_operand(context::id_index name, const range& operand
 void lsp_analyzer::update_macro_nest(const processing::resolved_statement& statement)
 {
     const auto& opcode = statement.opcode_ref().value;
-    if (opcode == context::id_storage::well_known::MACRO)
+    if (opcode == context::well_known::MACRO)
         macro_nest_++;
-    else if (opcode == context::id_storage::well_known::MEND)
+    else if (opcode == context::well_known::MEND)
         macro_nest_--;
 }
 

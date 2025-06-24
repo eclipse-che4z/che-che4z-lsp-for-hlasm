@@ -17,6 +17,7 @@
 #include <cassert>
 #include <memory>
 
+#include "context/hlasm_context.h"
 #include "diagnostic_tools.h"
 #include "lsp/lsp_context.h"
 #include "lsp/text_data_view.h"
@@ -62,11 +63,11 @@ processing_manager::processing_manager(std::unique_ptr<opencode_provider> base_p
                 ctx_, *this, lib_provider, *this, parser, opencode_prov_, *this, output, diag_ctx));
             break;
         case processing_kind::COPY:
-            start_copy_member(copy_start_data { ctx.hlasm_ctx->ids().add(std::move(dep_name)), std::move(file_loc) });
+            start_copy_member(copy_start_data { ctx.hlasm_ctx->add_id(std::move(dep_name)), std::move(file_loc) });
             break;
         case processing_kind::MACRO:
             start_macro_definition(
-                macrodef_start_data(ctx.hlasm_ctx->ids().add(std::move(dep_name))), std::move(file_loc));
+                macrodef_start_data(ctx.hlasm_ctx->add_id(std::move(dep_name))), std::move(file_loc));
             break;
         default:
             break;
@@ -226,7 +227,7 @@ void processing_manager::finish_preprocessor()
 
         static const context::statement_block stmt_block;
 
-        ctx_.lsp_ctx->add_copy(std::make_shared<context::copy_member>(hlasm_ctx_.ids().add(inc_member_details->name),
+        ctx_.lsp_ctx->add_copy(std::make_shared<context::copy_member>(hlasm_ctx_.add_id(inc_member_details->name),
                                    stmt_block,
                                    location(position(0, 0), inc_member_details->loc)),
             lsp::text_data_view(inc_member_details->text));

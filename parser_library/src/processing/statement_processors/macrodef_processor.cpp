@@ -14,9 +14,10 @@
 
 #include "macrodef_processor.h"
 
-#include <functional>
 #include <ranges>
 
+#include "context/hlasm_context.h"
+#include "context/well_known.h"
 #include "instructions/instruction.h"
 #include "processing/branching_provider.h"
 #include "processing/handler_map.h"
@@ -39,7 +40,7 @@ constexpr auto fn = []() {
 
 struct macrodef_processor::handler_table
 {
-    using wk = context::id_storage::well_known;
+    using wk = context::well_known;
     using callback = bool(macrodef_processor* self, const resolved_statement&);
     using enum context::SET_t_enum;
     static constexpr auto value = make_handler_map<callback>({
@@ -85,7 +86,7 @@ std::optional<context::id_index> macrodef_processor::resolve_concatenation(
     const semantics::concat_chain& concat, const range&) const
 {
     // TODO: should the identifier limit be enforced here?
-    return hlasm_ctx.ids().add(semantics::concatenation_point::to_string(concat));
+    return hlasm_ctx.add_id(semantics::concatenation_point::to_string(concat));
 }
 
 std::optional<processing_status> macrodef_processor::get_processing_status(
@@ -100,7 +101,7 @@ std::optional<processing_status> macrodef_processor::get_processing_status(
         {
             add_diagnostic(diagnostic_op::error_E042(r));
 
-            id = context::id_storage::well_known::ASPACE;
+            id = context::well_known::ASPACE;
         }
         else
         {
@@ -165,7 +166,7 @@ processing_status macrodef_processor::get_macro_processing_status(
 
             return std::make_pair(format, op_code(code.opcode, context::instruction_type::CA));
         }
-        else if (code.opcode == context::id_storage::well_known::COPY)
+        else if (code.opcode == context::well_known::COPY)
         {
             processing_format format(processing_kind::MACRO, processing_form::ASM, operand_occurrence::PRESENT);
 
@@ -204,7 +205,7 @@ bool macrodef_processor::process_statement(const context::hlasm_statement& state
     {
         result_.definition_location = hlasm_ctx.current_statement_location();
 
-        if (!res_stmt || res_stmt->opcode_ref().value != context::id_storage::well_known::MACRO)
+        if (!res_stmt || res_stmt->opcode_ref().value != context::well_known::MACRO)
         {
             add_diagnostic(
                 diagnostic_op::error_E059(start_.external_name.to_string_view(), statement.stmt_range_ref()));
@@ -294,7 +295,7 @@ void macrodef_processor::process_prototype_instruction(const resolved_statement&
     if (macro_name.empty())
     {
         add_diagnostic(diagnostic_op::error_E042(instr_range));
-        macro_name = context::id_storage::well_known::ASPACE;
+        macro_name = context::well_known::ASPACE;
     }
     result_.prototype.macro_name = macro_name;
     result_.prototype.macro_name_range = instr_range;
@@ -437,7 +438,7 @@ struct empty_statement_t final : public resolved_statement
 
 const processing_status empty_statement_t::status(
     processing_format(processing_kind::ORDINARY, processing_form::CA, operand_occurrence::ABSENT),
-    op_code(context::id_storage::well_known::ANOP, context::instruction_type::CA));
+    op_code(context::well_known::ANOP, context::instruction_type::CA));
 
 bool macrodef_processor::process_COPY(const resolved_statement& statement)
 {

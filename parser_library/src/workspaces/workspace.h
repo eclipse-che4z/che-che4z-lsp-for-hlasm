@@ -140,45 +140,8 @@ private:
 
     configuration_provider& m_configuration;
 
-    struct dependency_cache
-    {
-        dependency_cache(version_t version, const file_manager& fm, std::shared_ptr<file> file)
-            : version(version)
-            , cache(fm, std::move(file))
-        {}
-        version_t version;
-        macro_cache cache;
-    };
-
-    struct processor_file_compoments
-    {
-        std::shared_ptr<file> m_file;
-        std::unique_ptr<parsing_results> m_last_results;
-
-        std::map<resource_location, std::variant<std::shared_ptr<dependency_cache>, virtual_file_handle>, std::less<>>
-            m_dependencies;
-        std::map<std::string, resource_location, std::less<>> m_member_map;
-
-        resource_location m_alternative_config = resource_location();
-
-        bool m_opened = false;
-        bool m_collect_perf_metrics = false;
-
-        bool m_last_opencode_analyzer_with_lsp = false;
-        bool m_last_macro_analyzer_with_lsp = false;
-        std::shared_ptr<context::id_storage> m_last_opencode_id_storage;
-
-        index_t<processor_group, unsigned long long> m_group_id;
-
-        explicit processor_file_compoments(std::shared_ptr<file> file);
-        processor_file_compoments(const processor_file_compoments&) = delete;
-        processor_file_compoments(processor_file_compoments&&) noexcept;
-        processor_file_compoments& operator=(const processor_file_compoments&) = delete;
-        processor_file_compoments& operator=(processor_file_compoments&&) noexcept;
-        ~processor_file_compoments();
-
-        [[nodiscard]] utils::task update_source_if_needed(file_manager& fm);
-    };
+    struct dependency_cache;
+    struct processor_file_compoments;
 
     std::unordered_map<resource_location, processor_file_compoments> m_processor_files;
     std::unordered_set<resource_location> m_parsing_pending;

@@ -16,7 +16,6 @@
 #define HLASMPLUGIN_PARSERLIBRARY_WORKSPACES_CONFIGURATION_DATATYPES
 
 #include <compare>
-#include <functional>
 #include <memory>
 #include <string>
 #include <string_view>

@@ -12,6 +12,8 @@
  *   Broadcom, Inc. - initial API and implementation
  */
 
+#include <optional>
+
 #include "context/variables/set_symbol.h"
 #include "debug_types.h"
 #include "variable.h"

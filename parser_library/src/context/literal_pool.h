@@ -16,11 +16,9 @@
 #define HLASMPLUGIN_PARSERLIBRARY_LITERAL_POOL_H
 
 #include <unordered_map>
-#include <unordered_set>
 
 #include "expressions/data_definition.h"
-#include "id_storage.h"
-#include "location.h"
+#include "id_index.h"
 #include "source_context.h"
 #include "tagged_index.h"
 #include "utils/similar.h"

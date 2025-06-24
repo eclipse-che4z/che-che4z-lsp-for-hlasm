@@ -18,6 +18,8 @@
 #include <format>
 
 #include "analyzer.h"
+#include "context/hlasm_context.h"
+#include "context/well_known.h"
 #include "library_info_transitional.h"
 #include "lsp/lsp_context.h"
 #include "parsing/parser_impl.h"
@@ -281,9 +283,9 @@ void opencode_provider::generate_continuation_error_messages(diagnostic_op_consu
 namespace {
 bool operands_relevant_in_lookahead(bool has_label, const processing_status& status)
 {
-    static constexpr context::id_index EQU("EQU");
     using enum processing_form;
-    const auto& COPY = context::id_storage::well_known::COPY;
+    const auto& COPY = context::well_known::COPY;
+    const auto& EQU = context::well_known::EQU;
 
     const auto form = status.first.form;
     const auto& instr = status.second.value;
@@ -390,7 +392,7 @@ std::shared_ptr<const context::hlasm_statement> opencode_provider::process_ordin
                     h.op_rem_body_deferred();
                     break;
                 case processing_form::CA: {
-                    using wk = context::id_storage::well_known;
+                    using wk = context::well_known;
                     bool var_def = opcode.value == wk::GBLA || opcode.value == wk::GBLB || opcode.value == wk::GBLC
                         || opcode.value == wk::LCLA || opcode.value == wk::LCLB || opcode.value == wk::LCLC;
                     bool branchlike = opcode.value == wk::AIF || opcode.value == wk::AGO || opcode.value == wk::AIFB
@@ -505,7 +507,7 @@ utils::task opencode_provider::run_preprocessor()
     const size_t stop_line = it != m_input_document.end() ? it->lineno().value() : current_line;
     const auto last_index = it - m_input_document.begin();
 
-    auto virtual_file_name = m_ctx.hlasm_ctx->ids().add(std::format("PREPROCESSOR_{}", current_line));
+    auto virtual_file_name = m_ctx.hlasm_ctx->add_id(std::format("PREPROCESSOR_{}", current_line));
 
     auto [new_file, inserted] = m_virtual_files->try_emplace(virtual_file_name, std::move(preprocessor_text));
 
@@ -598,8 +600,7 @@ utils::task opencode_provider::convert_ainsert_buffer_to_copybook()
         result.append(s).push_back('\n');
     m_ainsert_buffer.clear();
 
-    auto virtual_copy_name =
-        m_ctx.hlasm_ctx->ids().add(std::format("AINSERT_{}", m_ctx.hlasm_ctx->obtain_ainsert_id()));
+    auto virtual_copy_name = m_ctx.hlasm_ctx->add_id(std::format("AINSERT_{}", m_ctx.hlasm_ctx->obtain_ainsert_id()));
 
     auto new_file = m_virtual_files->try_emplace(virtual_copy_name, std::move(result)).first;
 

@@ -15,25 +15,21 @@
 #include "lsp_context.h"
 
 #include <cassert>
-#include <limits>
 #include <ranges>
-#include <sstream>
 #include <string_view>
-#include <type_traits>
 #include <unordered_map>
-#include <variant>
 
-#include "completion_item.h"
 #include "completion_trigger_kind.h"
+#include "context/hlasm_context.h"
 #include "context/macro.h"
+#include "context/ordinary_assembly/section.h"
 #include "context/using.h"
+#include "document_symbol_item.h"
 #include "instructions/instruction.h"
 #include "item_convertors.h"
 #include "lsp/instruction_completions.h"
 #include "lsp/macro_info.h"
 #include "parse_lib_provider.h"
-#include "protocol.h"
-#include "utils/similar.h"
 #include "utils/string_operations.h"
 #include "utils/unicode_text.h"
 
