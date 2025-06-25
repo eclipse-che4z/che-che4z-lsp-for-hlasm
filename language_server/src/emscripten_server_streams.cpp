@@ -63,6 +63,9 @@ public:
     {
         auto msg_string = msg.dump();
         auto msg_string_size = msg_string.size();
+
+        LOG_INFO(msg_string);
+
         if (utils::platform::is_web())
         {
             MAIN_THREAD_EM_ASM(
@@ -87,6 +90,7 @@ public:
             if (!msg.has_value())
                 return std::nullopt;
 
+            LOG_INFO(msg.value());
             try
             {
                 return nlohmann::json::parse(msg.value());

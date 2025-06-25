@@ -59,10 +59,24 @@ void log(std::span<const std::string_view> list)
     s.reserve(std::transform_reduce(list.begin(), list.end(), (size_t)0, std::plus(), [](auto e) { return e.size(); }));
     for (auto e : list)
         s.append(e);
-    EM_ASM(
-        { console.error(new TextDecoder('utf8', { fatal : false }).decode(HEAPU8.slice($0, $1))); },
-        s.data(),
-        s.data() + s.size());
+
+    if (utils::platform::is_web())
+    {
+        MAIN_THREAD_EM_ASM(
+            {
+                Module['worker'].postMessage({
+                    jsonrpc : "2.0",
+                    method : "window/logMessage",
+                    params : { type : 4, message : new TextDecoder().decode(HEAPU8.slice($0, $0 + $1)) }
+                });
+            },
+            s.data(),
+            s.size());
+    }
+    else
+    {
+        MAIN_THREAD_EM_ASM({ process.stderr.write(HEAPU8.slice($0, $0 + $1)); }, s.data(), s.size());
+    }
 #else
     for (auto e : list)
         std::clog << e;

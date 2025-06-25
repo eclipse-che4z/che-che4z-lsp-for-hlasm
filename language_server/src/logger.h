@@ -15,6 +15,7 @@
 #ifndef HLASMPLUGIN_HLASMLANGUAGESERVER_LOGGER_H
 #define HLASMPLUGIN_HLASMLANGUAGESERVER_LOGGER_H
 
+#include <atomic>
 #include <concepts>
 #include <mutex>
 #include <span>
@@ -43,7 +44,7 @@ class logger
     static constexpr unsigned default_log_level = 0;
 #endif
 
-    unsigned m_level = default_log_level;
+    std::atomic<unsigned> m_level = default_log_level;
     std::mutex m_mutex;
 
     void log_impl(unsigned level, std::span<std::string_view> args);
@@ -52,14 +53,8 @@ public:
     static logger instance;
     static constexpr unsigned max_log_level = 2;
 
-    unsigned level() const noexcept { return m_level; }
-    void level(unsigned l) noexcept
-    {
-        if (l > max_log_level)
-            m_level = max_log_level;
-        else
-            m_level = l;
-    }
+    unsigned level() const noexcept { return m_level.load(std::memory_order_relaxed); }
+    void level(unsigned l) noexcept { m_level.store(l > max_log_level ? max_log_level : l, std::memory_order_relaxed); }
 
     template<std::convertible_to<std::string_view>... Args>
     void log(unsigned level, Args&&... args)

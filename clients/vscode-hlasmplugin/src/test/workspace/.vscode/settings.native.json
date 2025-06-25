@@ -3,5 +3,8 @@
     "hlasm.useAutodetection": true,
     "hlasm.diagnosticsSuppressLimit": 10,
     "workbench.editor.languageDetection": false,
+    "hlasm.arguments": [
+        "--log-level=1"
+    ],
     "emptyVariable": ""
 }
