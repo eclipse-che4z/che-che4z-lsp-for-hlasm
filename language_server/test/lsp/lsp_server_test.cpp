@@ -389,3 +389,65 @@ TEST(lsp_server_test, output_notification)
 
     ws_mngr->idle_handler(nullptr);
 }
+
+TEST(lsp_server_test, watcher_registration)
+{
+    parser_library::watcher_registration_provider* provider = nullptr;
+    NiceMock<test::ws_mngr_mock> ws_mngr;
+
+    EXPECT_CALL(ws_mngr, set_watcher_registration_provider(_)).WillOnce(SaveArg<0>(&provider));
+
+    NiceMock<send_message_provider_mock> smpm;
+    lsp::server s(ws_mngr);
+
+    s.testing_enable_capabilities();
+    s.set_send_message_provider(&smpm);
+
+    ASSERT_TRUE(provider);
+
+    EXPECT_CALL(smpm,
+        reply(
+            R"({"id":0,"jsonrpc":"2.0","method":"client/registerCapability","params":{"registrations":[
+            {"id":"watcher_1","method":"workspace/didChangeWatchedFiles","registerOptions":{"watchers":[
+            {"globPattern":{"baseUri":"scheme:/this/directory/","pattern":"*"}},
+            {"globPattern":{"baseUri":"scheme:/this/","pattern":"directory"},"kind":5}
+            ]}}]}})"_json))
+        .Times(1);
+
+    const auto dir1_1 = provider->add_watcher("scheme:/this/directory", false);
+    const auto dir1_2 = provider->add_watcher("scheme:/this/directory", false);
+
+    EXPECT_EQ(dir1_1, dir1_2);
+
+    EXPECT_CALL(smpm,
+        reply(
+            R"({"id":1,"jsonrpc":"2.0","method":"client/registerCapability","params":{"registrations":[
+            {"id":"watcher_2","method":"workspace/didChangeWatchedFiles","registerOptions":{"watchers":[
+            {"globPattern":{"baseUri":"scheme:/this/other/","pattern":"**/*"}},
+            {"globPattern":{"baseUri":"scheme:/this/","pattern":"other"},"kind":5}
+            ]}}]}})"_json))
+        .Times(1);
+
+    const auto dir2_1 = provider->add_watcher("scheme:/this/other", true);
+    const auto dir2_2 = provider->add_watcher("scheme:/this/other", true);
+
+    EXPECT_EQ(dir2_1, dir2_1);
+
+    EXPECT_CALL(smpm,
+        reply(
+            R"({"id":2,"jsonrpc":"2.0","method":"client/unregisterCapability",
+            "params":{"unregisterations":[{"id":"watcher_1","method":"workspace/didChangeWatchedFiles"}]}})"_json))
+        .Times(1);
+
+    provider->remove_watcher(dir1_1);
+    provider->remove_watcher(dir1_2);
+
+    EXPECT_CALL(smpm,
+        reply(
+            R"({"id":3,"jsonrpc":"2.0","method":"client/unregisterCapability",
+            "params":{"unregisterations":[{"id":"watcher_2","method":"workspace/didChangeWatchedFiles"}]}})"_json))
+        .Times(1);
+
+    provider->remove_watcher(dir2_1);
+    provider->remove_watcher(dir2_2);
+}

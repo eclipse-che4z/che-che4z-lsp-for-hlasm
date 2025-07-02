@@ -55,12 +55,14 @@ bool is_web()
 void log(std::span<const std::string_view> list)
 {
 #ifdef __EMSCRIPTEN__
+    const auto web = utils::platform::is_web();
     std::string s;
-    s.reserve(std::transform_reduce(list.begin(), list.end(), (size_t)0, std::plus(), [](auto e) { return e.size(); }));
+    s.reserve(
+        std::transform_reduce(list.begin(), list.end(), (size_t)!web, std::plus(), [](auto e) { return e.size(); }));
     for (auto e : list)
         s.append(e);
 
-    if (utils::platform::is_web())
+    if (web)
     {
         MAIN_THREAD_EM_ASM(
             {
@@ -75,6 +77,7 @@ void log(std::span<const std::string_view> list)
     }
     else
     {
+        s.push_back('\n');
         MAIN_THREAD_EM_ASM({ process.stderr.write(HEAPU8.slice($0, $0 + $1)); }, s.data(), s.size());
     }
 #else

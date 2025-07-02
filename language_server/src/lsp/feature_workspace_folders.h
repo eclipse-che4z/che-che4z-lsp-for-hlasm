@@ -56,13 +56,9 @@ private:
 
     void send_configuration_request();
 
-    void register_file_change_notifictions();
-
     parser_library::workspace_manager& ws_mngr_;
     std::vector<std::pair<std::string, std::string>> m_initial_workspaces;
     std::string m_root_uri;
-
-    bool m_supports_dynamic_file_change_notification = false;
 };
 
 } // namespace hlasm_plugin::language_server::lsp

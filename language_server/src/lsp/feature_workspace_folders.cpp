@@ -19,7 +19,6 @@
 #include "nlohmann/json.hpp"
 #include "utils/path.h"
 #include "utils/path_conversions.h"
-#include "utils/platform.h"
 
 namespace hlasm_plugin::language_server::lsp {
 
@@ -67,9 +66,6 @@ void feature_workspace_folders::initialize_feature(const nlohmann::json& initial
     {
         if (auto ws_folders = ws->find("workspaceFolders"); ws_folders != ws->end())
             ws_folders_support = ws_folders->get<bool>();
-
-        if (auto watcher = ws->find("didChangeWatchedFiles"); watcher != ws->end() && watcher->is_object())
-            m_supports_dynamic_file_change_notification = watcher->value("dynamicRegistration", false);
     }
 
     if (auto root_uri = initialize_params.find("rootUri"); root_uri != initialize_params.end() && root_uri->is_string())
@@ -97,8 +93,6 @@ void feature_workspace_folders::initialized()
 {
     ws_mngr_.change_implicit_group_base(m_root_uri);
     send_configuration_request();
-    if (m_supports_dynamic_file_change_notification)
-        register_file_change_notifictions();
     for (const auto& [name, uri] : std::exchange(m_initial_workspaces, {}))
         ws_mngr_.add_workspace(name, uri);
 }
@@ -166,41 +160,6 @@ void feature_workspace_folders::send_configuration_request()
         [this](const nlohmann::json& params) { configuration(params); },
         [](int, [[maybe_unused]] const char* msg) {
             LOG_WARNING("Unexpected error configuration response received: ", msg);
-        });
-}
-
-void feature_workspace_folders::register_file_change_notifictions()
-{
-    static const nlohmann::json global_patterns {
-        {
-            "registrations",
-            nlohmann::json::array_t {
-                {
-                    { "id", "global_watchers" },
-                    { "method", "workspace/didChangeWatchedFiles" },
-                    {
-                        "registerOptions",
-                        {
-                            {
-                                "watchers",
-                                nlohmann::json::array_t {
-                                    { { "globPattern", "**/*" } },
-                                    { { "globPattern", ".hlasmplugin/*.json" } },
-                                },
-                            },
-                        },
-                    },
-                },
-            },
-        },
-    };
-
-    response_->request(
-        "client/registerCapability",
-        global_patterns,
-        [](const nlohmann::json&) {},
-        [](int, [[maybe_unused]] const char* msg) {
-            LOG_WARNING("Error occurred while registering file watcher: ", msg);
         });
 }
 

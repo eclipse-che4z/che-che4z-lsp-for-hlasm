@@ -102,7 +102,8 @@ TEST(workspace_configuration, refresh_needed_configs)
             co_return std::nullopt;
         }));
 
-    workspace_configuration cfg(fm, resource_location("test://workspace"), global_settings, global_config, nullptr);
+    workspace_configuration cfg(
+        fm, resource_location("test://workspace"), global_settings, global_config, nullptr, nullptr);
 
     EXPECT_TRUE(cfg.refresh_libraries({ resource_location("test://workspace/.hlasmplugin") }).run().value());
     EXPECT_TRUE(
@@ -136,7 +137,8 @@ TEST(workspace_configuration, external_configurations_group_name)
     EXPECT_CALL(fm, get_file_content(resource_location("test://workspace/.hlasmplugin/pgm_conf.json")))
         .WillOnce(Invoke([]() { return value_task<std::optional<std::string>>::from_value(std::nullopt); }));
 
-    workspace_configuration cfg(fm, resource_location("test://workspace"), global_settings, global_config, &ext_confg);
+    workspace_configuration cfg(
+        fm, resource_location("test://workspace"), global_settings, global_config, &ext_confg, nullptr);
     cfg.parse_configuration_file().run();
 
     EXPECT_CALL(ext_confg,
@@ -171,7 +173,8 @@ TEST(workspace_configuration, external_configurations_group_inline)
         return value_task<std::optional<std::string>>::from_value(std::nullopt);
     }));
 
-    workspace_configuration cfg(fm, resource_location("test://workspace"), global_settings, global_config, &ext_confg);
+    workspace_configuration cfg(
+        fm, resource_location("test://workspace"), global_settings, global_config, &ext_confg, nullptr);
     cfg.parse_configuration_file().run();
 
     EXPECT_CALL(ext_confg,
@@ -214,7 +217,8 @@ TEST(workspace_configuration, external_configurations_prune)
         return value_task<std::optional<std::string>>::from_value(std::nullopt);
     }));
 
-    workspace_configuration cfg(fm, resource_location("test://workspace"), global_settings, global_config, &ext_confg);
+    workspace_configuration cfg(
+        fm, resource_location("test://workspace"), global_settings, global_config, &ext_confg, nullptr);
     cfg.parse_configuration_file().run();
 
     static constexpr std::string_view grp_def(R"({
@@ -267,7 +271,8 @@ TEST(workspace_configuration, external_configurations_prune_all)
         return value_task<std::optional<std::string>>::from_value(std::nullopt);
     }));
 
-    workspace_configuration cfg(fm, resource_location("test://workspace"), global_settings, global_config, &ext_confg);
+    workspace_configuration cfg(
+        fm, resource_location("test://workspace"), global_settings, global_config, &ext_confg, nullptr);
     cfg.parse_configuration_file().run();
 
     static constexpr std::string_view grp_def(R"({
@@ -308,7 +313,7 @@ TEST(workspace_configuration, refresh_settings)
     shared_json global_settings = std::make_shared<const nlohmann::json>(
         nlohmann::json::parse(R"({"pgm_mask":["file_name"],"sysparm":"DEBUG"})"));
     lib_config global_config;
-    workspace_configuration ws_cfg(fm, empty_ws, global_settings, global_config, nullptr);
+    workspace_configuration ws_cfg(fm, empty_ws, global_settings, global_config, nullptr, nullptr);
     const auto test_loc = resource_location::join(empty_ws, "test");
     ws_cfg.parse_configuration_file().run();
 
@@ -484,7 +489,7 @@ TEST(workspace_configuration, load_config_synthetic)
     file_manager_proc_grps_test file_manager;
     shared_json global_settings = make_empty_shared_json();
     lib_config global_config;
-    workspace_configuration ws_cfg(file_manager, ws_loc, global_settings, global_config, nullptr);
+    workspace_configuration ws_cfg(file_manager, ws_loc, global_settings, global_config, nullptr, nullptr);
 
     ws_cfg.parse_configuration_file().run();
 
@@ -588,7 +593,7 @@ TEST(workspace_configuration, asm_options_goff_xobject_redefinition)
     file_manager_asm_test file_manager;
     shared_json global_settings = make_empty_shared_json();
     lib_config global_config;
-    workspace_configuration ws_cfg(file_manager, ws_loc, global_settings, global_config, nullptr);
+    workspace_configuration ws_cfg(file_manager, ws_loc, global_settings, global_config, nullptr, nullptr);
 
     ws_cfg.parse_configuration_file().run();
 
@@ -598,6 +603,60 @@ TEST(workspace_configuration, asm_options_goff_xobject_redefinition)
     EXPECT_TRUE(contains_message_codes(diags, { "W0002" }));
 }
 
+TEST(workspace_configuration, watcher_registrations)
+{
+    NiceMock<file_manager_mock> file_manager;
+    EXPECT_CALL(file_manager, get_file_content(_)).WillRepeatedly(Invoke([]() {
+        return hlasm_plugin::utils::value_task<std::optional<std::string>>::from_value(std::nullopt);
+    }));
+    EXPECT_CALL(file_manager, list_directory_subdirs_and_symlinks(_))
+        .WillOnce(Return(hlasm_plugin::utils::value_task<
+            hlasm_plugin::parser_library::workspaces::list_directory_result>::from_value({
+            {},
+            hlasm_plugin::utils::path::list_directory_rc::not_a_directory,
+        })));
+
+    shared_json global_settings(std::make_shared<nlohmann::json>(R"({
+    "hlasm": {
+    "pgm_conf": {"pgms":[]},
+    "proc_grps": {
+      "pgroups": [
+        {
+          "name": "test",
+          "libs": [
+            "scheme:/test/library",
+            "scheme:/test/pattern/*/"
+          ]
+        }
+      ]
+    }}})"_json));
+    lib_config global_config;
+
+    struct watcher_registration_provider_mock : watcher_registration_provider
+    {
+        MOCK_METHOD(watcher_registration_id, add_watcher, (std::string_view uri, bool recursive), (override));
+        MOCK_METHOD(void, remove_watcher, (watcher_registration_id id), (override));
+    } wrp;
+
+    workspace_configuration ws_cfg(file_manager, ws_loc, global_settings, global_config, nullptr, &wrp);
+
+    EXPECT_CALL(wrp, add_watcher("scheme:/test/library/", false)).WillOnce(Return(watcher_registration_id(1)));
+    EXPECT_CALL(wrp, add_watcher("scheme:/test/pattern/", true)).WillOnce(Return(watcher_registration_id(2)));
+
+    ws_cfg.parse_configuration_file().run();
+
+    global_settings.store(std::make_shared<nlohmann::json>(R"({
+    "hlasm": {
+    "pgm_conf": {"pgms":[]},
+    "proc_grps": { "pgroups": [ ] }}})"_json));
+
+    EXPECT_CALL(wrp, remove_watcher(watcher_registration_id(1)));
+    EXPECT_CALL(wrp, remove_watcher(watcher_registration_id(2)));
+
+    EXPECT_TRUE(ws_cfg.settings_updated());
+
+    ws_cfg.parse_configuration_file().run();
+}
 
 namespace {
 class file_manager_refresh_needed_test : public file_manager_impl
@@ -668,7 +727,8 @@ private:
     const resource_location ws_loc = resource_location("test://workspace/");
     const shared_json m_global_settings = make_empty_shared_json();
     lib_config m_global_config;
-    workspace_configuration m_cfg = workspace_configuration(m_fm, ws_loc, m_global_settings, m_global_config, nullptr);
+    workspace_configuration m_cfg =
+        workspace_configuration(m_fm, ws_loc, m_global_settings, m_global_config, nullptr, nullptr);
 
     void cache_content(
         const resource_location& pgm_location, const std::unordered_set<resource_location>& lib_locations_to_cache)

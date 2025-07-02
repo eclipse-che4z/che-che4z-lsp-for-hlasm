@@ -195,7 +195,7 @@ std::vector<diagnostic> close_parse_and_recollect_diags(workspace& ws,
 struct workspace_test
 {
     workspace_test(file_manager& fm)
-        : ws_cfg(fm, ws_rl, global_settings, config, nullptr)
+        : ws_cfg(fm, ws_rl, global_settings, config, nullptr, nullptr)
         , ws(fm, ws_cfg)
     {
         ws_cfg.parse_configuration_file().run();
@@ -261,7 +261,7 @@ public:
     file_manager_impl_test fm;
     lib_config config;
     shared_json global_settings = make_empty_shared_json();
-    workspace_configuration ws_cfg = workspace_configuration(fm, ws_rl, global_settings, config, nullptr);
+    workspace_configuration ws_cfg = workspace_configuration(fm, ws_rl, global_settings, config, nullptr, nullptr);
     workspace ws = workspace(fm, ws_cfg);
 
     pgm_conf_preference_helper()

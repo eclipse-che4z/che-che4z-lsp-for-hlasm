@@ -15,6 +15,7 @@
 
 #include "lsp_server.h"
 
+#include <algorithm>
 #include <exception>
 #include <functional>
 #include <memory>
@@ -32,6 +33,8 @@
 #include "parsing_metadata_serialization.h"
 #include "utils/error_codes.h"
 #include "utils/general_hashers.h"
+#include "utils/scope_exit.h"
+#include "watchers.h"
 
 namespace hlasm_plugin::language_server::lsp {
 
@@ -49,6 +52,7 @@ server::server(parser_library::workspace_manager& ws_mngr)
     ws_mngr.register_diagnostics_consumer(this);
     ws_mngr.set_message_consumer(this);
     ws_mngr.set_request_interface(this);
+    ws_mngr.set_watcher_registration_provider(this);
 
     ws_mngr.register_parsing_metadata_consumer(this);
 }
@@ -310,12 +314,30 @@ void server::on_initialize(const request_id& id, const nlohmann::json& param)
 
     if (progress_notification::client_supports_work_done_progress(param))
         ws_mngr.set_progress_notification_consumer(&progress);
+
+    fill_change_notification_support_flags(param);
 }
 
-void server::on_initialized(const nlohmann::json&) const
+void server::fill_change_notification_support_flags(const nlohmann::json& initialize_params)
+{
+    const auto& capabs = initialize_params.at("capabilities");
+
+    if (auto ws = capabs.find("workspace"); ws != capabs.end())
+    {
+        if (auto watcher = ws->find("didChangeWatchedFiles"); watcher != ws->end() && watcher->is_object())
+        {
+            m_supports_dynamic_file_change_notification = watcher->value("dynamicRegistration", false);
+            m_supports_file_change_notification_relative_pattern = watcher->value("relativePatternSupport", false);
+        }
+    }
+}
+
+void server::on_initialized(const nlohmann::json&)
 {
     for (const auto& f : features_)
         f->initialized();
+    if (m_supports_dynamic_file_change_notification)
+        register_default_watcher();
 }
 
 void server::on_shutdown(const request_id& id, const nlohmann::json&)
@@ -504,4 +526,80 @@ void server::toggle_advisory_configuration_diagnostics(const nlohmann::json&)
 
 void server::set_log_level(const nlohmann::json& data) { logger::instance.level(data.at("log-level").get<unsigned>()); }
 
+parser_library::watcher_registration_id server::add_watcher(std::string_view uri, bool r)
+{
+    if (!m_supports_file_change_notification_relative_pattern || !m_supports_dynamic_file_change_notification
+        || shutdown_request_received_)
+        return parser_library::watcher_registration_id::INVALID;
+
+    const auto matching_registration = [uri, r](const auto& w) { return w.base_uri == uri && w.recursive == r; };
+    if (const auto it = std::ranges::find_if(m_watcher_registrations, matching_registration);
+        it != std::ranges::end(m_watcher_registrations))
+    {
+        it->reference_count++;
+        return it->id;
+    }
+
+    const auto id = next_watcher_id();
+
+    m_watcher_registrations.emplace_back(std::string(uri), r, id);
+
+    bool done = false;
+    utils::scope_exit remove_on_failure([this, id, &done]() noexcept {
+        if (!done)
+            std::erase_if(m_watcher_registrations, [id](const watcher_registration& wr) { return wr.id == id; });
+    });
+
+    request("client/registerCapability",
+        { { "registrations", nlohmann::json::array_t { watcher_registeration(id, uri, r) } } },
+        &empty_handler,
+        [this, id](int, const char* msg) {
+            std::erase_if(m_watcher_registrations, [id](const watcher_registration& wr) { return wr.id == id; });
+            LOG_WARNING("Error occurred while registering a file watcher: ", msg);
+        });
+
+    done = true;
+
+    return id;
+}
+
+void server::remove_watcher(parser_library::watcher_registration_id id)
+{
+    const auto it = std::ranges::find(m_watcher_registrations, id, &watcher_registration::id);
+    if (it == std::ranges::end(m_watcher_registrations) || --it->reference_count > 0)
+        return;
+
+    std::swap(*it, m_watcher_registrations.back());
+    m_watcher_registrations.pop_back();
+
+    if (shutdown_request_received_)
+        return;
+
+    request("client/unregisterCapability",
+        { { "unregisterations", nlohmann::json::array_t { watcher_unregisteration(id) } } },
+        &empty_handler,
+        [](int, const char* msg) { LOG_WARNING("Error occurred while unregistering file watcher: ", msg); });
+}
+
+void server::register_default_watcher()
+{
+    request("client/registerCapability",
+        { { "registrations", nlohmann::json::array_t { default_watcher_registration() } } },
+        &empty_handler,
+        [](int, const char* msg) { LOG_WARNING("Error occurred while registering global file watcher: ", msg); });
+}
+
+parser_library::watcher_registration_id server::next_watcher_id() noexcept
+{
+    const auto n = static_cast<std::underlying_type_t<parser_library::watcher_registration_id>>(m_next_watcher_id) + 1;
+    const auto w = static_cast<parser_library::watcher_registration_id>(n);
+    m_next_watcher_id = w;
+    return w;
+}
+
+void server::testing_enable_capabilities()
+{
+    m_supports_dynamic_file_change_notification = true;
+    m_supports_file_change_notification_relative_pattern = true;
+}
 } // namespace hlasm_plugin::language_server::lsp

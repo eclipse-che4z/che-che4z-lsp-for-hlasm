@@ -40,6 +40,7 @@ struct document_symbol_item;
 struct fade_message;
 class workspace_manager_external_file_requests;
 class external_configuration_requests;
+class watcher_registration_provider;
 namespace debugging {
 struct debugger_configuration;
 struct output_line;
@@ -152,6 +153,7 @@ public:
     virtual void set_message_consumer(message_consumer* consumer) = 0;
     virtual void set_request_interface(workspace_manager_requests* requests) = 0;
     virtual void set_progress_notification_consumer(progress_notification_consumer* progress) = 0;
+    virtual void set_watcher_registration_provider(watcher_registration_provider* watchers) = 0;
 
     virtual std::string get_virtual_file_content(unsigned long long id) const = 0;
 

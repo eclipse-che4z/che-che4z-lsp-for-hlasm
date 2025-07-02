@@ -23,6 +23,7 @@
 #include "../telemetry_sink.h"
 #include "nlohmann/json_fwd.hpp"
 #include "progress_notification.h"
+#include "watcher_registration_provider.h"
 #include "workspace_manager.h"
 #include "workspace_manager_requests.h"
 
@@ -36,7 +37,8 @@ class server final : public hlasm_plugin::language_server::server,
                      parser_library::message_consumer,
                      public telemetry_sink,
                      parser_library::parsing_metadata_consumer,
-                     parser_library::workspace_manager_requests
+                     parser_library::workspace_manager_requests,
+                     parser_library::watcher_registration_provider
 {
 public:
     // Creates the server with workspace_manager as entry point to parser library.
@@ -72,11 +74,25 @@ private:
     parser_library::workspace_manager& ws_mngr;
     progress_notification progress;
 
+    struct watcher_registration
+    {
+        std::string base_uri;
+        bool recursive;
+        parser_library::watcher_registration_id id;
+        unsigned long long reference_count = 1;
+    };
+
+    parser_library::watcher_registration_id m_next_watcher_id = parser_library::watcher_registration_id::INVALID;
+    std::vector<watcher_registration> m_watcher_registrations;
+
+    bool m_supports_dynamic_file_change_notification : 1 = false;
+    bool m_supports_file_change_notification_relative_pattern : 1 = false;
+
     // requests
     // Implements initialize request.
     void on_initialize(const request_id& id, const nlohmann::json& param);
     // Implements initialized notification.
-    void on_initialized(const nlohmann::json&) const;
+    void on_initialized(const nlohmann::json&);
     // Implements the LSP shutdown request.
     void on_shutdown(const request_id& id, const nlohmann::json& param);
 
@@ -120,6 +136,16 @@ private:
     void toggle_advisory_configuration_diagnostics(const nlohmann::json&);
 
     void set_log_level(const nlohmann::json&);
+
+    parser_library::watcher_registration_id add_watcher(std::string_view uri, bool recursive) override;
+    void remove_watcher(parser_library::watcher_registration_id id) override;
+
+    parser_library::watcher_registration_id next_watcher_id() noexcept;
+    void register_default_watcher();
+    void fill_change_notification_support_flags(const nlohmann::json& json);
+
+public: // testing only
+    void testing_enable_capabilities();
 };
 
 } // namespace hlasm_plugin::language_server::lsp

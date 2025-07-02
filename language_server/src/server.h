@@ -26,7 +26,6 @@
 #include "feature.h"
 #include "send_message_provider.h"
 #include "telemetry_sink.h"
-#include "workspace_manager.h"
 
 namespace hlasm_plugin::language_server {
 

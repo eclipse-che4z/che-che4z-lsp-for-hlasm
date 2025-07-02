@@ -70,7 +70,8 @@ class workspace_manager_impl final : public workspace_manager,
                                      debugger_configuration_provider,
                                      workspaces::external_file_reader,
                                      external_configuration_requests,
-                                     workspaces::configuration_provider
+                                     workspaces::configuration_provider,
+                                     watcher_registration_provider
 {
     static constexpr lib_config supress_all { 0 };
     using resource_location = utils::resource::resource_location;
@@ -83,13 +84,15 @@ class workspace_manager_impl final : public workspace_manager,
             std::string_view,
             workspaces::file_manager& file_manager,
             const lib_config& global_config,
-            external_configuration_requests* ecr)
-            : config(file_manager, location, settings, global_config, ecr)
+            external_configuration_requests* ecr,
+            watcher_registration_provider* wp)
+            : config(file_manager, location, settings, global_config, ecr, wp)
         {}
         opened_workspace(workspaces::file_manager& file_manager,
             const lib_config& global_config,
-            external_configuration_requests* ecr)
-            : config(file_manager, utils::resource::resource_location(), settings, global_config, ecr)
+            external_configuration_requests* ecr,
+            watcher_registration_provider* wp)
+            : config(file_manager, utils::resource::resource_location(), settings, global_config, ecr, wp)
         {}
         workspaces::shared_json settings = std::make_shared<const nlohmann::json>(nlohmann::json::object());
         workspaces::workspace_configuration config;
@@ -621,6 +624,8 @@ class workspace_manager_impl final : public workspace_manager,
 
     void set_progress_notification_consumer(progress_notification_consumer* p) override { m_progress = p; }
 
+    void set_watcher_registration_provider(watcher_registration_provider* p) override { m_watcher_provider = p; }
+
     static auto response_handle(auto r, auto f)
     {
         return [r = std::move(r), f = std::move(f)](bool workspace_removed) {
@@ -980,6 +985,7 @@ class workspace_manager_impl final : public workspace_manager,
     lib_config m_global_config;
 
     workspace_manager_external_file_requests* m_external_file_requests = nullptr;
+    watcher_registration_provider* m_watcher_provider = nullptr;
     workspaces::file_manager_impl m_file_manager;
 
     std::unordered_map<resource_location, opened_workspace> m_workspaces;
@@ -1021,7 +1027,8 @@ class workspace_manager_impl final : public workspace_manager,
                             name,
                             m_file_manager,
                             m_global_config,
-                            static_cast<external_configuration_requests*>(this))
+                            static_cast<external_configuration_requests*>(this),
+                            static_cast<watcher_registration_provider*>(this))
                         .first->second;
         m_ws.set_message_consumer(m_message_consumer);
 
@@ -1153,12 +1160,26 @@ class workspace_manager_impl final : public workspace_manager,
         return ows->config.get_opcode_suggestion_data(url);
     }
 
+    watcher_registration_id add_watcher(std::string_view uri, bool recursive) override
+    {
+        if (m_watcher_provider)
+            return m_watcher_provider->add_watcher(uri, recursive);
+        else
+            return watcher_registration_id::INVALID;
+    }
+
+    void remove_watcher(watcher_registration_id id) override
+    {
+        if (m_watcher_provider)
+            return m_watcher_provider->remove_watcher(id);
+    }
+
 public:
     explicit workspace_manager_impl(
         workspace_manager_external_file_requests* external_file_requests, bool vscode_extensions)
         : m_external_file_requests(external_file_requests)
         , m_file_manager(*this)
-        , m_implicit_workspace(m_file_manager, m_global_config, this)
+        , m_implicit_workspace(m_file_manager, m_global_config, this, this)
         , m_ws(m_file_manager, *this)
         , m_vscode_extensions(vscode_extensions)
     {

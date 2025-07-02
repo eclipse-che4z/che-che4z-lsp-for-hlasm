@@ -16,7 +16,6 @@
 #include "server.h"
 
 #include <functional>
-#include <sstream>
 
 #include "logger.h"
 #include "nlohmann/json.hpp"

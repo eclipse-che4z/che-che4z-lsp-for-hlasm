@@ -396,7 +396,7 @@ public:
 TEST_F(workspace_test, did_close_file)
 {
     file_manager_extended file_manager;
-    workspace_configuration ws_cfg(file_manager, ws_loc, global_settings, config, nullptr);
+    workspace_configuration ws_cfg(file_manager, ws_loc, global_settings, config, nullptr, nullptr);
     workspace ws(file_manager, ws_cfg);
 
     ws_cfg.parse_configuration_file().run();
@@ -439,7 +439,7 @@ TEST_F(workspace_test, did_close_file)
 TEST_F(workspace_test, did_close_file_without_save)
 {
     file_manager_extended file_manager;
-    workspace_configuration ws_cfg(file_manager, ws_loc, global_settings, config, nullptr);
+    workspace_configuration ws_cfg(file_manager, ws_loc, global_settings, config, nullptr, nullptr);
     workspace ws(file_manager, ws_cfg);
 
     ws_cfg.parse_configuration_file().run();
@@ -471,7 +471,7 @@ TEST_F(workspace_test, did_close_file_without_save)
 TEST_F(workspace_test, did_change_watched_files)
 {
     file_manager_extended file_manager;
-    workspace_configuration ws_cfg(file_manager, ws_loc, global_settings, config, nullptr);
+    workspace_configuration ws_cfg(file_manager, ws_loc, global_settings, config, nullptr, nullptr);
     workspace ws(file_manager, ws_cfg);
     ws_cfg.parse_configuration_file().run();
 
@@ -499,7 +499,7 @@ TEST_F(workspace_test, did_change_watched_files)
 TEST_F(workspace_test, did_change_watched_files_not_opened_file)
 {
     file_manager_extended file_manager;
-    workspace_configuration ws_cfg(file_manager, ws_loc, global_settings, config, nullptr);
+    workspace_configuration ws_cfg(file_manager, ws_loc, global_settings, config, nullptr, nullptr);
     workspace ws(file_manager, ws_cfg);
     ws_cfg.parse_configuration_file().run();
 
@@ -515,7 +515,7 @@ TEST_F(workspace_test, did_change_watched_files_not_opened_file)
 TEST_F(workspace_test, diagnostics_recollection)
 {
     file_manager_opt file_manager(file_manager_opt_variant::required);
-    workspace_configuration ws_cfg(file_manager, ws_loc, global_settings, config, nullptr);
+    workspace_configuration ws_cfg(file_manager, ws_loc, global_settings, config, nullptr, nullptr);
     workspace ws(file_manager, ws_cfg);
     ws_cfg.parse_configuration_file().run();
 
@@ -535,7 +535,7 @@ TEST_F(workspace_test, missing_library_required)
              file_manager_opt_variant::required })
     {
         file_manager_opt file_manager(type);
-        workspace_configuration ws_cfg(file_manager, ws_loc, global_settings, config, nullptr);
+        workspace_configuration ws_cfg(file_manager, ws_loc, global_settings, config, nullptr, nullptr);
         workspace ws(file_manager, ws_cfg);
         ws_cfg.parse_configuration_file().run();
 
@@ -548,7 +548,7 @@ TEST_F(workspace_test, missing_library_required)
 TEST_F(workspace_test, missing_library_optional)
 {
     file_manager_opt file_manager(file_manager_opt_variant::optional);
-    workspace_configuration ws_cfg(file_manager, ws_loc, global_settings, config, nullptr);
+    workspace_configuration ws_cfg(file_manager, ws_loc, global_settings, config, nullptr, nullptr);
     workspace ws(file_manager, ws_cfg);
     ws_cfg.parse_configuration_file().run();
 
@@ -560,7 +560,7 @@ TEST_F(workspace_test, missing_library_optional)
 TEST_F(workspace_test, invalid_assembler_options)
 {
     file_manager_opt file_manager(file_manager_opt_variant::invalid_assembler_options);
-    workspace_configuration ws_cfg(file_manager, ws_loc, global_settings, config, nullptr);
+    workspace_configuration ws_cfg(file_manager, ws_loc, global_settings, config, nullptr, nullptr);
     workspace ws(file_manager, ws_cfg);
     ws_cfg.parse_configuration_file().run();
 
@@ -570,7 +570,7 @@ TEST_F(workspace_test, invalid_assembler_options)
 TEST_F(workspace_test, invalid_assembler_options_in_pgm_conf)
 {
     file_manager_opt file_manager(file_manager_opt_variant::invalid_assembler_options_in_pgm_conf);
-    workspace_configuration ws_cfg(file_manager, ws_loc, global_settings, config, nullptr);
+    workspace_configuration ws_cfg(file_manager, ws_loc, global_settings, config, nullptr, nullptr);
     workspace ws(file_manager, ws_cfg);
     ws_cfg.parse_configuration_file().run();
 
@@ -580,7 +580,7 @@ TEST_F(workspace_test, invalid_assembler_options_in_pgm_conf)
 TEST_F(workspace_test, invalid_preprocessor_options)
 {
     file_manager_opt file_manager(file_manager_opt_variant::invalid_preprocessor_options);
-    workspace_configuration ws_cfg(file_manager, ws_loc, global_settings, config, nullptr);
+    workspace_configuration ws_cfg(file_manager, ws_loc, global_settings, config, nullptr, nullptr);
     workspace ws(file_manager, ws_cfg);
     ws_cfg.parse_configuration_file().run();
 
@@ -613,7 +613,7 @@ public:
 TEST_F(workspace_test, library_list_failure)
 {
     file_manager_list_dir_failed file_manager;
-    workspace_configuration ws_cfg(file_manager, ws_loc, global_settings, config, nullptr);
+    workspace_configuration ws_cfg(file_manager, ws_loc, global_settings, config, nullptr, nullptr);
     workspace ws(file_manager, ws_cfg);
     ws_cfg.parse_configuration_file().run();
 
@@ -625,7 +625,7 @@ TEST_F(workspace_test, library_list_failure)
 TEST_F(workspace_test, did_change_watched_files_added_missing)
 {
     file_manager_extended file_manager;
-    workspace_configuration ws_cfg(file_manager, ws_loc, global_settings, config, nullptr);
+    workspace_configuration ws_cfg(file_manager, ws_loc, global_settings, config, nullptr, nullptr);
     workspace ws(file_manager, ws_cfg);
     ws_cfg.parse_configuration_file().run();
 
@@ -660,7 +660,7 @@ TEST_F(workspace_test, use_external_library)
     EXPECT_CALL(external_conf_mock, read_external_configuration(Truly(source_match), _)).WillOnce(Invoke(provide_pg));
     fm.did_open_file(source1_loc, 1, "");
 
-    workspace_configuration ws_cfg(fm, resource_location(), global_settings, config, &external_conf_mock);
+    workspace_configuration ws_cfg(fm, resource_location(), global_settings, config, &external_conf_mock, nullptr);
     workspace ws(fm, ws_cfg);
     ws_cfg.parse_configuration_file().run();
 
@@ -697,7 +697,7 @@ TEST_F(workspace_test, use_external_library_with_workspace_uri)
 })");
     fm.did_open_file(source1_loc, 1, "");
 
-    workspace_configuration ws_cfg(fm, ws_loc, global_settings, config, nullptr);
+    workspace_configuration ws_cfg(fm, ws_loc, global_settings, config, nullptr, nullptr);
     workspace ws(fm, ws_cfg);
     ws_cfg.parse_configuration_file().run();
 
@@ -715,7 +715,7 @@ TEST_F(workspace_test, track_nested_dependencies)
 {
     file_manager_extended file_manager;
     config.diag_supress_limit = 0;
-    workspace_configuration ws_cfg(file_manager, ws_loc, global_settings, config, nullptr);
+    workspace_configuration ws_cfg(file_manager, ws_loc, global_settings, config, nullptr, nullptr);
     workspace ws(file_manager, ws_cfg);
 
     ws_cfg.parse_configuration_file().run();

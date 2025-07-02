@@ -21,4 +21,6 @@ target_sources(hlasm_language_server_base PRIVATE
     lsp_server.h
     progress_notification.cpp
     progress_notification.h
+    watchers.cpp
+    watchers.h
 )

@@ -37,6 +37,7 @@
 #include "utils/general_hashers.h"
 #include "utils/resource_location.h"
 #include "utils/task.h"
+#include "watcher_registration_provider.h"
 #include "workspaces/configuration_datatypes.h"
 #include "workspaces/configuration_provider.h"
 
@@ -196,12 +197,43 @@ class workspace_configuration : public configuration_provider
 
     std::vector<diagnostic> m_config_diags;
 
-    std::map<std::pair<utils::resource::resource_location, library_options>,
-        std::pair<std::shared_ptr<library>, bool>,
-        std::less<>>
-        m_libraries;
+    struct watcher_registration_handle
+    {
+        watcher_registration_provider* provider = nullptr;
+        watcher_registration_id id = watcher_registration_id::INVALID;
+
+        constexpr watcher_registration_handle() noexcept = default;
+        constexpr watcher_registration_handle(
+            watcher_registration_provider* provider, watcher_registration_id id) noexcept
+            : provider(provider)
+            , id(id)
+        {}
+
+        watcher_registration_handle(const watcher_registration_handle&) = delete;
+        constexpr watcher_registration_handle(watcher_registration_handle&& o) noexcept;
+        watcher_registration_handle& operator=(const watcher_registration_handle&) = delete;
+        watcher_registration_handle& operator=(watcher_registration_handle&&) noexcept;
+        ~watcher_registration_handle();
+    };
+
+    struct library_entry
+    {
+        std::shared_ptr<library> lib;
+        watcher_registration_handle handle;
+        bool used; // transient
+    };
+
+    struct library_prefix_entry
+    {
+        watcher_registration_handle handle;
+        bool used; // transient
+    };
+
+    std::map<std::pair<utils::resource::resource_location, library_options>, library_entry, std::less<>> m_libraries;
+    std::map<utils::resource::resource_location, library_prefix_entry, std::less<>> m_library_prefixes;
 
     external_configuration_requests* m_external_configuration_requests;
+    watcher_registration_provider* m_watch_provider;
     std::unique_ptr<program_configuration_storage> m_pgm_conf_store;
 
     std::shared_ptr<library> get_local_library(
@@ -267,12 +299,15 @@ class workspace_configuration : public configuration_provider
         const std::vector<utils::resource::resource_location>& opened_files,
         bool include_advisory_cfg_diags) const;
 
+    watcher_registration_handle add_watcher(std::string_view uri, bool recursive);
+
 public:
     workspace_configuration(file_manager& fm,
         utils::resource::resource_location location,
         const shared_json& global_settings,
         const lib_config& global_config,
-        external_configuration_requests* ecr);
+        external_configuration_requests* ecr,
+        watcher_registration_provider* watcher_provider);
     workspace_configuration(file_manager& fm,
         const shared_json& global_settings,
         const lib_config& global_config,

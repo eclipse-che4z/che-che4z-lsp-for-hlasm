@@ -90,7 +90,7 @@ TEST(workspace_folders, initialize_folders)
     response_provider_mock rpm;
     lsp::feature_workspace_folders f(ws_mngr, rpm);
 
-    EXPECT_CALL(rpm, request(std::string("client/registerCapability"), _, _, _)).Times(5);
+    EXPECT_CALL(ws_mngr, change_implicit_group_base(_)).Times(5);
     EXPECT_CALL(rpm, request(std::string("workspace/configuration"), _, _, _)).Times(5);
 
     // workspace folders on, but no workspaces provided
