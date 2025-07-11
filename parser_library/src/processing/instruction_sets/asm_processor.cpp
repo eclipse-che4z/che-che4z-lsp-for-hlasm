@@ -51,7 +51,7 @@ namespace hlasm_plugin::parser_library::processing {
 
 namespace {
 std::optional<context::A_t> try_get_abs_value(
-    const semantics::simple_expr_operand* op, context::dependency_solver& dep_solver)
+    const semantics::expr_assembler_operand* op, context::dependency_solver& dep_solver)
 {
     if (op->has_dependencies(dep_solver, nullptr))
         return std::nullopt;
@@ -65,7 +65,10 @@ std::optional<context::A_t> try_get_abs_value(
 
 std::optional<context::A_t> try_get_abs_value(const semantics::operand* op, context::dependency_solver& dep_solver)
 {
-    auto expr_op = dynamic_cast<const semantics::simple_expr_operand*>(op);
+    auto* asm_op = op->access_asm();
+    if (!asm_op)
+        return std::nullopt;
+    auto* expr_op = asm_op->access_expr();
     if (!expr_op)
         return std::nullopt;
     return try_get_abs_value(expr_op, dep_solver);

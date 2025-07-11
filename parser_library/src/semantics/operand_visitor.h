@@ -19,8 +19,7 @@ namespace hlasm_plugin::parser_library::semantics {
 
 struct empty_operand;
 struct model_operand;
-struct expr_machine_operand;
-struct address_machine_operand;
+struct machine_operand;
 struct expr_assembler_operand;
 struct using_instr_assembler_operand;
 struct complex_assembler_operand;
@@ -41,8 +40,7 @@ protected:
 public:
     virtual void visit(const empty_operand& op) = 0;
     virtual void visit(const model_operand& op) = 0;
-    virtual void visit(const expr_machine_operand& op) = 0;
-    virtual void visit(const address_machine_operand& op) = 0;
+    virtual void visit(const machine_operand& op) = 0;
     virtual void visit(const expr_assembler_operand& op) = 0;
     virtual void visit(const using_instr_assembler_operand& op) = 0;
     virtual void visit(const complex_assembler_operand& op) = 0;

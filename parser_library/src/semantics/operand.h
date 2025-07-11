@@ -15,6 +15,7 @@
 #ifndef SEMANTICS_OPERAND_H
 #define SEMANTICS_OPERAND_H
 
+#include <concepts>
 #include <memory>
 #include <vector>
 
@@ -72,23 +73,85 @@ class operand_visitor;
 // struct representing operand of instruction
 struct operand
 {
-    operand(const operand_type type, const range operand_range);
+private:
+    template<typename T>
+    [[nodiscard]] constexpr T* cast() noexcept
+    {
+        return type == T::type_id ? static_cast<T*>(this) : nullptr;
+    }
+
+    template<typename T>
+    [[nodiscard]] constexpr const T* cast() const noexcept
+    {
+        return type == T::type_id ? static_cast<const T*>(this) : nullptr;
+    }
+
+public:
+    operand(const operand_type type, const range& operand_range);
 
     virtual void apply(operand_visitor& visitor) const = 0;
 
-    model_operand* access_model();
-    ca_operand* access_ca();
-    macro_operand* access_mac();
-    data_def_operand* access_data_def();
-    machine_operand* access_mach();
-    assembler_operand* access_asm();
+    template<std::same_as<model_operand> T = model_operand>
+    [[nodiscard]] constexpr T* access_model() noexcept
+    {
+        return cast<T>();
+    }
+    template<std::same_as<ca_operand> T = ca_operand>
+    [[nodiscard]] constexpr T* access_ca() noexcept
+    {
+        return cast<T>();
+    }
+    template<std::same_as<macro_operand> T = macro_operand>
+    [[nodiscard]] constexpr T* access_mac() noexcept
+    {
+        return cast<T>();
+    }
+    template<std::same_as<data_def_operand> T = data_def_operand>
+    [[nodiscard]] constexpr T* access_data_def() noexcept
+    {
+        return cast<T>();
+    }
+    template<std::same_as<machine_operand> T = machine_operand>
+    [[nodiscard]] constexpr T* access_mach() noexcept
+    {
+        return cast<T>();
+    }
+    template<std::same_as<assembler_operand> T = assembler_operand>
+    [[nodiscard]] constexpr T* access_asm() noexcept
+    {
+        return cast<T>();
+    }
 
-    const model_operand* access_model() const;
-    const ca_operand* access_ca() const;
-    const macro_operand* access_mac() const;
-    const data_def_operand* access_data_def() const;
-    const machine_operand* access_mach() const;
-    const assembler_operand* access_asm() const;
+    template<std::same_as<model_operand> T = model_operand>
+    [[nodiscard]] constexpr const T* access_model() const noexcept
+    {
+        return cast<T>();
+    }
+    template<std::same_as<ca_operand> T = ca_operand>
+    [[nodiscard]] constexpr const T* access_ca() const noexcept
+    {
+        return cast<T>();
+    }
+    template<std::same_as<macro_operand> T = macro_operand>
+    [[nodiscard]] constexpr const T* access_mac() const noexcept
+    {
+        return cast<T>();
+    }
+    template<std::same_as<data_def_operand> T = data_def_operand>
+    [[nodiscard]] constexpr const T* access_data_def() const noexcept
+    {
+        return cast<T>();
+    }
+    template<std::same_as<machine_operand> T = machine_operand>
+    [[nodiscard]] constexpr const T* access_mach() const noexcept
+    {
+        return cast<T>();
+    }
+    template<std::same_as<assembler_operand> T = assembler_operand>
+    [[nodiscard]] constexpr const T* access_asm() const noexcept
+    {
+        return cast<T>();
+    }
 
     const operand_type type;
     const range operand_range;

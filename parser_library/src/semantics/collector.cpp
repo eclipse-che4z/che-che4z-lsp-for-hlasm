@@ -254,12 +254,7 @@ context::shared_stmt_ptr collector::extract_statement(processing::processing_sta
         if (!op_)
             op_.emplace(instr_.value().field_range, operand_list {});
 
-        // foreach operand substitute null with empty
-        for (size_t i = 0; i < op_->value.size(); i++)
-        {
-            if (!op_->value[i])
-                op_->value[i] = std::make_unique<empty_operand>(instr_.value().field_range);
-        }
+        assert(std::ranges::all_of(op_->value, [](const auto& p) { return !!p; }));
 
         return std::make_shared<statement_si>(union_range(lbl_->field_range, op_->field_range),
             std::move(*lbl_),

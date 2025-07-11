@@ -22,6 +22,8 @@ target_sources(parser_library PRIVATE
     instr_operand.h
     instruction_checker.cpp
     instruction_checker.h
+    machine_check.cpp
+    machine_check.h
     operand.h
     using_label_checker.cpp
     using_label_checker.h

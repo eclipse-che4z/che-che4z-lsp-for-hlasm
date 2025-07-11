@@ -316,8 +316,8 @@ void process_mnemonic_code(const instructions::mnemonic_code& mnemonic_instr,
     int snippet_id = 1;
     bool first_optional = true;
 
-    const auto& mach_operands = mnemonic_instr.instruction()->operands();
-    const auto optional_count = mnemonic_instr.instruction()->optional_operand_count();
+    const auto& mach_operands = mnemonic_instr.instruction().operands();
+    const auto optional_count = mnemonic_instr.instruction().optional_operand_count();
 
     auto transforms = mnemonic_instr.operand_transformations();
 
@@ -430,18 +430,18 @@ void process_mnemonic_code(const instructions::mnemonic_code& mnemonic_instr,
             subs_ops_nomnems_no_snippets.take(),
             utils::concat(mnemonic_instr.name(), " ${", snippet_id++, ":}", subs_ops_nomnems.take()),
             utils::concat("**",
-                mnemonic_instr.instruction()->fullname(),
+                mnemonic_instr.instruction().fullname(),
                 "**",
                 "\n\nMnemonic code for ",
-                mnemonic_instr.instruction()->name(),
+                mnemonic_instr.instruction().name(),
                 " instruction, format: ",
-                instructions::mach_format_to_string(mnemonic_instr.instruction()->format()),
+                instructions::mach_format_to_string(mnemonic_instr.instruction().format()),
                 "\n\nSubstituted operands: ",
                 subs_ops_mnems.take(),
-                get_implicit_parameters_text(mnemonic_instr.instruction()->has_parameter_list()),
-                get_privileged_status_text(mnemonic_instr.instruction()->privileged()),
-                generate_cc_explanation(mnemonic_instr.instruction()->cc_explanation()),
-                get_page_text(mnemonic_instr.instruction()->page_in_pop())),
+                get_implicit_parameters_text(mnemonic_instr.instruction().has_parameter_list()),
+                get_privileged_status_text(mnemonic_instr.instruction().privileged()),
+                generate_cc_explanation(mnemonic_instr.instruction().cc_explanation()),
+                get_page_text(mnemonic_instr.instruction().page_in_pop())),
             completion_item_kind::mach_instr,
             true),
         std::forward_as_tuple(mnemonic_instr.instr_set_affiliation()));

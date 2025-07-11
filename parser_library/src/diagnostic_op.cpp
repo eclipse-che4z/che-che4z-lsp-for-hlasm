@@ -1434,7 +1434,7 @@ diagnostic_op diagnostic_op::error_M114(std::string_view instr_name, const range
 }
 
 diagnostic_op diagnostic_op::error_M120(
-    std::string_view instr_name, const range& range, std::string_view qual, int min_value)
+    std::string_view instr_name, const range& range, long long from, long long to, std::string_view qual)
 {
     return diagnostic_op(diagnostic_severity::error,
         "M120",
@@ -1444,16 +1444,18 @@ diagnostic_op diagnostic_op::error_M120(
             qual,
             std::string_view(" ", +!qual.empty()),
             "between ",
-            std::to_string(min_value),
-            " and 15"),
+            from,
+            " and ",
+            to),
         range);
 }
 
-diagnostic_op diagnostic_op::error_M121(std::string_view instr_name, const range& range)
+diagnostic_op diagnostic_op::error_M121(std::string_view instr_name, long long from, long long to, const range& range)
 {
     return diagnostic_op(diagnostic_severity::error,
         "M121",
-        concat("Error at ", instr_name, " instruction: mask operand absolute value must be between 0 and 15"),
+        concat(
+            "Error at ", instr_name, " instruction: mask operand absolute value must be between ", from, " and ", to),
         range);
 }
 
@@ -1483,12 +1485,16 @@ diagnostic_op diagnostic_op::error_M123(std::string_view instr_name, long long f
         range);
 }
 
-diagnostic_op diagnostic_op::error_M124(std::string_view instr_name, const range& range)
+diagnostic_op diagnostic_op::error_M124(std::string_view instr_name, long long from, long long to, const range& range)
 {
     return diagnostic_op(diagnostic_severity::error,
         "M124",
-        concat(
-            "Error at ", instr_name, " instruction: vector register operand absolute value must be between 0 and 31"),
+        concat("Error at ",
+            instr_name,
+            " instruction: vector register operand absolute value must be between ",
+            from,
+            " and ",
+            to),
         range);
 }
 
@@ -1863,12 +1869,9 @@ diagnostic_op diagnostic_op::error_M003(std::string_view instr_name, const range
         range);
 }
 
-diagnostic_op diagnostic_op::error_M004(std::string_view instr_name, const range& range)
+diagnostic_op diagnostic_op::error_M004(const range& range)
 {
-    return diagnostic_op(diagnostic_severity::error,
-        "M004",
-        concat("Error at ", instr_name, " instruction: operand format D(X,) not allowed"),
-        range);
+    return diagnostic_op(diagnostic_severity::error, "M004", concat("Operand format D(X,) not allowed"), range);
 }
 
 diagnostic_op diagnostic_op::warning_M041(std::string_view instr_name, const range& range)

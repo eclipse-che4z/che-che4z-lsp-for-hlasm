@@ -706,13 +706,13 @@ public:
             status.first.form == processing::processing_form::CA ? p.ca_op_expr() : p.operand_mach();
 
         static constexpr auto ca_expr = [](const semantics::operand_ptr& o) -> const expressions::ca_expression* {
-            if (auto* ca_op = o->access_ca())
+            if (const auto* ca_op = o->access_ca())
                 return ca_op->access_expr()->expression.get();
             return nullptr;
         };
         static constexpr auto mach_expr = [](const semantics::operand_ptr& o) -> const expressions::mach_expression* {
-            if (auto* mach_op = o->access_mach())
-                return mach_op->access_expr()->expression.get();
+            if (const auto* mach_op = o->access_mach(); mach_op && mach_op->is_single_expression())
+                return mach_op->displacement.get();
             return nullptr;
         };
 

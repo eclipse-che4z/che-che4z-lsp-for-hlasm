@@ -494,24 +494,24 @@ lsp_analyzer::collection_info_t lsp_analyzer::get_active_collection(
 }
 
 namespace {
-std::optional<std::pair<int, int>> get_branch_operand(const instructions::machine_instruction* m) noexcept
+std::optional<std::pair<int, int>> get_branch_operand(const instructions::machine_instruction& m) noexcept
 {
-    auto ba = m->branch_argument();
+    auto ba = m.branch_argument();
     if (!ba.valid())
         return std::nullopt;
 
     return std::make_pair(ba.unknown_target() ? -1 : ba.target(), ba.branches_if_nonzero() ? ba.nonzero_arg() : -1);
 }
-std::optional<std::pair<int, int>> get_branch_operand(const instructions::mnemonic_code* m) noexcept
+std::optional<std::pair<int, int>> get_branch_operand(const instructions::mnemonic_code& m) noexcept
 {
-    auto ba = get_branch_operand(m->instruction());
+    auto ba = get_branch_operand(m.instruction());
     if (!ba)
         return ba;
 
     auto& [target, nonzero] = *ba;
     if (nonzero >= 0)
     {
-        for (auto pos = nonzero; const auto& t : m->operand_transformations())
+        for (auto pos = nonzero; const auto& t : m.operand_transformations())
         {
             if (pos < t.skip)
                 break;
@@ -531,7 +531,7 @@ std::optional<std::pair<int, int>> get_branch_operand(const instructions::mnemon
     }
     if (target >= 0)
     {
-        for (auto pos = target; const auto& t : m->operand_transformations())
+        for (auto pos = target; const auto& t : m.operand_transformations())
         {
             if (pos < t.skip)
                 break;
@@ -547,9 +547,9 @@ std::optional<std::pair<int, int>> get_branch_operand(const op_code& op) noexcep
     switch (op.type)
     {
         case context::instruction_type::MACH:
-            return get_branch_operand(op.instr_mach);
+            return get_branch_operand(*op.instr_mach);
         case context::instruction_type::MNEMO:
-            return get_branch_operand(op.instr_mnemo);
+            return get_branch_operand(*op.instr_mnemo);
         default:
             return std::nullopt;
     }
@@ -568,18 +568,15 @@ std::optional<position> extract_symbol_position(semantics::operand& op, context:
 {
     if (op.type != semantics::operand_type::MACH)
         return std::nullopt;
-    auto* mach = op.access_mach();
-    if (!mach)
-        return std::nullopt;
-    const auto* expr = mach->access_expr();
-    if (!expr)
+    const auto* mach = op.access_mach();
+    if (!mach || !mach->is_single_expression())
         return std::nullopt;
     const auto* rel_symbol =
-        dynamic_cast<const expressions::mach_expr_binary<expressions::rel_addr>*>(expr->expression.get());
+        dynamic_cast<const expressions::mach_expr_binary<expressions::rel_addr>*>(mach->displacement.get());
 
     const auto* symbol_name = rel_symbol
         ? dynamic_cast<const expressions::mach_expr_symbol*>(rel_symbol->right_expression())
-        : dynamic_cast<const expressions::mach_expr_symbol*>(expr->expression.get());
+        : dynamic_cast<const expressions::mach_expr_symbol*>(mach->displacement.get());
 
     if (!symbol_name)
         return std::nullopt;
@@ -603,14 +600,11 @@ bool symbol_value_zerolike(semantics::operand& op,
 {
     if (op.type != semantics::operand_type::MACH)
         return false;
-    auto* mach = op.access_mach();
-    if (!mach)
-        return false;
-    const auto* expr = mach->access_expr();
-    if (!expr)
+    const auto* mach = op.access_mach();
+    if (!mach || !mach->is_single_expression())
         return false;
     context::ordinary_assembly_dependency_solver solver(ord_ctx, dep_ctx, li);
-    auto value = expr->expression->evaluate(solver, drop_diagnostic_op);
+    auto value = mach->displacement->evaluate(solver, drop_diagnostic_op);
     if (value.value_kind() != context::symbol_value_kind::ABS)
         return false;
     return value.get_abs() == 0;

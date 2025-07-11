@@ -946,7 +946,7 @@ bool ccw::check(std::span<const asm_operand* const> to_check,
             return false;
         }
 
-        if (!one_operand::is_size_corresponding_unsigned(simple->value, operand_sizes[i]))
+        if (!is_size_corresponding_unsigned(simple->value, operand_sizes[i]))
         {
             if (can_be_relocatable[i])
                 add_diagnostic(diagnostic_op::error_M123(

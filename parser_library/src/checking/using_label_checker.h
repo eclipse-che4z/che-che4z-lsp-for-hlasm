@@ -25,12 +25,10 @@ class dependency_solver;
 
 namespace hlasm_plugin::parser_library::checking {
 
-class using_label_checker final : public expressions::mach_expr_visitor, diagnostic_consumer_t<diagnostic_op>
+class using_label_checker final : public expressions::mach_expr_visitor
 {
     context::dependency_solver& solver;
     diagnostic_consumer_t<diagnostic_op>& diags;
-
-    void add_diagnostic(diagnostic_op) override;
 
 public:
     using_label_checker(context::dependency_solver& solver, diagnostic_consumer_t<diagnostic_op>& diags)

@@ -22,6 +22,7 @@
 #include <cassert>
 #include <charconv>
 #include <optional>
+#include <span>
 #include <string>
 #include <string_view>
 

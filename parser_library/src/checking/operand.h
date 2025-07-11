@@ -26,7 +26,7 @@ class operand
 {
 public:
     operand() = default;
-    operand(range operand_range)
+    explicit operand(const range& operand_range)
         : operand_range(operand_range)
     {}
     range operand_range;
@@ -37,11 +37,11 @@ public:
 using check_op_ptr = std::unique_ptr<operand>;
 
 // Abstract ancestor class for all assembler operands that are prepared for checking.
-class asm_operand : public virtual operand
+class asm_operand : public operand
 {
 public:
     asm_operand() = default;
-    virtual ~asm_operand() = default;
+    explicit asm_operand(const range& r) noexcept;
 };
 
 

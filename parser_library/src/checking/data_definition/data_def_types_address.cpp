@@ -163,7 +163,7 @@ bool check_S_SY_operand(const data_definition_operand& op, const diagnostic_coll
                 continue;
             if (is_signed)
             {
-                if (!machine_operand::is_size_corresponding_signed(adr.displacement.value, size))
+                if (!is_size_corresponding_signed(adr.displacement.value, size))
                 {
                     add_diagnostic(diagnostic_op::error_D022(adr.displacement.rng));
                     ret = false;
@@ -171,13 +171,13 @@ bool check_S_SY_operand(const data_definition_operand& op, const diagnostic_coll
             }
             else
             {
-                if (!machine_operand::is_size_corresponding_unsigned(adr.displacement.value, size))
+                if (!is_size_corresponding_unsigned(adr.displacement.value, size))
                 {
                     add_diagnostic(diagnostic_op::error_D022(adr.displacement.rng));
                     ret = false;
                 }
             }
-            if (!machine_operand::is_size_corresponding_unsigned(adr.base.value, 4))
+            if (!is_size_corresponding_unsigned(adr.base.value, 4))
             {
                 add_diagnostic(diagnostic_op::error_D023(adr.base.rng));
                 ret = false;
@@ -191,7 +191,7 @@ bool check_S_SY_operand(const data_definition_operand& op, const diagnostic_coll
                 continue;
             if (is_signed)
             {
-                if (!machine_operand::is_size_corresponding_signed(expr.value, size))
+                if (!is_size_corresponding_signed(expr.value, size))
                 {
                     add_diagnostic(diagnostic_op::error_D022(expr.rng));
                     ret = false;
@@ -199,7 +199,7 @@ bool check_S_SY_operand(const data_definition_operand& op, const diagnostic_coll
             }
             else
             {
-                if (!machine_operand::is_size_corresponding_unsigned(expr.value, size))
+                if (!is_size_corresponding_unsigned(expr.value, size))
                 {
                     add_diagnostic(diagnostic_op::error_D022(expr.rng));
                     ret = false;

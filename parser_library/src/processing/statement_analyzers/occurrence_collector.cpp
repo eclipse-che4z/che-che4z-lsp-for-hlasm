@@ -41,13 +41,7 @@ void occurrence_collector::visit(const semantics::empty_operand&) {}
 
 void occurrence_collector::visit(const semantics::model_operand& op) { get_occurrence(op.chain); }
 
-void occurrence_collector::visit(const semantics::expr_machine_operand& op)
-{
-    if (op.expression)
-        op.expression->apply(*this);
-}
-
-void occurrence_collector::visit(const semantics::address_machine_operand& op)
+void occurrence_collector::visit(const semantics::machine_operand& op)
 {
     if (op.displacement)
         op.displacement->apply(*this);

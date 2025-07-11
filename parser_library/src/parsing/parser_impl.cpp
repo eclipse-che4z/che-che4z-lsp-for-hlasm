@@ -451,6 +451,7 @@ struct parser2
 
     void add_diagnostic(diagnostic_op d) const;
     void add_diagnostic(diagnostic_op (&d)(const range&)) const;
+    void add_diagnostic(diagnostic_op (&d)(const range&), parser_position start) const;
 
     void syntax_error_or_eof() const;
 
@@ -660,7 +661,8 @@ struct parser2
     };
     result_t<before_model> model_before_variable();
 
-    template<result_t<semantics::operand_ptr> (parser2::*first)(),
+    template<typename EmptyOperand,
+        result_t<semantics::operand_ptr> (parser2::*first)(),
         result_t<semantics::operand_ptr> (parser2::*rest)() = first>
     std::optional<semantics::op_rem> with_model(bool reparse, bool model_allowed) requires(first != nullptr);
 
@@ -906,6 +908,11 @@ void parser2::add_diagnostic(diagnostic_op d) const
 }
 
 void parser2::add_diagnostic(diagnostic_op (&d)(const range&)) const { add_diagnostic(d(cur_pos_range())); }
+
+void parser2::add_diagnostic(diagnostic_op (&d)(const range&), parser_position start) const
+{
+    add_diagnostic(d(range_from(start)));
+}
 
 void parser2::syntax_error_or_eof() const
 {
@@ -4127,7 +4134,7 @@ result_t<semantics::operand_ptr> parser2::mach_op()
         return failure;
 
     if (!try_consume<u8'('>(hl_scopes::operator_symbol))
-        return std::make_unique<semantics::expr_machine_operand>(std::move(disp), range_from(start));
+        return std::make_unique<semantics::machine_operand>(std::move(disp), nullptr, nullptr, range_from(start));
 
     expressions::mach_expr_ptr e1, e2;
     if (eof())
@@ -4143,10 +4150,11 @@ result_t<semantics::operand_ptr> parser2::mach_op()
         else
             e1 = std::move(e);
     }
-    bool parsed_comma = false;
-    if ((parsed_comma = try_consume<u8','>(hl_scopes::operator_symbol)) && !follows<u8')'>())
+    if (try_consume<u8','>(hl_scopes::operator_symbol))
     {
-        if (auto [error, e] = lex_mach_expr(); error)
+        if (follows<u8')'>())
+            add_diagnostic(diagnostic_op::error_M004, start);
+        else if (auto [error, e] = lex_mach_expr(); error)
             return failure;
         else
             e2 = std::move(e);
@@ -4155,19 +4163,8 @@ result_t<semantics::operand_ptr> parser2::mach_op()
     if (!match<u8')'>(hl_scopes::operator_symbol, diagnostic_op::error_S0011))
         return failure;
 
-    if (e1 && e2)
-        return std::make_unique<semantics::address_machine_operand>(
-            std::move(disp), std::move(e1), std::move(e2), range_from(start), checking::operand_state::PRESENT);
-    if (e2)
-        return std::make_unique<semantics::address_machine_operand>(
-            std::move(disp), nullptr, std::move(e2), range_from(start), checking::operand_state::FIRST_OMITTED);
-
-    if (e1 && !parsed_comma)
-        return std::make_unique<semantics::address_machine_operand>(
-            std::move(disp), nullptr, std::move(e1), range_from(start), checking::operand_state::ONE_OP);
-
-    return std::make_unique<semantics::address_machine_operand>(
-        std::move(disp), std::move(e1), nullptr, range_from(start), checking::operand_state::SECOND_OMITTED);
+    return std::make_unique<semantics::machine_operand>(
+        std::move(disp), std::move(e1), std::move(e2), range_from(start));
 }
 
 result_t<semantics::operand_ptr> parser2::dat_op()
@@ -4180,7 +4177,10 @@ result_t<semantics::operand_ptr> parser2::dat_op()
         return failure;
     return std::make_unique<semantics::data_def_operand_inline>(std::move(d), range_from(start));
 }
-template<result_t<semantics::operand_ptr> (parser2::*first)(), result_t<semantics::operand_ptr> (parser2::*rest)()>
+
+template<typename EmptyOperand,
+    result_t<semantics::operand_ptr> (parser2::*first)(),
+    result_t<semantics::operand_ptr> (parser2::*rest)()>
 std::optional<semantics::op_rem> parser2::with_model(bool reparse, bool model_allowed) requires(first != nullptr)
 {
     const auto start = cur_pos(); // capture true beginning
@@ -4207,10 +4207,8 @@ std::optional<semantics::op_rem> parser2::with_model(bool reparse, bool model_al
 
     bool has_error = false;
     if (follows<u8','>())
-        operands.push_back(std::make_unique<semantics::empty_operand>(cur_pos_range()));
-    else if (auto [error, op] = (this->*first)(); (has_error = error))
-        operands.push_back(std::make_unique<semantics::empty_operand>(cur_pos_range()));
-    else
+        operands.push_back(std::make_unique<EmptyOperand>(cur_pos_range()));
+    else if (auto [error, op] = (this->*first)(); !(has_error = error))
         operands.push_back(std::move(op));
 
     if (!has_error && ((rest == nullptr && except<u8' '>()) || except<u8',', u8' '>()))
@@ -4223,15 +4221,15 @@ std::optional<semantics::op_rem> parser2::with_model(bool reparse, bool model_al
     {
         consume(hl_scopes::operator_symbol);
         if (follows<u8','>())
-            operands.push_back(std::make_unique<semantics::empty_operand>(cur_pos_range()));
+            operands.push_back(std::make_unique<EmptyOperand>(cur_pos_range()));
         else if (eof() || follows<u8' '>())
         {
-            operands.push_back(std::make_unique<semantics::empty_operand>(cur_pos_range()));
+            operands.push_back(std::make_unique<EmptyOperand>(cur_pos_range()));
             break;
         }
         else if (auto [error_inner, op_inner] = (this->*rest)(); error_inner)
         {
-            operands.push_back(std::make_unique<semantics::empty_operand>(cur_pos_range()));
+            operands.push_back(std::make_unique<EmptyOperand>(cur_pos_range()));
             break;
         }
         else
@@ -4257,14 +4255,14 @@ std::optional<semantics::op_rem> parser_holder::op_rem_body_mach(bool reparse, b
 {
     parser2 p(this);
 
-    return p.with_model<&parser2::mach_op>(reparse, model_allowed);
+    return p.with_model<semantics::machine_operand, &parser2::mach_op>(reparse, model_allowed);
 }
 
 std::optional<semantics::op_rem> parser_holder::op_rem_body_dat(bool reparse, bool model_allowed)
 {
     parser2 p(this);
 
-    return p.with_model<&parser2::dat_op>(reparse, model_allowed);
+    return p.with_model<semantics::empty_operand, &parser2::dat_op>(reparse, model_allowed);
 }
 
 result_t<semantics::operand_ptr> parser2::alias_op()
@@ -4509,14 +4507,16 @@ std::optional<semantics::op_rem> parser_holder::op_rem_body_asm(
     static constexpr context::id_index USING("USING");
     static constexpr context::id_index END("END");
 
+    using semantics::empty_operand;
+
     if (opcode == ALIAS)
-        return p.with_model<&parser2::alias_op, nullptr>(reparse, model_allowed);
+        return p.with_model<empty_operand, &parser2::alias_op, nullptr>(reparse, model_allowed);
     else if (opcode == USING)
-        return p.with_model<&parser2::using_op1, &parser2::asm_mach_expr>(reparse, model_allowed);
+        return p.with_model<empty_operand, &parser2::using_op1, &parser2::asm_mach_expr>(reparse, model_allowed);
     else if (opcode == END)
-        return p.with_model<&parser2::asm_op, &parser2::end_op>(reparse, model_allowed);
+        return p.with_model<empty_operand, &parser2::asm_op, &parser2::end_op>(reparse, model_allowed);
     else
-        return p.with_model<&parser2::asm_op>(reparse, model_allowed);
+        return p.with_model<empty_operand, &parser2::asm_op>(reparse, model_allowed);
 }
 
 semantics::operand_ptr parser_holder::operand_mach()

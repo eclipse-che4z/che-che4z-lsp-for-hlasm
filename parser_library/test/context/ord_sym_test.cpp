@@ -180,7 +180,7 @@ B LR A*2,1
     EXPECT_TRUE(a.hlasm_ctx().ord_ctx.symbol_defined(context::id_index("B")));
     EXPECT_TRUE(get_symbol(a.hlasm_ctx(), "A")->kind() == symbol_value_kind::RELOC);
 
-    EXPECT_EQ(a.diags().size(), (size_t)2);
+    EXPECT_TRUE(matches_message_codes(a.diags(), { "ME002" }));
 }
 
 TEST(ordinary_symbols, relocatable_to_absolute)

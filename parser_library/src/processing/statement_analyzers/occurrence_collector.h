@@ -44,8 +44,7 @@ public:
 
     void visit(const semantics::empty_operand& op) override;
     void visit(const semantics::model_operand& op) override;
-    void visit(const semantics::expr_machine_operand& op) override;
-    void visit(const semantics::address_machine_operand& op) override;
+    void visit(const semantics::machine_operand& op) override;
     void visit(const semantics::expr_assembler_operand& op) override;
     void visit(const semantics::using_instr_assembler_operand& op) override;
     void visit(const semantics::complex_assembler_operand& op) override;

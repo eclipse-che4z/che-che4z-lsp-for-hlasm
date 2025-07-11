@@ -19,8 +19,6 @@
 
 namespace hlasm_plugin::parser_library::checking {
 
-void using_label_checker::add_diagnostic(diagnostic_op) {}
-
 void using_label_checker::visit(const expressions::mach_expr_constant&) {}
 void using_label_checker::visit(const expressions::mach_expr_data_attr& attr)
 {
@@ -42,7 +40,7 @@ void using_label_checker::visit(const expressions::mach_expr_symbol& expr)
 {
     if (expr.qualifier.empty())
         return;
-    auto value = expr.evaluate(solver, *this);
+    auto value = expr.evaluate(solver, drop_diagnostic_op);
     if (value.value_kind() != context::symbol_value_kind::RELOC)
         return;
     const auto& reloc = value.get_reloc();

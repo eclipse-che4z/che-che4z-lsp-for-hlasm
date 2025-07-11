@@ -384,6 +384,11 @@ public:
 
     constexpr branch_info_argument branch_argument() const noexcept { return m_branch_argument; }
 
+    constexpr std::pair<size_t, size_t> operand_count() const noexcept
+    {
+        return { m_operand_len - m_optional_op_count, m_operand_len };
+    }
+
     static constexpr auto max_name_len = decltype(m_name)::max_len;
 };
 extern constinit const machine_instruction g_machine_instructions[];
@@ -456,8 +461,8 @@ public:
         instruction_set_affiliation instr_set_affiliation,
         std::initializer_list<const mnemonic_transformation> transform) noexcept;
 
-    constexpr const machine_instruction* instruction() const noexcept { return g_machine_instructions + m_instruction; }
-    constexpr size_t size_in_bits() const noexcept { return instruction()->size_in_bits(); }
+    constexpr const machine_instruction& instruction() const noexcept { return g_machine_instructions[m_instruction]; }
+    constexpr size_t size_in_bits() const noexcept { return instruction().size_in_bits(); }
     constexpr std::span<const mnemonic_transformation> operand_transformations() const noexcept
     {
         return { m_transform.data(), m_transform_count };

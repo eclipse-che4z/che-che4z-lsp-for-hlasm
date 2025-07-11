@@ -15,6 +15,7 @@
 #include "gmock/gmock.h"
 
 #include "../common_testing.h"
+#include "expressions/mach_expr_term.h"
 #include "semantics/operand_impls.h"
 #include "semantics/variable_symbol.h"
 
@@ -43,19 +44,6 @@ bool access_op(operand_type type, operand* o)
         return false;
 
     return true;
-}
-
-bool access_mach_op(mach_kind kind, machine_operand* o)
-{
-    auto expr_op = o->access_expr();
-    if ((kind == mach_kind::EXPR) != (expr_op != nullptr))
-        return false;
-    auto addr_op = o->access_address();
-    if ((kind == mach_kind::ADDR) != (addr_op != nullptr))
-        return false;
-
-    operand* op = o;
-    return access_op(operand_type::MACH, op);
 }
 
 bool access_asm_op(asm_kind kind, assembler_operand* o)
@@ -109,12 +97,8 @@ TEST(operand, access_operand)
     EXPECT_TRUE(access_op(operand_type::MODEL, &mo));
 
     // machine operand
-    // expr
-    expr_machine_operand emo(nullptr, range());
-    EXPECT_TRUE(access_mach_op(mach_kind::EXPR, &emo));
-    // addr
-    address_machine_operand amo(nullptr, nullptr, nullptr, range(), checking::operand_state::FIRST_OMITTED);
-    EXPECT_TRUE(access_mach_op(mach_kind::ADDR, &amo));
+    machine_operand emo(std::make_unique<mach_expr_default>(range()), nullptr, nullptr, range());
+    EXPECT_TRUE(access_op(operand_type::MACH, &emo));
 
     // assembler operand
     // expr
