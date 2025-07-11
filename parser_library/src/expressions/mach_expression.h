@@ -16,7 +16,6 @@
 #define HLASMPLUGIN_PARSERLIBRARY_MACH_EXPRESSION_H
 
 #include <memory>
-#include <string>
 
 #include "context/ordinary_assembly/dependable.h"
 #include "diagnostic_consumer.h"
@@ -53,6 +52,8 @@ public:
     virtual size_t hash() const = 0;
 
     virtual mach_expr_ptr clone() const = 0;
+
+    virtual std::int32_t derive_length(std::int32_t mi_length, context::dependency_solver& solver) const = 0;
 
     range get_range() const;
     virtual ~mach_expression() = default;

@@ -63,6 +63,11 @@ public:
 
     const mach_expression* left_expression() const { return left_.get(); }
     const mach_expression* right_expression() const { return right_.get(); }
+
+    std::int32_t derive_length(std::int32_t mi_length, context::dependency_solver& solver) const override
+    {
+        return left_->derive_length(mi_length, solver);
+    }
 };
 
 // Represents a unart operator in machine expression. Holds its
@@ -94,6 +99,11 @@ public:
     size_t hash() const override;
 
     mach_expr_ptr clone() const override { return std::make_unique<mach_expr_unary<T>>(child_->clone(), get_range()); }
+
+    std::int32_t derive_length(std::int32_t mi_length, context::dependency_solver& solver) const override
+    {
+        return child_->derive_length(mi_length, solver);
+    }
 };
 
 struct add

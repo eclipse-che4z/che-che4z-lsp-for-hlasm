@@ -78,18 +78,6 @@ std::pair<std::optional<context::symbol_value::abs_value_t>, bool> evaluate_abs_
     return { std::nullopt, true };
 }
 
-std::optional<context::symbol_value::abs_value_t> derive_expression_length(const expressions::mach_expr_ptr& expr,
-    const instructions::machine_instruction& mi,
-    context::dependency_solver& info)
-{
-    (void)expr;
-    (void)mi;
-    (void)info;
-    // TODO: To be implemented in the future
-    // Pick leftmost operand and determine its length (including * or literals)
-    return std::nullopt;
-}
-
 diagnostic_op get_simple_operand_expected(
     const instructions::machine_operand_format& op_format, std::string_view instr_name, const auto& operand_range)
 {
@@ -238,7 +226,7 @@ machine_operand* evaluate_operands(machine_operand* out,
         if (!first_v.has_value() && fmt->first.type == instructions::machine_operand_type::LENGTH)
         {
             first_op_derived = true;
-            first_v = derive_expression_length(mop->displacement, mi, solver);
+            first_v = mop->displacement->derive_length(mi.size_in_bits() / 8, solver);
         }
 
         if (d.value_kind() == context::symbol_value_kind::ABS)

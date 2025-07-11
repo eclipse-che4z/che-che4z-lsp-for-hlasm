@@ -42,6 +42,8 @@ public:
     size_t hash() const override;
 
     mach_expr_ptr clone() const override;
+
+    std::int32_t derive_length(std::int32_t mi_length, context::dependency_solver& solver) const override;
 };
 
 // Represents a literal expression (e.g. =C'text')
@@ -71,6 +73,8 @@ public:
     context::id_index get_literal_id(context::dependency_solver& solver) const;
 
     void referenced_by_reladdr() const { m_literal_data->set_referenced_by_reladdr(); }
+
+    std::int32_t derive_length(std::int32_t mi_length, context::dependency_solver& solver) const override;
 };
 
 // Represents an attribute of a symbol written in machine expressions (e.g. L'SYMBOL)
@@ -101,6 +105,8 @@ public:
     size_t hash() const override;
 
     mach_expr_ptr clone() const override;
+
+    std::int32_t derive_length(std::int32_t mi_length, context::dependency_solver& solver) const override;
 };
 
 // Represents an attribute of a symbol written in machine expressions (e.g. L'SYMBOL)
@@ -127,6 +133,8 @@ public:
     size_t hash() const override;
 
     mach_expr_ptr clone() const override;
+
+    std::int32_t derive_length(std::int32_t mi_length, context::dependency_solver& solver) const override;
 };
 
 // Represents an ordinary symbol in machine expressions.
@@ -151,6 +159,8 @@ public:
     size_t hash() const override;
 
     mach_expr_ptr clone() const override;
+
+    std::int32_t derive_length(std::int32_t mi_length, context::dependency_solver& solver) const override;
 };
 
 // Represents a location counter written in a machine expression (the character *)
@@ -172,6 +182,8 @@ public:
     size_t hash() const override;
 
     mach_expr_ptr clone() const override;
+
+    std::int32_t derive_length(std::int32_t mi_length, context::dependency_solver& solver) const override;
 };
 
 // Represents an "empty" term that is used when parsing of a machine expression fails
@@ -194,6 +206,8 @@ public:
     size_t hash() const override;
 
     mach_expr_ptr clone() const override;
+
+    std::int32_t derive_length(std::int32_t mi_length, context::dependency_solver& solver) const override;
 };
 
 } // namespace hlasm_plugin::parser_library::expressions

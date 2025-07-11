@@ -367,12 +367,11 @@ TEST(machine_instr_check_test, mnemonics_with_optional_args)
 
 TEST(machine_instr_check_test, length_limits)
 {
-    std::string input(
-        R"(
+    std::string input = R"(
         CLC 0(256,1),0(2)
         CLC 0(1,1),0(2)
         CLC 0(0,1),0(2)
-)");
+)";
     analyzer a(input);
     a.analyze();
     EXPECT_TRUE(a.diags().empty());
@@ -380,10 +379,61 @@ TEST(machine_instr_check_test, length_limits)
 
 TEST(machine_instr_check_test, mnemonic_insert_middle)
 {
-    std::string input(
-        R"(
+    std::string input = R"(
         CIBE 0,0,0(0)
-)");
+)";
+    analyzer a(input);
+    a.analyze();
+    EXPECT_TRUE(a.diags().empty());
+}
+
+TEST(machine_instr_check_test, derive_length_over_1)
+{
+    std::string input = R"(
+        USING *,1
+        CLC   X,0
+X       DS    XL257
+)";
+    analyzer a(input);
+    a.analyze();
+    EXPECT_TRUE(matches_message_codes(a.diags(), { "M132" }));
+}
+
+TEST(machine_instr_check_test, derive_length_over_2)
+{
+    std::string input = R"(
+        USING *,1
+        CLC   (X),0
+X       DS    XL257
+)";
+    analyzer a(input);
+    a.analyze();
+    EXPECT_TRUE(matches_message_codes(a.diags(), { "M132" }));
+}
+
+TEST(machine_instr_check_test, derive_length_over_3)
+{
+    std::string input = R"(
+        USING *,1
+        ZAP   0,=XL256'0'
+)";
+    analyzer a(input);
+    a.analyze();
+    EXPECT_TRUE(matches_message_codes(a.diags(), { "M132" }));
+}
+
+TEST(machine_instr_check_test, derive_length_pass)
+{
+    std::string input = R"(
+        USING *,1
+        CLC   0+X,0
+        CLC   L'X,0
+        CLC   =2XL256'0',0
+        ZAP   0,=XL16'0'
+        ZAP   0,*
+        ZAP   0,L'=XL256'0'
+X       DS    XL257
+)";
     analyzer a(input);
     a.analyze();
     EXPECT_TRUE(a.diags().empty());

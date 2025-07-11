@@ -419,4 +419,23 @@ context::id_index mach_expr_literal::get_literal_id(context::dependency_solver& 
         std::shared_ptr<const expressions::data_definition>(m_literal_data, &m_literal_data->get_dd()));
 }
 
+std::int32_t mach_expr_constant::derive_length(std::int32_t, context::dependency_solver&) const { return 1; }
+std::int32_t mach_expr_literal::derive_length(std::int32_t, context::dependency_solver& solver) const
+{
+    return m_literal_data->get_dd().get_length_attribute(solver, drop_diagnostic_op);
+}
+std::int32_t mach_expr_data_attr::derive_length(std::int32_t, context::dependency_solver&) const { return 1; }
+std::int32_t mach_expr_data_attr_literal::derive_length(std::int32_t, context::dependency_solver&) const { return 1; }
+std::int32_t mach_expr_symbol::derive_length(std::int32_t, context::dependency_solver& solver) const
+{
+    const auto* symbol = solver.get_symbol(value);
+    if (!symbol)
+        return 1;
+    return (std::int32_t)symbol->attributes().length();
+}
+std::int32_t mach_expr_location_counter::derive_length(std::int32_t mi_length, context::dependency_solver&) const
+{
+    return mi_length;
+}
+std::int32_t mach_expr_default::derive_length(std::int32_t, context::dependency_solver&) const { return 1; }
 } // namespace hlasm_plugin::parser_library::expressions

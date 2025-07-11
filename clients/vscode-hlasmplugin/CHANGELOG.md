@@ -4,6 +4,7 @@
 
 #### Added
 - Support file change notification registration
+- Validate operand length in machine instructions
 
 #### Fixed
 - Logs produced by language server in WebAssembly mode are not visible
