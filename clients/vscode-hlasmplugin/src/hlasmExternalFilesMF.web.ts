@@ -12,6 +12,6 @@
  *   Broadcom, Inc. - initial API and implementation
  */
 
-export function HLASMExternalFilesFtp(..._: any[]) {
+export function HLASMExternalFilesMF(..._: any[]) {
     return null;
 }

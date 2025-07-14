@@ -21,41 +21,102 @@ import { promises as fsp } from "fs";
 import { hlasmplugin_folder, proc_grps_file } from './constants';
 import { Telemetry } from './telemetry';
 import { askUser } from './uiUtils';
-import { connectionSecurityLevel, gatherConnectionInfo, getLastRunConfig, translateConnectionInfo, updateLastRunConfig } from './ftpCreds';
+import { connectionSecurityLevel, ensureValidMfZoweClient, gatherConnectionInfo, getLastRunConfig, translateConnectionInfo, updateLastRunConfig, ZoweConnectionInfo } from './mfCreds';
 import { isCancellationError } from './helpers';
 import { unterseFile } from "terse.js";
 import { FBStreamingConvertor } from './FBStreamingConvertor';
 import { stripJsonComments } from './tools.common';
 
 export type JobId = string;
-export interface JobDescription {
+export type JobDescription = {
     jobname: string;
     id: JobId;
-    details: string;
+} & ({
+    rc: undefined;
+    spoolFiles: undefined;
+} | {
+    rc: number;
+    spoolFiles: string;
+});
+
+function getJobDetailInfo(jobDetailString: string): { rc: number; spoolFiles: string } | { rc: undefined; spoolFiles: undefined } {
+    const parsed = /^.*RC=(\d+)\s+(\d+) spool file/.exec(jobDetailString);
+    if (!parsed)
+        return { rc: undefined, spoolFiles: undefined };
+    else
+        return { rc: +parsed[1], spoolFiles: parsed[2] };
 }
 
-function getJobDetailInfo(job: JobDescription): { rc: number; spoolFiles: number } | undefined {
-    const parsed = /^.*RC=(\d+)\s+(\d+) spool file/.exec(job.details);
-    if (!parsed)
-        return undefined;
-    else
-        return { rc: +parsed[1], spoolFiles: +parsed[2] };
+export function ftpJobMapper(fi: FileInfo): JobDescription {
+    const parsedLine = /(\S+)\s+(\S+)\s+(.*)/.exec(fi.name);
+    if (!parsedLine)
+        throw Error("Unable to parse the job list");
+    return { jobname: parsedLine[1], id: parsedLine[2], ...getJobDetailInfo(parsedLine[3]) }
 }
+
+export function extractJobId(s: string) {
+    const jobid = /^.*as ([Jj](?:[Oo][Bb])?\d+)/.exec(s);
+    if (!jobid)
+        throw Error("Unable to extract the job id");
+    return jobid[1];
+}
+
 export interface JobClient {
     submitJcl(jcl: string): Promise<JobId>;
     setListMask(mask: string): Promise<void>;
     list(): Promise<JobDescription[]>;
-    download(target: Writable | string, id: JobId, spoolFile: number): Promise<void>;
+    download(target: Writable, job: JobDescription): Promise<void>;
     dispose(): void;
 }
 
-async function basicFtpJobClient(connection: {
+export function zoweJobMapper(spoolObj: string, jobs: {
+    jobid: string;
+    jobname: string;
+    retcode?: string;
+}[]): JobDescription[] {
+    return jobs.map(x => ({
+        jobname: x.jobname,
+        id: x.jobid,
+        ...x.retcode?.startsWith("CC ")
+            ? { rc: +x.retcode.substring(3), spoolFiles: spoolObj }
+            : { rc: undefined, spoolFiles: undefined }
+    }));
+}
+
+async function zoweJobClient(stepDD: string, ci: ZoweConnectionInfo): Promise<JobClient> {
+    const jes = await ensureValidMfZoweClient<any>(ci, ci.zoweExplorerApi.getJesApi);
+    let prefix = '';
+
+    return {
+        async submitJcl(jcl: string): Promise<JobId> { return jes.submitJcl(jcl).then((x: { jobid: string }) => x.jobid); },
+        async setListMask(mask: string): Promise<void> { prefix = mask; },
+        async list(): Promise<JobDescription[]> { return jes.getJobsByParameters({ prefix, status: 'OUTPUT' }).then(zoweJobMapper.bind(undefined, stepDD)); },
+        async download(target: Writable, job: JobDescription): Promise<void> {
+            if (typeof job.spoolFiles !== 'string') throw Error('Invalid job');
+            const [stepname, ddname] = job.spoolFiles.split('.');
+            const files: { stepname: string, ddname: string }[] = await jes.getSpoolFiles(job.jobname, job.id);
+            const toDownload = files.find(x => x.stepname == stepname && x.ddname == ddname);
+            return jes.downloadSingleSpool({
+                jobFile: toDownload,
+                jobid: job.id,
+                jobname: job.jobname,
+                stream: target,
+                binary: true,
+            });
+        },
+        dispose(): void { }
+    };
+}
+
+type FtpConnectionDescription = {
     host: string;
     port?: number;
     user: string;
     password: string;
     securityLevel: connectionSecurityLevel
-}): Promise<JobClient> {
+}
+
+async function basicFtpJobClient(connection: FtpConnectionDescription): Promise<JobClient> {
     const client = new Client();
     client.parseList = (rawList: string): FileInfo[] => {
         return rawList.split(/\r?\n/).slice(1).filter(x => !/^\s*$/.test(x)).map((value) => new FileInfo(value));
@@ -80,10 +141,7 @@ async function basicFtpJobClient(connection: {
             await switchText();
             const jobUpload = await client.uploadFrom(Readable.from(jcl), "JOB");
             checkResponse(jobUpload);
-            const jobid = /^.*as ([Jj](?:[Oo][Bb])?\d+)/.exec(jobUpload.message);
-            if (!jobid)
-                throw Error("Unable to extract the job id");
-            return jobid[1];
+            return extractJobId(jobUpload.message);
         },
         async setListMask(mask: string): Promise<void> {
             await checkedCommand("SITE JESJOBNAME=" + mask);
@@ -92,12 +150,7 @@ async function basicFtpJobClient(connection: {
         async list(): Promise<JobDescription[]> {
             try {
                 await switchText();
-                return (await client.list()).map((x: FileInfo): JobDescription => {
-                    const parsedLine = /(\S+)\s+(\S+)\s+(.*)/.exec(x.name);
-                    if (!parsedLine)
-                        throw Error("Unable to parse the job list");
-                    return { jobname: parsedLine[1], id: parsedLine[2], details: parsedLine[3] }
-                });
+                return (await client.list()).map(ftpJobMapper);
             }
             catch (e) {
                 if (e instanceof FTPError && e.code == 550)
@@ -105,13 +158,11 @@ async function basicFtpJobClient(connection: {
                 throw e;
             }
         },
-        async download(target: string | Writable, id: JobId, spoolFile: number): Promise<void> {
+        async download(target: Writable, job: JobDescription): Promise<void> {
             await switchBinary();
-            checkResponse(await client.downloadTo(target, id + "." + spoolFile));
+            checkResponse(await client.downloadTo(target, job.id + "." + job.spoolFiles));
         },
-        dispose(): void {
-            client.close();
-        }
+        dispose(): void { client.close(); }
     };
 }
 
@@ -385,14 +436,12 @@ async function copyDirectory(source: string, target: string) {
     await fsp.mkdir(target, { recursive: true });
     const files = await fsp.readdir(source, { withFileTypes: true });
     for (const file of files) {
-        if (!file.isFile() || file.isSymbolicLink())
-            continue;
-        await fsp.copyFile(path.join(source, file.name), path.join(target, file.name));
+        if (file.isFile() && !file.isSymbolicLink())
+            await fsp.copyFile(path.join(source, file.name), path.join(target, file.name));
     }
     for (const file of files) {
-        if (!file.isSymbolicLink())
-            continue;
-        await fsp.symlink(await fsp.readlink(path.join(source, file.name)), path.join(target, file.name));
+        if (file.isSymbolicLink())
+            await fsp.symlink(await fsp.readlink(path.join(source, file.name)), path.join(target, file.name));
     }
 }
 
@@ -407,8 +456,7 @@ async function downloadJobAndProcess(
     job: SubmittedJob,
     progress: StageProgressReporter,
     io: IoOps): Promise<{ unpacker: Promise<void> }> {
-    const jobDetail = getJobDetailInfo(fileInfo);
-    if (!jobDetail || jobDetail.rc !== 0) {
+    if (fileInfo.rc !== 0) {
         job.downloaded = true; // nothing we can do ...
         return {
             unpacker: Promise.reject(Error("Job failed: " + job.jobname + "/" + job.jobid))
@@ -419,7 +467,7 @@ async function downloadJobAndProcess(
 
     try {
         const { process, input } = await io.unterse(firstDir);
-        await client.download(input, job.jobid, jobDetail.spoolFiles!);
+        await client.download(input, fileInfo);
         progress.stageCompleted();
         job.downloaded = true;
 
@@ -436,11 +484,7 @@ async function downloadJobAndProcess(
                 })()
         };
     }
-    catch (e) {
-        return {
-            unpacker: Promise.reject(e)
-        };
-    }
+    catch (e) { return { unpacker: Promise.reject(e) }; }
 }
 
 export async function downloadDependenciesWithClient(client: JobClient,
@@ -517,23 +561,14 @@ export function replaceVariables(obj: any, resolver: (configKey: string) => (str
 
 async function getWorkspaceProcGrps(w: vscode.WorkspaceFolder): Promise<{ workspace: vscode.WorkspaceFolder, config: any } | null> {
     let config;
-    try {
-        config = await vscode.workspace.openTextDocument(vscode.Uri.joinPath(w.uri, hlasmplugin_folder, proc_grps_file)).then(doc => JSON.parse(stripJsonComments(doc.getText())));
-    }
-    catch (_) {
-        config = vscode.workspace.getConfiguration('hlasm', w).get<object>('proc_grps');
-    }
-    if (!config) return null;
-    return { workspace: w, config };
-}
-
-function notNull<T>(t: T | null): t is T {
-    return !!t;
+    try { config = await vscode.workspace.openTextDocument(vscode.Uri.joinPath(w.uri, hlasmplugin_folder, proc_grps_file)).then(doc => JSON.parse(stripJsonComments(doc.getText()))); }
+    catch (_) { config = vscode.workspace.getConfiguration('hlasm', w).get<object>('proc_grps'); }
+    return config ? { workspace: w, config } : null;
 }
 
 async function gatherAvailableConfigs() {
     if (vscode.workspace.workspaceFolders === undefined) return [];
-    const availableConfigs = (await Promise.all(vscode.workspace.workspaceFolders.map(getWorkspaceProcGrps))).filter(notNull);
+    const availableConfigs = (await Promise.all(vscode.workspace.workspaceFolders.map(getWorkspaceProcGrps))).filter(<T>(t: T | null): t is T => { return !!t; });
 
     const varResolver = (workspace: vscode.WorkspaceFolder) => {
         const config = vscode.workspace.getConfiguration(undefined, workspace);
@@ -673,11 +708,12 @@ export async function downloadDependencies(context: vscode.ExtensionContext, tel
 
         const newOnly = args.length === 1 && args[0] === "newOnly";
         const lastInput = getLastRunConfig(context);
-        const { host, port, user, password, hostInput, securityLevel, zowe } = await gatherConnectionInfo(lastInput);
+        const connectionInfo = await gatherConnectionInfo(lastInput);
+        const zowe = 'zoweExplorerApi' in connectionInfo;
 
-        const jobcardPattern = await askUser("Enter jobcard pattern (? will be substituted)", false, lastInput.jobcard || "//" + user.slice(0, 7).padEnd(8, '?').toUpperCase() + " JOB ACCTNO");
+        const jobcardPattern = await askUser("Enter jobcard pattern (? will be substituted)", false, lastInput.jobcard || "//" + connectionInfo.user.slice(0, 7).padEnd(8, '?').toUpperCase() + " JOB ACCTNO");
 
-        await updateLastRunConfig(context, { host: hostInput, user: user, jobcard: jobcardPattern });
+        await updateLastRunConfig(context, { host: connectionInfo.hostInput, user: zowe ? '' : connectionInfo.user, jobcard: jobcardPattern });
 
         const thingsToDownload = await filterDownloadList(gatherDownloadList(await gatherAvailableConfigs()), newOnly);
 
@@ -696,13 +732,7 @@ export async function downloadDependencies(context: vscode.ExtensionContext, tel
 
         const result = await vscode.window.withProgress({ title: "Downloading dependencies", location: vscode.ProgressLocation.Notification, cancellable: true }, async (p, t) => {
             return downloadDependenciesWithClient(
-                await basicFtpJobClient({
-                    host: host,
-                    user: user,
-                    password: password,
-                    port: port,
-                    securityLevel: securityLevel
-                }),
+                zowe ? await zoweJobClient('PRINTIT.SYSUT2', connectionInfo) : await basicFtpJobClient(connectionInfo),
                 thingsToDownload,
                 jobcardPattern,
                 new ProgressReporter(p, thingsToDownload.reduce((prev, cur) => { return prev + cur.dirs.length + 2 }, 0)),

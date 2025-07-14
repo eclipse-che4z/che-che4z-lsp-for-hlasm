@@ -33,7 +33,7 @@ import { hlasmplugin_folder_filter, bridge_json_filter, schemeExternalFiles, con
 import { ConfigurationsHandler } from './configurationsHandler';
 import { HlasmPluginMiddleware, getLanguageClientMiddleware } from './languageClientMiddleware';
 import { HLASMExternalFiles, SuspendError } from './hlasmExternalFiles';
-import { HLASMExternalFilesFtp } from './hlasmExternalFilesFtp';
+import { HLASMExternalFilesMF } from './hlasmExternalFilesMF';
 import { HLASMExternalConfigurationProvider, HLASMExternalConfigurationProviderHandler } from './hlasmExternalConfigurationProvider';
 import { HlasmExtension } from './extension.interface';
 import { toggleAdvisoryConfigurationDiagnostics } from './hlasmConfigurationDiagnosticsProvider'
@@ -292,7 +292,7 @@ async function registerDebugSupport(context: vscode.ExtensionContext, client: vs
 async function registerExternalFileSupport(context: vscode.ExtensionContext, client: vscodelc.BaseLanguageClient, extFiles: HLASMExternalFiles) {
     context.subscriptions.push(client.onDidChangeState(e => e.newState === vscodelc.State.Starting && extFiles.reset()));
     context.subscriptions.push(vscode.workspace.registerTextDocumentContentProvider(schemeExternalFiles, extFiles.getTextDocumentContentProvider()));
-    const datasetClient = HLASMExternalFilesFtp(context);
+    const datasetClient = HLASMExternalFilesMF(context);
     if (datasetClient)
         extFiles.setClient('DATASET', datasetClient);
 

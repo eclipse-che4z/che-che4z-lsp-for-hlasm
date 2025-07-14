@@ -16,6 +16,7 @@ import * as vscode from 'vscode';
 import { askUser, pickUser } from './uiUtils';
 import { AccessOptions } from 'basic-ftp';
 import { MementoKey } from './mementoKeys';
+import { AsyncMutex } from './asyncMutex';
 
 export enum connectionSecurityLevel {
     "rejectUnauthorized",
@@ -23,15 +24,21 @@ export enum connectionSecurityLevel {
     "unsecure",
 }
 
-export interface ConnectionInfo {
+export type FtpConnectionInfo = {
     host: string;
     port: number | undefined;
     user: string;
     password: string;
     hostInput: string;
     securityLevel: connectionSecurityLevel;
+}
 
-    zowe: boolean;
+export type ZoweConnectionInfo = {
+    loadedProfile: any;
+    profileCache: any;
+    zoweExplorerApi: any;
+    user: string;
+    hostInput: string;
 }
 
 export function translateConnectionInfo(connection: {
@@ -51,31 +58,21 @@ export function translateConnectionInfo(connection: {
     }
 }
 
-export function gatherSecurityLevelFromZowe(profile: any) {
-    // tested with Zowe Explorer v2.7.0
-    if (profile.secureFtp !== false) {
-        if (profile.rejectUnauthorized !== false)
-            return connectionSecurityLevel.rejectUnauthorized;
-        else
-            return connectionSecurityLevel.acceptUnauthorized;
-    }
-    else
-        return connectionSecurityLevel.unsecure;
-}
-
-async function gatherConnectionInfoFromZowe(zowe: vscode.Extension<any>, profileName: string): Promise<ConnectionInfo> {
+async function gatherConnectionInfoFromZowe(zowe: vscode.Extension<any>, profileName: string): Promise<ZoweConnectionInfo> {
     if (!zowe.isActive)
         await zowe.activate();
     if (!zowe.isActive)
         throw Error("Unable to activate ZOWE Explorer extension");
+    const profileType = 'zosmf'; // No default `type` available?
     const zoweExplorerApi = zowe?.exports;
     const profileCache = zoweExplorerApi.getExplorerExtenderApi().getProfilesCache();
     await profileCache.refresh(zoweExplorerApi);
+    if (profileName === '') {
+        profileName = profileCache.getDefaultProfile(profileType);
+    }
     const loadedProfile = profileCache.loadNamedProfile(profileName);
-    const { host, port, user, password } = loadedProfile.profile;
-    const securityLevel = gatherSecurityLevelFromZowe(loadedProfile.profile);
 
-    return { host, port, user, password, hostInput: '@' + profileName, securityLevel, zowe: true };
+    return { loadedProfile, profileCache, zoweExplorerApi, user: loadedProfile.user, hostInput: '@' + profileName };
 }
 
 const securityOptions = Object.freeze([
@@ -88,7 +85,7 @@ export async function gatherConnectionInfo(lastInput: {
     host: string;
     user: string;
     jobcard: string;
-}): Promise<ConnectionInfo> {
+}): Promise<FtpConnectionInfo | ZoweConnectionInfo> {
     const zowe = vscode.extensions.getExtension("Zowe.vscode-extension-for-zowe");
 
     const hostInput = await askUser(zowe ? "host[:port] or @zowe-profile-name" : "host[:port]", false, !zowe && lastInput.host.startsWith('@') ? '' : lastInput.host);
@@ -104,7 +101,7 @@ export async function gatherConnectionInfo(lastInput: {
     const user = await askUser("user name", false, lastInput.user);
     const password = await askUser("password", true);
     const securityLevel = await pickUser("Select security option", securityOptions);
-    return { host, port, user, password, hostInput, securityLevel, zowe: false };
+    return { host, port, user, password, hostInput, securityLevel };
 }
 
 export function getLastRunConfig(context: vscode.ExtensionContext) {
@@ -123,3 +120,17 @@ interface DownloadDependenciesInputMemento {
 };
 
 export const updateLastRunConfig = (context: vscode.ExtensionContext, lastInput: DownloadDependenciesInputMemento) => context.globalState.update(MementoKey.DownloadDependencies, lastInput);
+
+const zoweClientLock = new AsyncMutex();
+
+export async function ensureValidMfZoweClient<R extends { getSession(): unknown; }>(info: ZoweConnectionInfo, apiGetter: (profile: unknown) => R): Promise<R> {
+    // it looks like there is a race in checkCurrentProfile...
+    return zoweClientLock.locked(async () => {
+        const { status } = await info.profileCache.checkCurrentProfile(info.loadedProfile);
+
+        if (status !== 'active')
+            throw Error('Zowe profile is not active');
+
+        return apiGetter.call(info.zoweExplorerApi, info.loadedProfile);
+    });
+}
