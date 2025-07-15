@@ -167,7 +167,7 @@ TEST(language_features, document_symbol)
         { "selectionRange", r },
         { "children", nlohmann::json::array() },
     });
-    EXPECT_CALL(response_mock, respond(request_id(0), std::string(""), response));
+    EXPECT_CALL(response_mock, respond(request_id(0), std::string(""), std::move(response)));
     notifs["textDocument/documentSymbol"].as_request_handler()(request_id(0), params1);
 
     ws_mngr->idle_handler();
@@ -187,7 +187,7 @@ TEST(language_features, semantic_tokens)
     nlohmann::json params1 = nlohmann::json::parse(R"({"textDocument":{"uri":")" + uri + "\"}}");
 
     nlohmann::json response { { "data", { 0, 0, 1, 0, 0, 0, 2, 3, 1, 0, 0, 4, 1, 10, 0, 1, 1, 5, 1, 0 } } };
-    EXPECT_CALL(response_mock, respond(request_id(0), std::string(""), response));
+    EXPECT_CALL(response_mock, respond(request_id(0), std::string(""), std::move(response)));
 
     notifs["textDocument/semanticTokens/full"].as_request_handler()(request_id(0), params1);
 
@@ -248,7 +248,7 @@ IIIIIIIIIIIIIII1
             0,15,1,10,0   // number        1
         } } };
     // clang-format on
-    EXPECT_CALL(response_mock, respond(request_id(0), std::string(""), response));
+    EXPECT_CALL(response_mock, respond(request_id(0), std::string(""), std::move(response)));
 
     notifs["textDocument/semanticTokens/full"].as_request_handler()(request_id(0), params1);
 
@@ -293,7 +293,7 @@ TEST(language_features, semantic_tokens_multiline_overlap)
             0,3,4,1,0     // instruction   ANOP
         } } };
     // clang-format on
-    EXPECT_CALL(response_mock, respond(request_id(0), std::string(""), response));
+    EXPECT_CALL(response_mock, respond(request_id(0), std::string(""), std::move(response)));
 
     notifs["textDocument/semanticTokens/full"].as_request_handler()(request_id(0), params1);
 
@@ -413,7 +413,7 @@ TEST(language_features, opcode_suggestion)
 
     auto expected_json =
         nlohmann::json::parse(R"({"uri":")" + uri + R"(","suggestions":{"LHIXXX":[{"opcode":"LHI","distance":3}]}})");
-    EXPECT_CALL(response_mock, respond(_, _, expected_json));
+    EXPECT_CALL(response_mock, respond(_, _, std::move(expected_json)));
 
     notifs["textDocument/$/opcode_suggestion"].as_request_handler()(request_id(0), params1);
 }
@@ -463,7 +463,7 @@ TEST(language_features, branch_information)
   }
 ]
 )");
-    EXPECT_CALL(response_mock, respond(_, _, expected_json));
+    EXPECT_CALL(response_mock, respond(_, _, std::move(expected_json)));
 
     notifs["textDocument/$/branch_information"].as_request_handler()(request_id(0), params1);
 }
@@ -488,7 +488,7 @@ TEST(language_features, folding)
         { "kind", "comment" },
     });
 
-    EXPECT_CALL(response_mock, respond(request_id(0), std::string(""), response));
+    EXPECT_CALL(response_mock, respond(request_id(0), std::string(""), std::move(response)));
     notifs["textDocument/foldingRange"].as_request_handler()(request_id(0), params1);
 
     ws_mngr->idle_handler();
@@ -517,7 +517,7 @@ TEST(language_features, retrieve_output)
         { "text", "B" },
     });
 
-    EXPECT_CALL(response_mock, respond(request_id(0), std::string(""), response));
+    EXPECT_CALL(response_mock, respond(request_id(0), std::string(""), std::move(response)));
     notifs["textDocument/$/retrieve_outputs"].as_request_handler()(request_id(0), params1);
 
     ws_mngr->idle_handler();
@@ -538,7 +538,7 @@ TEST(language_features, retrieve_output_empty)
 
     nlohmann::json response = nlohmann::json::array();
 
-    EXPECT_CALL(response_mock, respond(request_id(0), std::string(""), response));
+    EXPECT_CALL(response_mock, respond(request_id(0), std::string(""), std::move(response)));
     notifs["textDocument/$/retrieve_outputs"].as_request_handler()(request_id(0), params1);
 
     ws_mngr->idle_handler();

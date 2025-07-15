@@ -30,7 +30,7 @@ using namespace hlasm_plugin::language_server;
 
 struct send_message_provider_mock : public send_message_provider
 {
-    void reply(const nlohmann::json& result) override { replies.push_back(result); };
+    void reply(nlohmann::json&& result) override { replies.push_back(std::move(result)); };
 
     std::vector<nlohmann::json> replies;
 };

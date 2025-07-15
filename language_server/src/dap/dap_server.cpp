@@ -31,7 +31,7 @@ server::server(parser_library::debugger_configuration_provider& dc_provider, tel
 }
 
 void server::request(std::string_view,
-    const nlohmann::json&,
+    nlohmann::json&&,
     std::function<void(const nlohmann::json& params)>,
     std::function<void(int, const char*)>)
 {
@@ -40,7 +40,7 @@ void server::request(std::string_view,
         { "seq", request_seq }, { "type", "request" }, { "command", requested_command }, { "arguments", args } });*/
 }
 
-void server::respond(const request_id& request_seq, std::string_view requested_command, const nlohmann::json& args)
+void server::respond(const request_id& request_seq, std::string_view requested_command, nlohmann::json&& args)
 {
     send_message_->reply(nlohmann::json {
         { "seq", ++last_seq_ },
@@ -48,17 +48,17 @@ void server::respond(const request_id& request_seq, std::string_view requested_c
         { "request_seq", request_seq },
         { "success", true },
         { "command", requested_command },
-        { "body", args },
+        { "body", std::move(args) },
     });
 }
 
-void server::notify(std::string_view method, const nlohmann::json& args)
+void server::notify(std::string_view method, nlohmann::json&& args)
 {
     send_message_->reply(nlohmann::json {
         { "seq", ++last_seq_ },
         { "type", "event" },
         { "event", method },
-        { "body", args },
+        { "body", std::move(args) },
     });
 }
 
@@ -66,7 +66,7 @@ void server::respond_error(const request_id& request_seq,
     std::string_view requested_command,
     int,
     std::string_view err_message,
-    const nlohmann::json& error)
+    nlohmann::json&& error)
 {
     send_message_->reply(nlohmann::json {
         { "seq", ++last_seq_ },
@@ -75,7 +75,7 @@ void server::respond_error(const request_id& request_seq,
         { "success", false },
         { "command", requested_command },
         { "message", err_message },
-        { "body", { { "error", error } } },
+        { "body", { { "error", std::move(error) } } },
     });
 }
 

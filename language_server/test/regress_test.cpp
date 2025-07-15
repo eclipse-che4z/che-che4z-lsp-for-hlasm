@@ -32,7 +32,7 @@ public:
     message_provider_mock(lsp::server& server)
         : server(server)
     {}
-    void reply(const nlohmann::json& result) override
+    void reply(nlohmann::json&& result) override
     {
         if (result.value("method", "") == "external_configuration_request")
         {
@@ -50,7 +50,7 @@ public:
             return;
         }
 
-        notfs.push_back(result);
+        notfs.push_back(std::move(result));
     }
 
     std::vector<nlohmann::json> notfs;

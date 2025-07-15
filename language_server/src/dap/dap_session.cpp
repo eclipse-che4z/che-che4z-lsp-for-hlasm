@@ -39,7 +39,7 @@ void session::thread_routine()
         struct smp_t final : send_message_provider
         {
             json_channel_adapter& channel;
-            void reply(const nlohmann::json& result) override { channel.write(result); }
+            void reply(nlohmann::json&& result) override { channel.write(std::move(result)); }
             explicit smp_t(json_channel_adapter& channel)
                 : channel(channel)
             {}

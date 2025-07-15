@@ -120,7 +120,7 @@ void dap_feature::stopped(std::string_view reason, std::string_view details)
         args["text"] = details;
     }
 
-    response_->notify("stopped", args);
+    response_->notify("stopped", std::move(args));
 }
 
 void dap_feature::exited(int exit_code)

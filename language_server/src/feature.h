@@ -107,16 +107,16 @@ class response_provider
 {
 public:
     virtual void request(std::string_view requested_method,
-        const nlohmann::json& args,
+        nlohmann::json&& args,
         std::function<void(const nlohmann::json& params)> handler,
         std::function<void(int, const char*)> error_handler) = 0;
-    virtual void respond(const request_id& id, std::string_view requested_method, const nlohmann::json& args) = 0;
-    virtual void notify(std::string_view method, const nlohmann::json& args) = 0;
+    virtual void respond(const request_id& id, std::string_view requested_method, nlohmann::json&& args) = 0;
+    virtual void notify(std::string_view method, nlohmann::json&& args) = 0;
     virtual void respond_error(const request_id& id,
         std::string_view requested_method,
         int err_code,
         std::string_view err_message,
-        const nlohmann::json& error) = 0;
+        nlohmann::json&& error) = 0;
 
     virtual void register_cancellable_request(const request_id& id, request_invalidator cancel_handler) = 0;
 

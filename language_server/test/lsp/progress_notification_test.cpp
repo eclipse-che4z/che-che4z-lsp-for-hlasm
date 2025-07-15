@@ -74,21 +74,21 @@ TEST(progress_notification, multiple_parsing)
 
     std::function<void(const nlohmann::json&)> callback;
 
-    static const auto token_0 = R"({"token":0})"_json;
-    static const auto token_0_a = R"({"token":0,"value":{"kind":"begin","title":"Parsing","message":"a"}})"_json;
-    static const auto token_0_b = R"({"token":0,"value":{"kind":"report","message":"b"}})"_json;
-    static const auto token_0_end = R"({"token":0,"value":{"kind":"end"}})"_json;
-    static const auto token_1 = R"({"token":1})"_json;
-    static const auto token_1_a = R"({"token":1,"value":{"kind":"begin","title":"Parsing","message":"a"}})"_json;
-    static const auto token_1_end = R"({"token":1,"value":{"kind":"end"}})"_json;
+    auto token_0 = R"({"token":0})"_json;
+    auto token_0_a = R"({"token":0,"value":{"kind":"begin","title":"Parsing","message":"a"}})"_json;
+    auto token_0_b = R"({"token":0,"value":{"kind":"report","message":"b"}})"_json;
+    auto token_0_end = R"({"token":0,"value":{"kind":"end"}})"_json;
+    auto token_1 = R"({"token":1})"_json;
+    auto token_1_a = R"({"token":1,"value":{"kind":"begin","title":"Parsing","message":"a"}})"_json;
+    auto token_1_end = R"({"token":1,"value":{"kind":"end"}})"_json;
 
-    EXPECT_CALL(mock, request(progress_create, token_0, _, _)).WillOnce(SaveArg<2>(&callback));
-    EXPECT_CALL(mock, notify(progress_event, token_0_a)).Times(1);
-    EXPECT_CALL(mock, notify(progress_event, token_0_b)).Times(1);
-    EXPECT_CALL(mock, notify(progress_event, token_0_end)).Times(1);
-    EXPECT_CALL(mock, request(progress_create, token_1, _, _)).WillOnce(SaveArg<2>(&callback));
-    EXPECT_CALL(mock, notify(progress_event, token_1_a)).Times(1);
-    EXPECT_CALL(mock, notify(progress_event, token_1_end)).Times(1);
+    EXPECT_CALL(mock, request(progress_create, std::move(token_0), _, _)).WillOnce(SaveArg<2>(&callback));
+    EXPECT_CALL(mock, notify(progress_event, std::move(token_0_a))).Times(1);
+    EXPECT_CALL(mock, notify(progress_event, std::move(token_0_b))).Times(1);
+    EXPECT_CALL(mock, notify(progress_event, std::move(token_0_end))).Times(1);
+    EXPECT_CALL(mock, request(progress_create, std::move(token_1), _, _)).WillOnce(SaveArg<2>(&callback));
+    EXPECT_CALL(mock, notify(progress_event, std::move(token_1_a))).Times(1);
+    EXPECT_CALL(mock, notify(progress_event, std::move(token_1_end))).Times(1);
 
     progress_notification p(mock);
 
@@ -108,11 +108,11 @@ TEST(progress_notification, done_before_token)
 
     std::function<void(const nlohmann::json&)> callback;
 
-    static const auto token_0 = R"({"token":0})"_json;
-    static const auto token_0_end = R"({"token":0,"value":{"kind":"end"}})"_json;
+    auto token_0 = R"({"token":0})"_json;
+    auto token_0_end = R"({"token":0,"value":{"kind":"end"}})"_json;
 
-    EXPECT_CALL(mock, request(progress_create, token_0, _, _)).WillOnce(SaveArg<2>(&callback));
-    EXPECT_CALL(mock, notify(progress_event, token_0_end)).Times(1);
+    EXPECT_CALL(mock, request(progress_create, std::move(token_0), _, _)).WillOnce(SaveArg<2>(&callback));
+    EXPECT_CALL(mock, notify(progress_event, std::move(token_0_end))).Times(1);
 
     progress_notification p(mock);
 

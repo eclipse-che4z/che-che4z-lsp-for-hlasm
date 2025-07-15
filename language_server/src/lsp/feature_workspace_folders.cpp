@@ -147,7 +147,7 @@ void feature_workspace_folders::did_change_watched_files(const nlohmann::json& p
 
 void feature_workspace_folders::send_configuration_request()
 {
-    static const nlohmann::json config_request_args { {
+    nlohmann::json config_request_args { {
         "items",
         nlohmann::json::array_t {
             { { "section", "hlasm.diagnosticsSuppressLimit" } },
@@ -156,7 +156,7 @@ void feature_workspace_folders::send_configuration_request()
     } };
     response_->request(
         "workspace/configuration",
-        config_request_args,
+        std::move(config_request_args),
         [this](const nlohmann::json& params) { configuration(params); },
         [](int, [[maybe_unused]] const char* msg) {
             LOG_WARNING("Unexpected error configuration response received: ", msg);

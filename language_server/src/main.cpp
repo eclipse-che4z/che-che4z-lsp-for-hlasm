@@ -60,7 +60,7 @@ class main_program final : public json_sink,
     dap::session_manager dap_sessions;
     virtual_file_provider virtual_files;
 
-    void reply(const nlohmann::json& message) final { json_output.write(message); }
+    void reply(nlohmann::json&& message) final { json_output.write(std::move(message)); }
 
     void provide_debugger_configuration(std::string_view document_uri,
         hlasm_plugin::parser_library::workspace_manager_response<

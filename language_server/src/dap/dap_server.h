@@ -15,9 +15,7 @@
 #ifndef HLASMPLUGIN_HLASMLANGUAGESERVER_DAP_SERVER_H
 #define HLASMPLUGIN_HLASMLANGUAGESERVER_DAP_SERVER_H
 
-#include <functional>
-#include <memory>
-#include <unordered_set>
+#include <atomic>
 
 #include "../server.h"
 #include "dap_feature.h"
@@ -33,20 +31,17 @@ public:
     explicit server(
         parser_library::debugger_configuration_provider& dc_provider, telemetry_sink* telemetry_reporter = nullptr);
 
-    void request(std::string_view requested_method,
-        const nlohmann::json& args,
-        std::function<void(const nlohmann::json& params)> handler,
-        std::function<void(int, const char*)> error_handler) override;
-
-    void respond(const request_id& id, std::string_view requested_method, const nlohmann::json& args) override;
-
-    void notify(std::string_view method, const nlohmann::json& args) override;
-
+    void respond(const request_id& id, std::string_view requested_method, nlohmann::json&& args) override;
     void respond_error(const request_id& id,
         std::string_view requested_method,
         int err_code,
         std::string_view err_message,
-        const nlohmann::json& error) override;
+        nlohmann::json&& error) override;
+    void request(std::string_view requested_method,
+        nlohmann::json&& args,
+        std::function<void(const nlohmann::json& params)> handler,
+        std::function<void(int, const char*)> error_handler) override;
+    void notify(std::string_view method, nlohmann::json&& args) override;
 
     void register_cancellable_request(const request_id& id, request_invalidator cancel_handler) override;
 

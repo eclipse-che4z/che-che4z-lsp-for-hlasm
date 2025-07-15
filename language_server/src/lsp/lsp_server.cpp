@@ -154,10 +154,11 @@ void server::message_received(const nlohmann::json& message)
     {
         try
         {
-            auto params_found = message.find("params");
-            call_method(method_found.value().get<std::string>(),
-                std::move(id),
-                params_found == message.end() ? nlohmann::json() : params_found.value());
+            static const nlohmann::json empty;
+
+            const auto& method = method_found.value().get_ref<const std::string&>();
+            const auto params_found = message.find("params");
+            call_method(method, std::move(id), params_found == message.end() ? empty : params_found.value());
         }
         catch (const std::exception& e)
         {
@@ -169,7 +170,7 @@ void server::message_received(const nlohmann::json& message)
                     -32803,
                     "RequestFailed",
                     {
-                        { "method", method_found.value().get<std::string>() },
+                        { "method", method_found.value() },
                         { "exception", e.what() },
                     });
         }
@@ -177,7 +178,7 @@ void server::message_received(const nlohmann::json& message)
 }
 
 void server::request(std::string_view requested_method,
-    const nlohmann::json& args,
+    nlohmann::json&& args,
     std::function<void(const nlohmann::json& params)> handler,
     std::function<void(int, const char*)> error_handler)
 {
@@ -186,13 +187,13 @@ void server::request(std::string_view requested_method,
         { "jsonrpc", "2.0" },
         { "id", id },
         { "method", requested_method },
-        { "params", args },
+        { "params", std::move(args) },
     };
     request_handlers_.try_emplace(request_id(id), std::move(handler), std::move(error_handler));
-    send_message_->reply(reply);
+    send_message_->reply(std::move(reply));
 }
 
-void server::respond(const request_id& id, std::string_view, const nlohmann::json& args)
+void server::respond(const request_id& id, std::string_view, nlohmann::json&& args)
 {
     if (auto node = cancellable_requests_.extract(id))
         telemetry_request_done(node.mapped().second);
@@ -200,23 +201,23 @@ void server::respond(const request_id& id, std::string_view, const nlohmann::jso
     nlohmann::json reply {
         { "jsonrpc", "2.0" },
         { "id", id },
-        { "result", args },
+        { "result", std::move(args) },
     };
-    send_message_->reply(reply);
+    send_message_->reply(std::move(reply));
 }
 
-void server::notify(std::string_view method, const nlohmann::json& args)
+void server::notify(std::string_view method, nlohmann::json&& args)
 {
     nlohmann::json reply {
         { "jsonrpc", "2.0" },
         { "method", method },
-        { "params", args },
+        { "params", std::move(args) },
     };
-    send_message_->reply(reply);
+    send_message_->reply(std::move(reply));
 }
 
 void server::respond_error(
-    const request_id& id, std::string_view, int err_code, std::string_view err_message, const nlohmann::json& error)
+    const request_id& id, std::string_view, int err_code, std::string_view err_message, nlohmann::json&& error)
 {
     cancellable_requests_.erase(id);
     nlohmann::json reply {
@@ -227,11 +228,11 @@ void server::respond_error(
             {
                 { "code", err_code },
                 { "message", err_message },
-                { "data", error },
+                { "data", std::move(error) },
             },
         },
     };
-    send_message_->reply(reply);
+    send_message_->reply(std::move(reply));
 }
 
 void server::register_cancellable_request(const request_id& id, request_invalidator cancel_handler)
@@ -291,7 +292,7 @@ void server::on_initialize(const request_id& id, const nlohmann::json& param)
         capabilities["capabilities"].insert(feature_cap.begin(), feature_cap.end());
     }
 
-    respond(id, "", capabilities);
+    respond(id, "", std::move(capabilities));
 
     nlohmann::json register_configuration_changed_args {
         {
@@ -305,7 +306,10 @@ void server::on_initialize(const request_id& id, const nlohmann::json& param)
         },
     };
 
-    request("client/registerCapability", register_configuration_changed_args, &empty_handler, &empty_error_handler);
+    request("client/registerCapability",
+        std::move(register_configuration_changed_args),
+        &empty_handler,
+        &empty_error_handler);
 
     for (auto& f : features_)
     {
@@ -356,7 +360,7 @@ void server::show_message(std::string_view message, parser_library::message_type
         { "type", (int)type },
         { "message", message },
     };
-    notify("window/showMessage", m);
+    notify("window/showMessage", std::move(m));
 }
 
 nlohmann::json diagnostic_related_info_to_json(const parser_library::diagnostic& diag)
@@ -448,14 +452,14 @@ void server::consume_diagnostics(std::span<const parser_library::diagnostic> dia
     // transform the diagnostics into json
     for (auto& [uri, diag_json] : diag_jsons)
     {
+        new_files.insert(uri);
+        last_diagnostics_files_.erase(uri);
+
         nlohmann::json publish_diags_params {
             { "uri", uri },
             { "diagnostics", std::move(diag_json) },
         };
-        new_files.insert(uri);
-        last_diagnostics_files_.erase(uri);
-
-        notify("textDocument/publishDiagnostics", publish_diags_params);
+        notify("textDocument/publishDiagnostics", std::move(publish_diags_params));
     }
 
     // for each file that had at least one diagnostic in the previous call of this function,
@@ -467,7 +471,7 @@ void server::consume_diagnostics(std::span<const parser_library::diagnostic> dia
             { "uri", it },
             { "diagnostics", nlohmann::json::array() },
         };
-        notify("textDocument/publishDiagnostics", publish_diags_params);
+        notify("textDocument/publishDiagnostics", std::move(publish_diags_params));
     }
 
     last_diagnostics_files_ = std::move(new_files);

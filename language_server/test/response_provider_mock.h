@@ -24,22 +24,20 @@ public:
     MOCK_METHOD(void,
         request,
         (std::string_view requested_method,
-            const nlohmann::json& args,
+            nlohmann::json&& args,
             std::function<void(const nlohmann::json& params)> handler,
             std::function<void(int, const char*)> error_handler),
         (override));
-    MOCK_METHOD(void,
-        respond,
-        (const request_id& id, std::string_view requested_method, const nlohmann::json& args),
-        (override));
-    MOCK_METHOD(void, notify, (std::string_view method, const nlohmann::json& args), (override));
+    MOCK_METHOD(
+        void, respond, (const request_id& id, std::string_view requested_method, nlohmann::json&& args), (override));
+    MOCK_METHOD(void, notify, (std::string_view method, nlohmann::json&& args), (override));
     MOCK_METHOD(void,
         respond_error,
         (const request_id& id,
             std::string_view requested_method,
             int err_code,
             std::string_view err_message,
-            const nlohmann::json& error),
+            nlohmann::json&& error),
         (override));
     MOCK_METHOD(void, register_cancellable_request, (const request_id&, request_invalidator), (override));
 };

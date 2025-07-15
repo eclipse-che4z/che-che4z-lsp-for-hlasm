@@ -203,7 +203,8 @@ TEST(workspace_folders, did_change_configuration)
         },
     };
 
-    EXPECT_CALL(provider, request("workspace/configuration", config_request_args, _, _)).WillOnce(SaveArg<2>(&handler));
+    EXPECT_CALL(provider, request("workspace/configuration", std::move(config_request_args), _, _))
+        .WillOnce(SaveArg<2>(&handler));
 
     methods["workspace/didChangeConfiguration"].as_notification_handler()("{}"_json);
 
@@ -258,7 +259,8 @@ TEST(workspace_folders, did_change_configuration_empty_configuration_params)
         },
     };
 
-    EXPECT_CALL(provider, request("workspace/configuration", config_request_args, _, _)).WillOnce(SaveArg<2>(&handler));
+    EXPECT_CALL(provider, request("workspace/configuration", std::move(config_request_args), _, _))
+        .WillOnce(SaveArg<2>(&handler));
 
     methods["workspace/didChangeConfiguration"].as_notification_handler()("{}"_json);
 

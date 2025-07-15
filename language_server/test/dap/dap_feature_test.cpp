@@ -70,17 +70,17 @@ struct error_msg
 struct response_provider_mock : public response_provider
 {
     void request(std::string_view,
-        const nlohmann::json&,
+        nlohmann::json&&,
         std::function<void(const nlohmann::json& params)>,
         std::function<void(int, const char*)>) override
     {}
-    void respond(const request_id& id, std::string_view requested_method, const nlohmann::json& args) override
+    void respond(const request_id& id, std::string_view requested_method, nlohmann::json&& args) override
     {
-        responses.push_back({ id, std::string(requested_method), args });
+        responses.push_back({ id, std::string(requested_method), std::move(args) });
     }
-    void notify(std::string_view method, const nlohmann::json& args) override
+    void notify(std::string_view method, nlohmann::json&& args) override
     {
-        notifs.push_back({ std::string(method), args });
+        notifs.push_back({ std::string(method), std::move(args) });
         if (method == "stopped")
             stopped = true;
         if (method == "exited")
@@ -90,7 +90,7 @@ struct response_provider_mock : public response_provider
         std::string_view command,
         int code,
         std::string_view message,
-        const nlohmann::json& details) override
+        nlohmann::json&& details) override
     {
         errors.push_back({ id, std::string(command), code, std::string(message), details });
     }

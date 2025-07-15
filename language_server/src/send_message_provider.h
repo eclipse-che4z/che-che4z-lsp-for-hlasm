@@ -27,7 +27,7 @@ protected:
 
 public:
     // Serializes the json and sends it to the LSP client.
-    virtual void reply(const nlohmann::json& result) = 0;
+    virtual void reply(nlohmann::json&& result) = 0;
 };
 
 } // namespace hlasm_plugin::language_server

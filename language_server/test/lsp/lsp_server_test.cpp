@@ -57,9 +57,9 @@ TEST(lsp_server, initialize)
         R"({"id":1,"jsonrpc":"2.0","method":"workspace/configuration","params":{"items":[{"section":"hlasm"},{}]}})"_json;
 
     EXPECT_CALL(smpm, reply(_)).WillOnce(SaveArg<0>(&server_capab));
-    EXPECT_CALL(smpm, reply(show_message)).Times(AtMost(1));
-    EXPECT_CALL(smpm, reply(register_message)).Times(AtMost(1));
-    EXPECT_CALL(smpm, reply(config_request_message)).Times(AtMost(1));
+    EXPECT_CALL(smpm, reply(std::move(show_message))).Times(AtMost(1));
+    EXPECT_CALL(smpm, reply(std::move(register_message))).Times(AtMost(1));
+    EXPECT_CALL(smpm, reply(std::move(config_request_message))).Times(AtMost(1));
     EXPECT_CALL(smpm, reply(Truly([](const nlohmann::json& arg) {
         return arg.count("method") && arg["method"] == "telemetry/event";
     })));
@@ -79,7 +79,7 @@ TEST(lsp_server, initialize)
     auto shutdown_request = R"({"jsonrpc":"2.0","id":48,"method":"shutdown","params":null})"_json;
     auto shutdown_response = R"({"jsonrpc":"2.0","id":48,"result":null})"_json;
     auto exit_notification = R"({"jsonrpc":"2.0","method":"exit","params":null})"_json;
-    EXPECT_CALL(smpm, reply(shutdown_response)).Times(1);
+    EXPECT_CALL(smpm, reply(std::move(shutdown_response))).Times(1);
     EXPECT_FALSE(s.is_exit_notification_received());
     EXPECT_FALSE(s.is_shutdown_request_received());
     s.message_received(shutdown_request);
@@ -111,8 +111,8 @@ TEST(lsp_server, not_implemented_method)
             "data":null
            }})"_json;
 
-    EXPECT_CALL(smpm, reply(expected_not_implemented));
-    EXPECT_CALL(smpm, reply(expected_telemetry));
+    EXPECT_CALL(smpm, reply(std::move(expected_not_implemented)));
+    EXPECT_CALL(smpm, reply(std::move(expected_telemetry)));
 
     s.message_received(j);
     // No result is tested, server should ignore unknown LSP method
@@ -141,7 +141,7 @@ TEST(lsp_server, request_correct)
 
     auto expected_message = R"({"id":0,"jsonrpc":"2.0","method":"client_method","params":"a_json_parameter"})"_json;
 
-    EXPECT_CALL(message_provider, reply(expected_message));
+    EXPECT_CALL(message_provider, reply(std::move(expected_message)));
 
     rp.request(
         "client_method", "a_json_parameter", [&handler](const nlohmann::json& params) { handler.handle(params); }, {});
@@ -171,7 +171,7 @@ TEST(lsp_server, request_no_handler)
            }})"_json;
 
     // Only telemetry expected
-    EXPECT_CALL(message_provider, reply(expected_telemetry));
+    EXPECT_CALL(message_provider, reply(std::move(expected_telemetry)));
 
     s.message_received(request_response);
 }
@@ -193,7 +193,7 @@ TEST(lsp_server, request_no_id)
            }})"_json;
 
     // Only telemetry expected
-    EXPECT_CALL(message_provider, reply(expected_telemetry));
+    EXPECT_CALL(message_provider, reply(std::move(expected_telemetry)));
 
     s.message_received(request_response);
 }
@@ -215,7 +215,7 @@ TEST(lsp_server, request_error_unknown)
            }})"_json;
 
     // Only telemetry expected
-    EXPECT_CALL(message_provider, reply(expected_telemetry));
+    EXPECT_CALL(message_provider, reply(std::move(expected_telemetry)));
 
     s.message_received(request_response);
 }
@@ -257,7 +257,7 @@ TEST(lsp_server, request_error_no_message)
 
     // Only telemetry expected
 
-    EXPECT_CALL(message_provider, reply(expected_telemetry));
+    EXPECT_CALL(message_provider, reply(std::move(expected_telemetry)));
 
     s.message_received(request_response);
 }
