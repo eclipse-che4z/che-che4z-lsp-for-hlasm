@@ -167,6 +167,17 @@ int32_t data_definition::get_integer_attribute(context::dependency_solver& info,
         return 0;
 }
 
+context::symbol_attributes::program_type data_definition::get_program_attribute(
+    context::dependency_solver& info, diagnostic_op_consumer& diags) const
+{
+    if (!program_type)
+        return {};
+    const auto p = program_type->evaluate(info, diags);
+    if (p.value_kind() != context::symbol_value_kind::ABS)
+        return {};
+    return context::symbol_attributes::program_type((std::uint32_t)p.get_abs());
+}
+
 context::symbol_attributes data_definition::get_symbol_attributes(
     context::dependency_solver& solver, diagnostic_op_consumer& diags) const
 {
@@ -174,7 +185,8 @@ context::symbol_attributes data_definition::get_symbol_attributes(
         ebcdic_encoding::to_ebcdic((unsigned char)get_type_attribute()),
         get_length_attribute(solver, diags),
         get_scale_attribute(solver, diags),
-        get_integer_attribute(solver, diags));
+        get_integer_attribute(solver, diags),
+        get_program_attribute(solver, diags));
 }
 
 bool data_definition::expects_single_symbol() const

@@ -783,6 +783,22 @@ diagnostic_op diagnostic_op::error_A173_invalid_psect(const range& range)
     return diagnostic_op(diagnostic_severity::error, "A173", "Invalid PSECT symbol", range);
 }
 
+diagnostic_op diagnostic_op::error_A174_EQU_prog_type_val_format(const range& range)
+{
+    return diagnostic_op(diagnostic_severity::error,
+        "A174",
+        "Error at EQU instruction: operand representing program type attribute value must either be an absolute value",
+        range);
+}
+
+diagnostic_op diagnostic_op::error_A175_data_prog_type_deps(const range& range)
+{
+    return diagnostic_op(diagnostic_severity::error,
+        "A175",
+        "Program type attribute must be a 32-bit value that can be evaluated at the time of definition",
+        range);
+}
+
 diagnostic_op diagnostic_op::error_A200_SCOPE_param(std::string_view instr_name, const range& range)
 {
     return diagnostic_op(diagnostic_severity::error,

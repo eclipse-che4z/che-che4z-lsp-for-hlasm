@@ -172,6 +172,8 @@ const section* get_section(hlasm_context& ctx, std::string name);
 
 const symbol* get_symbol(hlasm_context& ctx, std::string name);
 
+const symbol* get_symbol_reference(hlasm_context& ctx, std::string name);
+
 std::optional<int32_t> get_symbol_abs(hlasm_context& ctx, std::string name);
 
 std::optional<address> get_symbol_reloc(hlasm_context& ctx, std::string name);

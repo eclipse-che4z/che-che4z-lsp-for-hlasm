@@ -14,19 +14,27 @@
 
 #include "symbol_attributes.h"
 
+#include <algorithm>
 #include <limits>
 #include <stdexcept>
 
 #include "../../ebcdic_encoding.h"
 
-using namespace hlasm_plugin::parser_library::context;
-using namespace hlasm_plugin::parser_library;
+namespace hlasm_plugin::parser_library::context {
 
-const symbol_attributes::type_attr symbol_attributes::undef_type = 'U'_ebcdic;
+assembler_type assembler_type_from_string(std::string_view s) noexcept
+{
+    if (s.size() > sizeof(assembler_type_values[0]))
+        return {};
+    const auto it = std::ranges::find(assembler_type_values, s);
+    if (it == std::ranges::end(assembler_type_values))
+        return {};
+    return (symbol_attributes::assembler_type)std::ranges::distance(std::ranges::begin(assembler_type_values), it);
+}
 
-const symbol_attributes::len_attr symbol_attributes::undef_length = static_cast<len_attr>(-1);
-
-const symbol_attributes::scale_attr symbol_attributes::undef_scale = std::numeric_limits<scale_attr>::max();
+static_assert(symbol_attributes::undef_type == 'U'_ebcdic);
+static_assert(symbol_attributes::undef_length == static_cast<symbol_attributes::len_attr>(-1));
+static_assert(symbol_attributes::undef_scale == std::numeric_limits<symbol_attributes::scale_attr>::max());
 
 symbol_attributes symbol_attributes::make_section_attrs()
 {
@@ -118,23 +126,6 @@ SET_t symbol_attributes::default_ca_value(data_attr_kind attribute)
     }
 }
 
-symbol_attributes::symbol_attributes(symbol_origin origin)
-    : length_(undef_length)
-    , integer_(undef_length)
-    , type_(undef_type)
-    , scale_(undef_scale)
-    , origin_(origin)
-{}
-
-symbol_attributes::symbol_attributes(
-    symbol_origin origin, type_attr type, len_attr length, scale_attr scale, len_attr integer)
-    : length_(length)
-    , integer_(integer)
-    , type_(type)
-    , scale_(scale)
-    , origin_(origin)
-{}
-
 void symbol_attributes::length(len_attr value)
 {
     length_ == undef_length ? length_ = value : throw std::runtime_error("value can be assigned only once");
@@ -186,3 +177,4 @@ symbol_attributes::value_t symbol_attributes::get_attribute_value(data_attr_kind
             return 0;
     }
 }
+} // namespace hlasm_plugin::parser_library::context

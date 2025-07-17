@@ -17,6 +17,7 @@
 #include <charconv>
 #include <memory>
 #include <optional>
+#include <ranges>
 
 #include "analyzing_context.h"
 #include "checking/asm_instr_check.h"
@@ -63,15 +64,21 @@ std::optional<context::A_t> try_get_abs_value(
     return val.get_abs();
 }
 
+std::optional<context::A_t> try_get_abs_value(
+    const semantics::assembler_operand* asm_op, context::dependency_solver& dep_solver)
+{
+    auto* expr_op = asm_op->access_expr();
+    if (!expr_op)
+        return std::nullopt;
+    return try_get_abs_value(expr_op, dep_solver);
+}
+
 std::optional<context::A_t> try_get_abs_value(const semantics::operand* op, context::dependency_solver& dep_solver)
 {
     auto* asm_op = op->access_asm();
     if (!asm_op)
         return std::nullopt;
-    auto* expr_op = asm_op->access_expr();
-    if (!expr_op)
-        return std::nullopt;
-    return try_get_abs_value(expr_op, dep_solver);
+    return try_get_abs_value(asm_op, dep_solver);
 }
 
 std::optional<int> try_get_number(std::string_view s)
@@ -181,6 +188,7 @@ void asm_processor::process_LOCTR(rebuilt_statement&& stmt)
         std::move(dep_solver).derive_current_dependency_evaluation_context());
 }
 
+namespace {
 struct override_symbol_candidates final : public context::dependency_solver_redirect
 {
     std::variant<const context::symbol*, context::symbol_candidate> get_symbol_candidate(
@@ -198,8 +206,21 @@ struct override_symbol_candidates final : public context::dependency_solver_redi
     {}
 };
 
+template<std::size_t n>
+auto extract_asm_operands(std::span<const semantics::operand_ptr> ops)
+{
+    std::array<const semantics::assembler_operand*, n> result = {};
+
+    std::ranges::transform(ops | std::views::take(n), result.data(), [](const auto& p) { return p->access_asm(); });
+
+    return result;
+}
+} // namespace
+
 void asm_processor::process_EQU(rebuilt_statement&& stmt)
 {
+    using context::symbol_attributes;
+
     auto loctr = hlasm_ctx.ord_ctx.align(context::no_align, lib_info);
     context::ordinary_assembly_dependency_solver dep_solver(hlasm_ctx.ord_ctx, std::move(loctr), lib_info);
 
@@ -226,90 +247,104 @@ void asm_processor::process_EQU(rebuilt_statement&& stmt)
         return;
     }
 
-    // type attribute operand
-    context::symbol_attributes::type_attr t_attr = context::symbol_attributes::undef_type;
-    if (ops.size() >= 3 && ops[2]->type == semantics::operand_type::ASM)
-    {
-        auto asm_op = ops[2]->access_asm();
-        auto expr_op = asm_op->access_expr();
+    override_symbol_candidates dep_solver_override(dep_solver);
+    const auto [value, length, type, prog_type, asm_type] = extract_asm_operands<5>(ops);
 
-        override_symbol_candidates dep_solver_override(dep_solver);
-        if (expr_op && !expr_op->has_dependencies(dep_solver_override, nullptr))
-        {
-            auto t_value = expr_op->expression->evaluate(dep_solver_override, diag_ctx);
-            if (t_value.value_kind() == context::symbol_value_kind::ABS && t_value.get_abs() >= 0
-                && t_value.get_abs() <= 255)
-                t_attr = (context::symbol_attributes::type_attr)t_value.get_abs();
-            else
-                add_diagnostic(diagnostic_op::error_A134_EQU_type_att_format(asm_op->operand_range));
-        }
+    // assembler type attribute
+    symbol_attributes::assembler_type a_attr = symbol_attributes::assembler_type::NONE;
+    if (asm_type)
+    {
+        std::string_view a_value;
+        if (const auto* expr = asm_type->access_expr())
+            a_value = expr->get_value();
+        // relies on to_upper_case in the parser
+        a_attr = context::assembler_type_from_string(a_value);
+        if (a_attr == symbol_attributes::assembler_type::NONE)
+            add_diagnostic(diagnostic_op::error_A135_EQU_asm_type_val_format(asm_type->operand_range));
+    }
+
+    // program type attribute
+    symbol_attributes::program_type p_attr {};
+    if (prog_type)
+    {
+        const auto p_value = try_get_abs_value(prog_type, dep_solver_override);
+        if (!p_value)
+            add_diagnostic(diagnostic_op::error_A174_EQU_prog_type_val_format(prog_type->operand_range));
         else
-            add_diagnostic(diagnostic_op::error_A134_EQU_type_att_format(asm_op->operand_range));
+            p_attr = symbol_attributes::program_type((std::uint32_t)*p_value);
+    }
+
+    // type attribute operand
+    symbol_attributes::type_attr t_attr = symbol_attributes::undef_type;
+    if (type)
+    {
+        const auto t_value = try_get_abs_value(type, dep_solver_override);
+        if (!t_value || t_value < 0 || t_value > 255)
+            add_diagnostic(diagnostic_op::error_A134_EQU_type_att_format(type->operand_range));
+        else
+            t_attr = (symbol_attributes::type_attr)*t_value;
     }
 
     // length attribute operand
-    context::symbol_attributes::len_attr length_attr = context::symbol_attributes::undef_length;
-    if (ops.size() >= 2 && ops[1]->type == semantics::operand_type::ASM)
+    symbol_attributes::len_attr l_attr = symbol_attributes::undef_length;
+    if (length)
     {
-        auto asm_op = ops[1]->access_asm();
-        auto expr_op = asm_op->access_expr();
-
-        override_symbol_candidates dep_solver_override(dep_solver);
-        if (expr_op && !expr_op->has_dependencies(dep_solver_override, nullptr))
-        {
-            auto length_value = expr_op->expression->evaluate(dep_solver_override, diag_ctx);
-            if (length_value.value_kind() == context::symbol_value_kind::ABS && length_value.get_abs() >= 0
-                && length_value.get_abs() <= 65535)
-                length_attr = (context::symbol_attributes::len_attr)length_value.get_abs();
-            else
-                add_diagnostic(diagnostic_op::error_A133_EQU_len_att_format(asm_op->operand_range));
-        }
+        const auto l_value = try_get_abs_value(length, dep_solver_override);
+        if (!l_value || l_value < 0 || l_value > 65535)
+            add_diagnostic(diagnostic_op::error_A133_EQU_len_att_format(length->operand_range));
         else
-            add_diagnostic(diagnostic_op::error_A133_EQU_len_att_format(asm_op->operand_range));
+            l_attr = (symbol_attributes::len_attr)*l_value;
     }
 
     // value operand
-    if (ops[0]->type != semantics::operand_type::ASM)
-        add_diagnostic(diagnostic_op::error_A132_EQU_value_format(ops[0]->operand_range));
-    else if (auto expr_op = ops[0]->access_asm()->access_expr(); !expr_op)
-        add_diagnostic(diagnostic_op::error_A132_EQU_value_format(ops[0]->operand_range));
-    else
+    if (!value)
     {
-        auto holder(expr_op->expression->get_dependencies(dep_solver));
+        add_diagnostic(diagnostic_op::error_A132_EQU_value_format(ops.front()->operand_range));
+        return;
+    }
+    const auto expr_op = value->access_asm()->access_expr();
+    if (!expr_op)
+    {
+        add_diagnostic(diagnostic_op::error_A132_EQU_value_format(value->operand_range));
+        return;
+    }
+    auto holder(expr_op->expression->get_dependencies(dep_solver));
 
-        if (length_attr == context::symbol_attributes::undef_length)
+    if (l_attr == symbol_attributes::undef_length)
+    {
+        auto l_term = expr_op->expression->leftmost_term();
+        if (auto symbol_term = dynamic_cast<const expressions::mach_expr_symbol*>(l_term))
         {
-            auto l_term = expr_op->expression->leftmost_term();
-            if (auto symbol_term = dynamic_cast<const expressions::mach_expr_symbol*>(l_term))
-            {
-                auto len_symbol = hlasm_ctx.ord_ctx.get_symbol(symbol_term->value);
+            auto len_symbol = hlasm_ctx.ord_ctx.get_symbol(symbol_term->value);
 
-                if (len_symbol != nullptr && len_symbol->kind() != context::symbol_value_kind::UNDEF)
-                    length_attr = len_symbol->attributes().length();
-                else
-                    length_attr = 1;
-            }
+            if (len_symbol != nullptr && len_symbol->kind() != context::symbol_value_kind::UNDEF)
+                l_attr = len_symbol->attributes().length();
             else
-                length_attr = 1;
+                l_attr = 1;
         }
+        else
+            l_attr = 1;
+    }
 
-        context::symbol_attributes attrs(context::symbol_origin::EQU, t_attr, length_attr);
+    const auto s_attr = symbol_attributes::undef_scale;
+    const auto i_attr = symbol_attributes::undef_length;
 
-        auto stmt_range = stmt.stmt_range_ref();
+    symbol_attributes attrs(context::symbol_origin::EQU, t_attr, l_attr, s_attr, i_attr, p_attr, a_attr);
 
-        if (!holder.contains_dependencies())
-            create_symbol(stmt_range, symbol_name, expr_op->expression->evaluate(dep_solver, diag_ctx), attrs);
-        else if (holder.is_address() && holder.unresolved_spaces.empty())
-            create_symbol(stmt_range, symbol_name, *holder.unresolved_address, attrs);
-        else if (create_symbol(stmt_range, symbol_name, context::symbol_value(), attrs))
-        {
-            if (!hlasm_ctx.ord_ctx.symbol_dependencies().add_dependency(symbol_name,
-                    expr_op->expression.get(),
-                    std::make_unique<postponed_statement_impl>(std::move(stmt), hlasm_ctx.processing_stack()),
-                    std::move(dep_solver).derive_current_dependency_evaluation_context(),
-                    lib_info))
-                add_diagnostic(diagnostic_op::error_E033(stmt_range));
-        }
+    auto stmt_range = stmt.stmt_range_ref();
+
+    if (!holder.contains_dependencies())
+        create_symbol(stmt_range, symbol_name, expr_op->expression->evaluate(dep_solver, diag_ctx), attrs);
+    else if (holder.is_address() && holder.unresolved_spaces.empty())
+        create_symbol(stmt_range, symbol_name, *holder.unresolved_address, attrs);
+    else if (create_symbol(stmt_range, symbol_name, context::symbol_value(), attrs))
+    {
+        if (!hlasm_ctx.ord_ctx.symbol_dependencies().add_dependency(symbol_name,
+                expr_op->expression.get(),
+                std::make_unique<postponed_statement_impl>(std::move(stmt), hlasm_ctx.processing_stack()),
+                std::move(dep_solver).derive_current_dependency_evaluation_context(),
+                lib_info))
+            add_diagnostic(diagnostic_op::error_E033(stmt_range));
     }
 }
 
@@ -362,6 +397,7 @@ void asm_processor::process_data_instruction(rebuilt_statement&& stmt)
 
             context::symbol_attributes::len_attr len = context::symbol_attributes::undef_length;
             context::symbol_attributes::scale_attr scale = context::symbol_attributes::undef_scale;
+            context::symbol_attributes::program_type prog_type {};
 
             if (!data_op->value->length
                 || !has_deps(data_op->value->length->get_dependencies(dep_solver), length_has_self_reference))
@@ -376,6 +412,12 @@ void asm_processor::process_data_instruction(rebuilt_statement&& stmt)
                 scale = data_op->value->get_scale_attribute(dep_solver, drop_diagnostic_op);
                 s_dep = nullptr;
             }
+            if (data_op->value->program_type
+                && !data_op->value->program_type->get_dependencies(dep_solver).contains_dependencies())
+            {
+                prog_type = data_op->value->get_program_attribute(dep_solver, drop_diagnostic_op);
+            }
+
             create_symbol(stmt.stmt_range_ref(),
                 label,
                 std::move(loctr),
@@ -383,7 +425,8 @@ void asm_processor::process_data_instruction(rebuilt_statement&& stmt)
                     type,
                     len,
                     scale,
-                    data_op->value->get_integer_attribute(dep_solver, drop_diagnostic_op)));
+                    data_op->value->get_integer_attribute(dep_solver, drop_diagnostic_op),
+                    prog_type));
 
             if (length_has_self_reference
                 && !data_op->value->length->get_dependencies(dep_solver).contains_dependencies())
@@ -442,6 +485,13 @@ void asm_processor::process_data_instruction(rebuilt_statement&& stmt)
             current_alignment = op_align;
 
             has_length_dependencies |= data_op->get_length_dependencies(op_solver).contains_dependencies();
+
+            if (const auto* pt = data_op->value->program_type.get())
+            {
+                if (pt->get_dependencies(dep_solver).contains_dependencies()
+                    || pt->evaluate(dep_solver, drop_diagnostic_op).value_kind() != context::symbol_value_kind::ABS)
+                    add_diagnostic(diagnostic_op::error_A175_data_prog_type_deps(pt->get_range()));
+            }
         }
 
         const auto* const b = std::to_address(start);

@@ -1369,3 +1369,62 @@ I   EQU  'ABC'
 
     EXPECT_TRUE(matches_message_codes(a.diags(), { "A132" }));
 }
+
+TEST(lookahead, p_attr_equ)
+{
+    std::string input = R"(
+        AIF (0 EQ 0).SKIP
+P       EQU 0,,,X'12345678'
+.SKIP   ANOP
+)";
+
+    analyzer a(input);
+    a.analyze();
+
+    EXPECT_TRUE(a.diags().empty());
+
+    EXPECT_FALSE(get_symbol(a.hlasm_ctx(), "P"));
+    const auto p = get_symbol_reference(a.hlasm_ctx(), "P");
+    ASSERT_TRUE(p);
+
+    EXPECT_EQ(p->attributes().prog_type(), program_type(0x12345678));
+}
+
+TEST(lookahead, p_attr_dc)
+{
+    std::string input = R"(
+        AIF (0 EQ 0).SKIP
+P       DC  AP(X'12345678')(0)
+.SKIP   ANOP
+)";
+
+    analyzer a(input);
+    a.analyze();
+
+    EXPECT_TRUE(a.diags().empty());
+
+    EXPECT_FALSE(get_symbol(a.hlasm_ctx(), "P"));
+    const auto p = get_symbol_reference(a.hlasm_ctx(), "P");
+    ASSERT_TRUE(p);
+
+    EXPECT_EQ(p->attributes().prog_type(), program_type(0x12345678));
+}
+
+TEST(lookahead, a_attr)
+{
+    std::string input = R"(
+        AIF (0 EQ 0).SKIP
+AR0     EQU 0,,,,AR
+.SKIP   ANOP
+)";
+
+    analyzer a(input);
+    a.analyze();
+
+    EXPECT_TRUE(a.diags().empty());
+    EXPECT_FALSE(get_symbol(a.hlasm_ctx(), "AR0"));
+    const auto ar0 = get_symbol_reference(a.hlasm_ctx(), "AR0");
+    ASSERT_TRUE(ar0);
+
+    EXPECT_EQ(ar0->attributes().asm_type(), assembler_type::AR);
+}

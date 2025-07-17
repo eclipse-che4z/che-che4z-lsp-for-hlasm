@@ -16,6 +16,7 @@
 #define CONTEXT_SYMBOL_ATTRIBUTES_H
 
 #include <cstdint>
+#include <string_view>
 
 #include "context/common_types.h"
 
@@ -50,6 +51,42 @@ enum class symbol_origin : unsigned char
     UNKNOWN
 };
 
+struct program_type
+{
+    char ebcdic_value[4] = {};
+    bool valid = false;
+
+    program_type() = default;
+    explicit constexpr program_type(std::uint32_t v) noexcept
+        : valid(true)
+    {
+        for (int i = 3; i != -1; --i)
+        {
+            ebcdic_value[i] = v & 0b1111'1111U;
+            v >>= 8;
+        }
+    }
+
+    constexpr bool operator==(const program_type&) const noexcept = default;
+};
+
+enum class assembler_type : unsigned char
+{
+    NONE,
+    AR,
+    CR,
+    CR32,
+    CR64,
+    FPR,
+    GR,
+    GR32,
+    GR64,
+    VR,
+};
+constexpr char assembler_type_values[][5] = { "", "AR", "CR", "CR32", "CR64", "FPR", "GR", "GR32", "GR64", "VR" };
+
+assembler_type assembler_type_from_string(std::string_view s) noexcept;
+
 // structure wrapping attributes of the symbol
 // the structure fields are to be constant except undefined fields, their value can be defined later
 struct symbol_attributes
@@ -58,11 +95,13 @@ struct symbol_attributes
     using type_attr = uint16_t;
     using len_attr = uint32_t;
     using scale_attr = int16_t;
+    using program_type = program_type;
+    using assembler_type = assembler_type;
 
     // static field describing undefined states of attributes
-    static const type_attr undef_type;
-    static const len_attr undef_length;
-    static const scale_attr undef_scale;
+    static constexpr type_attr undef_type = 0xe4;
+    static constexpr len_attr undef_length = static_cast<len_attr>(-1);
+    static constexpr scale_attr undef_scale = 32767;
 
     // predefined symbol_attributes classes
     static symbol_attributes make_section_attrs();
@@ -81,18 +120,39 @@ struct symbol_attributes
     static value_t default_value(data_attr_kind attribute);
     static SET_t default_ca_value(data_attr_kind attribute);
 
-    symbol_attributes(symbol_origin origin,
+    constexpr symbol_attributes(symbol_origin origin,
         type_attr type,
         len_attr length = undef_length,
         scale_attr scale = undef_scale,
-        len_attr integer = undef_length);
-    symbol_attributes(symbol_origin origin);
+        len_attr integer = undef_length,
+        program_type prog_type = {},
+        assembler_type asm_type = assembler_type::NONE) noexcept
+        : length_(length)
+        , integer_(integer)
+        , type_(type)
+        , scale_(scale)
+        , origin_(origin)
+        , prog_type_(prog_type)
+        , asm_type_(asm_type)
+    {}
 
-    symbol_origin origin() const { return origin_; }
-    type_attr type() const { return type_; }
-    len_attr length() const { return length_; }
-    scale_attr scale() const { return scale_; }
-    len_attr integer() const { return integer_; }
+    explicit constexpr symbol_attributes(symbol_origin origin) noexcept
+        : length_(undef_length)
+        , integer_(undef_length)
+        , type_(undef_type)
+        , scale_(undef_scale)
+        , origin_(origin)
+        , prog_type_()
+        , asm_type_(assembler_type::NONE)
+    {}
+
+    symbol_origin origin() const noexcept { return origin_; }
+    type_attr type() const noexcept { return type_; }
+    len_attr length() const noexcept { return length_; }
+    scale_attr scale() const noexcept { return scale_; }
+    len_attr integer() const noexcept { return integer_; }
+    assembler_type asm_type() const noexcept { return asm_type_; }
+    program_type prog_type() const noexcept { return prog_type_; }
 
     bool is_defined(data_attr_kind attribute) const;
 
@@ -105,13 +165,14 @@ struct symbol_attributes
     // sets scale if undefined
     void scale(scale_attr value);
 
-
 private:
     len_attr length_;
     len_attr integer_;
     type_attr type_;
     scale_attr scale_;
     symbol_origin origin_;
+    program_type prog_type_;
+    assembler_type asm_type_;
 };
 
 } // namespace hlasm_plugin::parser_library::context

@@ -260,3 +260,69 @@ B   EQU A,*-A,T'TYPO
 
     EXPECT_EQ(b->attributes().type(), 'U'_ebcdic);
 }
+
+TEST(EQU, p_attr)
+{
+    std::string input = R"(
+N   EQU 0
+P   EQU 0,,,X'12345678'
+)";
+
+    analyzer a(input);
+    a.analyze();
+
+    EXPECT_TRUE(a.diags().empty());
+    const auto n = get_symbol(a.hlasm_ctx(), "N");
+    const auto p = get_symbol(a.hlasm_ctx(), "P");
+    ASSERT_TRUE(n);
+    ASSERT_TRUE(p);
+
+    EXPECT_EQ(n->attributes().prog_type(), program_type());
+    EXPECT_EQ(p->attributes().prog_type(), program_type(0x12345678));
+}
+
+TEST(EQU, p_attr_invalid)
+{
+    std::string input = R"(
+P   EQU 0,,,X
+X   EQU 0
+)";
+
+    analyzer a(input);
+    a.analyze();
+
+    EXPECT_TRUE(matches_message_codes(a.diags(), { "A174" }));
+}
+
+TEST(EQU, a_attr)
+{
+    std::string input = R"(
+N   EQU 0
+AR0 EQU 0,,,,AR
+)";
+
+    analyzer a(input);
+    a.analyze();
+
+    EXPECT_TRUE(a.diags().empty());
+    const auto n = get_symbol(a.hlasm_ctx(), "N");
+    const auto ar0 = get_symbol(a.hlasm_ctx(), "AR0");
+    ASSERT_TRUE(n);
+    ASSERT_TRUE(ar0);
+
+    EXPECT_EQ(n->attributes().asm_type(), assembler_type::NONE);
+    EXPECT_EQ(ar0->attributes().asm_type(), assembler_type::AR);
+}
+
+TEST(EQU, a_attr_invalid)
+{
+    std::string input = R"(
+X   EQU 0
+P   EQU 0,,,,X
+)";
+
+    analyzer a(input);
+    a.analyze();
+
+    EXPECT_TRUE(matches_message_codes(a.diags(), { "A135" }));
+}

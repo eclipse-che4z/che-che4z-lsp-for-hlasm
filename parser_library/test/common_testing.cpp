@@ -68,6 +68,15 @@ const symbol* get_symbol(hlasm_context& ctx, std::string name)
     return ctx.ord_ctx.get_symbol(symbol.value());
 }
 
+const symbol* get_symbol_reference(hlasm_context& ctx, std::string name)
+{
+    auto symbol = ctx.find_id(name);
+    if (!symbol.has_value())
+        return nullptr;
+
+    return ctx.ord_ctx.get_symbol_reference(symbol.value());
+}
+
 std::optional<symbol_value::abs_value_t> get_symbol_abs(hlasm_context& ctx, std::string name)
 {
     auto symbol = ctx.find_id(name);

@@ -14,6 +14,9 @@
 
 #include "lookahead_processor.h"
 
+#include <algorithm>
+#include <ranges>
+
 #include "context/hlasm_context.h"
 #include "context/ordinary_assembly/ordinary_assembly_dependency_solver.h"
 #include "context/well_known.h"
@@ -172,87 +175,117 @@ struct lookahead_processor::handler_table
     static constexpr auto find(id_index id) noexcept { return value.find(id); }
 };
 
+namespace {
+template<std::size_t n>
+auto extract_asm_operands(std::span<const semantics::operand_ptr> ops)
+{
+    std::array<const semantics::assembler_operand*, n> result = {};
+
+    std::ranges::transform(ops | std::views::take(n), result.data(), [](const auto& p) { return p->access_asm(); });
+
+    return result;
+}
+
+std::optional<context::A_t> try_get_abs_value(
+    const semantics::assembler_operand* asm_op, context::dependency_solver& dep_solver)
+{
+    auto* expr_op = asm_op->access_expr();
+
+    if (!expr_op || expr_op->has_error(dep_solver) || expr_op->has_dependencies(dep_solver, nullptr))
+        return std::nullopt;
+
+    const auto value = expr_op->expression->evaluate(dep_solver, drop_diagnostic_op);
+
+    if (value.value_kind() != context::symbol_value_kind::ABS)
+        return std::nullopt;
+
+    return value.get_abs();
+}
+} // namespace
+
 void lookahead_processor::assign_EQU_attributes(context::id_index symbol_name, const resolved_statement& statement)
 {
+    using enum context::symbol_origin;
+    using context::symbol_attributes;
+
     library_info_transitional li(lib_provider_);
     context::ordinary_assembly_dependency_solver dep_solver(hlasm_ctx.ord_ctx, li);
-    // type attribute operand
-    context::symbol_attributes::type_attr t_attr = context::symbol_attributes::undef_type;
-    if (statement.operands_ref().value.size() >= 3
-        && statement.operands_ref().value[2]->type == semantics::operand_type::ASM)
-    {
-        auto asm_op = statement.operands_ref().value[2]->access_asm();
-        auto expr_op = asm_op->access_expr();
 
-        if (expr_op && !expr_op->has_error(dep_solver) && !expr_op->has_dependencies(dep_solver, nullptr))
-        {
-            auto t_value = expr_op->expression->evaluate(dep_solver, drop_diagnostic_op);
-            if (t_value.value_kind() == context::symbol_value_kind::ABS && t_value.get_abs() >= 0
-                && t_value.get_abs() <= 255)
-                t_attr = (context::symbol_attributes::type_attr)t_value.get_abs();
-        }
+    const auto [value, length, type, program, assembler] = extract_asm_operands<5>(statement.operands_ref().value);
+
+    // assembler type attribute
+    symbol_attributes::assembler_type a_attr = symbol_attributes::assembler_type::NONE;
+    if (assembler)
+    {
+        if (const auto* expr = assembler->access_expr())
+            a_attr = context::assembler_type_from_string(expr->get_value()); // relies on to_upper_case in the parser
+    }
+
+    // program type attribute
+    symbol_attributes::program_type p_attr {};
+    if (program)
+    {
+        if (const auto p_value = try_get_abs_value(program, dep_solver); p_value)
+            p_attr = symbol_attributes::program_type((std::uint32_t)*p_value);
+    }
+
+    // type attribute operand
+    symbol_attributes::type_attr t_attr = symbol_attributes::undef_type;
+    if (type)
+    {
+        if (const auto t_value = try_get_abs_value(type, dep_solver); t_value && t_value >= 0 && t_value <= 255)
+            t_attr = (symbol_attributes::type_attr)*t_value;
     }
 
     // length attribute operand
-    context::symbol_attributes::len_attr length_attr = context::symbol_attributes::undef_length;
-    if (statement.operands_ref().value.size() >= 2
-        && statement.operands_ref().value[1]->type == semantics::operand_type::ASM)
+    symbol_attributes::len_attr length_attr = symbol_attributes::undef_length;
+    if (length)
     {
-        auto asm_op = statement.operands_ref().value[1]->access_asm();
-        auto expr_op = asm_op->access_expr();
-
-        if (expr_op && !expr_op->has_error(dep_solver) && !expr_op->has_dependencies(dep_solver, nullptr))
-        {
-            auto length_value = expr_op->expression->evaluate(dep_solver, drop_diagnostic_op);
-            if (length_value.value_kind() == context::symbol_value_kind::ABS && length_value.get_abs() >= 0
-                && length_value.get_abs() <= 65535)
-                length_attr = (context::symbol_attributes::len_attr)length_value.get_abs();
-        }
+        if (const auto l_value = try_get_abs_value(length, dep_solver); l_value && l_value >= 0 && l_value <= 65535)
+            length_attr = (symbol_attributes::len_attr)*l_value;
     }
 
-    if (length_attr == context::symbol_attributes::undef_length)
+    if (length_attr == symbol_attributes::undef_length && value)
     {
-        if (statement.operands_ref().value.size() >= 1
-            && statement.operands_ref().value[0]->type == semantics::operand_type::ASM)
+        if (auto expr_op = value->access_expr(); !expr_op) // complex, string, ...
+            length_attr = 1;
+        else if (auto t = dynamic_cast<const expressions::mach_expr_symbol*>(expr_op->expression->leftmost_term()))
         {
-            auto asm_op = statement.operands_ref().value[0]->access_asm();
-            if (auto expr_op = asm_op->access_expr(); !expr_op) // complex, string, ...
-                length_attr = 1;
-            else if (auto t = dynamic_cast<const expressions::mach_expr_symbol*>(expr_op->expression->leftmost_term()))
-            {
-                auto len_symbol = hlasm_ctx.ord_ctx.get_symbol(t->value);
+            auto len_symbol = hlasm_ctx.ord_ctx.get_symbol(t->value);
 
-                if (len_symbol != nullptr && len_symbol->kind() != context::symbol_value_kind::UNDEF)
-                    length_attr = len_symbol->attributes().length();
-            }
-            else
-                length_attr = 1;
+            if (len_symbol != nullptr && len_symbol->kind() != context::symbol_value_kind::UNDEF)
+                length_attr = len_symbol->attributes().length();
         }
+        else
+            length_attr = 1;
     }
+    const auto s_attr = symbol_attributes::undef_scale;
+    const auto i_attr = symbol_attributes::undef_length;
 
-    register_attr_ref(symbol_name, context::symbol_attributes(context::symbol_origin::DAT, t_attr, length_attr));
+    register_attr_ref(symbol_name, symbol_attributes(EQU, t_attr, length_attr, s_attr, i_attr, p_attr, a_attr));
 }
 
 void lookahead_processor::assign_data_def_attributes(context::id_index symbol_name, const resolved_statement& statement)
 {
+    using enum context::symbol_origin;
+    using context::symbol_attributes;
+
     const auto& ops = statement.operands_ref().value;
 
     const auto data_op = ops.empty() ? nullptr : ops.front()->access_data_def();
     if (!data_op)
     {
         register_attr_ref(symbol_name,
-            context::symbol_attributes(context::symbol_origin::DAT,
-                'U'_ebcdic,
-                context::symbol_attributes::undef_length,
-                context::symbol_attributes::undef_scale));
+            symbol_attributes(DAT, 'U'_ebcdic, symbol_attributes::undef_length, symbol_attributes::undef_scale));
         return;
     }
 
-    context::symbol_attributes::type_attr type =
-        ebcdic_encoding::to_ebcdic((unsigned char)data_op->value->get_type_attribute());
+    symbol_attributes::type_attr type = ebcdic_encoding::to_ebcdic((unsigned char)data_op->value->get_type_attribute());
 
-    context::symbol_attributes::len_attr len = context::symbol_attributes::undef_length;
-    context::symbol_attributes::scale_attr scale = context::symbol_attributes::undef_scale;
+    symbol_attributes::len_attr len = symbol_attributes::undef_length;
+    symbol_attributes::scale_attr scale = symbol_attributes::undef_scale;
+    symbol_attributes::len_attr integer = symbol_attributes::undef_length;
+    symbol_attributes::program_type prog {};
 
     library_info_transitional li(lib_provider_);
     context::ordinary_assembly_dependency_solver dep_solver(hlasm_ctx.ord_ctx, li);
@@ -265,8 +298,13 @@ void lookahead_processor::assign_data_def_attributes(context::id_index symbol_na
     {
         scale = data_op->value->get_scale_attribute(dep_solver, drop_diagnostic_op);
     }
+    if (data_op->value->program_type
+        && !data_op->value->program_type->get_dependencies(dep_solver).contains_dependencies())
+    {
+        prog = data_op->value->get_program_attribute(dep_solver, drop_diagnostic_op);
+    }
 
-    register_attr_ref(symbol_name, context::symbol_attributes(context::symbol_origin::DAT, type, len, scale));
+    register_attr_ref(symbol_name, symbol_attributes(DAT, type, len, scale, integer, prog));
 }
 
 void lookahead_processor::assign_section_attributes(context::id_index symbol_name, const resolved_statement&)

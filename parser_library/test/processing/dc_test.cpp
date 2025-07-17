@@ -397,3 +397,31 @@ TEST(DC, r_type_valid)
 
     EXPECT_TRUE(a.diags().empty());
 }
+
+TEST(DC, p_attr)
+{
+    std::string input = R"(
+P   DC  AP(X'12345678')(0)
+)";
+
+    analyzer a(input);
+    a.analyze();
+
+    const auto p = get_symbol(a.hlasm_ctx(), "P");
+    ASSERT_TRUE(p);
+
+    EXPECT_EQ(p->attributes().prog_type(), program_type(0x12345678));
+}
+
+TEST(DC, p_attr_invalid)
+{
+    std::string input = R"(
+P   DC  AP(X)(0)
+X   EQU 0
+)";
+
+    analyzer a(input);
+    a.analyze();
+
+    EXPECT_TRUE(matches_message_codes(a.diags(), { "A175" }));
+}

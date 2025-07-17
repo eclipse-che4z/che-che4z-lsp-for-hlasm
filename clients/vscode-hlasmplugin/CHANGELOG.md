@@ -6,6 +6,7 @@
 - Support file change notification registration
 - Validate operand length in machine instructions
 - Provide bulk copybook download via Zowe Explorer
+- Support program and assembler type symbol attributes
 
 #### Fixed
 - Logs produced by language server in WebAssembly mode are not visible
