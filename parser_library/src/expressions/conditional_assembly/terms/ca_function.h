@@ -82,8 +82,8 @@ public:
     static context::SET_t ESYM(const context::C_t& param);
     static context::SET_t LOWER(context::C_t param);
     static context::SET_t SIGNED(context::A_t param);
-    static context::SET_t SYSATTRA(const context::C_t& param);
-    static context::SET_t SYSATTRP(const context::C_t& param);
+    static context::SET_t SYSATTRA(const context::C_t& param, const evaluation_context& eval_ctx);
+    static context::SET_t SYSATTRP(const context::C_t& param, const evaluation_context& eval_ctx);
     static context::SET_t UPPER(context::C_t param);
     static context::SET_t X2B(const context::C_t& param, diagnostic_adder& add_diagnostic);
     static context::SET_t X2C(const context::C_t& param, diagnostic_adder& add_diagnostic);

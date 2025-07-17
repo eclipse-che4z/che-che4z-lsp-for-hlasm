@@ -1428,3 +1428,51 @@ AR0     EQU 0,,,,AR
 
     EXPECT_EQ(ar0->attributes().asm_type(), assembler_type::AR);
 }
+
+TEST(lookahead, sysattra_equ)
+{
+    std::string input = R"(
+&NAME   SETC 'AR0'
+&RES    SETC SYSATTRA('&NAME')
+AR0     EQU 0,,,,AR
+)";
+
+    analyzer a(input);
+    a.analyze();
+
+    EXPECT_TRUE(a.diags().empty());
+
+    EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "RES"), "AR");
+}
+
+TEST(lookahead, sysattrp_equ)
+{
+    std::string input = R"(
+&NAME   SETC 'P'
+&RES    SETC SYSATTRP('&NAME')
+P       EQU 0,,,C'ABCD'
+)";
+
+    analyzer a(input);
+    a.analyze();
+
+    EXPECT_TRUE(a.diags().empty());
+
+    EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "RES"), "ABCD");
+}
+
+TEST(lookahead, sysattrp_dc)
+{
+    std::string input = R"(
+&NAME   SETC 'P'
+&RES    SETC SYSATTRP('&NAME')
+P       DC   AP(C'ABCD')(0)
+)";
+
+    analyzer a(input);
+    a.analyze();
+
+    EXPECT_TRUE(a.diags().empty());
+
+    EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "RES"), "ABCD");
+}

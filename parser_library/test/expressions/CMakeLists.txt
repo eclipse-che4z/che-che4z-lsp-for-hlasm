@@ -17,6 +17,8 @@ target_sources(library_test PRIVATE
     ca_function_test.cpp
     ca_operator_test.cpp
     ca_string_test.cpp
+    ca_sysattra_test.cpp
+    ca_sysattrp_test.cpp
     ca_symbol_attribute_test.cpp
     ca_symbol_test.cpp
     ca_var_sym_test.cpp

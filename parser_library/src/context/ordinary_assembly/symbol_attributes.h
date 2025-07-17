@@ -83,9 +83,9 @@ enum class assembler_type : unsigned char
     GR64,
     VR,
 };
-constexpr char assembler_type_values[][5] = { "", "AR", "CR", "CR32", "CR64", "FPR", "GR", "GR32", "GR64", "VR" };
 
 assembler_type assembler_type_from_string(std::string_view s) noexcept;
+std::string_view assembler_type_to_string(assembler_type t) noexcept;
 
 // structure wrapping attributes of the symbol
 // the structure fields are to be constant except undefined fields, their value can be defined later

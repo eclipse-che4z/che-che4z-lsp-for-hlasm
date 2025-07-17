@@ -19,6 +19,7 @@
 #include <charconv>
 
 #include "ca_string.h"
+#include "context/hlasm_context.h"
 #include "ebcdic_encoding.h"
 #include "expressions/conditional_assembly/ca_expr_visitor.h"
 #include "expressions/evaluation_context.h"
@@ -51,8 +52,25 @@ bool ca_function::get_undefined_attributed_symbols(
     bool result = false;
     for (auto&& expr : parameters)
         result |= expr->get_undefined_attributed_symbols(symbols, eval_ctx);
+
+    using enum ca_expr_funcs;
+    if (!result && parameters.size() == 1 && (function == SYSATTRA || function == SYSATTRP))
+    {
+        const auto args = parameters[0]->evaluate(eval_ctx);
+        if (args.type() == context::SET_t_enum::C_TYPE)
+        {
+            if (const auto id = eval_ctx.hlasm_ctx.add_id(args.access_c());
+                !eval_ctx.hlasm_ctx.ord_ctx.get_symbol(id) && !eval_ctx.hlasm_ctx.ord_ctx.get_symbol_reference(id))
+            {
+                symbols.emplace_back(id);
+                result = true;
+            }
+        }
+    }
+
     if (duplication_factor)
         result |= duplication_factor->get_undefined_attributed_symbols(symbols, eval_ctx);
+
     return result;
 }
 
@@ -181,10 +199,10 @@ context::SET_t ca_function::evaluate(const evaluation_context& eval_ctx) const
             str_ret = SIGNED(get_ith_param(0, eval_ctx).access_a());
             break;
         case ca_expr_funcs::SYSATTRA:
-            str_ret = SYSATTRA(get_ith_param(0, eval_ctx).access_c());
+            str_ret = SYSATTRA(get_ith_param(0, eval_ctx).access_c(), eval_ctx);
             break;
         case ca_expr_funcs::SYSATTRP:
-            str_ret = SYSATTRP(get_ith_param(0, eval_ctx).access_c());
+            str_ret = SYSATTRP(get_ith_param(0, eval_ctx).access_c(), eval_ctx);
             break;
         case ca_expr_funcs::UPPER:
             str_ret = UPPER(get_ith_param(0, eval_ctx).access_c());
@@ -628,9 +646,42 @@ context::SET_t ca_function::LOWER(context::C_t param)
 
 context::SET_t ca_function::SIGNED(context::A_t param) { return std::to_string(param); }
 
-context::SET_t ca_function::SYSATTRA(const context::C_t&) { return context::SET_t(); }
+const context::symbol_attributes* find_symbol_attributes(const context::C_t& name, const evaluation_context& eval_ctx)
+{
+    if (const auto id = eval_ctx.hlasm_ctx.find_id(name))
+    {
+        if (const auto* sym = eval_ctx.hlasm_ctx.ord_ctx.get_symbol(*id))
+            return &sym->attributes();
+        if (const auto* sym = eval_ctx.hlasm_ctx.ord_ctx.get_symbol_reference(*id))
+            return &sym->attributes();
+    }
+    return nullptr;
+}
 
-context::SET_t ca_function::SYSATTRP(const context::C_t&) { return context::SET_t(); }
+context::SET_t ca_function::SYSATTRA(const context::C_t& name, const evaluation_context& eval_ctx)
+{
+    if (const auto* attrs = find_symbol_attributes(name, eval_ctx))
+    {
+        if (const auto a_attr = attrs->asm_type(); a_attr != context::symbol_attributes::assembler_type::NONE)
+        {
+            return context::SET_t(std::string(context::assembler_type_to_string(a_attr)));
+        }
+    }
+    return context::SET_t();
+}
+
+context::SET_t ca_function::SYSATTRP(const context::C_t& name, const evaluation_context& eval_ctx)
+{
+    if (const auto* attrs = find_symbol_attributes(name, eval_ctx))
+    {
+        if (const auto& p_attr = attrs->prog_type(); p_attr.valid)
+        {
+            const auto& prog = p_attr.ebcdic_value;
+            return context::SET_t(ebcdic_encoding::to_ascii(std::string(prog, sizeof(prog))));
+        }
+    }
+    return context::SET_t();
+}
 
 context::SET_t ca_function::UPPER(context::C_t param)
 {

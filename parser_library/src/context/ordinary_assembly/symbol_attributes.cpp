@@ -15,12 +15,15 @@
 #include "symbol_attributes.h"
 
 #include <algorithm>
+#include <cassert>
 #include <limits>
 #include <stdexcept>
 
 #include "../../ebcdic_encoding.h"
 
 namespace hlasm_plugin::parser_library::context {
+
+constexpr char assembler_type_values[][5] = { "", "AR", "CR", "CR32", "CR64", "FPR", "GR", "GR32", "GR64", "VR" };
 
 assembler_type assembler_type_from_string(std::string_view s) noexcept
 {
@@ -30,6 +33,13 @@ assembler_type assembler_type_from_string(std::string_view s) noexcept
     if (it == std::ranges::end(assembler_type_values))
         return {};
     return (symbol_attributes::assembler_type)std::ranges::distance(std::ranges::begin(assembler_type_values), it);
+}
+
+std::string_view assembler_type_to_string(assembler_type t) noexcept
+{
+    const auto value = (std::underlying_type_t<assembler_type>)t;
+    assert(value < std::size(assembler_type_values));
+    return assembler_type_values[value];
 }
 
 static_assert(symbol_attributes::undef_type == 'U'_ebcdic);
