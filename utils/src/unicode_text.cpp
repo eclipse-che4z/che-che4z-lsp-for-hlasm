@@ -55,8 +55,9 @@ constinit const std::array<unsigned char, 128> utf8_valid_multibyte_prefix_table
     return result;
 }();
 
-void append_utf8_sanitized(std::string& result, std::string_view str)
+character_replaced append_utf8_sanitized(std::string& result, std::string_view str)
 {
+    auto ret = character_replaced::no;
     auto it = str.begin();
     auto end = str.end();
     while (true)
@@ -87,6 +88,8 @@ void append_utf8_sanitized(std::string& result, std::string_view str)
             }
         }
 
+        ret = character_replaced::yes;
+
         static constexpr char hex_digits[] = "0123456789ABCDEF";
 
         // 0x00-0x1F, 0x7F, 0x8D-0x9F, not characters and invalid sequences
@@ -97,6 +100,8 @@ void append_utf8_sanitized(std::string& result, std::string_view str)
 
         ++it;
     }
+
+    return ret;
 }
 
 bool utf8_one_byte_begin(char ch)

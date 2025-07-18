@@ -60,7 +60,13 @@ inline bool utf8_valid_multibyte_prefix(unsigned char first, unsigned char secon
     return utf8_valid_multibyte_prefix_table[bitid / 8] & (0x80 >> bitid % 8);
 }
 
-void append_utf8_sanitized(std::string& result, std::string_view str);
+enum class character_replaced : bool
+{
+    no,
+    yes,
+};
+
+character_replaced append_utf8_sanitized(std::string& result, std::string_view str);
 
 bool utf8_one_byte_begin(char ch);
 

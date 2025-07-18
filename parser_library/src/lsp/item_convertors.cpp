@@ -115,6 +115,33 @@ std::string hover_text(const context::symbol& sym)
         markdown.append("S: ").append(std::to_string(attrs.scale())).append("  \n");
     if (attrs.is_defined(context::data_attr_kind::T))
         markdown.append("T: ").append(ebcdic_encoding::to_ascii((unsigned char)attrs.type())).append("  \n");
+    if (const auto p = attrs.prog_type(); p.valid)
+    {
+        std::string_view val(p.ebcdic_value, sizeof(p.ebcdic_value));
+        std::string valstr;
+        const auto replaced = utils::append_utf8_sanitized(valstr, ebcdic_encoding::to_ascii(std::string(val)));
+        markdown.append("P: '");
+        for (auto c : valstr)
+        {
+            if (c == ' ')
+                markdown.append((const char*)u8"\U00002003");
+            else
+                markdown.push_back(c);
+        }
+        markdown.push_back('\'');
+        if (replaced == utils::character_replaced::yes)
+        {
+            markdown.push_back(' ');
+            uint32_t bin = 0;
+            for (unsigned char c : val)
+                bin = c | bin << 8;
+            append_hex_and_dec(markdown, bin);
+        }
+
+        markdown.append("  \n");
+    }
+    if (const auto a = attrs.asm_type(); a != context::symbol_attributes::assembler_type::NONE)
+        markdown.append("A: ").append(context::assembler_type_to_string(a)).append("  \n");
 
     return markdown;
 }

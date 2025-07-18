@@ -70,7 +70,7 @@ TEST(hover, abs_symbol)
 {
     std::string input = R"(
  LR R1,1
-R1 EQU 1 R1 comment                                                    X
+R1 EQU 1,,,C'F',GR32 R1 comment                                        X
                comment 2
 )";
     analyzer a(input);
@@ -89,9 +89,11 @@ Absolute Symbol
 
 L: X'1' (1)  
 T: U  
+P: '<00><00><00>F' X'C6' (198)  
+A: GR32  
 
 ```hlasm
-R1 EQU 1 R1 comment                                                    X
+R1 EQU 1,,,C'F',GR32 R1 comment                                        X
                comment 2
 ```
 )");
