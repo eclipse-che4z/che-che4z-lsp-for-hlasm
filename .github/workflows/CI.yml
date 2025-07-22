@@ -339,6 +339,9 @@ jobs:
       - name: NPM Test
         run: npm run test:web
         working-directory: ${{ env.CLIENT_DIR }}
+      - name: Inject commit
+        run: jq '. + {"commit":"${{ github.sha }}"}' package.json > tmp && mv tmp package.json
+        working-directory: ${{ env.CLIENT_DIR }}
       - name: Package VSIX
         run: npm exec vsce -- package ${{ github.ref == 'refs/heads/master' && ' ' || '--pre-release' }}  --no-dependencies --target web -o hlasm-language-support-web.vsix --baseContentUrl "https://raw.githubusercontent.com/${{ github.repository }}/${{ github.sha }}/"
         working-directory: ${{ env.CLIENT_DIR }}
@@ -409,6 +412,9 @@ jobs:
         working-directory: ${{ env.CLIENT_DIR }}
       - name: NPM Compile
         run: npm run compile
+        working-directory: ${{ env.CLIENT_DIR }}
+      - name: Inject commit
+        run: jq '. + {"commit":"${{ github.sha }}"}' package.json > tmp && mv tmp package.json
         working-directory: ${{ env.CLIENT_DIR }}
       - name: Package VSIX
         run: npm exec vsce -- package ${{ github.ref == 'refs/heads/master' && ' ' || '--pre-release' }} --no-dependencies -o hlasm-language-support.vsix --baseContentUrl "https://raw.githubusercontent.com/${{ github.repository }}/${{ github.sha }}/"
