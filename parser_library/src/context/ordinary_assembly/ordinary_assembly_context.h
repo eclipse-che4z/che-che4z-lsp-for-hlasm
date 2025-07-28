@@ -16,6 +16,7 @@
 #define CONTEXT_ORDINARY_ASSEMBLY_CONTEXT_H
 
 #include <memory>
+#include <optional>
 #include <unordered_map>
 #include <variant>
 #include <vector>
@@ -117,7 +118,7 @@ public:
     section* set_section(section& s);
 
     // creates an external section
-    void create_external_section(id_index name, section_kind kind);
+    void create_external_section(id_index name, section_kind kind, std::optional<position> pos = std::nullopt);
 
     // sets current location counter of current section
     void set_location_counter(id_index name, const library_info& li);

@@ -607,7 +607,7 @@ void asm_processor::process_external(rebuilt_statement&& stmt, external_type t)
         if (hlasm_ctx.ord_ctx.symbol_defined(name))
             add_diagnostic(diagnostic_op::error_E031("external symbol", op_range));
         else
-            hlasm_ctx.ord_ctx.create_external_section(name, s_kind);
+            hlasm_ctx.ord_ctx.create_external_section(name, s_kind, op_range.start);
     };
     for (const auto& op : stmt.operands_ref().value)
     {

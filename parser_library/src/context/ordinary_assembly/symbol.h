@@ -15,8 +15,9 @@
 #ifndef CONTEXT_SYMBOL_H
 #define CONTEXT_SYMBOL_H
 
+#include <optional>
+
 #include "../source_context.h"
-#include "address.h"
 #include "location.h"
 #include "symbol_attributes.h"
 #include "symbol_value.h"
@@ -31,8 +32,8 @@ public:
     symbol(id_index name,
         symbol_value value,
         symbol_attributes attributes,
-        location symbol_location,
-        processing_stack_t stack);
+        processing_stack_t stack,
+        std::optional<position> pos = std::nullopt) noexcept;
 
     const symbol_value& value() const { return value_; }
     const symbol_attributes& attributes() const { return attributes_; }
@@ -44,14 +45,14 @@ public:
     void set_scale(symbol_attributes::scale_attr value);
 
     id_index name() const { return name_; }
-    const location& symbol_location() const { return symbol_location_; }
+    location symbol_location() const;
     const processing_stack_t& proc_stack() const;
 
 private:
     id_index name_;
-    location symbol_location_;
     symbol_value value_;
     symbol_attributes attributes_;
+    position pos_;
     processing_stack_t stack_;
 };
 

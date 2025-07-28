@@ -17,15 +17,26 @@
 #include <assert.h>
 #include <stdexcept>
 
-using namespace hlasm_plugin::parser_library;
-using namespace hlasm_plugin::parser_library::context;
+namespace hlasm_plugin::parser_library::context {
 
-symbol::symbol(
-    id_index name, symbol_value value, symbol_attributes attributes, location symbol_location, processing_stack_t stack)
+position from_stack(processing_stack_t stack) noexcept
+{
+    if (stack.empty())
+        return position();
+    auto p = stack.frame().pos;
+    p.column = 0;
+    return p;
+}
+
+symbol::symbol(id_index name,
+    symbol_value value,
+    symbol_attributes attributes,
+    processing_stack_t stack,
+    std::optional<position> pos) noexcept
     : name_(name)
-    , symbol_location_(std::move(symbol_location))
     , value_(std::move(value))
     , attributes_(attributes)
+    , pos_(std::move(pos).value_or(from_stack(stack)))
     , stack_(std::move(stack))
 {}
 
@@ -44,4 +55,16 @@ void symbol::set_length(symbol_attributes::len_attr value) { attributes_.length(
 
 void symbol::set_scale(symbol_attributes::scale_attr value) { attributes_.scale(value); }
 
+location symbol::symbol_location() const
+{
+    if (stack_.empty())
+        return location();
+
+    auto sym_loc = stack_.frame().get_location();
+    sym_loc.pos = pos_;
+    return sym_loc;
+}
+
 const processing_stack_t& symbol::proc_stack() const { return stack_; }
+
+} // namespace hlasm_plugin::parser_library::context
