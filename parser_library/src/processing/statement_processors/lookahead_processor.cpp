@@ -170,6 +170,7 @@ struct lookahead_processor::handler_table
         { id_index("DC"), fn<&lookahead_processor::assign_data_def_attributes> },
         { id_index("DS"), fn<&lookahead_processor::assign_data_def_attributes> },
         { id_index("CXD"), fn<&lookahead_processor::assign_cxd_attributes> },
+        { id_index("CCW"), fn<&lookahead_processor::assign_ccw_attributes> },
     });
 
     static constexpr auto find(id_index id) noexcept { return value.find(id); }
@@ -324,12 +325,17 @@ void lookahead_processor::assign_assembler_attributes(
     if (const auto handler = handler_table::find(statement.opcode_ref().value))
         handler(this, symbol_name, statement);
     else
-        register_attr_ref(symbol_name, context::symbol_attributes(context::symbol_origin::MACH, 'M'_ebcdic));
+        register_attr_ref(symbol_name, context::symbol_attributes(context::symbol_origin::ASM, 'U'_ebcdic));
 }
 
 void lookahead_processor::assign_cxd_attributes(context::id_index symbol_name, const resolved_statement&)
 {
     register_attr_ref(symbol_name, context::symbol_attributes(context::symbol_origin::ASM, 'A'_ebcdic, 4));
+}
+
+void lookahead_processor::assign_ccw_attributes(context::id_index symbol_name, const resolved_statement&)
+{
+    register_attr_ref(symbol_name, context::symbol_attributes::make_ccw_attrs());
 }
 
 void lookahead_processor::find_seq(const semantics::label_si& label)

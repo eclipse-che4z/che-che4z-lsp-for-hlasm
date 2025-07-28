@@ -67,6 +67,7 @@ private:
     void assign_data_def_attributes(context::id_index symbol_name, const resolved_statement& statement);
     void assign_section_attributes(context::id_index symbol_name, const resolved_statement& statement);
     void assign_cxd_attributes(context::id_index symbol_name, const resolved_statement& statement);
+    void assign_ccw_attributes(context::id_index symbol_name, const resolved_statement& statement);
 
     void assign_machine_attributes(context::id_index symbol_name, size_t len);
     void assign_assembler_attributes(context::id_index symbol_name, const resolved_statement& statement);

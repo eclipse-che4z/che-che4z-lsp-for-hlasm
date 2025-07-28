@@ -1476,3 +1476,20 @@ P       DC   AP(C'ABCD')(0)
 
     EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "RES"), "ABCD");
 }
+
+TEST(lookahead, ccw)
+{
+    std::string input = R"(
+&T      SETC T'CCW
+&L      SETA L'CCW
+CCW     CCW  0,0,0,0
+)";
+
+    analyzer a(input);
+    a.analyze();
+
+    EXPECT_TRUE(a.diags().empty());
+
+    EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "T"), "W");
+    EXPECT_EQ(get_var_value<A_t>(a.hlasm_ctx(), "L"), 8);
+}
