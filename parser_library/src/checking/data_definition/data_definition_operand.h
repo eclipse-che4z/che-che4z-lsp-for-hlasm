@@ -42,37 +42,8 @@ public:
 
     const data_def_type* access_data_def_type() const;
 
-    template<data_instr_type instr_type>
-    bool check(const diagnostic_collector& add_diagnostic) const;
-
-    uint64_t get_length() const;
-    context::alignment get_alignment() const;
-    int16_t get_scale_attribute() const;
-    uint32_t get_length_attribute() const;
-    uint32_t get_integer_attribute() const;
-
-    template<data_instr_type instr_type>
-    static uint64_t get_operands_length(const std::vector<const data_definition_operand*>& operands);
-
-
-private:
     std::pair<const data_def_type*, bool> check_type_and_extension(const diagnostic_collector& add_diagnostic) const;
 };
-
-
-//************************* template functions implementation ************************
-
-template<data_instr_type instr_type>
-bool data_definition_operand::check(const diagnostic_collector& add_diagnostic) const
-{
-    const auto [data_def, exact_match] = check_type_and_extension(add_diagnostic);
-
-    if (!exact_match)
-        return false;
-
-    return data_def->check<instr_type>(*this, add_diagnostic);
-}
-
 
 } // namespace hlasm_plugin::parser_library::checking
 

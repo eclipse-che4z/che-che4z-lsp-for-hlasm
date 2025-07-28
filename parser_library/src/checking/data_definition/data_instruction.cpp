@@ -18,12 +18,9 @@
 
 #include "checking/asm_instr_check.h"
 #include "checking/diagnostic_collector.h"
-#include "data_def_types.h"
+#include "data_definition_operand.h"
 
-using namespace hlasm_plugin::parser_library::checking;
-using namespace hlasm_plugin::parser_library;
-
-
+namespace hlasm_plugin::parser_library::checking {
 
 data::data(const std::vector<label_types>& allowed_types, std::string_view name_of_instruction)
     : assembler_instruction(allowed_types, name_of_instruction, 1, -1)
@@ -37,29 +34,45 @@ bool data::check_data(std::span<const asm_operand* const> to_check,
     if (!operands_size_corresponding(to_check, stmt_range, add_diagnostic))
         return false;
 
-    std::vector<const data_definition_operand*> get_len_ops;
-    get_len_ops.reserve(to_check.size());
+    auto operands_bit_length = 0ULL;
     bool ret = true;
     for (const auto& operand : to_check)
     {
-        auto ddef = dynamic_cast<const data_definition_operand*>(operand);
-        if (ddef)
-        {
-            get_len_ops.push_back(ddef);
-            ret &= ddef->check<instr_type>(add_diagnostic);
-        }
-        else
+        const auto op = dynamic_cast<const data_definition_operand*>(operand);
+        if (!op)
         {
             add_diagnostic(diagnostic_op::error_A004_data_def_expected());
             ret = false;
+            continue;
         }
+
+        const auto [def_type, exact_match] = op->check_type_and_extension(add_diagnostic);
+        ret &= exact_match && def_type->check<instr_type>(*op, add_diagnostic);
+
+        if (!ret)
+            continue;
+
+        if (op->length.len_type != checking::data_def_length_t::BIT)
+        {
+            // align to whole byte
+            operands_bit_length = round_up(operands_bit_length, 8ULL);
+
+            // enforce data def alignment
+            const context::alignment al = def_type->get_alignment(op->length.present);
+
+            operands_bit_length = round_up(operands_bit_length, al.boundary * 8ULL);
+        }
+
+        operands_bit_length += def_type->get_length(*op);
     }
 
     if (!ret)
         return false;
 
-    uint64_t len = data_definition_operand::get_operands_length<instr_type>(get_len_ops);
-    if (len > INT32_MAX)
+    // align to whole byte
+    operands_bit_length = round_up(operands_bit_length, 8ULL);
+
+    if (operands_bit_length / 8 > INT32_MAX)
     {
         add_diagnostic(diagnostic_op::error_D029(stmt_range));
         ret = false;
@@ -88,3 +101,5 @@ bool ds_dxd::check(std::span<const asm_operand* const> to_check,
 {
     return check_data<data_instr_type::DS>(to_check, stmt_range, add_diagnostic);
 }
+
+} // namespace hlasm_plugin::parser_library::checking
