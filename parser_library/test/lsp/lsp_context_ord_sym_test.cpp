@@ -122,6 +122,8 @@ Relocatable Symbol
 ---
 
 L: X'2' (2)  
+I: 15  
+S: 0  
 T: H  
 
 ```hlasm

@@ -852,6 +852,32 @@ TEST(data_def_checker, LD_no_exponent)
     EXPECT_TRUE(matches_message_codes(col.diags(), { "D010" }));
 }
 
+TEST(data_def_checker, LD_scale_ignored)
+{
+    data_def_type_LD t;
+
+    data_definition_operand op = setup_data_def_op('L', 'D', "0");
+    op.scale = scale_modifier_t(0);
+
+    diag_collector col;
+    EXPECT_TRUE(t.check_DC(op, ADD_DIAG(col)));
+
+    EXPECT_TRUE(matches_message_codes(col.diags(), { "D025" }));
+}
+
+TEST(data_def_checker, LD_scale_wrong)
+{
+    data_def_type_LD t;
+
+    data_definition_operand op = setup_data_def_op('L', 'D', "0");
+    op.scale = scale_modifier_t(1);
+
+    diag_collector col;
+    EXPECT_FALSE(t.check_DC(op, ADD_DIAG(col)));
+
+    EXPECT_TRUE(matches_message_codes(col.diags(), { "D009" }));
+}
+
 TEST(data_def_checker, special_values_BD)
 {
     diag_collector col;

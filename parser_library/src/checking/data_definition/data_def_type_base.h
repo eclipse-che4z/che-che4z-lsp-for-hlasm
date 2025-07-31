@@ -25,6 +25,9 @@
 
 namespace hlasm_plugin::parser_library {
 class diagnostic_collector;
+namespace context {
+enum class integer_type : unsigned char;
+}
 } // namespace hlasm_plugin::parser_library
 
 namespace hlasm_plugin::parser_library::checking {
@@ -86,7 +89,9 @@ public:
         modifier_spec exponent_spec,
         nominal_value_type nominal_type,
         context::alignment implicit_alignment,
-        implicit_length_t implicit_length);
+        implicit_length_t implicit_length,
+        context::integer_type int_type_,
+        bool ignores_scale = false);
 
     // constructor for types with different allowed lengths with DS instruction
     data_def_type(char type,
@@ -98,7 +103,8 @@ public:
         modifier_spec exponent_spec,
         nominal_value_type nominal_type,
         context::alignment implicit_alignment,
-        implicit_length_t implicit_length);
+        implicit_length_t implicit_length,
+        context::integer_type int_type_);
 
 
     // Checks data def operand, returns false when there was an error. Adds found diagnostics using specified diagnostic
@@ -121,9 +127,6 @@ public:
     uint32_t get_length_attribute(const data_def_length_t& length, const reduced_nominal_value_t& nominal) const;
     // returns scale attribute of operand with specified scale modifier and nominal value
     int16_t get_scale_attribute(const scale_modifier_t& scale, const reduced_nominal_value_t& nominal) const;
-    // returns length of operand with specified scale modifier and nominal value
-    int32_t get_integer_attribute(
-        const data_def_length_t& length, const scale_modifier_t& scale, const reduced_nominal_value_t& nominal) const;
     // Returns type corresponding to specified type and extension.
     static const data_def_type* access_data_def_type(char type, char extension);
 
@@ -138,6 +141,9 @@ public:
     template<data_instr_type type>
     bool check_length(const data_def_length_t& op, const diagnostic_collector& add_diagnostic) const;
 
+    [[nodiscard]] constexpr context::integer_type get_int_type() const noexcept { return int_type_; }
+    [[nodiscard]] constexpr bool ignores_scale() const noexcept { return ignores_scale_; }
+
 protected:
     char type;
     char extension;
@@ -150,8 +156,6 @@ protected:
     virtual uint32_t get_nominal_length_attribute(const reduced_nominal_value_t& op) const;
     // Gets the value of scale attribute when there is no scale modifier defined by user.
     virtual int16_t get_implicit_scale(const reduced_nominal_value_t& op) const;
-
-    virtual int32_t get_integer_attribute_impl(uint32_t length, int32_t scale) const;
 
 private:
     // Checks properties of data def operand that all types have in common - modifiers, duplication factor.
@@ -197,6 +201,9 @@ private:
     context::alignment alignment_;
 
     implicit_length_t implicit_length_;
+
+    context::integer_type int_type_;
+    bool ignores_scale_ = false;
 };
 
 } // namespace hlasm_plugin::parser_library::checking

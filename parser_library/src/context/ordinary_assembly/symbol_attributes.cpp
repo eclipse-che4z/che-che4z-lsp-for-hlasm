@@ -43,7 +43,6 @@ std::string_view assembler_type_to_string(assembler_type t) noexcept
 }
 
 static_assert(symbol_attributes::undef_type == 'U'_ebcdic);
-static_assert(symbol_attributes::undef_length == static_cast<symbol_attributes::len_attr>(-1));
 static_assert(symbol_attributes::undef_scale == std::numeric_limits<symbol_attributes::scale_attr>::max());
 
 symbol_attributes symbol_attributes::make_section_attrs()
@@ -157,7 +156,18 @@ bool symbol_attributes::is_defined(data_attr_kind attribute) const
         case data_attr_kind::S:
             return scale_ != undef_scale;
         case data_attr_kind::I:
-            return scale_ != undef_scale && length_ != undef_length;
+            switch (integer_)
+            {
+                case integer_type::undefined:
+                    return false;
+                case integer_type::zero:
+                    return true;
+                case integer_type::fixed:
+                case integer_type::packed:
+                case integer_type::zoned:
+                case integer_type::hexfloat:
+                    return scale_ != undef_scale && length_ != undef_length;
+            }
         default:
             return false;
     }
@@ -186,5 +196,29 @@ symbol_attributes::value_t symbol_attributes::get_attribute_value(data_attr_kind
         default:
             return 0;
     }
+}
+
+std::int32_t compute_integer_attribute(integer_type t, std::int32_t l, std::int32_t s) noexcept
+{
+    switch (t)
+    {
+        case integer_type::undefined:
+            return 0;
+        case integer_type::zero:
+            return 0;
+        case integer_type::fixed:
+            return 8 * l - s - 1;
+        case integer_type::packed:
+            return 2 * l - s - 1;
+        case integer_type::zoned:
+            return l - s;
+        case integer_type::hexfloat:
+            return 2 * (l - 1) - s - 2 * (l > 8);
+    }
+}
+
+symbol_attributes::len_attr symbol_attributes::integer() const noexcept
+{
+    return compute_integer_attribute(integer_, length_, scale_);
 }
 } // namespace hlasm_plugin::parser_library::context

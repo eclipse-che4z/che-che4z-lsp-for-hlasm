@@ -17,6 +17,10 @@
 
 #include "instruction_processor.h"
 
+namespace hlasm_plugin::parser_library::context {
+class symbol;
+} // namespace hlasm_plugin::parser_library::context
+
 namespace hlasm_plugin::parser_library::processing {
 class processing_manager;
 class statement_fields_parser;
@@ -44,11 +48,8 @@ protected:
     context::id_index find_using_label(const rebuilt_statement& stmt) const;
 
     // helper method to create symbol
-    bool create_symbol(range err_range,
-        context::id_index symbol_name,
-        context::symbol_value value,
-        context::symbol_attributes attributes);
-
+    context::symbol& create_symbol(
+        context::id_index symbol_name, context::symbol_value value, context::symbol_attributes attributes);
 
 private:
     struct preprocessed_part

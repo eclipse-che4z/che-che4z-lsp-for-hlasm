@@ -112,9 +112,6 @@ public:
     bool check(const data_definition_operand& op,
         const diagnostic_collector& add_diagnostic,
         bool check_nominal) const override;
-
-protected:
-    int32_t get_integer_attribute_impl(uint32_t length, int32_t scale) const override;
 };
 
 class data_def_type_H final : public data_def_type_H_F_FD
@@ -138,7 +135,7 @@ public:
 class data_def_type_P_Z : public data_def_type
 {
 public:
-    data_def_type_P_Z(char type);
+    data_def_type_P_Z(char type, context::integer_type int_type);
 
     bool check(const data_definition_operand& op,
         const diagnostic_collector& add_diagnostic,
@@ -154,9 +151,6 @@ public:
 protected:
     uint64_t get_nominal_length(const reduced_nominal_value_t& op) const override;
     uint32_t get_nominal_length_attribute(const reduced_nominal_value_t& op) const override;
-
-
-    int32_t get_integer_attribute_impl(uint32_t length, int32_t scale) const override;
 };
 
 class data_def_type_Z final : public data_def_type_P_Z
@@ -167,7 +161,6 @@ public:
 protected:
     uint64_t get_nominal_length(const reduced_nominal_value_t& op) const override;
     uint32_t get_nominal_length_attribute(const reduced_nominal_value_t& op) const override;
-    int32_t get_integer_attribute_impl(uint32_t length, int32_t scale) const override;
 };
 
 //************* address types *****************
@@ -336,9 +329,6 @@ public:
     bool check(const data_definition_operand& op,
         const diagnostic_collector& add_diagnostic,
         bool check_nominal) const override;
-
-protected:
-    int32_t get_integer_attribute_impl(uint32_t length, int32_t scale) const override;
 };
 
 class data_def_type_E final : public data_def_type_E_D_L

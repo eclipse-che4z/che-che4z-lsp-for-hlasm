@@ -41,7 +41,9 @@ data_def_type::data_def_type(char type,
     modifier_spec exponent_spec,
     nominal_value_type nominal_type,
     context::alignment implicit_alignment,
-    implicit_length_t implicit_length)
+    implicit_length_t implicit_length,
+    context::integer_type int_type,
+    bool ignores_scale)
     : type(type)
     , extension(extension)
     , nominal_type(nominal_type)
@@ -53,6 +55,8 @@ data_def_type::data_def_type(char type,
     , exponent_spec_(exponent_spec)
     , alignment_(implicit_alignment)
     , implicit_length_(implicit_length)
+    , int_type_(int_type)
+    , ignores_scale_(ignores_scale)
 {
     type_str = init_type_str(type, extension);
 }
@@ -67,7 +71,8 @@ data_def_type::data_def_type(char type,
     modifier_spec exponent_spec,
     nominal_value_type nominal_type,
     context::alignment implicit_alignment,
-    implicit_length_t implicit_length)
+    implicit_length_t implicit_length,
+    context::integer_type int_type)
     : type(type)
     , extension(extension)
     , nominal_type(nominal_type)
@@ -79,6 +84,7 @@ data_def_type::data_def_type(char type,
     , exponent_spec_(exponent_spec)
     , alignment_(implicit_alignment)
     , implicit_length_(implicit_length)
+    , int_type_(int_type)
 {
     type_str = init_type_str(type, extension);
 }
@@ -131,8 +137,12 @@ bool check_modifier(const data_def_field<field_val_T>& modifier,
         return true;
     if (std::holds_alternative<ignored>(bound))
     {
-        add_diagnostic(diagnostic_op::warn_D025(modifier.rng, type_str, modifier_name));
-        return true;
+        const bool tolerate = modifier.value == 0;
+        if (tolerate)
+            add_diagnostic(diagnostic_op::warn_D025(modifier.rng, type_str, modifier_name));
+        else
+            add_diagnostic(diagnostic_op::error_D009(modifier.rng, type_str, modifier_name));
+        return tolerate;
     }
     if (std::holds_alternative<n_a>(bound))
     {
@@ -140,14 +150,10 @@ bool check_modifier(const data_def_field<field_val_T>& modifier,
         add_diagnostic(diagnostic_op::error_D009(modifier.rng, type_str, modifier_name));
         return false;
     }
-    if (modifier.value < std::get<modifier_bound>(bound).min || modifier.value > std::get<modifier_bound>(bound).max)
+    if (const auto [min, max] = std::get<modifier_bound>(bound); modifier.value < min || modifier.value > max)
     {
         // modifier out of bounds
-        add_diagnostic(diagnostic_op::error_D008(modifier.rng,
-            type_str,
-            modifier_name,
-            std::get<modifier_bound>(bound).min,
-            std::get<modifier_bound>(bound).max));
+        add_diagnostic(diagnostic_op::error_D008(modifier.rng, type_str, modifier_name, min, max));
         return false;
     }
     return true;
@@ -170,12 +176,6 @@ uint32_t data_def_type::get_nominal_length_attribute(const reduced_nominal_value
 int16_t data_def_type::get_implicit_scale(const reduced_nominal_value_t&) const
 {
     // All types except P and Z have implicit scale 0.
-    return 0;
-}
-
-int32_t data_def_type::get_integer_attribute_impl(uint32_t, int32_t) const
-{
-    // Types that do not have integer specifier return 0.
     return 0;
 }
 
@@ -436,20 +436,12 @@ uint32_t data_def_type::get_length_attribute(
 
 int16_t data_def_type::get_scale_attribute(const scale_modifier_t& scale, const reduced_nominal_value_t& nominal) const
 {
-    if (scale.present)
+    if (ignores_scale())
+        return 0;
+    else if (scale.present)
         return scale.value;
     else
         return get_implicit_scale(nominal);
-}
-
-int32_t data_def_type::get_integer_attribute(
-    const data_def_length_t& length, const scale_modifier_t& scale, const reduced_nominal_value_t& nominal) const
-{
-    uint32_t L = get_length_attribute(length, nominal);
-    int32_t S = get_scale_attribute(scale, nominal);
-
-    // Types, that do not have integer specified return 0;
-    return get_integer_attribute_impl(L, S);
 }
 
 const std::map<std::pair<char, char>, std::unique_ptr<const data_def_type>> data_def_type::types_and_extensions = []() {

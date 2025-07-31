@@ -17,6 +17,7 @@
 
 #include "checking/checker_helper.h"
 #include "checking/diagnostic_collector.h"
+#include "context/ordinary_assembly/symbol_attributes.h"
 #include "data_def_types.h"
 
 using namespace hlasm_plugin::parser_library::checking;
@@ -34,7 +35,8 @@ data_def_type_H_F_FD::data_def_type_H_F_FD(char type, char extension, uint8_t wo
           modifier_bound { -85, 75 },
           nominal_value_type::STRING,
           { 0, word_length },
-          word_length)
+          word_length,
+          integer_type::fixed)
 {}
 
 class H_F_FD_number_spec
@@ -96,11 +98,6 @@ bool data_def_type_H_F_FD::check(
     // TODO truncation is also an error
 }
 
-int32_t data_def_type_H_F_FD::get_integer_attribute_impl(uint32_t length, int32_t scale) const
-{
-    return 8 * length - scale - 1;
-}
-
 data_def_type_H::data_def_type_H()
     : data_def_type_H_F_FD('H', '\0', 2)
 {}
@@ -123,7 +120,7 @@ public:
     static bool is_sign_char(char c) { return c == '+' || c == '-'; }
 };
 
-data_def_type_P_Z::data_def_type_P_Z(char type)
+data_def_type_P_Z::data_def_type_P_Z(char type, integer_type int_type)
     : data_def_type(type,
           '\0',
           modifier_bound { 1, 128 },
@@ -132,7 +129,8 @@ data_def_type_P_Z::data_def_type_P_Z(char type)
           n_a(),
           nominal_value_type::STRING,
           no_align,
-          as_needed())
+          as_needed(),
+          int_type)
 {}
 
 bool data_def_type_P_Z::check(
@@ -189,7 +187,7 @@ int16_t data_def_type_P_Z::get_implicit_scale(const reduced_nominal_value_t& op)
 }
 
 data_def_type_P::data_def_type_P()
-    : data_def_type_P_Z('P')
+    : data_def_type_P_Z('P', integer_type::packed)
 {}
 
 uint64_t data_def_type_P::get_nominal_length(const reduced_nominal_value_t& op) const
@@ -240,13 +238,8 @@ uint32_t hlasm_plugin::parser_library::checking::data_def_type_P::get_nominal_le
     // each digit is assembled as 4 bits, 4 more sign bits are assembled per each number
 }
 
-int32_t data_def_type_P::get_integer_attribute_impl(uint32_t length, int32_t scale) const
-{
-    return 2 * length - scale - 1;
-}
-
 data_def_type_Z::data_def_type_Z()
-    : data_def_type_P_Z('Z')
+    : data_def_type_P_Z('Z', integer_type::zoned)
 {}
 
 uint64_t data_def_type_Z::get_nominal_length(const reduced_nominal_value_t& op) const
@@ -279,5 +272,3 @@ uint32_t data_def_type_Z::get_nominal_length_attribute(const reduced_nominal_val
 
     return first_value_len;
 }
-
-int32_t data_def_type_Z::get_integer_attribute_impl(uint32_t length, int32_t scale) const { return length - scale; }

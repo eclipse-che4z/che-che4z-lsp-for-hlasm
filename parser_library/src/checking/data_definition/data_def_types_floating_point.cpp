@@ -20,6 +20,7 @@
 
 #include "checking/checker_helper.h"
 #include "checking/diagnostic_collector.h"
+#include "context/ordinary_assembly/symbol_attributes.h"
 #include "data_def_types.h"
 
 namespace hlasm_plugin::parser_library::checking {
@@ -39,7 +40,9 @@ data_def_type_E_D_L::data_def_type_E_D_L(char type,
           modifier_bound { -85, 75 },
           nominal_value_type::STRING,
           align,
-          implicit_length)
+          implicit_length,
+          context::integer_type::hexfloat,
+          extension == 'D' || extension == 'B')
 {}
 
 namespace {
@@ -233,17 +236,6 @@ bool data_def_type_E_D_L::check(
     }
 
     return true;
-}
-
-int32_t data_def_type_E_D_L::get_integer_attribute_impl(uint32_t length, int32_t scale) const
-{
-    // Decimal and binary floating point constants have integer attribute 0
-    if (extension == 'D' || extension == 'B')
-        return 0;
-    else if (length > 8)
-        return 2 * (length - 1) - scale - 2;
-    else
-        return 2 * (length - 1) - scale;
 }
 
 data_def_type_E::data_def_type_E()

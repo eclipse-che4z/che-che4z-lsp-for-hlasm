@@ -242,10 +242,30 @@ context::dependency_collector mach_expr_data_attr::get_dependencies(context::dep
     else
         symbol = std::get<const context::symbol*>(symbol_ext);
 
-    if (symbol == nullptr || !symbol->attributes().is_defined(attribute))
-        return context::dependency_collector({ attribute, value });
-    else
+    if (symbol && symbol->attributes().is_defined(attribute))
         return context::dependency_collector();
+
+    if (attribute == context::data_attr_kind::I)
+    {
+        if (symbol && !symbol->attributes().can_have_SI_attr())
+            return context::dependency_collector();
+
+        context::dependency_collector result;
+
+        auto& sym = result.undefined_symbolics.emplace_back();
+        sym.name = value;
+        if (!symbol || !symbol->attributes().is_defined(context::data_attr_kind::L))
+            sym.set(context::data_attr_kind::L);
+        if (!symbol || !symbol->attributes().is_defined(context::data_attr_kind::S))
+            sym.set(context::data_attr_kind::S);
+
+        return result;
+    }
+
+    if (attribute == context::data_attr_kind::S && symbol && !symbol->attributes().can_have_SI_attr())
+        return context::dependency_collector();
+
+    return context::dependency_collector({ attribute, value });
 }
 
 mach_expression::value_t mach_expr_data_attr::evaluate(
@@ -431,7 +451,7 @@ std::int32_t mach_expr_symbol::derive_length(std::int32_t, context::dependency_s
     const auto* symbol = solver.get_symbol(value);
     if (!symbol)
         return 1;
-    return (std::int32_t)symbol->attributes().length();
+    return symbol->attributes().length();
 }
 std::int32_t mach_expr_location_counter::derive_length(std::int32_t mi_length, context::dependency_solver&) const
 {

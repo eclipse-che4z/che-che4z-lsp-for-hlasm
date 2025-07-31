@@ -207,7 +207,7 @@ context::SET_t ca_symbol_attribute::retrieve_value(
     if ((attribute == context::data_attr_kind::S || attribute == context::data_attr_kind::I)
         && !ord_symbol->attributes().can_have_SI_attr())
     {
-        eval_ctx.diags.add_diagnostic(diagnostic_op::error_E066(expr_range));
+        eval_ctx.diags.add_diagnostic(diagnostic_op::warning_W011(expr_range));
         return context::symbol_attributes::default_value(attribute);
     }
 

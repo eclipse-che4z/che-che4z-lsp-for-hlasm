@@ -262,9 +262,8 @@ TEST(attribute_lookahead, lookup_not_triggered)
     evaluation_context eval_ctx { a.hlasm_ctx(), library_info_transitional::empty, diags };
 
     // define symbol with undefined length
-    auto tmp = a.hlasm_ctx().ord_ctx.create_symbol(
-        id_index("X"), symbol_value(), symbol_attributes(symbol_origin::DAT, 200), library_info_transitional::empty);
-    ASSERT_TRUE(tmp);
+    (void)a.hlasm_ctx().ord_ctx.create_symbol(
+        id_index("X"), symbol_value(), symbol_attributes(symbol_origin::DAT, 200));
 
     // although length is undefined the actual symbol is defined so no lookup should happen
     std::vector<context::id_index> references;
@@ -1492,4 +1491,34 @@ CCW     CCW  0,0,0,0
 
     EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "T"), "W");
     EXPECT_EQ(get_var_value<A_t>(a.hlasm_ctx(), "L"), 8);
+}
+
+TEST(lookahead, I_attr)
+{
+    std::string input = R"(
+&RES    SETA I'L
+L       DS   FS8
+)";
+
+    analyzer a(input);
+    a.analyze();
+
+    EXPECT_TRUE(a.diags().empty());
+
+    EXPECT_EQ(get_var_value<A_t>(a.hlasm_ctx(), "RES"), 23);
+}
+
+TEST(lookahead, ignores_scale)
+{
+    std::string input = R"(
+&RES    SETA I'LD
+LD      DS   LD
+)";
+
+    analyzer a(input);
+    a.analyze();
+
+    EXPECT_TRUE(a.diags().empty());
+
+    EXPECT_EQ(get_var_value<A_t>(a.hlasm_ctx(), "RES"), 28);
 }

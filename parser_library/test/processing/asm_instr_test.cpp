@@ -221,7 +221,7 @@ L   EQU  *-C
     analyzer a(input);
     a.analyze();
 
-    EXPECT_TRUE(matches_message_codes(a.diags(), { "E066", "E066" })); // S, I attributes
+    EXPECT_TRUE(matches_message_codes(a.diags(), { "W011", "W011" })); // S, I attributes
 
     EXPECT_EQ(get_symbol_abs(a.hlasm_ctx(), "L"), 4);
     EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "T"), "A");
@@ -249,7 +249,7 @@ C   CXD
     analyzer a(input);
     a.analyze();
 
-    EXPECT_TRUE(matches_message_codes(a.diags(), { "E066", "E066" })); // S, I attributes
+    EXPECT_TRUE(matches_message_codes(a.diags(), { "W011", "W011" })); // S, I attributes
 
     EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "T"), "A");
     EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "O"), "O");
@@ -272,7 +272,7 @@ D   DXD  F
     analyzer a(input);
     a.analyze();
 
-    EXPECT_TRUE(matches_message_codes(a.diags(), { "E066", "E066" })); // S, I attributes
+    EXPECT_TRUE(matches_message_codes(a.diags(), { "W011", "W011" })); // S, I attributes
 
     EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "T"), "J");
     EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "O"), "O");

@@ -19,6 +19,7 @@
 
 #include "checking/checker_helper.h"
 #include "checking/diagnostic_collector.h"
+#include "context/ordinary_assembly/symbol_attributes.h"
 #include "data_def_types.h"
 #include "utils/unicode_text.h"
 
@@ -89,7 +90,8 @@ data_def_type_B::data_def_type_B()
           n_a(),
           nominal_value_type::STRING,
           no_align,
-          as_needed())
+          as_needed(),
+          integer_type::undefined)
 {}
 
 bool data_def_type_B::check(
@@ -142,7 +144,8 @@ data_def_type_CA_CE::data_def_type_CA_CE(char extension)
           n_a(),
           nominal_value_type::STRING,
           no_align,
-          as_needed())
+          as_needed(),
+          integer_type::undefined)
 {}
 
 uint64_t data_def_type_CA_CE::get_nominal_length(const reduced_nominal_value_t& op) const
@@ -181,8 +184,16 @@ data_def_type_CE::data_def_type_CE()
 {}
 
 data_def_type_CU::data_def_type_CU()
-    : data_def_type(
-          'C', 'U', n_a(), modifier_bound { 1, 256 }, n_a(), n_a(), nominal_value_type::STRING, no_align, as_needed())
+    : data_def_type('C',
+          'U',
+          n_a(),
+          modifier_bound { 1, 256 },
+          n_a(),
+          n_a(),
+          nominal_value_type::STRING,
+          no_align,
+          as_needed(),
+          integer_type::undefined)
 {}
 
 uint64_t data_def_type_CU::get_nominal_length(const reduced_nominal_value_t& op) const
@@ -230,7 +241,8 @@ data_def_type_G::data_def_type_G()
           n_a(),
           nominal_value_type::STRING,
           no_align,
-          as_needed())
+          as_needed(),
+          integer_type::undefined)
 {}
 
 bool data_def_type_G::check(const data_definition_operand& op, const diagnostic_collector& add_diagnostic, bool) const
@@ -285,7 +297,8 @@ data_def_type_X::data_def_type_X()
           n_a(),
           nominal_value_type::STRING,
           no_align,
-          as_needed())
+          as_needed(),
+          integer_type::undefined)
 {}
 
 bool data_def_type_X::check(

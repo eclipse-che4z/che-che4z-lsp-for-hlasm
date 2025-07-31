@@ -87,20 +87,32 @@ enum class assembler_type : unsigned char
 assembler_type assembler_type_from_string(std::string_view s) noexcept;
 std::string_view assembler_type_to_string(assembler_type t) noexcept;
 
+enum class integer_type : unsigned char
+{
+    undefined,
+    zero,
+    fixed,
+    packed,
+    zoned,
+    hexfloat,
+};
+
+std::int32_t compute_integer_attribute(integer_type t, std::int32_t l, std::int32_t s) noexcept;
+
 // structure wrapping attributes of the symbol
 // the structure fields are to be constant except undefined fields, their value can be defined later
 struct symbol_attributes
 {
     using value_t = int32_t;
     using type_attr = uint16_t;
-    using len_attr = uint32_t;
+    using len_attr = int32_t;
     using scale_attr = int16_t;
     using program_type = program_type;
     using assembler_type = assembler_type;
 
     // static field describing undefined states of attributes
     static constexpr type_attr undef_type = 0xe4;
-    static constexpr len_attr undef_length = static_cast<len_attr>(-1);
+    static constexpr len_attr undef_length = -1;
     static constexpr scale_attr undef_scale = 32767;
 
     // predefined symbol_attributes classes
@@ -124,33 +136,33 @@ struct symbol_attributes
         type_attr type,
         len_attr length = undef_length,
         scale_attr scale = undef_scale,
-        len_attr integer = undef_length,
+        integer_type integer = integer_type::undefined,
         program_type prog_type = {},
         assembler_type asm_type = assembler_type::NONE) noexcept
         : length_(length)
-        , integer_(integer)
         , type_(type)
         , scale_(scale)
         , origin_(origin)
-        , prog_type_(prog_type)
+        , integer_(integer)
         , asm_type_(asm_type)
+        , prog_type_(prog_type)
     {}
 
     explicit constexpr symbol_attributes(symbol_origin origin) noexcept
         : length_(undef_length)
-        , integer_(undef_length)
         , type_(undef_type)
         , scale_(undef_scale)
         , origin_(origin)
-        , prog_type_()
+        , integer_(integer_type::undefined)
         , asm_type_(assembler_type::NONE)
+        , prog_type_()
     {}
 
     symbol_origin origin() const noexcept { return origin_; }
     type_attr type() const noexcept { return type_; }
     len_attr length() const noexcept { return length_; }
     scale_attr scale() const noexcept { return scale_; }
-    len_attr integer() const noexcept { return integer_; }
+    len_attr integer() const noexcept;
     assembler_type asm_type() const noexcept { return asm_type_; }
     program_type prog_type() const noexcept { return prog_type_; }
 
@@ -167,12 +179,12 @@ struct symbol_attributes
 
 private:
     len_attr length_;
-    len_attr integer_;
     type_attr type_;
     scale_attr scale_;
     symbol_origin origin_;
-    program_type prog_type_;
+    integer_type integer_;
     assembler_type asm_type_;
+    program_type prog_type_;
 };
 
 } // namespace hlasm_plugin::parser_library::context

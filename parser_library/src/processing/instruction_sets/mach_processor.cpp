@@ -67,8 +67,7 @@ void mach_processor::process(std::shared_ptr<const processing::resolved_statemen
         }
         else
         {
-            create_symbol(rebuilt_stmt.stmt_range_ref(),
-                label_name,
+            create_symbol(label_name,
                 loctr,
                 context::symbol_attributes::make_machine_attrs((context::symbol_attributes::len_attr)opcode_size));
         }

@@ -1219,3 +1219,56 @@ A   USE
 
     EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "T"), "U");
 }
+
+TEST(data_attributes, S_attr_dependent)
+{
+    std::string input = R"(
+FLD DS     FL2S(L'FLD)
+S   EQU    S'FLD
+I   EQU    I'FLD
+)";
+
+    analyzer a(input);
+    a.analyze();
+
+    EXPECT_TRUE(a.diags().empty());
+
+    EXPECT_EQ(get_symbol_abs(a.hlasm_ctx(), "S"), 2);
+    EXPECT_EQ(get_symbol_abs(a.hlasm_ctx(), "I"), 13);
+}
+
+TEST(data_attributes, I_attr_scale_ignore)
+{
+    std::string input = R"(
+FLD DS     E
+S   EQU    S'FLD
+I   EQU    I'FLD
+)";
+
+    analyzer a(input);
+    a.analyze();
+
+    EXPECT_TRUE(a.diags().empty());
+
+    EXPECT_EQ(get_symbol_abs(a.hlasm_ctx(), "S"), 0);
+    EXPECT_EQ(get_symbol_abs(a.hlasm_ctx(), "I"), 6);
+}
+
+TEST(data_attributes, I_attr_dependency_tracking)
+{
+    // TODO: HLASM ABENDs at the moment
+    std::string input = R"(
+F1  DS     FL(X)S(Y)
+F2  DS     XL(I'F1)
+X   EQU    2
+Y   EQU    8
+RES EQU    L'F2
+)";
+
+    analyzer a(input);
+    a.analyze();
+
+    EXPECT_TRUE(a.diags().empty());
+
+    EXPECT_EQ(get_symbol_abs(a.hlasm_ctx(), "RES"), 7);
+}

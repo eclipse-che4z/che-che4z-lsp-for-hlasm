@@ -308,7 +308,6 @@ void asm_processor::process_EQU(rebuilt_statement&& stmt)
         add_diagnostic(diagnostic_op::error_A132_EQU_value_format(value->operand_range));
         return;
     }
-    auto holder(expr_op->expression->get_dependencies(dep_solver));
 
     if (l_attr == symbol_attributes::undef_length)
     {
@@ -327,18 +326,18 @@ void asm_processor::process_EQU(rebuilt_statement&& stmt)
     }
 
     const auto s_attr = symbol_attributes::undef_scale;
-    const auto i_attr = symbol_attributes::undef_length;
+    const auto i_attr = context::integer_type::undefined;
 
-    symbol_attributes attrs(context::symbol_origin::EQU, t_attr, l_attr, s_attr, i_attr, p_attr, a_attr);
+    const symbol_attributes attrs(context::symbol_origin::EQU, t_attr, l_attr, s_attr, i_attr, p_attr, a_attr);
 
-    auto stmt_range = stmt.stmt_range_ref();
-
-    if (!holder.contains_dependencies())
-        create_symbol(stmt_range, symbol_name, expr_op->expression->evaluate(dep_solver, diag_ctx), attrs);
+    if (auto holder = expr_op->expression->get_dependencies(dep_solver); !holder.contains_dependencies())
+        create_symbol(symbol_name, expr_op->expression->evaluate(dep_solver, diag_ctx), attrs);
     else if (holder.is_address() && holder.unresolved_spaces.empty())
-        create_symbol(stmt_range, symbol_name, *holder.unresolved_address, attrs);
-    else if (create_symbol(stmt_range, symbol_name, context::symbol_value(), attrs))
+        create_symbol(symbol_name, std::move(*holder.unresolved_address), attrs);
+    else
     {
+        const auto stmt_range = stmt.stmt_range_ref();
+        create_symbol(symbol_name, context::symbol_value(), attrs);
         if (!hlasm_ctx.ord_ctx.symbol_dependencies().add_dependency(symbol_name,
                 expr_op->expression.get(),
                 std::make_unique<postponed_statement_impl>(std::move(stmt), hlasm_ctx.processing_stack()),
@@ -376,72 +375,44 @@ void asm_processor::process_data_instruction(rebuilt_statement&& stmt)
 
     if (!label.empty())
     {
-        bool length_has_self_reference = false;
-        bool scale_has_self_reference = false;
-
-        const auto has_deps = [label](auto deps, bool& self_ref) {
-            if (!deps.contains_dependencies())
-                return false;
-            self_ref =
-                std::ranges::binary_search(deps.undefined_symbolics, label, {}, &context::symbolic_reference::name);
-            return true;
-        };
         if (!hlasm_ctx.ord_ctx.symbol_defined(label))
         {
             auto data_op = first_op->access_data_def();
-            l_dep = data_op->value->length.get();
-            s_dep = data_op->value->scale.get();
 
             context::symbol_attributes::type_attr type =
                 ebcdic_encoding::to_ebcdic((unsigned char)data_op->value->get_type_attribute());
 
-            context::symbol_attributes::len_attr len = context::symbol_attributes::undef_length;
-            context::symbol_attributes::scale_attr scale = context::symbol_attributes::undef_scale;
             context::symbol_attributes::program_type prog_type {};
-
-            if (!data_op->value->length
-                || !has_deps(data_op->value->length->get_dependencies(dep_solver), length_has_self_reference))
-            {
-                len = data_op->value->get_length_attribute(dep_solver, drop_diagnostic_op);
-                l_dep = nullptr;
-            }
-
-            if (data_op->value->scale
-                && !has_deps(data_op->value->scale->get_dependencies(dep_solver), scale_has_self_reference))
-            {
-                scale = data_op->value->get_scale_attribute(dep_solver, drop_diagnostic_op);
-                s_dep = nullptr;
-            }
             if (data_op->value->program_type
                 && !data_op->value->program_type->get_dependencies(dep_solver).contains_dependencies())
             {
                 prog_type = data_op->value->get_program_attribute(dep_solver, drop_diagnostic_op);
             }
 
-            create_symbol(stmt.stmt_range_ref(),
-                label,
+            auto& symbol = hlasm_ctx.ord_ctx.create_symbol(label,
                 std::move(loctr),
                 context::symbol_attributes(context::symbol_origin::DAT,
                     type,
-                    len,
-                    scale,
-                    data_op->value->get_integer_attribute(dep_solver, drop_diagnostic_op),
+                    context::symbol_attributes::undef_length,
+                    context::symbol_attributes::undef_scale,
+                    data_op->value->get_integer_attribute(),
                     prog_type));
 
-            if (length_has_self_reference
-                && !data_op->value->length->get_dependencies(dep_solver).contains_dependencies())
-            {
-                hlasm_ctx.ord_ctx.get_symbol(label)->set_length(
-                    data_op->value->get_length_attribute(dep_solver, drop_diagnostic_op));
-                l_dep = nullptr;
-            }
-            if (scale_has_self_reference
-                && !data_op->value->scale->get_dependencies(dep_solver).contains_dependencies())
-            {
-                hlasm_ctx.ord_ctx.get_symbol(label)->set_scale(
-                    data_op->value->get_scale_attribute(dep_solver, drop_diagnostic_op));
-                s_dep = nullptr;
-            }
+            if (!data_op->value->length
+                || !data_op->value->length->get_dependencies(dep_solver).contains_dependencies())
+                symbol.set_length(data_op->value->get_length_attribute(dep_solver, drop_diagnostic_op));
+            else
+                l_dep = data_op->value->length.get();
+
+            if (const auto* data_type = data_op->value->access_data_def_type(); data_type && data_type->ignores_scale())
+                symbol.set_scale(0);
+            else if (!data_op->value->scale
+                || !data_op->value->scale->get_dependencies(dep_solver).contains_dependencies())
+                symbol.set_scale(data_op->value->get_scale_attribute(dep_solver, drop_diagnostic_op));
+            else // TODO: HLASM does not seem to be tracking the attribute dependency correctly
+                s_dep = data_op->value->scale.get();
+
+            hlasm_ctx.ord_ctx.symbol_dependencies().add_defined(label, nullptr, lib_info);
         }
         else
             add_diagnostic(diagnostic_op::error_E031("symbol", stmt.label_ref().field_range));
@@ -578,6 +549,8 @@ void asm_processor::process_DXD(rebuilt_statement&& stmt)
     else
         hlasm_ctx.ord_ctx.create_external_section(name, context::section_kind::EXTERNAL_DSECT);
 
+    // TODO: S' and I' attributes do not currently work with DXD in HLASM, revisit when fixed
+
     context::ordinary_assembly_dependency_solver dep_solver(hlasm_ctx.ord_ctx, lib_info);
     hlasm_ctx.ord_ctx.symbol_dependencies().add_postponed_statement(
         std::make_unique<postponed_statement_impl>(std::move(stmt), hlasm_ctx.processing_stack()),
@@ -651,7 +624,7 @@ void asm_processor::process_ORG(rebuilt_statement&& stmt)
         if (hlasm_ctx.ord_ctx.symbol_defined(label))
             add_diagnostic(diagnostic_op::error_E031("symbol", stmt.label_ref().field_range));
         else
-            create_symbol(stmt.stmt_range_ref(), label, loctr, context::symbol_attributes::make_org_attrs());
+            create_symbol(label, loctr, context::symbol_attributes::make_org_attrs());
     }
 
     const auto& ops = stmt.operands_ref().value;
@@ -1001,7 +974,7 @@ void asm_processor::process_CCW(rebuilt_statement&& stmt)
         if (hlasm_ctx.ord_ctx.symbol_defined(label))
             add_diagnostic(diagnostic_op::error_E031("symbol", stmt.label_ref().field_range));
         else
-            create_symbol(stmt.stmt_range_ref(), label, loctr, context::symbol_attributes::make_ccw_attrs());
+            create_symbol(label, loctr, context::symbol_attributes::make_ccw_attrs());
     }
 
     context::ordinary_assembly_dependency_solver dep_solver(hlasm_ctx.ord_ctx, std::move(loctr), lib_info);
@@ -1023,7 +996,7 @@ void asm_processor::process_CNOP(rebuilt_statement&& stmt)
         if (hlasm_ctx.ord_ctx.symbol_defined(label))
             add_diagnostic(diagnostic_op::error_E031("symbol", stmt.label_ref().field_range));
         else
-            create_symbol(stmt.stmt_range_ref(), label, loctr, context::symbol_attributes::make_cnop_attrs());
+            create_symbol(label, loctr, context::symbol_attributes::make_cnop_attrs());
     }
 
     context::ordinary_assembly_dependency_solver dep_solver(hlasm_ctx.ord_ctx, std::move(loctr), lib_info);
@@ -1156,10 +1129,8 @@ void asm_processor::process_LTORG(rebuilt_statement&& stmt)
         if (hlasm_ctx.ord_ctx.symbol_defined(label))
             add_diagnostic(diagnostic_op::error_E031("symbol", stmt.label_ref().field_range));
         else
-            create_symbol(stmt.stmt_range_ref(),
-                label,
-                std::move(loctr),
-                context::symbol_attributes(context::symbol_origin::EQU, 'U'_ebcdic, 1));
+            create_symbol(
+                label, std::move(loctr), context::symbol_attributes(context::symbol_origin::EQU, 'U'_ebcdic, 1));
     }
 
     hlasm_ctx.ord_ctx.generate_pool(diag_ctx, hlasm_ctx.using_current(), lib_info);
@@ -1266,7 +1237,7 @@ void asm_processor::process_DROP(rebuilt_statement&& stmt)
         else
         {
             add_diagnostic(diagnostic_op::warn_A251_unexpected_label(stmt.label_ref().field_range));
-            create_symbol(stmt.stmt_range_ref(), label, loctr, context::symbol_attributes(context::symbol_origin::EQU));
+            create_symbol(label, loctr, context::symbol_attributes(context::symbol_origin::EQU));
         }
     }
 
@@ -1439,8 +1410,7 @@ void asm_processor::process_CXD(rebuilt_statement&& stmt)
     {
         if (!hlasm_ctx.ord_ctx.symbol_defined(label))
         {
-            create_symbol(stmt.stmt_range_ref(),
-                label,
+            create_symbol(label,
                 std::move(loctr),
                 context::symbol_attributes(context::symbol_origin::ASM, 'A'_ebcdic, cxd_length));
         }

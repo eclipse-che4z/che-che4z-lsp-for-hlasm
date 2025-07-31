@@ -144,13 +144,11 @@ TEST_P(ca_attr, test)
 
     (void)hlasm_ctx->ord_ctx.create_symbol(id_index("C"),
         context::symbol_value(),
-        context::symbol_attributes(context::symbol_origin::EQU, 'w'_ebcdic, 10),
-        library_info_transitional::empty);
+        context::symbol_attributes(context::symbol_origin::EQU, 'w'_ebcdic, 10));
 
     (void)hlasm_ctx->ord_ctx.create_symbol(id_index("T"),
         context::symbol_value(),
-        context::symbol_attributes(context::symbol_origin::EQU, 'w'_ebcdic, 10),
-        library_info_transitional::empty);
+        context::symbol_attributes(context::symbol_origin::EQU, 'w'_ebcdic, 10));
 
     auto var = hlasm_ctx->create_local_variable<context::C_t>(name, true);
     var->access_set_symbol<context::C_t>()->set_value(GetParam().value);

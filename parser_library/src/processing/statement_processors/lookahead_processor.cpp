@@ -261,7 +261,7 @@ void lookahead_processor::assign_EQU_attributes(context::id_index symbol_name, c
             length_attr = 1;
     }
     const auto s_attr = symbol_attributes::undef_scale;
-    const auto i_attr = symbol_attributes::undef_length;
+    const auto i_attr = context::integer_type::undefined;
 
     register_attr_ref(symbol_name, symbol_attributes(EQU, t_attr, length_attr, s_attr, i_attr, p_attr, a_attr));
 }
@@ -285,7 +285,7 @@ void lookahead_processor::assign_data_def_attributes(context::id_index symbol_na
 
     symbol_attributes::len_attr len = symbol_attributes::undef_length;
     symbol_attributes::scale_attr scale = symbol_attributes::undef_scale;
-    symbol_attributes::len_attr integer = symbol_attributes::undef_length;
+    const auto integer = data_op->value->get_integer_attribute();
     symbol_attributes::program_type prog {};
 
     library_info_transitional li(lib_provider_);
@@ -295,7 +295,11 @@ void lookahead_processor::assign_data_def_attributes(context::id_index symbol_na
     {
         len = data_op->value->get_length_attribute(dep_solver, drop_diagnostic_op);
     }
-    if (data_op->value->scale && !data_op->value->scale->get_dependencies(dep_solver).contains_dependencies())
+    if (const auto* data_type = data_op->value->access_data_def_type(); data_type && data_type->ignores_scale())
+    {
+        scale = 0;
+    }
+    else if (!data_op->value->scale || !data_op->value->scale->get_dependencies(dep_solver).contains_dependencies())
     {
         scale = data_op->value->get_scale_attribute(dep_solver, drop_diagnostic_op);
     }

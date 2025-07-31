@@ -19,6 +19,7 @@
 #include <type_traits>
 
 #include "context/hlasm_context.h"
+#include "context/ordinary_assembly/symbol_dependency_tables.h"
 #include "processing/processing_manager.h"
 #include "processing/statement_processors/ordinary_processor.h"
 #include "semantics/operand_impls.h"
@@ -75,15 +76,17 @@ context::id_index low_language_processor::find_using_label(const rebuilt_stateme
     return context::id_index();
 }
 
-bool low_language_processor::create_symbol(
-    range err_range, context::id_index symbol_name, context::symbol_value value, context::symbol_attributes attributes)
+context::symbol& low_language_processor::create_symbol(
+    context::id_index symbol_name, context::symbol_value value, context::symbol_attributes attributes)
 {
-    bool ok = hlasm_ctx.ord_ctx.create_symbol(symbol_name, std::move(value), std::move(attributes), lib_info);
+    const bool defined = value.value_kind() != context::symbol_value_kind::UNDEF;
 
-    if (!ok)
-        add_diagnostic(diagnostic_op::error_E033(err_range));
+    auto& symbol = hlasm_ctx.ord_ctx.create_symbol(symbol_name, std::move(value), std::move(attributes));
 
-    return ok;
+    if (defined)
+        hlasm_ctx.ord_ctx.symbol_dependencies().add_defined(symbol_name, nullptr, lib_info);
+
+    return symbol;
 }
 
 low_language_processor::preprocessed_part low_language_processor::preprocess_inner(const resolved_statement& stmt)

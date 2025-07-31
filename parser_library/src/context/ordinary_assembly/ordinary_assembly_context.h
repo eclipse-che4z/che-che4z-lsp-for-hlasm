@@ -95,10 +95,7 @@ public:
     ordinary_assembly_context(ordinary_assembly_context&&) noexcept;
     ~ordinary_assembly_context();
 
-    // creates symbol
-    // returns false if loctr cycle has occured
-    [[nodiscard]] bool create_symbol(
-        id_index name, symbol_value value, symbol_attributes attributes, const library_info& li);
+    [[nodiscard]] symbol& create_symbol(id_index name, symbol_value value, symbol_attributes attributes);
 
     void add_symbol_reference(id_index name, symbol_attributes attributes, const library_info& li);
     const symbol* get_symbol_reference(context::id_index name) const;

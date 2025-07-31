@@ -17,6 +17,7 @@
 
 #include "checking/checker_helper.h"
 #include "checking/diagnostic_collector.h"
+#include "context/ordinary_assembly/symbol_attributes.h"
 #include "data_def_types.h"
 
 using namespace hlasm_plugin::parser_library::checking;
@@ -34,7 +35,8 @@ data_def_type_A_AD_Y::data_def_type_A_AD_Y(char type, char extension, alignment 
           n_a(),
           nominal_value_type::EXPRESSIONS,
           align,
-          implicit_length)
+          implicit_length,
+          integer_type::undefined)
 {}
 
 data_def_type_A::data_def_type_A()
@@ -142,7 +144,8 @@ data_def_type_S_SY::data_def_type_S_SY(char extension, int size)
           n_a(),
           nominal_value_type::ADDRESS_OR_EXPRESSION,
           halfword,
-          (unsigned long long)size)
+          (unsigned long long)size,
+          integer_type::undefined)
 {}
 
 data_def_type_S::data_def_type_S()
@@ -234,8 +237,16 @@ bool data_def_type_SY::check(
 
 data_def_type_single_symbol::data_def_type_single_symbol(
     char type, char extension, modifier_spec length_bound, alignment align, uint64_t implicit_length)
-    : data_def_type(
-          type, extension, n_a(), length_bound, n_a(), n_a(), nominal_value_type::EXPRESSIONS, align, implicit_length)
+    : data_def_type(type,
+          extension,
+          n_a(),
+          length_bound,
+          n_a(),
+          n_a(),
+          nominal_value_type::EXPRESSIONS,
+          align,
+          implicit_length,
+          integer_type::undefined)
 {}
 
 bool hlasm_plugin::parser_library::checking::data_def_type_single_symbol::expects_single_symbol() const { return true; }

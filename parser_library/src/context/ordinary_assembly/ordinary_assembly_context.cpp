@@ -62,21 +62,14 @@ location_counter& ordinary_assembly_context::loctr()
     return s->current_location_counter();
 }
 
-bool ordinary_assembly_context::create_symbol(
-    id_index name, symbol_value value, symbol_attributes attributes, const library_info& li)
+symbol& ordinary_assembly_context::create_symbol(id_index name, symbol_value value, symbol_attributes attributes)
 {
     assert(symbol_can_be_assigned(symbols_, name));
 
-    const auto value_kind = value.value_kind();
+    const auto [it, _] =
+        symbols_.insert_or_assign(name, symbol(name, std::move(value), attributes, hlasm_ctx_.processing_stack()));
 
-    symbols_.insert_or_assign(name, symbol(name, std::move(value), attributes, hlasm_ctx_.processing_stack()));
-
-    bool ok = true;
-
-    if (value_kind != symbol_value_kind::UNDEF)
-        m_symbol_dependencies->add_defined(name, nullptr, li);
-
-    return ok;
+    return std::get<symbol>(it->second);
 }
 
 void ordinary_assembly_context::add_symbol_reference(
