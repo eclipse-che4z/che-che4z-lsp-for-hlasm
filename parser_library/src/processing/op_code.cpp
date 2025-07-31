@@ -53,7 +53,6 @@ processing_status_cache_key::processing_status_cache_key(
     const processing_status& s, std::pair<unsigned char, unsigned char> details) noexcept
     : form(s.first.form)
     , occurrence(s.first.occurrence)
-    , is_alias(s.second.type == context::instruction_type::ASM && s.second.value.to_string_view() == "ALIAS")
     , loctr_len(details.first)
     , rel_addr(details.second)
 {}

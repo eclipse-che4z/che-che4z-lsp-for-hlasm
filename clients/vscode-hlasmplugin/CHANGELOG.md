@@ -15,6 +15,7 @@
 - CCW is assigned incorrect symbol attributes in the lookahead mode
 - Improved navigation for external symbols
 - Scale and integer attributes are not processed correctly
+- Statement operands are improperly cached after encountering OPSYN
 
 ## [1.18.0](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/compare/1.17.0...1.18.0) (2025-06-20)
 

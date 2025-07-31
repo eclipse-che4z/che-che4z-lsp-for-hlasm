@@ -290,7 +290,8 @@ bool operands_relevant_in_lookahead(bool has_label, const processing_status& sta
     const auto form = status.first.form;
     const auto& instr = status.second.value;
 
-    return form == ASM && instr == COPY || form == ASM && instr == EQU && has_label || form == DAT && has_label;
+    return form == ASM_GENERIC && instr == COPY || form == ASM_GENERIC && instr == EQU && has_label
+        || form == DAT && has_label;
 }
 } // namespace
 
@@ -316,7 +317,7 @@ std::shared_ptr<const context::hlasm_statement> opencode_provider::process_looka
 
         switch (proc_status.first.form)
         {
-            case processing_form::ASM:
+            case processing_form::ASM_GENERIC: // other ASM forms are excluded
                 h.lookahead_operands_and_remarks_asm();
                 break;
             case processing_form::DAT:
@@ -406,8 +407,11 @@ std::shared_ptr<const context::hlasm_statement> opencode_provider::process_ordin
                     (void)h.collector.take_literals(); // drop literals
                     break;
                 }
-                case processing_form::ASM:
-                    if (auto ops = h.op_rem_body_asm(opcode.value, false, true); ops)
+                case processing_form::ASM_GENERIC:
+                case processing_form::ASM_ALIAS:
+                case processing_form::ASM_END:
+                case processing_form::ASM_USING:
+                    if (auto ops = h.op_rem_body_asm(format.form, false, true); ops)
                     {
                         h.collector.set_operand_remark_field(
                             std::move(ops->operands), std::move(ops->remarks), ops->line_range);

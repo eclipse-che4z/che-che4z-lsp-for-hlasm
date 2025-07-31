@@ -65,8 +65,11 @@ statement_fields_parser::parse_result statement_fields_parser::parse_operand_fie
                 literals = h.collector.take_literals();
                 break;
             }
-            case processing::processing_form::ASM:
-                if (auto ops = h.op_rem_body_asm(opcode.value, true, !after_substitution); ops)
+            case processing::processing_form::ASM_GENERIC:
+            case processing::processing_form::ASM_ALIAS:
+            case processing::processing_form::ASM_END:
+            case processing::processing_form::ASM_USING:
+                if (auto ops = h.op_rem_body_asm(format.form, true, !after_substitution); ops)
                     line = std::move(*ops);
                 literals = h.collector.take_literals();
                 break;

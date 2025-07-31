@@ -29,14 +29,17 @@ enum class processing_kind : uint8_t
 
 enum class processing_form : uint8_t
 {
+    UNKNOWN,
     MACH,
-    ASM,
+    ASM_GENERIC,
+    ASM_ALIAS,
+    ASM_END,
+    ASM_USING,
     MAC,
     CA,
     DAT,
     IGNORED,
     DEFERRED,
-    UNKNOWN
 };
 
 enum class operand_occurrence : uint8_t

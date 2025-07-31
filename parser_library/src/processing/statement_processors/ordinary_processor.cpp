@@ -32,6 +32,7 @@
 #include "processing/instruction_sets/postponed_statement_impl.h"
 #include "processing/processing_manager.h"
 #include "semantics/operand_impls.h"
+#include "utils/projectors.h"
 #include "utils/truth_table.h"
 
 namespace hlasm_plugin::parser_library::processing {
@@ -213,10 +214,18 @@ struct processing_status_visitor
 
     std::optional<processing_status> operator()(const instructions::assembler_instruction* i) const noexcept
     {
-        const auto f = id == context::id_index("DC") || id == context::id_index("DS") || id == context::id_index("DXD")
-            ? processing_form::DAT
-            : processing_form::ASM;
-        return return_value(f, i->max_operands() == 0, context::instruction_type::ASM);
+        using enum processing_form;
+        static constexpr std::pair<context::id_index, processing_form> forms[] = {
+            { context::id_index("DC"), DAT },
+            { context::id_index("DS"), DAT },
+            { context::id_index("USING"), ASM_USING },
+            { context::id_index("ALIAS"), ASM_ALIAS },
+            { context::id_index("DXD"), DAT },
+            { context::id_index("END"), ASM_END },
+            { context::id_index(), ASM_GENERIC },
+        };
+        const auto it = std::ranges::find(forms, forms + std::size(forms) - 1, id, utils::first_element);
+        return return_value(it->second, i->max_operands() == 0, context::instruction_type::ASM);
     }
     std::optional<processing_status> operator()(const instructions::machine_instruction* i) const noexcept
     {

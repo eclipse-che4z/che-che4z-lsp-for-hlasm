@@ -453,3 +453,21 @@ SETA       OPSYN SETB
 
     EXPECT_TRUE(matches_message_codes(a.diags(), { "E013" }));
 }
+
+TEST(OPSYN, processing_form_caching)
+{
+    std::string input = R"(
+         MACRO
+         MAC
+         USING *,0
+         MEND
+
+         MAC
+USING    OPSYN END
+         MAC
+)";
+    analyzer a(input);
+    a.analyze();
+
+    EXPECT_TRUE(matches_message_codes(a.diags(), { "S0002" }));
+}

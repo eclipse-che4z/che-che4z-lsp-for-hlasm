@@ -115,7 +115,8 @@ public:
 
     std::optional<semantics::op_rem> op_rem_body_dat(bool reparse, bool model_allowed);
     std::optional<semantics::op_rem> op_rem_body_mach(bool reparse, bool model_allowed);
-    std::optional<semantics::op_rem> op_rem_body_asm(context::id_index opcode, bool reparse, bool model_allowed);
+    std::optional<semantics::op_rem> op_rem_body_asm(
+        processing::processing_form form, bool reparse, bool model_allowed);
 
     semantics::operand_ptr ca_op_expr();
     semantics::operand_ptr operand_mach();

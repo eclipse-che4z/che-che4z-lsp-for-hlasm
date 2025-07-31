@@ -18,6 +18,7 @@
 #include <charconv>
 #include <concepts>
 #include <cstdint>
+#include <cstdlib>
 #include <utility>
 
 #include "context/hlasm_context.h"
@@ -4499,24 +4500,27 @@ result_t<semantics::operand_ptr> parser2::asm_op()
 }
 
 std::optional<semantics::op_rem> parser_holder::op_rem_body_asm(
-    context::id_index opcode, bool reparse, bool model_allowed)
+    processing::processing_form form, bool reparse, bool model_allowed)
 {
     parser2 p(this);
 
-    static constexpr context::id_index ALIAS("ALIAS");
-    static constexpr context::id_index USING("USING");
-    static constexpr context::id_index END("END");
-
     using semantics::empty_operand;
+    using enum processing::processing_form;
 
-    if (opcode == ALIAS)
-        return p.with_model<empty_operand, &parser2::alias_op, nullptr>(reparse, model_allowed);
-    else if (opcode == USING)
-        return p.with_model<empty_operand, &parser2::using_op1, &parser2::asm_mach_expr>(reparse, model_allowed);
-    else if (opcode == END)
-        return p.with_model<empty_operand, &parser2::asm_op, &parser2::end_op>(reparse, model_allowed);
-    else
-        return p.with_model<empty_operand, &parser2::asm_op>(reparse, model_allowed);
+    switch (form)
+    {
+        case ASM_GENERIC:
+            return p.with_model<empty_operand, &parser2::asm_op>(reparse, model_allowed);
+        case ASM_ALIAS:
+            return p.with_model<empty_operand, &parser2::alias_op, nullptr>(reparse, model_allowed);
+        case ASM_END:
+            return p.with_model<empty_operand, &parser2::asm_op, &parser2::end_op>(reparse, model_allowed);
+        case ASM_USING:
+            return p.with_model<empty_operand, &parser2::using_op1, &parser2::asm_mach_expr>(reparse, model_allowed);
+        default:
+            // std::unreachable(); C++23
+            std::abort();
+    }
 }
 
 semantics::operand_ptr parser_holder::operand_mach()

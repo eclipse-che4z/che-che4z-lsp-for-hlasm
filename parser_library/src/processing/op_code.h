@@ -78,7 +78,7 @@ class processing_status_cache_key
 {
     processing_form form;
     operand_occurrence occurrence;
-    unsigned char is_alias : 1, loctr_len : 7;
+    unsigned char loctr_len;
     unsigned char rel_addr;
 
     explicit processing_status_cache_key(
