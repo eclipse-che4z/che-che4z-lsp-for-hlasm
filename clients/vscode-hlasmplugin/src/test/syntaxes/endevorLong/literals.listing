@@ -1,0 +1,124 @@
+                                                                                                                                     
+                                          High Level Assembler Option Summary                   (PTF UO03644)   Page    1            
+                                                                                             HLASM R6.0  2025/08/05 03.48            
+   No Overriding ASMAOPT Parameters                                                                                                  
+   Overriding Parameters-  OBJECT,NODECK,LINECOUNT(0),LIST(133)                                                                      
+   No Process Statements                                                                                                             
+                                                                                                                                     
+                                                                                                                                     
+   Options for this Assembly                                                                                                         
+                     NOADATA                                                                                                         
+                       ALIGN                                                                                                         
+                     NOASA                                                                                                           
+                       ASCII(00819)                                                                                                  
+                       BATCH                                                                                                         
+                       CA(LOCAL)                                                                                                     
+                       CE(LOCAL)                                                                                                     
+                       CODEPAGE(01148)                                                                                               
+                     NOCOMPAT                                                                                                        
+                       CU(LOCAL)                                                                                                     
+                     NODATAMAP                                                                                                       
+                     NODBCS                                                                                                          
+ 3 PARM/OPTION       NODECK                                                                                                          
+                       DXREF                                                                                                         
+                       EBCDIC(00037)                                                                                                 
+                       ESD                                                                                                           
+                     NOEXIT                                                                                                          
+                       FAIL(NOMSG,NOMNOTE,MAXERRS(500))                                                                              
+                       FLAG(0,ALIGN,CONT,EXLITW,NOIMPLEN,NOLONGER,NOPAGE0,PUSH,RECORD,RENT,NOSIGNED,NOSUBSTR,NOTRUNC,USING0)         
+                     NOFOLD                                                                                                          
+                     NOGOFF                                                                                                          
+                       ILMA                                                                                                          
+                     NOINFO                                                                                                          
+                       LANGUAGE(EN)                                                                                                  
+                     NOLIBMAC                                                                                                        
+ 3 PARM/OPTION         LINECOUNT(0)                                                                                                  
+ 3 PARM/OPTION         LIST(133)                                                                                                     
+                       MACHINE(,NOLIST)                                                                                              
+                       MXREF(SOURCE)                                                                                                 
+ 3 PARM/OPTION         OBJECT                                                                                                        
+                       OPTABLE(UNI,NOLIST)                                                                                           
+                     NOPCONTROL                                                                                                      
+                     NOPESTOP                                                                                                        
+                     NOPROFILE                                                                                                       
+                     NORA2                                                                                                           
+                     NORENT                                                                                                          
+                       RLD                                                                                                           
+                       RXREF                                                                                                         
+                       SECTALGN(8)                                                                                                   
+                       SIZE(MAX)                                                                                                     
+                     NOSUPRWARN                                                                                                      
+                       SYSPARM()                                                                                                     
+                     NOTERM                                                                                                          
+                     NOTEST                                                                                                          
+                       THREAD                                                                                                        
+                     NOTRANSLATE                                                                                                     
+                       TYPECHECK(MAGNITUDE,REGISTER,SIGNED)                                                                          
+                       UNICODE(01200)                                                                                                
+                       USING(NOLIMIT,MAP,WARN(15))                                                                                   
+                     NOWORKFILE                                                                                                      
+                       XREF(SHORT,UNREFS)                                                                                            
+                                                                                                                                     
+   No Overriding DD Names                                                                                                            
+                                                                                                                                     
+                                               External Symbol Dictionary                                       Page    2            
+ Symbol   Type   Id     Address  Length   Owner Id Flags Alias-of                            HLASM R6.0  2025/08/05 03.48            
+           PC 00000001 00000000 00000120             00                                                                              
+                                                                                                                Page    3            
+   Loc    Object Code      Addr1    Addr2    Stmt  Source Statement                          HLASM R6.0  2025/08/05 03.48            
+ 00000000 C000 0000 0008          00000010      1          LARL  0,=C'AAAABBBBCCCCDDDDSDJFLSASDFASDFASFDASDFASDFASDFASDFS+           
+                                                                 ASDFASDFASDFBCCCCASDFASDFLSASDFASDFASFDASDFASDFASDFASDFS+           
+                                                                 SLKJFLSDKJFLSDJLFSJDLFJSKLDJFLSJDLFSLDFJKSDLF'                      
+ 00000006 C000 0000 0051          000000A8      2          LARL   0,=A(0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,+           
+                                                                 0,0,0,0,0)                                                          
+                                                3          END                                                                       
+ 00000010 C1C1C1C1C2C2C2C2                      4                =C'AAAABBBBCCCCDDDDSDJFLSASDFASDFASFDASDFASDFASDFASDFSAS            
+ 00000018 C3C3C3C3C4C4C4C4                                       DFASDFASDFBCCCCASDFASDFLSASDFASDFASFDASDFASDFASDFASDFSSL            
+ 00000020 E2C4D1C6D3E2C1E2                                       KJFLSDKJFLSDJLFSJDLFJSKLDJFLSJDLFSLDFJKSDLF'                        
+ 000000A8 0000000000000000                      5                =A(0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0            
+ 000000B0 0000000000000000                                       ,0,0,0)                                                             
+                                Ordinary Symbol and Literal Cross Reference                                     Page    4            
+ Symbol   Length   Value     Id    R Type Asm  Program   Defn References                     HLASM R6.0  2025/08/05 03.48            
+ =A(0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0)                                                                     
+               4 000000A8 00000001     A                    5    2                                                                   
+ =C'AAAABBBBCCCCDDDDSDJFLSASDFASDFASFDASDFASDFASDFASDFSASDFASDFASDFBCCCCASDFASDFLSASDFASDFASFDASDFASD                                
+      FASDFASDFSSLKJFLSDKJFLSDJLFSJDLFJSKLDJFLSJDLFSLDFJKSDLF'                                                                       
+             152 00000010 00000001     C                    4    1                                                                   
+                                    General Purpose Register Cross Reference                                    Page    5            
+  Register  References (M=modified, B=branch, U=USING, D=DROP, N=index)                      HLASM R6.0  2025/08/05 03.48            
+     0(0)       1M    2M                                                                                                             
+     1(1)    (no references identified)                                                                                              
+     2(2)    (no references identified)                                                                                              
+     3(3)    (no references identified)                                                                                              
+     4(4)    (no references identified)                                                                                              
+     5(5)    (no references identified)                                                                                              
+     6(6)    (no references identified)                                                                                              
+     7(7)    (no references identified)                                                                                              
+     8(8)    (no references identified)                                                                                              
+     9(9)    (no references identified)                                                                                              
+    10(A)    (no references identified)                                                                                              
+    11(B)    (no references identified)                                                                                              
+    12(C)    (no references identified)                                                                                              
+    13(D)    (no references identified)                                                                                              
+    14(E)    (no references identified)                                                                                              
+    15(F)    (no references identified)                                                                                              
+                                   Diagnostic Cross Reference and Assembler Summary                             Page    6            
+                                                                                             HLASM R6.0  2025/08/05 03.48            
+      No Statements Flagged in this Assembly                                                                                         
+ HIGH LEVEL ASSEMBLER, 5696-234, RELEASE 6.0, PTF UO03644                                                                            
+ SYSTEM: z/OS 03.01.00              JOBNAME: XXXXXXXX    STEPNAME: STEP1      PROCSTEP: C                                            
+ Unicode Module:   ASMA047C   From Page     1148   To Page    17584           ECECP: International 1                                 
+ Data Sets Allocated for this Assembly                                                                                               
+  Con DDname   Data Set Name                                Volume  Member                                                           
+   P1 SYSIN    XXXXXXX.XXXXXXXX.XXXXXXXX.XXXXXXXX.?                                                                                  
+   L1 SYSLIB   XXXX.XXXXXXXX                                XXXXXX                                                                   
+   L2          XXXX.XXXXXX                                  XXXXXX                                                                   
+      SYSLIN   XXXXXXX.XXXXXXXX.XXXXXXXX.XXXXXXXX.XXX                                                                                
+      SYSPRINT XXXXXXX.XXXXXXXX.XXXXXXXX.XXXXXXXX.?                                                                                  
+                                                                                                                                     
+   26848K allocated to Buffer Pool       Storage required     200K                                                                   
+       6 Primary Input Records Read            0 Library Records Read                  0 Work File Reads                             
+       0 ASMAOPT Records Read                124 Primary Print Records Written         0 Work File Writes                            
+       8 Object Records Written                0 ADATA Records Written                                                               
+ Assembly Start Time: 03.48.22 Stop Time: 03.48.22 Processor Time: 00.00.00.0002                                                     
+ Return Code 000                                                                                                                     

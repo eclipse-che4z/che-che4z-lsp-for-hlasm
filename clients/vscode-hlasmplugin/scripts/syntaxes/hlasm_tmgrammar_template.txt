@@ -29,6 +29,9 @@
           "include": "#lineComment"
         },
         {
+          "include": "#literalPool"
+        },
+        {
           "include": "#parseLine"
         },
         {
@@ -171,6 +174,35 @@
         }
       ]
     },
+    "literalPool": {
+      "begin": "^${listingDetails}$\\s{15}(?==)",
+      "end": "(?=^${listingDetails}$(?<=\\d ))",
+      "applyEndPatternLast": 0,
+      "patterns": [
+        {
+          "include": "#${pageAnnotation}$"
+        },
+        {
+          "match": "^(${listingDetails}$\\s{15})",
+          "comment": "Just to get rid of the spaces",
+          "captures": {
+            "1": {
+              "patterns": [
+                {
+                  "include": "#listingSyntaxExpansion"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "include": "#literalPoolAsmArguments"
+        },
+        {
+          "include": "#literalPoolLineEnd"
+        }
+      ]
+    },
     "remarksLine": {
       "patterns": [
         {
@@ -199,6 +231,29 @@
         },
         {
           "include": "#openEndedArgs"
+        },
+        {
+          "match": "([^\\s=(),'*/+-]+)(?<=^${listingDetails}$.{0,71})",
+          "captures": {
+            "1": {
+              "name": "punctuation.definition.tag.hlasm",
+              "patterns": [
+                {
+                  "include": "#additionalAsmHighlight"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    "literalPoolAsmArguments": {
+      "patterns": [
+        {
+          "include": "#quoteType"
+        },
+        {
+          "include": "#literalPoolOpenEndedArgs"
         },
         {
           "match": "([^\\s=(),'*/+-]+)(?<=^${listingDetails}$.{0,71})",
@@ -261,6 +316,32 @@
         }
       ]
     },
+    "literalPoolOpenEndedArgs": {
+      "begin": "\\s*(?=(?:[('])(?<=^${listingDetails}$.{0,71}))",
+      "end": "(?=.*)",
+      "applyEndPatternLast": 1,
+      "beginCaptures": {
+        "1": {
+          "name": "punctuation.definition.tag.hlasm",
+          "patterns": [
+            {
+              "include": "#additionalAsmHighlight"
+            }
+          ]
+        }
+      },
+      "patterns": [
+        {
+          "include": "#${pageAnnotation}$"
+        },
+        {
+          "include": "#literalPoolParenthesis"
+        },
+        {
+          "include": "#literalPoolStringType"
+        }
+      ]
+    },
     "parenthesis": {
       "patterns": [
         {
@@ -289,6 +370,60 @@
         {
           "begin": "(?<!^${listingDetails}$)(')(?<=^${listingDetails}$.{0,71})",
           "end": "(?<=^${listingDetails}$.*?)((.*?')(?<=^${listingDetails}$.{0,71})|([^']*)(?<=^${listingDetails}$.{71})(?=\\s)|(^${listingDetails}$.{0,71}$))|(((?<=^${listingDetails}$(.{71}\\s.*|.{0,71}))${noPrecedingCodeBlock}$)$)",
+          "applyEndPatternLast": 0,
+          "beginCaptures": {
+            "1": {
+              "name": "string.hlasm"
+            }
+          },
+          "endCaptures": {
+            "1": {
+              "patterns": [
+                {
+                  "include": "#stringContents"
+                }
+              ]
+            }
+          },
+          "patterns": [
+            {
+              "include": "#${pageAnnotation}$"
+            },
+            {
+              "include": "#stringContents"
+            }
+          ]
+        }
+      ]
+    },
+    "literalPoolParenthesis": {
+      "patterns": [
+        {
+          "begin": "(?<!^${listingDetails}$)[(]\\s*(?<=^${listingDetails}$.{0,71})",
+          "end": "[)](?<=^${listingDetails}$.{0,71})",
+          "applyEndPatternLast": 0,
+          "patterns": [
+            {
+              "include": "#${pageAnnotation}$"
+            },
+            {
+              "include": "#illegalMultilineColumns"
+            },
+            {
+              "include": "#literalPoolAsmArguments"
+            },
+            {
+              "include": "#literalPoolLineEnd"
+            }
+          ]
+        }
+      ]
+    },
+    "literalPoolStringType": {
+      "patterns": [
+        {
+          "begin": "(?<!^${listingDetails}$)(')(?<=^${listingDetails}$.{0,71})",
+          "end": "(?<=^${listingDetails}$.*?)(.*?')(?<=^${listingDetails}$.{0,71})",
           "applyEndPatternLast": 0,
           "beginCaptures": {
             "1": {
@@ -345,6 +480,9 @@
           "include": "#sequenceNumbers"
         }
       ]
+    },
+    "literalPoolLineEnd": {
+      "match": "(?<=^${listingDetails}$.{71})(\\s).*$"
     },
     "additionalAsmHighlight": {
       "patterns": [
@@ -404,7 +542,7 @@
       "name": "keyword.control.hlasm"
     },
     "noNameFieldInstruction": {
-      "match": "(?<=^${listingDetails}$)\\s+(\\S+)(?<=^${listingDetails}$.{0,71})",
+      "match": "(?<=^${listingDetails}$)\\s+([^ \\t\\v\\r\\n\\f=]\\S*)(?<=^${listingDetails}$.{0,71})",
       "captures": {
         "1": {
           "name": "entity.name.function.hlasm"
