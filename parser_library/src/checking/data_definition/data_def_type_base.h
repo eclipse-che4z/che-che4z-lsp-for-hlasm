@@ -109,11 +109,9 @@ public:
 
     // Checks data def operand, returns false when there was an error. Adds found diagnostics using specified diagnostic
     // collector.
-    template<data_instr_type instr_type>
-    bool check(const data_definition_operand& op, const diagnostic_collector& add_diagnostic) const;
-
-    bool check_DC(const data_definition_operand& op, const diagnostic_collector& add_diagnostic) const;
-    bool check_DS(const data_definition_operand& op, const diagnostic_collector& add_diagnostic) const;
+    bool check(const data_definition_operand& op,
+        data_instr_type instr_type,
+        const diagnostic_collector& add_diagnostic) const;
 
     virtual bool expects_single_symbol() const;
 
@@ -138,8 +136,8 @@ public:
     bool check_dupl_factor(const data_def_field<int32_t>& op, const diagnostic_collector& add_diagnostic) const;
 
     // Checks the length modifier.
-    template<data_instr_type type>
-    bool check_length(const data_def_length_t& op, const diagnostic_collector& add_diagnostic) const;
+    bool check_length(
+        const data_def_length_t& op, data_instr_type instr_type, const diagnostic_collector& add_diagnostic) const;
 
     [[nodiscard]] constexpr context::integer_type get_int_type() const noexcept { return int_type_; }
     [[nodiscard]] constexpr bool ignores_scale() const noexcept { return ignores_scale_; }
@@ -159,13 +157,13 @@ protected:
 
 private:
     // Checks properties of data def operand that all types have in common - modifiers, duplication factor.
-    template<data_instr_type type>
-    std::pair<bool, bool> check_base(
-        const data_definition_operand& op, const diagnostic_collector& add_diagnostic) const;
+    std::pair<bool, bool> check_base(const data_definition_operand& op,
+        data_instr_type instr_type,
+        const diagnostic_collector& add_diagnostic) const;
 
     // Data def types override this function to implement type-specific check. check_nominal specifies whether it is
     // safe to access nominal value of operand(has correct type, etc..).
-    virtual bool check(
+    virtual bool check_impl(
         const data_definition_operand& op, const diagnostic_collector& add_diagnostic, bool check_nominal) const;
 
     // Concatenates the two characters and returns resulting string.
@@ -174,20 +172,18 @@ private:
     // Checks whether the nominal value is present when it is mandatory. Returns two booleans: the first one specifies
     // whether there was an error, the second one specifies whether the nominal value is present and needs to be checked
     // further.
-    template<data_instr_type type>
-    std::pair<bool, bool> check_nominal_present(
-        const data_definition_operand& op, const diagnostic_collector& add_diagnostic) const;
+    std::pair<bool, bool> check_nominal_present(const data_definition_operand& op,
+        data_instr_type instr_type,
+        const diagnostic_collector& add_diagnostic) const;
 
     // Checks if nominal value has the right type and is safe to access. Expects that nominal type is present.
     bool check_nominal_type(const data_definition_operand& op, const diagnostic_collector& add_diagnostic) const;
 
     size_t get_number_of_values_in_nominal(const reduced_nominal_value_t& nom) const;
 
-    template<data_instr_type type>
-    modifier_spec get_length_spec() const;
+    modifier_spec get_length_spec(data_instr_type instr_type) const;
 
-    template<data_instr_type type>
-    modifier_spec get_bit_length_spec() const;
+    modifier_spec get_bit_length_spec(data_instr_type instr_type) const;
 
     nominal_value_type nominal_type;
 

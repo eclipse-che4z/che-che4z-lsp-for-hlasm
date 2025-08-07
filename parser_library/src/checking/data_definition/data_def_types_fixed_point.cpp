@@ -47,7 +47,7 @@ public:
     static bool is_sign_char(char c) { return c == 'U' || c == 'u' || c == '+' || c == '-'; }
 };
 
-bool data_def_type_H_F_FD::check(
+bool data_def_type_H_F_FD::check_impl(
     const data_definition_operand& op, const diagnostic_collector& add_diagnostic, bool check_nominal) const
 {
     if (!check_nominal)
@@ -133,7 +133,7 @@ data_def_type_P_Z::data_def_type_P_Z(char type, integer_type int_type)
           int_type)
 {}
 
-bool data_def_type_P_Z::check(
+bool data_def_type_P_Z::check_impl(
     const data_definition_operand& op, const diagnostic_collector& add_diagnostic, bool check_nominal) const
 {
     // TO DO truncation is also an error

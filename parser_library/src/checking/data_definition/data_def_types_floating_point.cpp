@@ -156,7 +156,7 @@ matched_special_value try_matching_special_value(
     return matched_special_value::error;
 }
 
-bool data_def_type_E_D_L::check(
+bool data_def_type_E_D_L::check_impl(
     const data_definition_operand& op, const diagnostic_collector& add_diagnostic, bool check_nominal) const
 {
     if (!check_nominal)

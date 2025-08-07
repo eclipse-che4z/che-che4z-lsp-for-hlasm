@@ -233,9 +233,10 @@ public:
     data(const std::vector<label_types>& allowed_types, std::string_view name_of_instruction);
 
 protected:
-    template<data_instr_type instr_type>
-    bool check_data(
-        std::span<const asm_operand* const> to_check, const range& stmt_range, const diagnostic_collector&) const;
+    bool check_data(std::span<const asm_operand* const> to_check,
+        data_instr_type instr_type,
+        const range& stmt_range,
+        const diagnostic_collector&) const;
 };
 
 class dc final : public data

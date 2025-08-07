@@ -85,7 +85,7 @@ TEST(data_def_length, B_multiple)
     data_definition_operand op = setup_data_def_op('B', '\0', "111010101,10100010,011");
 
     diag_collector col;
-    ASSERT_TRUE(t.check_DC(op, ADD_DIAG(col)));
+    ASSERT_TRUE(t.check(op, data_instr_type::DC, ADD_DIAG(col)));
 
     EXPECT_EQ(t.get_length(op), (size_t)(4 * 8));
 }
@@ -97,7 +97,7 @@ TEST(data_def_length_attribute, B_multiple)
     data_definition_operand op = setup_data_def_op('B', '\0', "111010101,10100010,011");
 
     diag_collector col;
-    ASSERT_TRUE(t.check_DC(op, ADD_DIAG(col)));
+    ASSERT_TRUE(t.check(op, data_instr_type::DC, ADD_DIAG(col)));
 
     EXPECT_EQ(t.get_length_attribute(op.length, reduce_nominal_value(op.nominal_value)), 2U);
 }
@@ -109,7 +109,7 @@ TEST(data_def_length_attribute, B_explicit)
     data_definition_operand op = setup_data_def_op('B', '\0', "111010101,10100010,011", 5);
 
     diag_collector col;
-    ASSERT_TRUE(t.check_DC(op, ADD_DIAG(col)));
+    ASSERT_TRUE(t.check(op, data_instr_type::DC, ADD_DIAG(col)));
 
     EXPECT_EQ(t.get_length_attribute(op.length, reduce_nominal_value(op.nominal_value)), 5U);
 }
@@ -122,7 +122,7 @@ TEST(data_def_length, dupl_factor_bit_length)
     op.length.len_type = data_def_length_t::BIT;
     op.dupl_factor = 3;
     diag_collector col;
-    ASSERT_TRUE(t.check_DC(op, ADD_DIAG(col)));
+    ASSERT_TRUE(t.check(op, data_instr_type::DC, ADD_DIAG(col)));
 
     EXPECT_EQ(t.get_length(op), 12U * 3);
 }
@@ -134,7 +134,7 @@ TEST(data_def_length, dupl_factor_implicit_length)
     data_definition_operand op = setup_data_def_expr_op('A', '\0', 12, expr_type::ABS, -300, expr_type::ABS);
     op.dupl_factor = 5;
     diag_collector col;
-    ASSERT_TRUE(t.check_DC(op, ADD_DIAG(col)));
+    ASSERT_TRUE(t.check(op, data_instr_type::DC, ADD_DIAG(col)));
 
     EXPECT_EQ(t.get_length(op), (size_t)(8 * 5 * 8));
 }
@@ -146,7 +146,7 @@ TEST(data_def_length, B_one_bit)
     data_definition_operand op = setup_data_def_op('B', '\0', "1");
 
     diag_collector col;
-    ASSERT_TRUE(t.check_DC(op, ADD_DIAG(col)));
+    ASSERT_TRUE(t.check(op, data_instr_type::DC, ADD_DIAG(col)));
 
     EXPECT_EQ(t.get_length(op), (size_t)(1 * 8));
 }
@@ -158,7 +158,7 @@ TEST(data_def_length, B_explicit_length)
     data_definition_operand op = setup_data_def_op('B', '\0', "111010101,10100010,011", 4);
 
     diag_collector col;
-    ASSERT_TRUE(t.check_DC(op, ADD_DIAG(col)));
+    ASSERT_TRUE(t.check(op, data_instr_type::DC, ADD_DIAG(col)));
 
     EXPECT_EQ(t.get_length(op), (size_t)(12 * 8));
 }
@@ -170,7 +170,7 @@ TEST(data_def_length, B_no_nominal)
     data_definition_operand op = setup_data_def_op('B', '\0');
 
     diag_collector col;
-    ASSERT_TRUE(t.check_DS(op, ADD_DIAG(col)));
+    ASSERT_TRUE(t.check(op, data_instr_type::DS, ADD_DIAG(col)));
 
     EXPECT_EQ(t.get_length(op), 8U);
 }
@@ -183,7 +183,7 @@ TEST(data_def_length, CA)
 
     diag_collector col;
 
-    ASSERT_TRUE(t.check_DC(op, ADD_DIAG(col)));
+    ASSERT_TRUE(t.check(op, data_instr_type::DC, ADD_DIAG(col)));
 
     EXPECT_EQ(t.get_length(op), 5U * 8);
 }
@@ -196,7 +196,7 @@ TEST(data_def_length_attribute, CA)
 
     diag_collector col;
 
-    ASSERT_TRUE(t.check_DC(op, ADD_DIAG(col)));
+    ASSERT_TRUE(t.check(op, data_instr_type::DC, ADD_DIAG(col)));
 
     EXPECT_EQ(t.get_length_attribute(op.length, reduce_nominal_value(op.nominal_value)), 5U);
 }
@@ -209,7 +209,7 @@ TEST(data_def_length_attribute, CA_bit_length)
     op.length.len_type = data_def_length_t::BIT;
     diag_collector col;
 
-    ASSERT_TRUE(t.check_DC(op, ADD_DIAG(col)));
+    ASSERT_TRUE(t.check(op, data_instr_type::DC, ADD_DIAG(col)));
 
     EXPECT_EQ(t.get_length_attribute(op.length, reduce_nominal_value(op.nominal_value)), 4U);
 }
@@ -222,7 +222,7 @@ TEST(data_def_length, CA_no_nominal)
     data_definition_operand op = setup_data_def_op('C', 'A');
 
     diag_collector col;
-    ASSERT_TRUE(t.check_DS(op, ADD_DIAG(col)));
+    ASSERT_TRUE(t.check(op, data_instr_type::DS, ADD_DIAG(col)));
 
     EXPECT_EQ(t.get_length(op), 8U);
 }
@@ -234,7 +234,7 @@ TEST(data_def_length, CA_explicit_length)
     data_definition_operand op = setup_data_def_op('C', 'A', "ASCII,ASCII", 4);
 
     diag_collector col;
-    ASSERT_TRUE(t.check_DC(op, ADD_DIAG(col)));
+    ASSERT_TRUE(t.check(op, data_instr_type::DC, ADD_DIAG(col)));
 
     EXPECT_EQ(t.get_length(op), 4U * 8);
 }
@@ -246,7 +246,7 @@ TEST(data_def_length, CE)
     data_definition_operand op = setup_data_def_op('C', 'E', "ebcdic");
 
     diag_collector col;
-    EXPECT_TRUE(t.check_DC(op, ADD_DIAG(col)));
+    EXPECT_TRUE(t.check(op, data_instr_type::DC, ADD_DIAG(col)));
 
     EXPECT_EQ(t.get_length(op), 6U * 8);
 }
@@ -258,7 +258,7 @@ TEST(data_def_length, CU)
     data_definition_operand op = setup_data_def_op('C', 'U', "utf16");
 
     diag_collector col;
-    EXPECT_TRUE(t.check_DC(op, ADD_DIAG(col)));
+    EXPECT_TRUE(t.check(op, data_instr_type::DC, ADD_DIAG(col)));
 
     EXPECT_EQ(t.get_length(op), 5U * 2 * 8);
 }
@@ -270,7 +270,7 @@ TEST(data_def_length_attribute, CU)
     data_definition_operand op = setup_data_def_op('C', 'U', "utf,16");
 
     diag_collector col;
-    EXPECT_TRUE(t.check_DC(op, ADD_DIAG(col)));
+    EXPECT_TRUE(t.check(op, data_instr_type::DC, ADD_DIAG(col)));
 
     EXPECT_EQ(t.get_length_attribute(op.length, reduce_nominal_value(op.nominal_value)), 12U);
 }
@@ -282,7 +282,7 @@ TEST(data_def_length, CU_no_nominal)
     data_definition_operand op = setup_data_def_op('C', 'U');
 
     diag_collector col;
-    ASSERT_TRUE(t.check_DS(op, ADD_DIAG(col)));
+    ASSERT_TRUE(t.check(op, data_instr_type::DS, ADD_DIAG(col)));
 
     EXPECT_EQ(t.get_length(op), 16U);
 }
@@ -294,7 +294,7 @@ TEST(data_def_length, CU_explicit_length)
     data_definition_operand op = setup_data_def_op('C', 'U', "utf,16", 4);
 
     diag_collector col;
-    EXPECT_TRUE(t.check_DC(op, ADD_DIAG(col)));
+    EXPECT_TRUE(t.check(op, data_instr_type::DC, ADD_DIAG(col)));
 
     EXPECT_EQ(t.get_length(op), 4U * 8);
 }
@@ -307,7 +307,7 @@ TEST(data_def_length, G)
     data_definition_operand op = setup_data_def_op('G', '\0', "<.A.B>");
 
     diag_collector col;
-    EXPECT_TRUE(t.check_DC(op, ADD_DIAG(col)));
+    EXPECT_TRUE(t.check(op, data_instr_type::DC, ADD_DIAG(col)));
 
     EXPECT_EQ(t.get_length(op), 4U * 8);
 }
@@ -319,7 +319,7 @@ TEST(data_def_length, G_explicit_length)
     data_definition_operand op = setup_data_def_op('G', '\0', "<.A.,.B>", 4);
 
     diag_collector col;
-    EXPECT_TRUE(t.check_DC(op, ADD_DIAG(col)));
+    EXPECT_TRUE(t.check(op, data_instr_type::DC, ADD_DIAG(col)));
 
     EXPECT_EQ(t.get_length(op), 4U * 8);
 }
@@ -331,7 +331,7 @@ TEST(data_def_length, G_no_nominal)
     data_definition_operand op = setup_data_def_op('G', '\0');
 
     diag_collector col;
-    ASSERT_TRUE(t.check_DS(op, ADD_DIAG(col)));
+    ASSERT_TRUE(t.check(op, data_instr_type::DS, ADD_DIAG(col)));
 
     EXPECT_EQ(t.get_length(op), 16U);
 }
@@ -343,7 +343,7 @@ TEST(data_def_length, X_odd)
     data_definition_operand op = setup_data_def_op('X', '\0', "ABC");
 
     diag_collector col;
-    EXPECT_TRUE(t.check_DC(op, ADD_DIAG(col)));
+    EXPECT_TRUE(t.check(op, data_instr_type::DC, ADD_DIAG(col)));
 
     EXPECT_EQ(t.get_length(op), 2U * 8);
 }
@@ -355,7 +355,7 @@ TEST(data_def_length_attribute, X_multiple)
     data_definition_operand op = setup_data_def_op('X', '\0', "ABC,CD,1234");
 
     diag_collector col;
-    EXPECT_TRUE(t.check_DC(op, ADD_DIAG(col)));
+    EXPECT_TRUE(t.check(op, data_instr_type::DC, ADD_DIAG(col)));
 
     EXPECT_EQ(t.get_length_attribute(op.length, reduce_nominal_value(op.nominal_value)), 2U);
 }
@@ -367,7 +367,7 @@ TEST(data_def_length, X_even)
     data_definition_operand op = setup_data_def_op('X', '\0', "ABCD");
 
     diag_collector col;
-    EXPECT_TRUE(t.check_DC(op, ADD_DIAG(col)));
+    EXPECT_TRUE(t.check(op, data_instr_type::DC, ADD_DIAG(col)));
 
     EXPECT_EQ(t.get_length(op), 2U * 8);
 }
@@ -379,7 +379,7 @@ TEST(data_def_length, X_multiple)
     data_definition_operand op = setup_data_def_op('X', '\0', "ABCD,A,ABC,01235");
 
     diag_collector col;
-    EXPECT_TRUE(t.check_DC(op, ADD_DIAG(col)));
+    EXPECT_TRUE(t.check(op, data_instr_type::DC, ADD_DIAG(col)));
 
     EXPECT_EQ(t.get_length(op), 8U * 8);
 }
@@ -391,7 +391,7 @@ TEST(data_def_length, X_no_nominal)
     data_definition_operand op = setup_data_def_op('X', '\0');
 
     diag_collector col;
-    ASSERT_TRUE(t.check_DS(op, ADD_DIAG(col)));
+    ASSERT_TRUE(t.check(op, data_instr_type::DS, ADD_DIAG(col)));
 
     EXPECT_EQ(t.get_length(op), 8U);
 }
@@ -403,7 +403,7 @@ TEST(data_def_length, F)
     data_definition_operand op = setup_data_def_op('F', '\0', "1.23E3");
 
     diag_collector col;
-    EXPECT_TRUE(t.check_DC(op, ADD_DIAG(col)));
+    EXPECT_TRUE(t.check(op, data_instr_type::DC, ADD_DIAG(col)));
 
     EXPECT_EQ(t.get_length(op), 4U * 8);
 }
@@ -415,7 +415,7 @@ TEST(data_def_length_attribute, F)
     data_definition_operand op = setup_data_def_op('F', '\0', "1.23E3,123");
 
     diag_collector col;
-    EXPECT_TRUE(t.check_DC(op, ADD_DIAG(col)));
+    EXPECT_TRUE(t.check(op, data_instr_type::DC, ADD_DIAG(col)));
 
     EXPECT_EQ(t.get_length_attribute(op.length, reduce_nominal_value(op.nominal_value)), 4U);
 }
@@ -427,7 +427,7 @@ TEST(data_def_length, F_no_nominal)
     data_definition_operand op = setup_data_def_op('F', '\0');
 
     diag_collector col;
-    EXPECT_TRUE(t.check_DS(op, ADD_DIAG(col)));
+    EXPECT_TRUE(t.check(op, data_instr_type::DS, ADD_DIAG(col)));
 
     EXPECT_EQ(t.get_length(op), 4U * 8);
 }
@@ -439,7 +439,7 @@ TEST(data_def_length, F_multiple)
     data_definition_operand op = setup_data_def_op('F', '\0', "1.23E3,1,1.45");
 
     diag_collector col;
-    EXPECT_TRUE(t.check_DC(op, ADD_DIAG(col)));
+    EXPECT_TRUE(t.check(op, data_instr_type::DC, ADD_DIAG(col)));
 
     EXPECT_EQ(t.get_length(op), 3U * 4 * 8);
 }
@@ -451,7 +451,7 @@ TEST(data_def_length, FD_multiple)
     data_definition_operand op = setup_data_def_op('F', 'D', "1.23E3,1,1.45");
 
     diag_collector col;
-    EXPECT_TRUE(t.check_DC(op, ADD_DIAG(col)));
+    EXPECT_TRUE(t.check(op, data_instr_type::DC, ADD_DIAG(col)));
 
     EXPECT_EQ(t.get_length(op), 3U * 8 * 8);
 }
@@ -463,7 +463,7 @@ TEST(data_def_length, H_multiple)
     data_definition_operand op = setup_data_def_op('H', '\0', "1.23E3,1,1.45");
 
     diag_collector col;
-    EXPECT_TRUE(t.check_DC(op, ADD_DIAG(col)));
+    EXPECT_TRUE(t.check(op, data_instr_type::DC, ADD_DIAG(col)));
 
     EXPECT_EQ(t.get_length(op), 3U * 2 * 8);
 }
@@ -475,7 +475,7 @@ TEST(data_def_length, P)
     data_definition_operand op = setup_data_def_op('P', '\0', "456,-12,4.587");
 
     diag_collector col;
-    EXPECT_TRUE(t.check_DC(op, ADD_DIAG(col)));
+    EXPECT_TRUE(t.check(op, data_instr_type::DC, ADD_DIAG(col)));
 
     EXPECT_EQ(t.get_length(op), (size_t)(2 + 2 + 3) * 8);
 }
@@ -487,7 +487,7 @@ TEST(data_def_length_attribute, P_multiple)
     data_definition_operand op = setup_data_def_op('P', '\0', "456.174,-12,4.587");
 
     diag_collector col;
-    EXPECT_TRUE(t.check_DC(op, ADD_DIAG(col)));
+    EXPECT_TRUE(t.check(op, data_instr_type::DC, ADD_DIAG(col)));
 
     EXPECT_EQ(t.get_length_attribute(op.length, reduce_nominal_value(op.nominal_value)), 4U);
 }
@@ -499,7 +499,7 @@ TEST(data_def_length_attribute, P_simple)
     data_definition_operand op = setup_data_def_op('P', '\0', "456");
 
     diag_collector col;
-    EXPECT_TRUE(t.check_DC(op, ADD_DIAG(col)));
+    EXPECT_TRUE(t.check(op, data_instr_type::DC, ADD_DIAG(col)));
 
     EXPECT_EQ(t.get_length_attribute(op.length, reduce_nominal_value(op.nominal_value)), 2U);
 }
@@ -511,7 +511,7 @@ TEST(data_def_length, Z)
     data_definition_operand op = setup_data_def_op('Z', '\0', "456,-12,4.587");
 
     diag_collector col;
-    EXPECT_TRUE(t.check_DC(op, ADD_DIAG(col)));
+    EXPECT_TRUE(t.check(op, data_instr_type::DC, ADD_DIAG(col)));
 
     EXPECT_EQ(t.get_length(op), (size_t)(3 + 2 + 4) * 8);
 }
@@ -523,7 +523,7 @@ TEST(data_def_length_attribute, Z_multiple)
     data_definition_operand op = setup_data_def_op('Z', '\0', "45.12,-12,4.587");
 
     diag_collector col;
-    EXPECT_TRUE(t.check_DC(op, ADD_DIAG(col)));
+    EXPECT_TRUE(t.check(op, data_instr_type::DC, ADD_DIAG(col)));
 
     EXPECT_EQ(t.get_length_attribute(op.length, reduce_nominal_value(op.nominal_value)), 4U);
 }
@@ -535,7 +535,7 @@ TEST(data_def_length_attribute, Z_simple)
     data_definition_operand op = setup_data_def_op('Z', '\0', "45");
 
     diag_collector col;
-    EXPECT_TRUE(t.check_DC(op, ADD_DIAG(col)));
+    EXPECT_TRUE(t.check(op, data_instr_type::DC, ADD_DIAG(col)));
 
     EXPECT_EQ(t.get_length_attribute(op.length, reduce_nominal_value(op.nominal_value)), 2U);
 }
@@ -546,7 +546,7 @@ TEST(data_def_length, A)
     data_definition_operand op =
         setup_data_def_expr_op('A', '\0', 0, expr_type::RELOC, 0, expr_type::RELOC, 0, expr_type::ABS);
     diag_collector col;
-    EXPECT_TRUE(t.check_DC(op, ADD_DIAG(col)));
+    EXPECT_TRUE(t.check(op, data_instr_type::DC, ADD_DIAG(col)));
     EXPECT_EQ(t.get_length(op), (size_t)(4 + 4 + 4) * 8);
 }
 
@@ -556,7 +556,7 @@ TEST(data_def_length, A_no_nominal)
     data_definition_operand op = setup_data_def_op('A', '\0');
 
     diag_collector col;
-    EXPECT_TRUE(t.check_DS(op, ADD_DIAG(col)));
+    EXPECT_TRUE(t.check(op, data_instr_type::DS, ADD_DIAG(col)));
 
     EXPECT_EQ(t.get_length(op), 4U * 8);
 }
@@ -567,7 +567,7 @@ TEST(data_def_length, A_explicit_length)
     data_definition_operand op =
         setup_data_def_expr_op_length('A', '\0', 3, 0, expr_type::RELOC, 0, expr_type::RELOC, 0, expr_type::ABS);
     diag_collector col;
-    EXPECT_TRUE(t.check_DC(op, ADD_DIAG(col)));
+    EXPECT_TRUE(t.check(op, data_instr_type::DC, ADD_DIAG(col)));
     EXPECT_EQ(t.get_length(op), (size_t)(3 + 3 + 3) * 8);
 }
 
@@ -577,7 +577,7 @@ TEST(data_def_length, AD)
     data_definition_operand op =
         setup_data_def_expr_op('A', 'D', 0, expr_type::RELOC, 0, expr_type::RELOC, 0, expr_type::ABS);
     diag_collector col;
-    EXPECT_TRUE(t.check_DC(op, ADD_DIAG(col)));
+    EXPECT_TRUE(t.check(op, data_instr_type::DC, ADD_DIAG(col)));
     EXPECT_EQ(t.get_length(op), (size_t)(8 + 8 + 8) * 8);
 }
 
@@ -587,7 +587,7 @@ TEST(data_def_length, Y)
     data_definition_operand op =
         setup_data_def_expr_op('Y', '\0', 0, expr_type::RELOC, 0, expr_type::RELOC, 0, expr_type::ABS);
     diag_collector col;
-    EXPECT_TRUE(t.check_DC(op, ADD_DIAG(col)));
+    EXPECT_TRUE(t.check(op, data_instr_type::DC, ADD_DIAG(col)));
     EXPECT_EQ(t.get_length(op), (size_t)(2 + 2 + 2) * 8);
 }
 
@@ -597,7 +597,7 @@ TEST(data_def_length, R)
     data_definition_operand op = setup_data_def_expr_op('R', '\0', 0, expr_type::RELOC, 0, expr_type::RELOC);
 
     diag_collector col;
-    EXPECT_TRUE(t.check_DC(op, ADD_DIAG(col)));
+    EXPECT_TRUE(t.check(op, data_instr_type::DC, ADD_DIAG(col)));
 
     EXPECT_EQ(t.get_length(op), (size_t)(4 + 4) * 8);
 }
@@ -608,7 +608,7 @@ TEST(data_def_length, RD)
     data_definition_operand op = setup_data_def_expr_op('R', 'D', 0, expr_type::RELOC, 0, expr_type::RELOC);
 
     diag_collector col;
-    EXPECT_TRUE(t.check_DC(op, ADD_DIAG(col)));
+    EXPECT_TRUE(t.check(op, data_instr_type::DC, ADD_DIAG(col)));
 
     EXPECT_EQ(t.get_length(op), (size_t)(8 + 8) * 8);
 }
@@ -619,7 +619,7 @@ TEST(data_def_length, RD_no_nominal)
     data_definition_operand op = setup_data_def_op('R', 'D');
 
     diag_collector col;
-    EXPECT_TRUE(t.check_DS(op, ADD_DIAG(col)));
+    EXPECT_TRUE(t.check(op, data_instr_type::DS, ADD_DIAG(col)));
 
     EXPECT_EQ(t.get_length(op), 8U * 8);
 }
@@ -630,7 +630,7 @@ TEST(data_def_length, RD_explicit_length)
     data_definition_operand op = setup_data_def_expr_op_length('R', 'D', 4, 0, expr_type::RELOC, 0, expr_type::RELOC);
 
     diag_collector col;
-    EXPECT_TRUE(t.check_DC(op, ADD_DIAG(col)));
+    EXPECT_TRUE(t.check(op, data_instr_type::DC, ADD_DIAG(col)));
 
     EXPECT_EQ(t.get_length(op), (size_t)(4 + 4) * 8);
 }
@@ -642,7 +642,7 @@ TEST(data_def_length, S)
     data_definition_operand op = setup_data_def_expr_op('S', '\0', 4095, expr_type::ABS);
 
     diag_collector col;
-    EXPECT_TRUE(t.check_DC(op, ADD_DIAG(col)));
+    EXPECT_TRUE(t.check(op, data_instr_type::DC, ADD_DIAG(col)));
 
     EXPECT_EQ(t.get_length(op), 2U * 8);
 }
@@ -653,7 +653,7 @@ TEST(data_def_length, SY)
     data_definition_operand op = setup_data_def_expr_op('S', 'Y', 4096, expr_type::ABS);
 
     diag_collector col;
-    EXPECT_TRUE(t.check_DC(op, ADD_DIAG(col)));
+    EXPECT_TRUE(t.check(op, data_instr_type::DC, ADD_DIAG(col)));
 
     EXPECT_EQ(t.get_length(op), 3U * 8);
 }
@@ -664,7 +664,7 @@ TEST(data_def_length, J)
     data_definition_operand op = setup_data_def_expr_op('J', '\0', 0, expr_type::RELOC, 0, expr_type::RELOC);
 
     diag_collector col;
-    EXPECT_TRUE(t.check_DC(op, ADD_DIAG(col)));
+    EXPECT_TRUE(t.check(op, data_instr_type::DC, ADD_DIAG(col)));
 
     EXPECT_EQ(t.get_length(op), (size_t)(4 + 4) * 8);
 }
@@ -677,7 +677,7 @@ TEST(data_def_length, E)
     data_definition_operand op = setup_data_def_op('E', '\0', "456E10,45");
 
     diag_collector col;
-    EXPECT_TRUE(t.check_DC(op, ADD_DIAG(col)));
+    EXPECT_TRUE(t.check(op, data_instr_type::DC, ADD_DIAG(col)));
 
     EXPECT_EQ(t.get_length(op), (size_t)(4 + 4) * 8);
 }
@@ -689,7 +689,7 @@ TEST(data_def_length, ED)
     data_definition_operand op = setup_data_def_op('E', 'D', "456E7R8");
 
     diag_collector col;
-    EXPECT_TRUE(t.check_DC(op, ADD_DIAG(col)));
+    EXPECT_TRUE(t.check(op, data_instr_type::DC, ADD_DIAG(col)));
 
     EXPECT_EQ(t.get_length(op), 4U * 8);
 }
@@ -701,7 +701,7 @@ TEST(data_def_length, D)
     data_definition_operand op = setup_data_def_op('D', '\0', "456E7");
 
     diag_collector col;
-    EXPECT_TRUE(t.check_DC(op, ADD_DIAG(col)));
+    EXPECT_TRUE(t.check(op, data_instr_type::DC, ADD_DIAG(col)));
 
     EXPECT_EQ(t.get_length(op), 8U * 8);
 }
@@ -713,7 +713,7 @@ TEST(data_def_length, DD)
     data_definition_operand op = setup_data_def_op('D', 'D', "456,14");
 
     diag_collector col;
-    EXPECT_TRUE(t.check_DC(op, ADD_DIAG(col)));
+    EXPECT_TRUE(t.check(op, data_instr_type::DC, ADD_DIAG(col)));
 
     EXPECT_EQ(t.get_length(op), (size_t)(8 + 8) * 8);
 }
@@ -725,7 +725,7 @@ TEST(data_def_length, L)
     data_definition_operand op = setup_data_def_op('L', '\0', "+4E7");
 
     diag_collector col;
-    EXPECT_TRUE(t.check_DC(op, ADD_DIAG(col)));
+    EXPECT_TRUE(t.check(op, data_instr_type::DC, ADD_DIAG(col)));
 
     EXPECT_EQ(t.get_length(op), 16U * 8);
 }
@@ -737,7 +737,7 @@ TEST(data_def_length, LB)
     data_definition_operand op = setup_data_def_op('L', 'B', "-13.14E7");
 
     diag_collector col;
-    EXPECT_TRUE(t.check_DC(op, ADD_DIAG(col)));
+    EXPECT_TRUE(t.check(op, data_instr_type::DC, ADD_DIAG(col)));
 
     EXPECT_EQ(t.get_length(op), 16U * 8);
 }
@@ -749,7 +749,7 @@ TEST(data_def_length, LQ)
     data_definition_operand op = setup_data_def_op('L', 'Q', "-1E7");
 
     diag_collector col;
-    EXPECT_TRUE(t.check_DC(op, ADD_DIAG(col)));
+    EXPECT_TRUE(t.check(op, data_instr_type::DC, ADD_DIAG(col)));
 
     EXPECT_EQ(t.get_length(op), 16U * 8);
 }

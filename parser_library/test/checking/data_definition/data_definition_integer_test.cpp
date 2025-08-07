@@ -41,7 +41,7 @@ TEST(data_def_integer_attribute, H)
     op.scale = 6;
 
     diag_collector col;
-    EXPECT_TRUE(t.check_DC(op, ADD_DIAG(col)));
+    EXPECT_TRUE(t.check(op, data_instr_type::DC, ADD_DIAG(col)));
     EXPECT_EQ(compute_integer(t, op.length, op.scale, reduce_nominal_value(op.nominal_value)), 9);
 }
 
@@ -53,7 +53,7 @@ TEST(data_def_integer_attribute, F)
     op.scale = 8;
 
     diag_collector col;
-    EXPECT_TRUE(t.check_DC(op, ADD_DIAG(col)));
+    EXPECT_TRUE(t.check(op, data_instr_type::DC, ADD_DIAG(col)));
     EXPECT_EQ(compute_integer(t, op.length, op.scale, reduce_nominal_value(op.nominal_value)), 23);
 }
 
@@ -65,7 +65,7 @@ TEST(data_def_integer_attribute, E)
     op.scale = 2;
 
     diag_collector col;
-    EXPECT_TRUE(t.check_DC(op, ADD_DIAG(col)));
+    EXPECT_TRUE(t.check(op, data_instr_type::DC, ADD_DIAG(col)));
     EXPECT_EQ(compute_integer(t, op.length, op.scale, reduce_nominal_value(op.nominal_value)), 4);
 }
 
@@ -77,7 +77,7 @@ TEST(data_def_integer_attribute, D)
     op.scale = 5;
 
     diag_collector col;
-    EXPECT_TRUE(t.check_DC(op, ADD_DIAG(col)));
+    EXPECT_TRUE(t.check(op, data_instr_type::DC, ADD_DIAG(col)));
     EXPECT_EQ(compute_integer(t, op.length, op.scale, reduce_nominal_value(op.nominal_value)), 9);
 }
 
@@ -89,7 +89,7 @@ TEST(data_def_integer_attribute, L)
     op.scale = 10;
 
     diag_collector col;
-    EXPECT_TRUE(t.check_DC(op, ADD_DIAG(col)));
+    EXPECT_TRUE(t.check(op, data_instr_type::DC, ADD_DIAG(col)));
     EXPECT_EQ(compute_integer(t, op.length, op.scale, reduce_nominal_value(op.nominal_value)), 18);
 }
 
@@ -100,7 +100,7 @@ TEST(data_def_integer_attribute, P)
     data_definition_operand op = setup_data_def_op('P', '\0', "+3.513");
 
     diag_collector col;
-    EXPECT_TRUE(t.check_DC(op, ADD_DIAG(col)));
+    EXPECT_TRUE(t.check(op, data_instr_type::DC, ADD_DIAG(col)));
     EXPECT_EQ(compute_integer(t, op.length, op.scale, reduce_nominal_value(op.nominal_value)), 2);
 }
 
@@ -111,7 +111,7 @@ TEST(data_def_integer_attribute, Z)
     data_definition_operand op = setup_data_def_op('Z', '\0', "3.513");
 
     diag_collector col;
-    EXPECT_TRUE(t.check_DC(op, ADD_DIAG(col)));
+    EXPECT_TRUE(t.check(op, data_instr_type::DC, ADD_DIAG(col)));
     EXPECT_EQ(compute_integer(t, op.length, op.scale, reduce_nominal_value(op.nominal_value)), 1);
 }
 
@@ -122,7 +122,7 @@ TEST(data_def_integer_attribute, LD)
     data_definition_operand op = setup_data_def_op('L', 'D', "3.513");
 
     diag_collector col;
-    EXPECT_TRUE(t.check_DC(op, ADD_DIAG(col)));
+    EXPECT_TRUE(t.check(op, data_instr_type::DC, ADD_DIAG(col)));
     EXPECT_EQ(compute_integer(t, op.length, op.scale, reduce_nominal_value(op.nominal_value)), 28);
 }
 
@@ -133,6 +133,6 @@ TEST(data_def_integer_attribute, LB)
     data_definition_operand op = setup_data_def_op('L', 'B', "3.513");
 
     diag_collector col;
-    EXPECT_TRUE(t.check_DC(op, ADD_DIAG(col)));
+    EXPECT_TRUE(t.check(op, data_instr_type::DC, ADD_DIAG(col)));
     EXPECT_EQ(compute_integer(t, op.length, op.scale, reduce_nominal_value(op.nominal_value)), 28);
 }

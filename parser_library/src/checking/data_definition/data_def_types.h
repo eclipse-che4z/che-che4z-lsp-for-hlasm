@@ -27,7 +27,7 @@ class data_def_type_B final : public data_def_type
 public:
     data_def_type_B();
 
-    bool check(const data_definition_operand& op,
+    bool check_impl(const data_definition_operand& op,
         const diagnostic_collector& add_diagnostic,
         bool check_nominal) const override;
 
@@ -67,7 +67,7 @@ class data_def_type_CU final : public data_def_type
 public:
     data_def_type_CU();
 
-    bool check(const data_definition_operand& op,
+    bool check_impl(const data_definition_operand& op,
         const diagnostic_collector& add_diagnostic,
         bool check_nominal) const override;
 
@@ -80,7 +80,7 @@ class data_def_type_G final : public data_def_type
 public:
     data_def_type_G();
 
-    bool check(const data_definition_operand& op,
+    bool check_impl(const data_definition_operand& op,
         const diagnostic_collector& add_diagnostic,
         bool check_nominal) const override;
 
@@ -93,7 +93,7 @@ class data_def_type_X final : public data_def_type
 public:
     data_def_type_X();
 
-    bool check(const data_definition_operand& op,
+    bool check_impl(const data_definition_operand& op,
         const diagnostic_collector& add_diagnostic,
         bool check_nominal) const override;
 
@@ -109,7 +109,7 @@ class data_def_type_H_F_FD : public data_def_type
 public:
     data_def_type_H_F_FD(char type, char extension, uint8_t word_length);
 
-    bool check(const data_definition_operand& op,
+    bool check_impl(const data_definition_operand& op,
         const diagnostic_collector& add_diagnostic,
         bool check_nominal) const override;
 };
@@ -137,7 +137,7 @@ class data_def_type_P_Z : public data_def_type
 public:
     data_def_type_P_Z(char type, context::integer_type int_type);
 
-    bool check(const data_definition_operand& op,
+    bool check_impl(const data_definition_operand& op,
         const diagnostic_collector& add_diagnostic,
         bool check_nominal) const override;
     int16_t get_implicit_scale(const reduced_nominal_value_t& op) const override;
@@ -176,7 +176,7 @@ class data_def_type_A final : public data_def_type_A_AD_Y
 public:
     data_def_type_A();
 
-    bool check(const data_definition_operand& op,
+    bool check_impl(const data_definition_operand& op,
         const diagnostic_collector& add_diagnostic,
         bool check_nominal) const override;
 };
@@ -186,7 +186,7 @@ class data_def_type_AD final : public data_def_type_A_AD_Y
 public:
     data_def_type_AD();
 
-    bool check(const data_definition_operand& op,
+    bool check_impl(const data_definition_operand& op,
         const diagnostic_collector& add_diagnostic,
         bool check_nominal) const override;
 };
@@ -196,7 +196,7 @@ class data_def_type_Y final : public data_def_type_A_AD_Y
 public:
     data_def_type_Y();
 
-    bool check(const data_definition_operand& op,
+    bool check_impl(const data_definition_operand& op,
         const diagnostic_collector& add_diagnostic,
         bool check_nominal) const override;
 };
@@ -214,7 +214,7 @@ class data_def_type_S final : public data_def_type_S_SY
 public:
     data_def_type_S();
 
-    bool check(const data_definition_operand& op,
+    bool check_impl(const data_definition_operand& op,
         const diagnostic_collector& add_diagnostic,
         bool check_nominal) const override;
 };
@@ -224,7 +224,7 @@ class data_def_type_SY final : public data_def_type_S_SY
 public:
     data_def_type_SY();
 
-    bool check(const data_definition_operand& op,
+    bool check_impl(const data_definition_operand& op,
         const diagnostic_collector& add_diagnostic,
         bool check_nominal) const override;
 };
@@ -254,7 +254,7 @@ class data_def_type_RD final : public data_def_type_single_symbol
 public:
     data_def_type_RD();
 
-    bool check(const data_definition_operand& op,
+    bool check_impl(const data_definition_operand& op,
         const diagnostic_collector& add_diagnostic,
         bool check_nominal) const override;
 };
@@ -270,7 +270,7 @@ class data_def_type_VD final : public data_def_type_single_symbol
 public:
     data_def_type_VD();
 
-    bool check(const data_definition_operand& op,
+    bool check_impl(const data_definition_operand& op,
         const diagnostic_collector& add_diagnostic,
         bool check_nominal) const override;
 };
@@ -298,7 +298,7 @@ class data_def_type_J final : public data_def_type_single_symbol
 public:
     data_def_type_J();
 
-    bool check(const data_definition_operand& op,
+    bool check_impl(const data_definition_operand& op,
         const diagnostic_collector& add_diagnostic,
         bool check_nominal) const override;
 };
@@ -308,7 +308,7 @@ class data_def_type_JD final : public data_def_type_single_symbol
 public:
     data_def_type_JD();
 
-    bool check(const data_definition_operand& op,
+    bool check_impl(const data_definition_operand& op,
         const diagnostic_collector& add_diagnostic,
         bool check_nominal) const override;
 };
@@ -326,7 +326,7 @@ public:
         context::alignment align,
         uint64_t implicit_length);
 
-    bool check(const data_definition_operand& op,
+    bool check_impl(const data_definition_operand& op,
         const diagnostic_collector& add_diagnostic,
         bool check_nominal) const override;
 };

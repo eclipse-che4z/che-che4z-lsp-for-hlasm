@@ -498,18 +498,8 @@ long long data_definition::evaluate_total_length(
     if (!dd_type->check_dupl_factor(dupl, drop_diags))
         return -1;
 
-    if (checking_rules == checking::data_instr_type::DC)
-    {
-        if (!dd_type->check_length<checking::data_instr_type::DC>(len, drop_diags))
-            return -1;
-    }
-    else if (checking_rules == checking::data_instr_type::DS)
-    {
-        if (!dd_type->check_length<checking::data_instr_type::DS>(len, drop_diags))
-            return -1;
-    }
-    else
-        assert(false);
+    if (!dd_type->check_length(len, checking_rules, drop_diags))
+        return -1;
 
     auto result = dd_type->get_length(dupl, len, evaluate_reduced_nominal_value());
     return result >= ((1ll << 31) - 1) * 8 ? -1 : (long long)result;

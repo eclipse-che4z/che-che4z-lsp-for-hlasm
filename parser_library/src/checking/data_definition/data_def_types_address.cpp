@@ -101,7 +101,7 @@ bool check_A_AD_Y_length(const std::string& type,
     return true;
 }
 
-bool data_def_type_A::check(
+bool data_def_type_A::check_impl(
     const data_definition_operand& op, const diagnostic_collector& add_diagnostic, bool check_nominal) const
 {
     if (!check_nominal)
@@ -113,7 +113,7 @@ data_def_type_AD::data_def_type_AD()
     : data_def_type_A_AD_Y('A', 'D', doubleword, 8)
 {}
 
-bool data_def_type_AD::check(
+bool data_def_type_AD::check_impl(
     const data_definition_operand& op, const diagnostic_collector& add_diagnostic, bool check_nominal) const
 {
     if (!check_nominal)
@@ -125,7 +125,7 @@ data_def_type_Y::data_def_type_Y()
     : data_def_type_A_AD_Y('Y', '\0', halfword, 2)
 {}
 
-bool data_def_type_Y::check(
+bool data_def_type_Y::check_impl(
     const data_definition_operand& op, const diagnostic_collector& add_diagnostic, bool check_nominal) const
 {
     if (!check_nominal)
@@ -213,7 +213,7 @@ bool check_S_SY_operand(const data_definition_operand& op, const diagnostic_coll
     return ret;
 }
 
-bool data_def_type_S::check(
+bool data_def_type_S::check_impl(
     const data_definition_operand& op, const diagnostic_collector& add_diagnostic, bool check_nominal) const
 {
     if (!check_nominal)
@@ -225,7 +225,7 @@ data_def_type_SY::data_def_type_SY()
     : data_def_type_S_SY('Y', 3)
 {}
 
-bool data_def_type_SY::check(
+bool data_def_type_SY::check_impl(
     const data_definition_operand& op, const diagnostic_collector& add_diagnostic, bool check_nominal) const
 {
     if (!check_nominal)
@@ -259,7 +259,8 @@ data_def_type_RD::data_def_type_RD()
     : data_def_type_single_symbol('R', 'D', no_check(), doubleword, 8)
 {}
 
-bool data_def_type_RD::check(const data_definition_operand& op, const diagnostic_collector& add_diagnostic, bool) const
+bool data_def_type_RD::check_impl(
+    const data_definition_operand& op, const diagnostic_collector& add_diagnostic, bool) const
 {
     if (op.length.present && op.length.value != 3 && op.length.value != 4 && op.length.value != 8)
     {
@@ -279,7 +280,8 @@ data_def_type_VD::data_def_type_VD()
     : data_def_type_single_symbol('V', 'D', no_check(), doubleword, 8)
 {}
 
-bool data_def_type_VD::check(const data_definition_operand& op, const diagnostic_collector& add_diagnostic, bool) const
+bool data_def_type_VD::check_impl(
+    const data_definition_operand& op, const diagnostic_collector& add_diagnostic, bool) const
 {
     if (op.length.present && op.length.value != 3 && op.length.value != 4 && op.length.value != 8)
     {
@@ -310,7 +312,8 @@ data_def_type_J::data_def_type_J()
     : data_def_type_single_symbol('J', '\0', no_check(), fullword, 4)
 {}
 
-bool data_def_type_J::check(const data_definition_operand& op, const diagnostic_collector& add_diagnostic, bool) const
+bool data_def_type_J::check_impl(
+    const data_definition_operand& op, const diagnostic_collector& add_diagnostic, bool) const
 {
     if (op.length.present && op.length.value != 2 && op.length.value != 3 && op.length.value != 4
         && op.length.value != 8)
@@ -326,7 +329,8 @@ data_def_type_JD::data_def_type_JD()
     : data_def_type_single_symbol('J', 'D', no_check(), doubleword, 8)
 {}
 
-bool data_def_type_JD::check(const data_definition_operand& op, const diagnostic_collector& add_diagnostic, bool) const
+bool data_def_type_JD::check_impl(
+    const data_definition_operand& op, const diagnostic_collector& add_diagnostic, bool) const
 {
     if (op.length.present && op.length.value != 2 && op.length.value != 3 && op.length.value != 4
         && op.length.value != 8)

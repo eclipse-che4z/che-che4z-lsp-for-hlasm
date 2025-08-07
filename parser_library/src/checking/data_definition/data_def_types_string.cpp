@@ -94,7 +94,7 @@ data_def_type_B::data_def_type_B()
           integer_type::undefined)
 {}
 
-bool data_def_type_B::check(
+bool data_def_type_B::check_impl(
     const data_definition_operand& op, const diagnostic_collector& add_diagnostic, bool check_nominal) const
 {
     if (!check_nominal)
@@ -219,7 +219,8 @@ uint32_t data_def_type_CU::get_nominal_length_attribute(const reduced_nominal_va
     }
 }
 
-bool data_def_type_CU::check(const data_definition_operand& op, const diagnostic_collector& add_diagnostic, bool) const
+bool data_def_type_CU::check_impl(
+    const data_definition_operand& op, const diagnostic_collector& add_diagnostic, bool) const
 {
     if (op.length.present && op.length.value % 2 == 1)
     {
@@ -245,7 +246,8 @@ data_def_type_G::data_def_type_G()
           integer_type::undefined)
 {}
 
-bool data_def_type_G::check(const data_definition_operand& op, const diagnostic_collector& add_diagnostic, bool) const
+bool data_def_type_G::check_impl(
+    const data_definition_operand& op, const diagnostic_collector& add_diagnostic, bool) const
 {
     if (op.length.present && op.length.value % 2 == 1)
     {
@@ -301,7 +303,7 @@ data_def_type_X::data_def_type_X()
           integer_type::undefined)
 {}
 
-bool data_def_type_X::check(
+bool data_def_type_X::check_impl(
     const data_definition_operand& op, const diagnostic_collector& add_diagnostic, bool check_nominal) const
 {
     if (!check_nominal)
