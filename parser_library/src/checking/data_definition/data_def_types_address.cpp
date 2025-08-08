@@ -43,7 +43,7 @@ data_def_type_A::data_def_type_A()
     : data_def_type_A_AD_Y('A', '\0', fullword, 4)
 {}
 
-bool check_A_AD_Y_length(const std::string& type,
+bool check_A_AD_Y_length(std::string_view type,
     const data_definition_operand& op,
     const diagnostic_collector& add_diagnostic,
     int min_byte_abs,
@@ -87,14 +87,14 @@ bool check_A_AD_Y_length(const std::string& type,
     { // For relocatable expressions, bit length is not allowed and byte has specific bounds.
         if (op.length.len_type == data_def_length_t::BIT)
         {
-            add_diagnostic(diagnostic_op::error_D007(op.length.rng, type + " with relocatable symbols"));
+            add_diagnostic(diagnostic_op::error_D007(op.length.rng, type, " with relocatable symbols"));
             return false;
         }
         else if (op.length.len_type == data_def_length_t::BYTE
             && (op.length.value < min_byte_sym || op.length.value > max_byte_sym))
         {
             add_diagnostic(diagnostic_op::error_D008(
-                op.length.rng, type + " with relocatable symbols", "length", min_byte_sym, max_byte_sym));
+                op.length.rng, type, "length", min_byte_sym, max_byte_sym, " with relocatable symbols"));
             return false;
         }
     }

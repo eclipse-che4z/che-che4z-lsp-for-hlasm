@@ -118,8 +118,8 @@ bool data_def_type::expects_single_symbol() const { return false; }
 
 template<typename field_val_T>
 bool check_modifier(const data_def_field<field_val_T>& modifier,
-    const std::string& type_str,
-    const std::string& modifier_name,
+    std::string_view type_str,
+    std::string_view modifier_name,
     modifier_spec bound,
     const diagnostic_collector& add_diagnostic)
 {
@@ -356,8 +356,8 @@ size_t data_def_type::get_number_of_values_in_nominal(const reduced_nominal_valu
 {
     if (type == 'C' || type == 'G') // C and G do not support multiple nominal values
         return 1;
-    else if (std::holds_alternative<std::string>(nom.value))
-        return std::ranges::count(std::get<std::string>(nom.value), ',') + 1;
+    else if (std::holds_alternative<std::string_view>(nom.value))
+        return std::ranges::count(std::get<std::string_view>(nom.value), ',') + 1;
     else
         return std::get<size_t>(nom.value);
 }

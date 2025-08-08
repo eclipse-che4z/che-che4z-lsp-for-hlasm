@@ -1608,23 +1608,24 @@ diagnostic_op diagnostic_op::error_D006(const range& range)
         diagnostic_severity::error, "D006", "Unexpected character. Nominal value or modifier expected", range);
 }
 
-diagnostic_op diagnostic_op::error_D007(const range& range, std::string_view type)
+diagnostic_op diagnostic_op::error_D007(const range& range, std::string_view type, std::string_view suffix)
 {
-    return diagnostic_op(diagnostic_severity::error, "D007", concat("Bit length not allowed with type ", type), range);
+    return diagnostic_op(
+        diagnostic_severity::error, "D007", concat("Bit length not allowed with type ", type, suffix), range);
 }
 
 diagnostic_op diagnostic_op::error_D008(
-    const range& range, std::string_view type, std::string_view modifier, int min, int max)
+    const range& range, std::string_view type, std::string_view modifier, int min, int max, std::string_view suffix)
 {
     if (min == max)
         return diagnostic_op(diagnostic_severity::error,
             "D008",
-            concat("The ", modifier, " modifier of type ", type, " must be ", min),
+            concat("The ", modifier, " modifier of type ", type, suffix, " must be ", min),
             range);
     else
         return diagnostic_op(diagnostic_severity::error,
             "D008",
-            concat("The ", modifier, " modifier of type ", type, " must be between ", min, " and ", max),
+            concat("The ", modifier, " modifier of type ", type, suffix, " must be between ", min, " and ", max),
             range);
 }
 

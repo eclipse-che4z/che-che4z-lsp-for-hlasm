@@ -54,8 +54,8 @@ bool data_def_type_H_F_FD::check_impl(
         return true;
 
     size_t i = 0;
-    const std::string& nom = std::get<std::string>(op.nominal_value.value);
-    if (nom.size() == 0)
+    std::string_view nom = std::get<std::string>(op.nominal_value.value);
+    if (nom.empty())
     {
         add_diagnostic(diagnostic_op::error_D010(op.nominal_value.rng, type_str));
         return false;
@@ -141,8 +141,8 @@ bool data_def_type_P_Z::check_impl(
         return true;
 
     size_t i = 0;
-    const std::string& nom = std::get<std::string>(op.nominal_value.value);
-    if (nom.size() == 0)
+    std::string_view nom = std::get<std::string>(op.nominal_value.value);
+    if (nom.empty())
     {
         add_diagnostic(diagnostic_op::error_D010(op.nominal_value.rng, type_str));
         return false;
@@ -167,13 +167,13 @@ bool data_def_type_P_Z::check_impl(
 
 int16_t data_def_type_P_Z::get_implicit_scale(const reduced_nominal_value_t& op) const
 {
-    if (!op.present || !std::holds_alternative<std::string>(op.value))
+    if (!op.present || !std::holds_alternative<std::string_view>(op.value))
         return 0;
     // Count number of characters between the first . and first ,
 
     uint16_t count = 0;
     bool do_count = false;
-    for (char c : std::get<std::string>(op.value))
+    for (char c : std::get<std::string_view>(op.value))
     {
         if (c == ',')
             break;
@@ -192,15 +192,13 @@ data_def_type_P::data_def_type_P()
 
 uint64_t data_def_type_P::get_nominal_length(const reduced_nominal_value_t& op) const
 {
-    if (!op.present || !std::holds_alternative<std::string>(op.value))
+    if (!op.present || !std::holds_alternative<std::string_view>(op.value))
         return 1;
-
-    const std::string& s = std::get<std::string>(op.value);
 
     uint64_t bytes_count = 0;
     // 4 sign bits are added to each assembled number
     uint64_t halfbytes_count = 1;
-    for (char c : s)
+    for (char c : std::get<std::string_view>(op.value))
     {
         if (c == ',')
         {
@@ -219,14 +217,12 @@ uint64_t data_def_type_P::get_nominal_length(const reduced_nominal_value_t& op) 
 uint32_t hlasm_plugin::parser_library::checking::data_def_type_P::get_nominal_length_attribute(
     const reduced_nominal_value_t& op) const
 {
-    if (!op.present || !std::holds_alternative<std::string>(op.value))
+    if (!op.present || !std::holds_alternative<std::string_view>(op.value))
         return 1;
-
-    const std::string& s = std::get<std::string>(op.value);
 
     // 4 sign bits are added to each assembled number
     uint32_t halfbytes_count = 1;
-    for (char c : s)
+    for (char c : std::get<std::string_view>(op.value))
     {
         if (c == ',')
             break;
@@ -244,23 +240,20 @@ data_def_type_Z::data_def_type_Z()
 
 uint64_t data_def_type_Z::get_nominal_length(const reduced_nominal_value_t& op) const
 {
-    if (!op.present || !std::holds_alternative<std::string>(op.value))
+    if (!op.present || !std::holds_alternative<std::string_view>(op.value))
         return 1;
 
-    const std::string& s = std::get<std::string>(op.value);
-
     // each digit is assembled as one byte
-
-    return std::ranges::count_if(s, &is_digit);
+    return std::ranges::count_if(std::get<std::string_view>(op.value), &is_digit);
 }
 
 uint32_t data_def_type_Z::get_nominal_length_attribute(const reduced_nominal_value_t& op) const
 {
-    if (!op.present || !std::holds_alternative<std::string>(op.value))
+    if (!op.present || !std::holds_alternative<std::string_view>(op.value))
         return 1;
 
     uint32_t first_value_len = 0;
-    for (char c : std::get<std::string>(op.value))
+    for (char c : std::get<std::string_view>(op.value))
     {
         if (c == ',')
             break;

@@ -478,9 +478,13 @@ struct diagnostic_op
     // static diagnostic_op error_D004(const range& range);
     // static diagnostic_op error_D005(const range& range);
     static diagnostic_op error_D006(const range& range);
-    static diagnostic_op error_D007(const range& range, std::string_view type);
-    static diagnostic_op error_D008(
-        const range& range, std::string_view type, std::string_view modifier, int min, int max);
+    static diagnostic_op error_D007(const range& range, std::string_view type, std::string_view suffix = {});
+    static diagnostic_op error_D008(const range& range,
+        std::string_view type,
+        std::string_view modifier,
+        int min,
+        int max,
+        std::string_view suffix = {});
     static diagnostic_op error_D009(const range& range, std::string_view type, std::string_view modifier);
     static diagnostic_op error_D010(const range& range, std::string_view type);
     static diagnostic_op error_D011(const range& range);

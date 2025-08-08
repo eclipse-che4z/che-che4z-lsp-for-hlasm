@@ -158,7 +158,7 @@ inline bool is_decimal_number_ch(char c) { return is_digit(c) || is_sign(c) || c
 // bool is_end_char(char c) specifies whether char is valid character that delimits number.
 // bool is_sign_char(char c) specifies whether char is valid beginning character
 template<class number_spec>
-inline bool check_number(const std::string& nominal, size_t& i)
+inline bool check_number(std::string_view nominal, size_t& i)
 {
     if (nominal[i] == ',')
         return false;
@@ -203,7 +203,7 @@ inline bool check_number(const std::string& nominal, size_t& i)
 }
 // Checks whether there is valid exponent on position i, we assume nominal[i] == 'E'. Leaves i on the first invalid
 // character.
-inline bool check_exponent(const std::string& nominal, size_t& i)
+inline bool check_exponent(std::string_view nominal, size_t& i)
 {
     assert(nominal[i] == 'E' || nominal[i] == 'e');
     ++i;
