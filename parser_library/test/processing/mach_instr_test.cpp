@@ -240,7 +240,7 @@ TEST(mach_instr_processing, instr_size)
              { op_code(id_index("LA"), &instructions::get_machine_instructions("LA")), 4 },
              { op_code(id_index("CLIJ"), &instructions::get_machine_instructions("CLIJ")), 6 },
              { op_code(id_index("BR"), &instructions::get_mnemonic_codes("BR")), 2 },
-             { op_code(id_index("DC"), context::instruction_type::ASM), 1 },
+             { op_code(id_index("DC"), &instructions::get_assembler_instructions("DC")), 1 },
          })
     {
         EXPECT_EQ(processing::processing_status_cache_key::generate_loctr_len(instr), expected)

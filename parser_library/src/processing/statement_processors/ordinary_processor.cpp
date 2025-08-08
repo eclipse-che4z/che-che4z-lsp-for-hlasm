@@ -225,7 +225,7 @@ struct processing_status_visitor
             { context::id_index(), ASM_GENERIC },
         };
         const auto it = std::ranges::find(forms, forms + std::size(forms) - 1, id, utils::first_element);
-        return return_value(it->second, i->max_operands() == 0, context::instruction_type::ASM);
+        return return_value(it->second, i->max_operands() == 0, i);
     }
     std::optional<processing_status> operator()(const instructions::machine_instruction* i) const noexcept
     {
@@ -262,18 +262,16 @@ std::optional<processing_status> ordinary_processor::get_instruction_processing_
 checking::check_op_ptr get_check_op(const semantics::operand* op,
     context::dependency_solver& dep_solver,
     const diagnostic_collector& add_diagnostic,
-    const resolved_statement& stmt)
+    const instructions::assembler_instruction& instr)
 {
     diagnostic_consumer_transform diags([&add_diagnostic](diagnostic_op d) { add_diagnostic(std::move(d)); });
 
     const auto& ev_op = dynamic_cast<const semantics::evaluable_operand&>(*op);
 
-    auto tmp = instructions::find_assembler_instructions(stmt.opcode_ref().value.to_string_view());
-    const bool can_have_ord_syms = tmp ? tmp->has_ord_symbols() : true;
-    const bool postpone_dependencies = tmp ? tmp->postpone_dependencies() : false;
+    const bool can_have_ord_syms = instr.has_ord_symbols();
 
     std::vector<context::id_index> missing_symbols;
-    if (can_have_ord_syms && !postpone_dependencies && ev_op.has_dependencies(dep_solver, &missing_symbols))
+    if (can_have_ord_syms && !instr.postpone_dependencies() && ev_op.has_dependencies(dep_solver, &missing_symbols))
     {
         for (const auto& symbol : missing_symbols)
             add_diagnostic(diagnostic_op::error_E010("ordinary symbol", symbol.to_string_view(), ev_op.operand_range));
@@ -299,12 +297,13 @@ checking::check_op_ptr get_check_op(const semantics::operand* op,
     return uniq;
 }
 
-bool transform_default(std::vector<checking::check_op_ptr>& result,
-    const resolved_statement& stmt,
+bool transform_asm(std::vector<checking::check_op_ptr>& result,
+    const semantics::operand_list& ops,
+    const instructions::assembler_instruction& instr,
     context::dependency_solver& dep_solver,
     const diagnostic_collector& add_diagnostic)
 {
-    for (const auto& op : stmt.operands_ref().value)
+    for (const auto& op : ops)
     {
         // check whether operand isn't empty
         if (op->type == semantics::operand_type::EMPTY)
@@ -313,7 +312,7 @@ bool transform_default(std::vector<checking::check_op_ptr>& result,
             continue;
         }
 
-        auto uniq = get_check_op(op.get(), dep_solver, add_diagnostic, stmt);
+        auto uniq = get_check_op(op.get(), dep_solver, add_diagnostic, instr);
 
         if (!uniq)
             return false; // contains dependencies
@@ -368,7 +367,7 @@ void ordinary_processor::check_postponed_statements(
                 break;
 
             case ASM:
-                if (!transform_default(operand_vector, *rs, dep_solver, collector))
+                if (!transform_asm(operand_vector, rs->operands_ref().value, *opcode.instr_asm, dep_solver, collector))
                     continue;
                 operand_asm_vector.clear();
                 for (const auto& op : operand_vector)

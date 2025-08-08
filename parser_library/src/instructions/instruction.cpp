@@ -206,10 +206,12 @@ consteval assembler_instruction::assembler_instruction(std::string_view name,
     bool has_ord_symbols,
     unsigned short desc_off,
     unsigned char desc_len,
-    bool postpone_dependencies) noexcept
+    bool postpone_dependencies,
+    data_def_instruction data_def) noexcept
     : m_name(name)
     , m_has_ord_symbols(has_ord_symbols)
     , m_postpone_dependencies(postpone_dependencies)
+    , m_data_def(data_def)
     , m_min_operands(min_operands)
     , m_max_operands(max_operands)
     , m_desc_len(desc_len)

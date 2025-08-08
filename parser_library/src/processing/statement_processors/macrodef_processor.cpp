@@ -158,7 +158,7 @@ processing_status macrodef_processor::get_macro_processing_status(
     if (instruction && !instruction->empty())
     {
         auto code = hlasm_ctx.get_operation_code(*instruction);
-        if (auto** ca_instr = std::get_if<const instructions::ca_instruction*>(&code.opcode_detail); ca_instr)
+        if (const auto** ca_instr = std::get_if<const instructions::ca_instruction*>(&code.opcode_detail); ca_instr)
         {
             processing_format format(processing_kind::MACRO,
                 processing_form::CA,
@@ -166,11 +166,11 @@ processing_status macrodef_processor::get_macro_processing_status(
 
             return std::make_pair(format, op_code(code.opcode, context::instruction_type::CA));
         }
-        else if (code.opcode == context::well_known::COPY)
+        else if (const auto** asm_instr = std::get_if<const instructions::assembler_instruction*>(&code.opcode_detail);
+                 asm_instr && (*asm_instr)->name() == "COPY")
         {
             processing_format format(processing_kind::MACRO, processing_form::ASM_GENERIC, operand_occurrence::PRESENT);
-
-            return std::make_pair(format, op_code(code.opcode, context::instruction_type::ASM));
+            return std::make_pair(format, op_code(code.opcode, *asm_instr));
         }
     }
 

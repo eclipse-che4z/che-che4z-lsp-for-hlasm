@@ -478,10 +478,18 @@ public:
     static constexpr auto max_name_len = decltype(m_name)::max_len;
 };
 
+enum class data_def_instruction : unsigned char
+{
+    NONE,
+    DC_TYPE,
+    DS_TYPE,
+};
+
 class assembler_instruction
 {
     inline_string<9> m_name;
     bool m_has_ord_symbols : 1, m_postpone_dependencies : 1;
+    data_def_instruction m_data_def : 2;
     signed char m_min_operands;
     signed char m_max_operands; // -1 in case there is no max value
     unsigned char m_desc_len;
@@ -496,11 +504,13 @@ public:
         bool has_ord_symbols,
         unsigned short desc_off,
         unsigned char desc_len,
-        bool postpone_dependencies = false) noexcept;
+        bool postpone_dependencies = false,
+        data_def_instruction data_def = data_def_instruction::NONE) noexcept;
 
     constexpr auto name() const noexcept { return m_name.to_string_view(); }
     constexpr auto has_ord_symbols() const noexcept { return m_has_ord_symbols; }
     constexpr auto postpone_dependencies() const noexcept { return m_postpone_dependencies; }
+    constexpr auto data_def_type() const noexcept { return m_data_def; }
     constexpr auto min_operands() const noexcept { return m_min_operands; }
     constexpr auto max_operands() const noexcept { return m_max_operands; }
     constexpr auto description() const noexcept { return std::string_view(s_descriptions + m_desc_offset, m_desc_len); }

@@ -22,6 +22,7 @@
 #include "processing_format.h"
 
 namespace hlasm_plugin::parser_library::instructions {
+class assembler_instruction;
 class mnemonic_code;
 class machine_instruction;
 } // namespace hlasm_plugin::parser_library::instructions
@@ -35,30 +36,36 @@ namespace hlasm_plugin::parser_library::processing {
 // structure holding resolved operation code of the instruction (solving OPSYNs and so on)
 struct op_code
 {
+    using enum context::instruction_type;
+
     constexpr op_code() noexcept
-        : type(context::instruction_type::UNDEF)
+        : type(UNDEF)
     {}
     constexpr op_code(context::id_index value, context::instruction_type type) noexcept
         : value(value)
         , type(type)
     {
-        assert(type != context::instruction_type::MAC && type != context::instruction_type::MACH
-            && type != context::instruction_type::MNEMO);
+        assert(type != MAC && type != MACH && type != MNEMO && type != ASM);
     }
     constexpr op_code(context::id_index value, context::macro_definition* mac_def) noexcept
         : value(value)
         , mac_def(mac_def)
-        , type(context::instruction_type::MAC)
+        , type(MAC)
+    {}
+    constexpr op_code(context::id_index value, const instructions::assembler_instruction* asm_instr) noexcept
+        : value(value)
+        , instr_asm(asm_instr)
+        , type(ASM)
     {}
     constexpr op_code(context::id_index value, const instructions::machine_instruction* mach_instr) noexcept
         : value(value)
         , instr_mach(mach_instr)
-        , type(context::instruction_type::MACH)
+        , type(MACH)
     {}
     constexpr op_code(context::id_index value, const instructions::mnemonic_code* mach_mnemo) noexcept
         : value(value)
         , instr_mnemo(mach_mnemo)
-        , type(context::instruction_type::MNEMO)
+        , type(MNEMO)
     {}
 
     context::id_index value;
@@ -66,6 +73,7 @@ struct op_code
     {
         const void* _empty = nullptr;
         context::macro_definition* mac_def;
+        const instructions::assembler_instruction* instr_asm;
         const instructions::machine_instruction* instr_mach;
         const instructions::mnemonic_code* instr_mnemo;
     };

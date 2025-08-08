@@ -25,6 +25,7 @@
 #include "diagnosable_ctx.h"
 #include "ebcdic_encoding.h"
 #include "hlasm_context.h"
+#include "instructions/instruction.h"
 #include "processing/statement.h"
 #include "semantics/operand_impls.h"
 
@@ -125,7 +126,7 @@ public:
 };
 
 const processing::op_code literal_pool::literal_postponed_statement::op_code(
-    context::id_index("DC"), context::instruction_type::ASM);
+    context::id_index("DC"), &instructions::get_assembler_instructions("DC"));
 const semantics::remarks_si literal_pool::literal_postponed_statement::empty_remarks({});
 const semantics::label_si literal_pool::literal_postponed_statement::empty_label(range {});
 const semantics::instruction_si literal_pool::literal_postponed_statement::empty_instr(range {});
