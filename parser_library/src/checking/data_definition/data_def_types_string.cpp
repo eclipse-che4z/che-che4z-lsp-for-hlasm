@@ -112,22 +112,22 @@ bool data_def_type_B::check_impl(
 
 uint64_t data_def_type_B::get_nominal_length(const reduced_nominal_value_t& op) const
 {
-    if (!op.present)
+    if (std::holds_alternative<std::monostate>(op))
         return 1;
-    else if (!std::holds_alternative<std::string_view>(op.value))
+    else if (!std::holds_alternative<std::string_view>(op))
         return 0;
     else
-        return get_X_B_length(std::get<std::string_view>(op.value), 8);
+        return get_X_B_length(std::get<std::string_view>(op), 8);
 }
 
 uint32_t data_def_type_B::get_nominal_length_attribute(const reduced_nominal_value_t& nom) const
 {
-    if (!nom.present)
+    if (std::holds_alternative<std::monostate>(nom))
         return 1;
-    else if (!std::holds_alternative<std::string_view>(nom.value))
+    else if (!std::holds_alternative<std::string_view>(nom))
         return 0;
     else
-        return get_X_B_length_attr(std::get<std::string_view>(nom.value), 8);
+        return get_X_B_length_attr(std::get<std::string_view>(nom), 8);
 }
 
 //******************************   type C   ********************************//
@@ -147,22 +147,22 @@ data_def_type_CA_CE::data_def_type_CA_CE(char extension)
 
 uint64_t data_def_type_CA_CE::get_nominal_length(const reduced_nominal_value_t& op) const
 {
-    if (!op.present)
+    if (std::holds_alternative<std::monostate>(op))
         return 1;
-    else if (!std::holds_alternative<std::string_view>(op.value))
+    else if (!std::holds_alternative<std::string_view>(op))
         return 0;
     else
-        return utils::length_utf32_no_validation(std::get<std::string_view>(op.value));
+        return utils::length_utf32_no_validation(std::get<std::string_view>(op));
 }
 
 uint32_t data_def_type_CA_CE::get_nominal_length_attribute(const reduced_nominal_value_t& nom) const
 {
-    if (!nom.present)
+    if (std::holds_alternative<std::monostate>(nom))
         return 1;
-    else if (!std::holds_alternative<std::string_view>(nom.value))
+    else if (!std::holds_alternative<std::string_view>(nom))
         return 0;
     else
-        return (uint32_t)utils::length_utf32_no_validation(std::get<std::string_view>(nom.value));
+        return (uint32_t)utils::length_utf32_no_validation(std::get<std::string_view>(nom));
 }
 
 data_def_type_C::data_def_type_C()
@@ -192,22 +192,22 @@ data_def_type_CU::data_def_type_CU()
 
 uint64_t data_def_type_CU::get_nominal_length(const reduced_nominal_value_t& op) const
 {
-    if (!op.present)
+    if (std::holds_alternative<std::monostate>(op))
         return 2;
-    else if (!std::holds_alternative<std::string_view>(op.value))
+    else if (!std::holds_alternative<std::string_view>(op))
         return 0;
     else
-        return 2 * (uint64_t)utils::length_utf16_no_validation(std::get<std::string_view>(op.value));
+        return 2 * (uint64_t)utils::length_utf16_no_validation(std::get<std::string_view>(op));
 }
 
 uint32_t data_def_type_CU::get_nominal_length_attribute(const reduced_nominal_value_t& nom) const
 {
-    if (!nom.present)
+    if (std::holds_alternative<std::monostate>(nom))
         return 2;
-    else if (!std::holds_alternative<std::string_view>(nom.value))
+    else if (!std::holds_alternative<std::string_view>(nom))
         return 0;
     else
-        return 2 * (uint32_t)utils::length_utf16_no_validation(std::get<std::string_view>(nom.value));
+        return 2 * (uint32_t)utils::length_utf16_no_validation(std::get<std::string_view>(nom));
 }
 
 bool data_def_type_CU::check_impl(
@@ -251,13 +251,13 @@ bool data_def_type_G::check_impl(
 
 uint64_t data_def_type_G::get_nominal_length(const reduced_nominal_value_t& op) const
 {
-    if (!op.present)
+    if (std::holds_alternative<std::monostate>(op))
         return 2;
-    else if (!std::holds_alternative<std::string_view>(op.value))
+    else if (!std::holds_alternative<std::string_view>(op))
         return 0;
     else
     {
-        const auto s = std::get<std::string_view>(op.value);
+        const auto s = std::get<std::string_view>(op);
         return utils::length_utf32_no_validation(s)
             - std::ranges::count_if(s, [](char c) { return c == '<' || c == '>'; });
     }
@@ -265,13 +265,13 @@ uint64_t data_def_type_G::get_nominal_length(const reduced_nominal_value_t& op) 
 
 uint32_t data_def_type_G::get_nominal_length_attribute(const reduced_nominal_value_t& nom) const
 {
-    if (!nom.present)
+    if (std::holds_alternative<std::monostate>(nom))
         return 2;
-    else if (!std::holds_alternative<std::string_view>(nom.value))
+    else if (!std::holds_alternative<std::string_view>(nom))
         return 0;
     else
     {
-        const auto s = std::get<std::string_view>(nom.value);
+        const auto s = std::get<std::string_view>(nom);
         return (uint32_t)(utils::length_utf32_no_validation(s)
             - std::ranges::count_if(s, [](char c) { return c == '<' || c == '>'; }));
     }
@@ -310,20 +310,20 @@ bool data_def_type_X::check_impl(
 
 uint64_t data_def_type_X::get_nominal_length(const reduced_nominal_value_t& op) const
 {
-    if (!op.present)
+    if (std::holds_alternative<std::monostate>(op))
         return 1;
-    else if (!std::holds_alternative<std::string_view>(op.value))
+    else if (!std::holds_alternative<std::string_view>(op))
         return 0;
     else
-        return get_X_B_length(std::get<std::string_view>(op.value), 2);
+        return get_X_B_length(std::get<std::string_view>(op), 2);
 }
 
 uint32_t data_def_type_X::get_nominal_length_attribute(const reduced_nominal_value_t& nom) const
 {
-    if (!nom.present)
+    if (std::holds_alternative<std::monostate>(nom))
         return 1;
-    else if (!std::holds_alternative<std::string_view>(nom.value))
+    else if (!std::holds_alternative<std::string_view>(nom))
         return 0;
     else
-        return get_X_B_length_attr(std::get<std::string_view>(nom.value), 2);
+        return get_X_B_length_attr(std::get<std::string_view>(nom), 2);
 }

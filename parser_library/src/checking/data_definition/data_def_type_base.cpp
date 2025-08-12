@@ -355,41 +355,45 @@ size_t data_def_type::get_number_of_values_in_nominal(const reduced_nominal_valu
 {
     if (type == 'C' || type == 'G') // C and G do not support multiple nominal values
         return 1;
-    else if (std::holds_alternative<std::string_view>(nom.value))
-        return std::ranges::count(std::get<std::string_view>(nom.value), ',') + 1;
+    else if (std::holds_alternative<std::string_view>(nom))
+        return std::ranges::count(std::get<std::string_view>(nom), ',') + 1;
+    else if (std::holds_alternative<size_t>(nom))
+        return std::get<size_t>(nom);
     else
-        return std::get<size_t>(nom.value);
+        return 1;
 }
 
 // this function assumes, that the operand is already checked and was OK
 uint64_t data_def_type::get_length(const data_definition_operand& op) const
 {
-    return get_length(op.dupl_factor, op.length, reduce_nominal_value(op.nominal_value));
+    return get_length(op.dupl_factor.present ? op.dupl_factor.value : -1,
+        op.length.present ? op.length.value : -1,
+        op.length.len_type == data_def_length_t::length_type::BIT,
+        reduce_nominal_value(op.nominal_value));
 }
-uint64_t data_def_type::get_length(const data_def_field<int32_t>& dupl_factor,
-    const data_def_length_t& length,
-    const reduced_nominal_value_t& rnv) const
+uint64_t data_def_type::get_length(
+    int32_t dupl_factor, int32_t length, bool length_in_bits, const reduced_nominal_value_t& rnv) const
 {
     uint64_t len_in_bits;
-    if (length.present)
+    if (length >= 0)
     {
         uint64_t val_count = get_number_of_values_in_nominal(rnv);
-        len_in_bits = val_count * length.value;
+        len_in_bits = val_count * length;
 
-        if (length.len_type == data_def_length_t::BYTE)
+        if (!length_in_bits)
             len_in_bits *= 8;
     }
     else if (std::holds_alternative<as_needed>(implicit_length_))
         len_in_bits = get_nominal_length(rnv) * 8;
-    else if (!rnv.present)
+    else if (std::holds_alternative<std::monostate>(rnv))
         len_in_bits = std::get<uint64_t>(implicit_length_) * 8;
     else
     {
         uint64_t val_count = get_number_of_values_in_nominal(rnv);
         len_in_bits = val_count * std::get<uint64_t>(implicit_length_) * 8;
     }
-    if (dupl_factor.present)
-        len_in_bits *= (uint64_t)dupl_factor.value;
+    if (dupl_factor >= 0)
+        len_in_bits *= (uint64_t)dupl_factor;
     return len_in_bits;
 }
 

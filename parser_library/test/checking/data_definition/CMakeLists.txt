@@ -12,7 +12,6 @@
 
 target_sources(library_test PRIVATE
     data_definition_check_test.cpp
-    data_definition_common.h
     data_definition_integer_test.cpp
     data_definition_length_test.cpp
     data_definition_scale_test.cpp

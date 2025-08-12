@@ -465,23 +465,14 @@ checking::nominal_value_t data_definition::evaluate_nominal_value(
 checking::reduced_nominal_value_t data_definition::evaluate_reduced_nominal_value() const
 {
     if (!nominal_value)
-        return {};
+        return std::monostate();
 
-    checking::reduced_nominal_value_t nom;
-    nom.present = true;
     if (const auto* str = nominal_value->access_string())
-    {
-        nom.value = str->value;
-        nom.rng = str->value_range;
-    }
+        return str->value;
     else if (const auto* exprs = nominal_value->access_exprs())
-    {
-        nom.value = exprs->exprs.size();
-    }
+        return exprs->exprs.size();
     else
         assert(false);
-
-    return nom;
 }
 
 long long data_definition::evaluate_total_length(
@@ -500,8 +491,10 @@ long long data_definition::evaluate_total_length(
 
     if (!dd_type->check_length(len, checking_rules, drop_diags))
         return -1;
+    const auto bit_len = len.len_type == checking::data_def_length_t::length_type::BIT;
 
-    auto result = dd_type->get_length(dupl, len, evaluate_reduced_nominal_value());
+    auto result = dd_type->get_length(
+        dupl.present ? dupl.value : -1, len.present ? len.value : -1, bit_len, evaluate_reduced_nominal_value());
     return result >= ((1ll << 31) - 1) * 8 ? -1 : (long long)result;
 }
 

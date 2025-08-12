@@ -96,7 +96,7 @@ struct data_def_address
 using expr_or_address = std::variant<data_def_expr, data_def_address>;
 using nominal_value_expressions = std::vector<expr_or_address>;
 using nominal_value_t = data_def_field<std::variant<std::string, nominal_value_expressions>>;
-using reduced_nominal_value_t = data_def_field<std::variant<std::string_view, size_t>>;
+using reduced_nominal_value_t = std::variant<std::monostate, std::string_view, size_t>;
 using scale_modifier_t = data_def_field<int16_t>;
 using exponent_modifier_t = data_def_field<int32_t>;
 using dupl_factor_modifier_t = data_def_field<int32_t>;
@@ -111,10 +111,13 @@ inline reduced_nominal_value_t reduce_nominal_value(const nominal_value_t& n)
 {
     struct
     {
-        std::variant<std::string_view, size_t> operator()(const std::string& s) const { return s; }
-        std::variant<std::string_view, size_t> operator()(const nominal_value_expressions& e) const { return e.size(); }
+        reduced_nominal_value_t operator()(const std::string& s) const { return s; }
+        reduced_nominal_value_t operator()(const nominal_value_expressions& e) const { return e.size(); }
     } visitor;
-    return reduced_nominal_value_t(n.present, std::visit(visitor, n.value), n.rng);
+    if (!n.present)
+        return std::monostate();
+    else
+        return std::visit(visitor, n.value);
 }
 reduced_nominal_value_t reduce_nominal_value(nominal_value_t&& n) = delete;
 

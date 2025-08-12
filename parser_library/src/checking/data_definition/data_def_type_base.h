@@ -124,9 +124,8 @@ public:
     context::alignment get_alignment(bool length_present) const;
     // returns length of the operand in bits
     uint64_t get_length(const data_definition_operand& op) const;
-    uint64_t get_length(const data_def_field<int32_t>& dupl_factor,
-        const data_def_length_t& length,
-        const reduced_nominal_value_t& rnv) const;
+    uint64_t get_length(
+        int32_t dupl_factor, int32_t length, bool length_in_bits, const reduced_nominal_value_t& rnv) const;
     // returns the length attribute of operand with specified length modifier and nominal value
     uint32_t get_length_attribute(const data_def_length_t& length, const reduced_nominal_value_t& nominal) const;
     // returns scale attribute of operand with specified scale modifier and nominal value

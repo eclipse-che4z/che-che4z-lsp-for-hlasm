@@ -12,75 +12,44 @@
  *   Broadcom, Inc. - initial API and implementation
  */
 
-#include "data_definition_common.h"
-#include "expressions/data_definition.h"
-#include "processing/instruction_sets/data_def_postponed_statement.h"
-#include "semantics/operand.h"
+#include "gtest/gtest.h"
 
+#include "checking/data_definition/data_def_types.h"
 
-using namespace hlasm_plugin::parser_library::expressions;
 using namespace hlasm_plugin::parser_library::checking;
-using namespace hlasm_plugin::parser_library;
 
 
 TEST(data_def_scale_attribute, P)
 {
     data_def_type_P t;
 
-    data_definition_operand op = setup_data_def_op('P', '\0', "456.1234,-12,4.587");
-
-    diag_collector col;
-    EXPECT_TRUE(t.check(op, data_instr_type::DC, ADD_DIAG(col)));
-
-    EXPECT_EQ(t.get_scale_attribute(op.scale, reduce_nominal_value(op.nominal_value)), 4);
+    EXPECT_EQ(t.get_scale_attribute({}, "456.1234,-12,4.587"), 4);
 }
 
 TEST(data_def_scale_attribute, P_no_integral)
 {
     data_def_type_P t;
 
-    data_definition_operand op = setup_data_def_op('P', '\0', ".1234");
-
-    diag_collector col;
-    EXPECT_TRUE(t.check(op, data_instr_type::DC, ADD_DIAG(col)));
-
-    EXPECT_EQ(t.get_scale_attribute(op.scale, reduce_nominal_value(op.nominal_value)), 4);
+    EXPECT_EQ(t.get_scale_attribute({}, ".1234"), 4);
 }
 
 TEST(data_def_scale_attribute, P_no_fraction)
 {
     data_def_type_P t;
 
-    data_definition_operand op = setup_data_def_op('P', '\0', "3.");
-
-    diag_collector col;
-    EXPECT_TRUE(t.check(op, data_instr_type::DC, ADD_DIAG(col)));
-
-    EXPECT_EQ(t.get_scale_attribute(op.scale, reduce_nominal_value(op.nominal_value)), 0);
+    EXPECT_EQ(t.get_scale_attribute({}, "3."), 0);
 }
 
 TEST(data_def_scale_attribute, P_simple_number)
 {
     data_def_type_P t;
 
-    data_definition_operand op = setup_data_def_op('P', '\0', "3");
-
-    diag_collector col;
-    EXPECT_TRUE(t.check(op, data_instr_type::DC, ADD_DIAG(col)));
-
-    EXPECT_EQ(t.get_scale_attribute(op.scale, reduce_nominal_value(op.nominal_value)), 0);
+    EXPECT_EQ(t.get_scale_attribute({}, "3"), 0);
 }
 
 TEST(data_def_scale_attribute, H_explicit)
 {
     data_def_type_H t;
 
-    data_definition_operand op = setup_data_def_op('H', '\0', "3");
-    op.scale.present = true;
-    op.scale.value = 5;
-
-    diag_collector col;
-    EXPECT_TRUE(t.check(op, data_instr_type::DC, ADD_DIAG(col)));
-
-    EXPECT_EQ(t.get_scale_attribute(op.scale, reduce_nominal_value(op.nominal_value)), 5);
+    EXPECT_EQ(t.get_scale_attribute(5, "3"), 5);
 }
