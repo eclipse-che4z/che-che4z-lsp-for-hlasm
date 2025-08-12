@@ -434,11 +434,11 @@ checking::nominal_value_t data_definition::evaluate_nominal_value(
         return {};
 
     checking::nominal_value_t nom;
+    nom.rng = nominal_value->value_range;
     nom.present = true;
     if (const auto* str = nominal_value->access_string())
     {
         nom.value = str->value;
-        nom.rng = str->value_range;
     }
     else if (const auto* exprs = nominal_value->access_exprs())
     {

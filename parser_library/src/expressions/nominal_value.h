@@ -26,6 +26,11 @@ struct nominal_value_exprs;
 // D and B are expressions) or string.
 struct nominal_value_t : public context::dependable
 {
+    explicit nominal_value_t(range rng) noexcept
+        : value_range(rng)
+    {}
+    range value_range;
+
     nominal_value_string* access_string();
     nominal_value_exprs* access_exprs();
 
@@ -47,7 +52,6 @@ struct nominal_value_string final : public nominal_value_t
 
     nominal_value_string(std::string value, range rng);
     std::string value;
-    range value_range;
 
     friend bool is_similar(const nominal_value_string& l, const nominal_value_string& r) { return l.value == r.value; }
 
@@ -75,7 +79,7 @@ struct nominal_value_exprs final : public nominal_value_t
 {
     context::dependency_collector get_dependencies(context::dependency_solver& solver) const override;
 
-    nominal_value_exprs(expr_or_address_list exprs);
+    nominal_value_exprs(expr_or_address_list exprs, range rng);
     expr_or_address_list exprs;
 
     friend bool is_similar(const nominal_value_exprs& l, const nominal_value_exprs& r);

@@ -17,6 +17,7 @@
 #include <algorithm>
 #include <functional>
 
+#include "checking/data_definition/data_def_type_base.h"
 #include "checking/diagnostic_collector.h"
 #include "context/ordinary_assembly/ordinary_assembly_context.h"
 #include "context/ordinary_assembly/ordinary_assembly_dependency_solver.h"

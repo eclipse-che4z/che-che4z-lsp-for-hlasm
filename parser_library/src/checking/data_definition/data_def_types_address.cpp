@@ -246,10 +246,9 @@ data_def_type_single_symbol::data_def_type_single_symbol(
           nominal_value_type::EXPRESSIONS,
           align,
           implicit_length,
-          integer_type::undefined)
+          integer_type::undefined,
+          expects_single_symbol_t::yes)
 {}
-
-bool hlasm_plugin::parser_library::checking::data_def_type_single_symbol::expects_single_symbol() const { return true; }
 
 data_def_type_R::data_def_type_R()
     : data_def_type_single_symbol('R', '\0', modifier_bound { 3, 4 }, fullword, 4)

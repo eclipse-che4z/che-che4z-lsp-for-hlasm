@@ -289,7 +289,7 @@ struct string_assembler_operand final : assembler_operand
 };
 
 // data definition operand
-struct data_def_operand : evaluable_operand
+struct data_def_operand : operand
 {
     static constexpr operand_type type_id = operand_type::DAT;
     std::shared_ptr<const expressions::data_definition> value;
@@ -298,19 +298,12 @@ struct data_def_operand : evaluable_operand
 
     context::dependency_collector get_dependencies(context::dependency_solver& info) const;
 
-    bool has_dependencies(
-        context::dependency_solver& info, std::vector<context::id_index>* missing_symbols) const final;
-
-    bool has_error(context::dependency_solver& info) const final;
-
-    std::unique_ptr<checking::operand> get_operand_value(
-        context::dependency_solver& info, diagnostic_op_consumer& diags) const final;
-    static checking::data_definition_operand get_operand_value(
-        const expressions::data_definition& dd, context::dependency_solver& info, diagnostic_op_consumer& diags);
+    checking::data_definition_operand get_operand_value(
+        context::dependency_solver& info, diagnostic_op_consumer& diags) const;
 
     void apply(operand_visitor& visitor) const final;
 
-    void apply_mach_visitor(expressions::mach_expr_visitor&) const final;
+    void apply_mach_visitor(expressions::mach_expr_visitor&) const;
 
     long long evaluate_total_length(context::dependency_solver& info,
         checking::data_instr_type checking_rules,

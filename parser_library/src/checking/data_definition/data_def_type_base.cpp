@@ -43,6 +43,7 @@ data_def_type::data_def_type(char type,
     context::alignment implicit_alignment,
     implicit_length_t implicit_length,
     context::integer_type int_type,
+    expects_single_symbol_t single_symbol,
     bool ignores_scale)
     : type(type)
     , extension(extension)
@@ -57,6 +58,7 @@ data_def_type::data_def_type(char type,
     , implicit_length_(implicit_length)
     , int_type_(int_type)
     , ignores_scale_(ignores_scale)
+    , single_symbol(single_symbol)
 {
     type_str = init_type_str(type, extension);
 }
@@ -112,9 +114,6 @@ bool data_def_type::check(
 
     return true;
 }
-
-bool data_def_type::expects_single_symbol() const { return false; }
-
 
 template<typename field_val_T>
 bool check_modifier(const data_def_field<field_val_T>& modifier,

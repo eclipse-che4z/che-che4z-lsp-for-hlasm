@@ -383,7 +383,7 @@ void macro_operand::apply(operand_visitor& visitor) const { visitor.visit(*this)
 
 data_def_operand::data_def_operand(
     std::shared_ptr<const expressions::data_definition> dd_ptr, const range& operand_range)
-    : evaluable_operand(operand_type::DAT, operand_range)
+    : operand(operand_type::DAT, operand_range)
     , value(std::move(dd_ptr))
 {}
 
@@ -408,20 +408,6 @@ context::dependency_collector data_def_operand::get_dependencies(context::depend
     return value->get_dependencies(info);
 }
 
-bool data_def_operand::has_dependencies(
-    context::dependency_solver& info, std::vector<context::id_index>* missing_symbols) const
-{
-    auto deps = value->get_dependencies(info);
-    if (missing_symbols)
-        deps.collect_unique_symbolic_dependencies(*missing_symbols);
-    return deps.contains_dependencies();
-}
-
-bool data_def_operand::has_error(context::dependency_solver& info) const
-{
-    return value->get_dependencies(info).has_error;
-}
-
 template<typename... args>
 std::vector<const context::resolvable*> resolvable_list(const args&... expr)
 {
@@ -435,28 +421,24 @@ std::vector<const context::resolvable*> resolvable_list(const args&... expr)
     return list;
 }
 
-std::unique_ptr<checking::operand> data_def_operand::get_operand_value(
-    context::dependency_solver& info, diagnostic_op_consumer& diags) const
-{
-    return std::make_unique<checking::data_definition_operand>(get_operand_value(*value, info, diags));
-}
-
 checking::data_definition_operand data_def_operand::get_operand_value(
-    const expressions::data_definition& dd, context::dependency_solver& info, diagnostic_op_consumer& diags)
+    context::dependency_solver& info, diagnostic_op_consumer& diags) const
 {
     checking::data_definition_operand op;
 
-    op.dupl_factor = dd.evaluate_dupl_factor(info, diags);
-    op.type.value = dd.type;
-    op.type.rng = dd.type_range;
-    op.extension.present = dd.extension != '\0';
-    op.extension.value = dd.extension;
-    op.extension.rng = dd.extension_range;
-    op.length = dd.evaluate_length(info, diags);
-    op.scale = dd.evaluate_scale(info, diags);
-    op.exponent = dd.evaluate_exponent(info, diags);
+    op.operand_range = operand_range;
 
-    op.nominal_value = dd.evaluate_nominal_value(info, diags);
+    op.dupl_factor = value->evaluate_dupl_factor(info, diags);
+    op.type.value = value->type;
+    op.type.rng = value->type_range;
+    op.extension.present = value->extension != '\0';
+    op.extension.value = value->extension;
+    op.extension.rng = value->extension_range;
+    op.length = value->evaluate_length(info, diags);
+    op.scale = value->evaluate_scale(info, diags);
+    op.exponent = value->evaluate_exponent(info, diags);
+
+    op.nominal_value = value->evaluate_nominal_value(info, diags);
 
     return op;
 }

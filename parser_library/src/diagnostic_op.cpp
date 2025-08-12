@@ -44,9 +44,9 @@ diagnostic_op diagnostic_op::error_A001_complex_op_expected(std::string_view ins
         range);
 }
 
-diagnostic_op diagnostic_op::error_A004_data_def_expected()
+diagnostic_op diagnostic_op::error_A004_data_def_expected(const range& range)
 {
-    return diagnostic_op(diagnostic_severity::error, "A004", "Data definition operand expected");
+    return diagnostic_op(diagnostic_severity::error, "A004", "Data definition operand expected", range);
 }
 
 diagnostic_op diagnostic_op::error_A010_minimum(std::string_view instr_name, size_t min_params, const range& range)

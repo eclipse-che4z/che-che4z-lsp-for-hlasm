@@ -15,22 +15,15 @@
 #ifndef HLASMPLUGIN_PARSERLIBRARY_CHECKING_DATA_DEFINITION_OPERAND_H
 #define HLASMPLUGIN_PARSERLIBRARY_CHECKING_DATA_DEFINITION_OPERAND_H
 
-#include "checking/operand.h"
 #include "data_def_fields.h"
-#include "data_def_type_base.h"
-
-namespace hlasm_plugin::parser_library {
-class diagnostic_collector;
-} // namespace hlasm_plugin::parser_library
 
 namespace hlasm_plugin::parser_library::checking {
 // Represents evaluated (resolved machine expressions) data definition operand suitable for checking.
-class data_definition_operand final : public asm_operand
+struct data_definition_operand final
 {
-public:
-    using num_t = int32_t;
+    range operand_range;
 
-    data_def_field<num_t> dupl_factor;
+    data_def_field<std::int32_t> dupl_factor;
     data_def_field<char> type;
     data_def_field<char> extension;
     data_def_length_t length;
@@ -39,10 +32,6 @@ public:
     scale_modifier_t scale;
 
     nominal_value_t nominal_value;
-
-    const data_def_type* access_data_def_type() const;
-
-    std::pair<const data_def_type*, bool> check_type_and_extension(const diagnostic_collector& add_diagnostic) const;
 };
 
 } // namespace hlasm_plugin::parser_library::checking

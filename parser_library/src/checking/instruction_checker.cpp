@@ -61,11 +61,8 @@ const std::unordered_map<std::string_view, std::unique_ptr<assembler_instruction
     a.add<copy>("COPY", { OPTIONAL, SEQUENCE_SYMBOL });
     a.add<no_operands>("CSECT", { OPTIONAL, ORD_SYMBOL, SEQUENCE_SYMBOL, VAR_SYMBOL });
     a.add<no_operands>("CXD", { OPTIONAL, ORD_SYMBOL, SEQUENCE_SYMBOL, VAR_SYMBOL });
-    a.add<dc>("DC", { OPTIONAL, ORD_SYMBOL, SEQUENCE_SYMBOL, VAR_SYMBOL });
     a.add<drop>("DROP", { OPTIONAL, SEQUENCE_SYMBOL });
-    a.add<ds_dxd>("DS", { OPTIONAL, ORD_SYMBOL, SEQUENCE_SYMBOL, VAR_SYMBOL });
     a.add<no_operands>("DSECT", { OPTIONAL, ORD_SYMBOL, SEQUENCE_SYMBOL, VAR_SYMBOL });
-    a.add<ds_dxd>("DXD", { OPTIONAL, ORD_SYMBOL, SEQUENCE_SYMBOL, VAR_SYMBOL });
     a.add<no_operands>("EJECT", { OPTIONAL, SEQUENCE_SYMBOL });
     a.add<end>("END", { OPTIONAL, SEQUENCE_SYMBOL });
     a.add<entry>("ENTRY", { OPTIONAL, SEQUENCE_SYMBOL });

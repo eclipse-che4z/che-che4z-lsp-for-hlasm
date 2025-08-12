@@ -15,49 +15,78 @@
 #include <span>
 
 #include "../../common_testing.h"
+#include "checking/data_check.h"
+#include "context/ordinary_assembly/ordinary_assembly_dependency_solver.h"
 #include "data_definition_common.h"
+#include "expressions/mach_expr_term.h"
+#include "instructions/instruction.h"
+#include "library_info_transitional.h"
+#include "semantics/operand_impls.h"
 
-using namespace hlasm_plugin::parser_library::checking;
 using namespace hlasm_plugin::parser_library;
-
 
 TEST(data_def_checker, unknown_type)
 {
-    dc d({}, "DC");
+    const auto& dc = instructions::get_assembler_instructions("DC");
 
     diag_collector col;
 
-    data_definition_operand op = setup_data_def_op('W', '\0', "");
-    const checking::asm_operand* const ops[] = { &op };
+    data_definition dd;
+    dd.type = 'W';
+    dd.nominal_value = std::make_unique<nominal_value_string>("", range());
+    const std::unique_ptr<semantics::operand> ops[] = {
+        std::make_unique<data_def_operand_inline>(std::move(dd), range()),
+    };
+    ordinary_assembly_dependency_solver solver(col.ctx.ord_ctx, library_info_transitional::empty);
 
-    EXPECT_FALSE(d.check(std::span(ops), {}, ADD_DIAG(col)));
+    diagnostic_collector add_diagnostic(&col.diag_ctx);
+    checking::check_data_instruction_operands(dc, std::span(ops), {}, solver, add_diagnostic);
     EXPECT_TRUE(matches_message_codes(col.diags(), { "D012" }));
 }
 
 TEST(data_def_checker, unknown_extension)
 {
-    dc d({}, "DC");
+    const auto& dc = instructions::get_assembler_instructions("DC");
 
     diag_collector col;
 
-    data_definition_operand op = setup_data_def_op('B', 'A', "");
-    const checking::asm_operand* const ops[] = { &op };
+    data_definition dd;
+    dd.type = 'B';
+    dd.extension = 'A';
+    dd.nominal_value = std::make_unique<nominal_value_string>("", range());
+    const std::unique_ptr<semantics::operand> ops[] = {
+        std::make_unique<data_def_operand_inline>(std::move(dd), range()),
+    };
+    ordinary_assembly_dependency_solver solver(col.ctx.ord_ctx, library_info_transitional::empty);
 
-    EXPECT_FALSE(d.check(std::span(ops), {}, ADD_DIAG(col)));
+    diagnostic_collector add_diagnostic(&col.diag_ctx);
+    checking::check_data_instruction_operands(dc, std::span(ops), {}, solver, add_diagnostic);
     EXPECT_TRUE(matches_message_codes(col.diags(), { "D013" }));
 }
 
 TEST(data_def_checker, operands_too_long)
 {
-    ds_dxd d({}, "DC");
+    const auto& ds = instructions::get_assembler_instructions("DS");
 
     diag_collector col;
 
-    data_definition_operand op = setup_data_def_op('C', '\0', 1);
-    op.dupl_factor = 1 << 30;
-    const checking::asm_operand* const ops[] = { &op, &op };
+    data_definition dd1;
+    dd1.type = 'C';
+    dd1.dupl_factor = std::make_unique<mach_expr_constant>(1 << 30, range());
+    dd1.length = std::make_unique<mach_expr_constant>(1, range());
+    data_definition dd2;
+    dd2.type = 'C';
+    dd2.dupl_factor = std::make_unique<mach_expr_constant>(1 << 30, range());
+    dd2.length = std::make_unique<mach_expr_constant>(1, range());
 
-    EXPECT_FALSE(d.check(std::span(ops), {}, ADD_DIAG(col)));
+    const std::unique_ptr<semantics::operand> ops[] = {
+        std::make_unique<data_def_operand_inline>(std::move(dd1), range()),
+        std::make_unique<data_def_operand_inline>(std::move(dd2), range()),
+    };
+    ordinary_assembly_dependency_solver solver(col.ctx.ord_ctx, library_info_transitional::empty);
+
+    diagnostic_collector add_diagnostic(&col.diag_ctx);
+    checking::check_data_instruction_operands(ds, std::span(ops), {}, solver, add_diagnostic);
     EXPECT_TRUE(matches_message_codes(col.diags(), { "D029" }));
 }
 

@@ -144,7 +144,7 @@ struct diagnostic_op
 
     static diagnostic_op error_A001_complex_op_expected(std::string_view instr_name, const range& range);
 
-    static diagnostic_op error_A004_data_def_expected();
+    static diagnostic_op error_A004_data_def_expected(const range& range);
 
     static diagnostic_op error_A010_minimum(std::string_view instr_name, size_t min_params, const range& range);
 

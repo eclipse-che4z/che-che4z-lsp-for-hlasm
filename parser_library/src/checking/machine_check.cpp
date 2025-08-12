@@ -20,6 +20,8 @@
 #include "context/using.h"
 #include "diagnostic_consumer.h"
 #include "instr_operand.h"
+#include "instructions/instruction.h"
+#include "range.h"
 #include "semantics/operand_impls.h"
 
 namespace hlasm_plugin::parser_library::checking {

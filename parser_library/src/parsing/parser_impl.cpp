@@ -21,6 +21,7 @@
 #include <cstdlib>
 #include <utility>
 
+#include "checking/data_definition/data_def_type_base.h"
 #include "context/hlasm_context.h"
 #include "context/literal_pool.h"
 #include "context/well_known.h"
@@ -2336,7 +2337,7 @@ result_t<expressions::nominal_value_ptr> parser2::lex_literal_nominal()
         auto [error, n] = lex_literal_nominal_addr();
         if (error)
             return failure;
-        return std::make_unique<expressions::nominal_value_exprs>(std::move(n));
+        return std::make_unique<expressions::nominal_value_exprs>(std::move(n), range_from(start));
     }
     else
     {

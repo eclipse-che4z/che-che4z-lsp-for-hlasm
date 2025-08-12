@@ -42,9 +42,9 @@ const nominal_value_exprs* nominal_value_t::access_exprs() const
 //*********** nominal_value_string ***************
 dependency_collector nominal_value_string::get_dependencies(dependency_solver&) const { return dependency_collector(); }
 
-nominal_value_string::nominal_value_string(std::string value, hlasm_plugin::parser_library::range rng)
-    : value(std::move(value))
-    , value_range(rng)
+nominal_value_string::nominal_value_string(std::string value, range rng)
+    : nominal_value_t(rng)
+    , value(std::move(value))
 {}
 
 size_t hlasm_plugin::parser_library::expressions::nominal_value_string::hash() const
@@ -73,8 +73,9 @@ dependency_collector nominal_value_exprs::get_dependencies(dependency_solver& so
     return conjunction;
 }
 
-nominal_value_exprs::nominal_value_exprs(expr_or_address_list exprs)
-    : exprs(std::move(exprs))
+nominal_value_exprs::nominal_value_exprs(expr_or_address_list exprs, range rng)
+    : nominal_value_t(rng)
+    , exprs(std::move(exprs))
 {}
 
 size_t nominal_value_exprs::hash() const

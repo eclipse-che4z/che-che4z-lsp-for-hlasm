@@ -16,6 +16,7 @@
 
 #include <stdexcept>
 
+#include "checking/data_check.h"
 #include "checking/diagnostic_collector.h"
 #include "checking/instruction_checker.h"
 #include "checking/machine_check.h"
@@ -344,35 +345,40 @@ void ordinary_processor::check_postponed_statements(
 
         const auto& opcode = rs->opcode_ref();
         const auto instruction_name = opcode.value.to_string_view();
+        const auto& ops = rs->operands_ref().value;
+        const auto& stmt_range = rs->stmt_range_ref();
 
         using enum context::instruction_type;
         switch (opcode.type)
         {
             case MACH:
-                checking::check_machine_instruction_operands(*opcode.instr_mach,
-                    instruction_name,
-                    rs->operands_ref().value,
-                    rs->stmt_range_ref(),
-                    dep_solver,
-                    collector);
+                checking::check_machine_instruction_operands(
+                    *opcode.instr_mach, instruction_name, ops, stmt_range, dep_solver, collector);
                 break;
 
             case MNEMO:
-                checking::check_mnemonic_code_operands(*opcode.instr_mnemo,
-                    instruction_name,
-                    rs->operands_ref().value,
-                    rs->stmt_range_ref(),
-                    dep_solver,
-                    collector);
+                checking::check_mnemonic_code_operands(
+                    *opcode.instr_mnemo, instruction_name, ops, stmt_range, dep_solver, collector);
                 break;
 
             case ASM:
-                if (!transform_asm(operand_vector, rs->operands_ref().value, *opcode.instr_asm, dep_solver, collector))
-                    continue;
-                operand_asm_vector.clear();
-                for (const auto& op : operand_vector)
-                    operand_asm_vector.push_back(dynamic_cast<const checking::asm_operand*>(op.get()));
-                checking::check_asm_ops(instruction_name, operand_asm_vector, rs->stmt_range_ref(), collector);
+                switch (opcode.instr_asm->data_def_type())
+                {
+                    case instructions::data_def_instruction::DC_TYPE:
+                    case instructions::data_def_instruction::DS_TYPE:
+                        checking::check_data_instruction_operands(
+                            *opcode.instr_asm, ops, stmt_range, dep_solver, collector);
+                        break;
+
+                    case instructions::data_def_instruction::NONE:
+                        if (!transform_asm(operand_vector, ops, *opcode.instr_asm, dep_solver, collector))
+                            return;
+                        operand_asm_vector.clear();
+                        for (const auto& op : operand_vector)
+                            operand_asm_vector.push_back(dynamic_cast<const checking::asm_operand*>(op.get()));
+                        checking::check_asm_ops(instruction_name, operand_asm_vector, stmt_range, collector);
+                        break;
+                }
                 break;
 
             default:

@@ -16,6 +16,7 @@ target_sources(parser_library PRIVATE
     asm_instr_class.cpp
     asm_instr_class.h
     checker_helper.h
+    data_check.h
     diagnostic_collector.cpp
     diagnostic_collector.h
     instr_operand.cpp

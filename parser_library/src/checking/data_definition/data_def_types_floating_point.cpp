@@ -42,6 +42,7 @@ data_def_type_E_D_L::data_def_type_E_D_L(char type,
           align,
           implicit_length,
           context::integer_type::hexfloat,
+          expects_single_symbol_t::no,
           extension == 'D' || extension == 'B')
 {}
 

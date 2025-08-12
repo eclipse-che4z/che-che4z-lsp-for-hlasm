@@ -239,8 +239,6 @@ public:
         modifier_spec length_bound,
         context::alignment implicit_alignment,
         uint64_t implicit_length);
-
-    bool expects_single_symbol() const override;
 };
 
 class data_def_type_R final : public data_def_type_single_symbol

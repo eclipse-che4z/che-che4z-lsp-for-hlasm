@@ -227,36 +227,6 @@ public:
         const diagnostic_collector&) const override;
 };
 
-class data : public assembler_instruction
-{
-public:
-    data(const std::vector<label_types>& allowed_types, std::string_view name_of_instruction);
-
-protected:
-    bool check_data(std::span<const asm_operand* const> to_check,
-        data_instr_type instr_type,
-        const range& stmt_range,
-        const diagnostic_collector&) const;
-};
-
-class dc final : public data
-{
-public:
-    dc(const std::vector<label_types>& allowed_types, std::string_view name_of_instruction);
-    bool check(std::span<const asm_operand* const> to_check,
-        const range& stmt_range,
-        const diagnostic_collector&) const override;
-};
-
-class ds_dxd final : public data
-{
-public:
-    ds_dxd(const std::vector<label_types>& allowed_types, std::string_view name_of_instruction);
-    bool check(std::span<const asm_operand* const> to_check,
-        const range& stmt_range,
-        const diagnostic_collector&) const override;
-};
-
 // class for copy instruction, TO DO - parse member
 class copy final : public assembler_instruction
 {

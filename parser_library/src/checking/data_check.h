@@ -12,12 +12,11 @@
  *   Broadcom, Inc. - initial API and implementation
  */
 
-#ifndef HLASMPLUGIN_PARSERLIBRARY_CHECKING_MACHINE_CHECK_H
-#define HLASMPLUGIN_PARSERLIBRARY_CHECKING_MACHINE_CHECK_H
+#ifndef HLASMPLUGIN_PARSERLIBRARY_CHECKING_DATA_CHECK_H
+#define HLASMPLUGIN_PARSERLIBRARY_CHECKING_DATA_CHECK_H
 
 #include <memory>
 #include <span>
-#include <string_view>
 
 namespace hlasm_plugin::parser_library {
 class diagnostic_collector;
@@ -28,8 +27,7 @@ class dependency_solver;
 } // namespace context
 
 namespace instructions {
-class machine_instruction;
-class mnemonic_code;
+class assembler_instruction;
 } // namespace instructions
 
 namespace semantics {
@@ -39,28 +37,12 @@ struct operand;
 } // namespace hlasm_plugin::parser_library
 
 namespace hlasm_plugin::parser_library::checking {
-void check_machine_instruction_operands(const instructions::machine_instruction& mi,
-    std::string_view mi_name,
-    std::span<const std::unique_ptr<semantics::operand>> ops,
-    const range& stmt_range,
-    context::dependency_solver& dep_solver,
-    diagnostic_collector& diags);
-void check_mnemonic_code_operands(const instructions::mnemonic_code& mn,
-    std::string_view mi_name,
-    std::span<const std::unique_ptr<semantics::operand>> ops,
-    const range& stmt_range,
-    context::dependency_solver& dep_solver,
-    diagnostic_collector& diags);
 
-struct machine_operand final
-{
-    int displacement;
-    int first_op;
-    int second_op;
-    bool valid;
-    [[maybe_unused]] bool first_op_derived;
-    unsigned char source;
-};
+void check_data_instruction_operands(const instructions::assembler_instruction& ai,
+    std::span<const std::unique_ptr<semantics::operand>> ops,
+    const range& stmt_range,
+    context::dependency_solver& dep_solver,
+    diagnostic_collector& diags);
 
 } // namespace hlasm_plugin::parser_library::checking
 
