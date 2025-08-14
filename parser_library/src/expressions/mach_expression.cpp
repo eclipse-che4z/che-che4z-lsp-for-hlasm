@@ -47,8 +47,6 @@ bool mach_expression::has_dependencies(
     return d.contains_dependencies();
 }
 
-range mach_expression::get_range() const { return expr_range_; }
-
 context::symbol_value hlasm_plugin::parser_library::expressions::mach_expression::resolve(
     context::dependency_solver& solver) const
 {

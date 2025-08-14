@@ -15,6 +15,7 @@
 #ifndef HLASMPLUGIN_PARSERLIBRARY_CHECKING_DATA_DEF_TYPE_BASE_H
 #define HLASMPLUGIN_PARSERLIBRARY_CHECKING_DATA_DEF_TYPE_BASE_H
 
+#include <bitset>
 #include <cstdint>
 #include <map>
 #include <memory>
@@ -32,6 +33,7 @@ enum class integer_type : unsigned char;
 
 namespace hlasm_plugin::parser_library::checking {
 
+struct data_definition_common;
 struct data_definition_operand;
 
 // DC and DS have subtle differences; this enum is used to template functions accordingly.
@@ -50,6 +52,7 @@ struct modifier_bound
 {
     int min;
     int max;
+    bool even = false;
 };
 struct n_a
 {};
@@ -57,7 +60,22 @@ struct no_check
 {};
 struct ignored
 {};
-using modifier_spec = std::variant<modifier_bound, n_a, no_check, ignored>;
+class bound_list
+{
+    std::bitset<32> m_allowed;
+
+public:
+    bound_list(std::initializer_list<unsigned> l) noexcept
+    {
+        for (unsigned i : l)
+            m_allowed.set(i);
+    }
+
+    bool allowed(int32_t i) const noexcept { return i >= 0 && (uint32_t)i < m_allowed.size() && m_allowed.test(i); }
+
+    std::string to_diag_list() const;
+};
+using modifier_spec = std::variant<modifier_bound, n_a, no_check, ignored, bound_list>;
 
 // Implicit length is either fixed number or is derived from (string) nominal value.
 struct as_needed
@@ -112,18 +130,9 @@ public:
         implicit_length_t implicit_length,
         context::integer_type int_type_);
 
-
-    // Checks data def operand, returns false when there was an error. Adds found diagnostics using specified diagnostic
-    // collector.
-    bool check(const data_definition_operand& op,
-        data_instr_type instr_type,
-        const diagnostic_collector& add_diagnostic) const;
-
     bool expects_single_symbol() const noexcept { return single_symbol == expects_single_symbol_t::yes; }
 
-    context::alignment get_alignment(bool length_present) const;
     // returns length of the operand in bits
-    uint64_t get_length(const data_definition_operand& op) const;
     uint64_t get_length(
         int32_t dupl_factor, int32_t length, bool length_in_bits, const reduced_nominal_value_t& rnv) const;
     // returns the length attribute of operand with specified length modifier and nominal value
@@ -137,17 +146,9 @@ public:
 
     virtual ~data_def_type() = 0;
 
-    // Checks duplication factor.
-    bool check_dupl_factor(const data_def_field<int32_t>& op, const diagnostic_collector& add_diagnostic) const;
-
-    // Checks the length modifier.
-    bool check_length(
-        const data_def_length_t& op, data_instr_type instr_type, const diagnostic_collector& add_diagnostic) const;
-
     [[nodiscard]] constexpr context::integer_type get_int_type() const noexcept { return int_type_; }
     [[nodiscard]] constexpr bool ignores_scale() const noexcept { return ignores_scale_; }
 
-protected:
     char type;
     char extension;
     std::string type_str;
@@ -160,29 +161,19 @@ protected:
     // Gets the value of scale attribute when there is no scale modifier defined by user.
     virtual int16_t get_implicit_scale(const reduced_nominal_value_t& op) const;
 
-private:
-    // Checks properties of data def operand that all types have in common - modifiers, duplication factor.
-    std::pair<bool, bool> check_base(const data_definition_operand& op,
-        data_instr_type instr_type,
-        const diagnostic_collector& add_diagnostic) const;
-
     // Data def types override this function to implement type-specific check. check_nominal specifies whether it is
     // safe to access nominal value of operand(has correct type, etc..).
-    virtual bool check_impl(
-        const data_definition_operand& op, const diagnostic_collector& add_diagnostic, bool check_nominal) const;
+    virtual bool check_impl(const data_definition_common& common,
+        const nominal_value_t& nominal,
+        const diagnostic_collector& add_diagnostic,
+        bool check_nominal) const;
 
     // Concatenates the two characters and returns resulting string.
     static std::string init_type_str(char type, char extension);
 
-    // Checks whether the nominal value is present when it is mandatory. Returns two booleans: the first one specifies
-    // whether there was an error, the second one specifies whether the nominal value is present and needs to be checked
-    // further.
-    std::pair<bool, bool> check_nominal_present(const data_definition_operand& op,
-        data_instr_type instr_type,
-        const diagnostic_collector& add_diagnostic) const;
-
     // Checks if nominal value has the right type and is safe to access. Expects that nominal type is present.
-    bool check_nominal_type(const data_definition_operand& op, const diagnostic_collector& add_diagnostic) const;
+    bool check_nominal_type(
+        const nominal_value_t& op, const diagnostic_collector& add_diagnostic, const range& r) const;
 
     size_t get_number_of_values_in_nominal(const reduced_nominal_value_t& nom) const;
 

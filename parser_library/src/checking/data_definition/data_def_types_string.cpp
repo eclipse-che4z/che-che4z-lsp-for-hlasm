@@ -94,16 +94,17 @@ data_def_type_B::data_def_type_B()
           integer_type::undefined)
 {}
 
-bool data_def_type_B::check_impl(
-    const data_definition_operand& op, const diagnostic_collector& add_diagnostic, bool check_nominal) const
+bool data_def_type_B::check_impl(const data_definition_common&,
+    const nominal_value_t& nominal,
+    const diagnostic_collector& add_diagnostic,
+    bool check_nominal) const
 {
     if (!check_nominal)
         return true;
 
-    if (!check_comma_separated(
-            std::get<std::string>(op.nominal_value.value), [](char c) { return c == '0' || c == '1'; }))
+    if (!check_comma_separated(std::get<std::string>(nominal.value), [](char c) { return c == '0' || c == '1'; }))
     {
-        add_diagnostic(diagnostic_op::error_D010(op.nominal_value.rng, type_str));
+        add_diagnostic(diagnostic_op::error_D010(nominal.rng, type_str));
         return false;
     }
 
@@ -181,7 +182,7 @@ data_def_type_CU::data_def_type_CU()
     : data_def_type('C',
           'U',
           n_a(),
-          modifier_bound { 1, 256 },
+          modifier_bound { 1, 256, true },
           n_a(),
           n_a(),
           nominal_value_type::STRING,
@@ -210,24 +211,13 @@ uint32_t data_def_type_CU::get_nominal_length_attribute(const reduced_nominal_va
         return 2 * (uint32_t)utils::length_utf16_no_validation(std::get<std::string_view>(nom));
 }
 
-bool data_def_type_CU::check_impl(
-    const data_definition_operand& op, const diagnostic_collector& add_diagnostic, bool) const
-{
-    if (op.length.present && op.length.value % 2 == 1)
-    {
-        add_diagnostic(diagnostic_op::error_D014(op.length.rng, type_str));
-        return false;
-    }
-    return true;
-}
-
 //******************************   type G   ********************************//
 
 data_def_type_G::data_def_type_G()
     : data_def_type('G',
           '\0',
           n_a(),
-          modifier_bound { 1, 256 },
+          modifier_bound { 1, 256, true },
           65534,
           n_a(),
           n_a(),
@@ -236,18 +226,6 @@ data_def_type_G::data_def_type_G()
           as_needed(),
           integer_type::undefined)
 {}
-
-bool data_def_type_G::check_impl(
-    const data_definition_operand& op, const diagnostic_collector& add_diagnostic, bool) const
-{
-    if (op.length.present && op.length.value % 2 == 1)
-    {
-        add_diagnostic(diagnostic_op::error_D014(op.length.rng, type_str));
-        return false;
-    }
-
-    return true;
-}
 
 uint64_t data_def_type_G::get_nominal_length(const reduced_nominal_value_t& op) const
 {
@@ -294,15 +272,17 @@ data_def_type_X::data_def_type_X()
           integer_type::undefined)
 {}
 
-bool data_def_type_X::check_impl(
-    const data_definition_operand& op, const diagnostic_collector& add_diagnostic, bool check_nominal) const
+bool data_def_type_X::check_impl(const data_definition_common&,
+    const nominal_value_t& nominal,
+    const diagnostic_collector& add_diagnostic,
+    bool check_nominal) const
 {
     if (!check_nominal)
         return true;
 
-    if (!check_comma_separated(std::get<std::string>(op.nominal_value.value), &is_hexadecimal_digit))
+    if (!check_comma_separated(std::get<std::string>(nominal.value), &is_hexadecimal_digit))
     {
-        add_diagnostic(diagnostic_op::error_D010(op.nominal_value.rng, type_str));
+        add_diagnostic(diagnostic_op::error_D010(nominal.rng, type_str));
         return false;
     }
     return true;

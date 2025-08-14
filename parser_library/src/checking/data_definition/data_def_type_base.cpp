@@ -14,14 +14,16 @@
 
 #include "data_def_type_base.h"
 
+#include <cassert>
+#include <format>
+#include <iterator>
 #include <optional>
 
 #include "checking/diagnostic_collector.h"
 #include "checking/instr_operand.h"
 #include "data_def_types.h"
 
-using namespace hlasm_plugin::parser_library::checking;
-using namespace hlasm_plugin::parser_library;
+namespace hlasm_plugin::parser_library::checking {
 
 std::string data_def_type::init_type_str(char type, char extension)
 {
@@ -61,6 +63,8 @@ data_def_type::data_def_type(char type,
     , single_symbol(single_symbol)
 {
     type_str = init_type_str(type, extension);
+    assert(!std::holds_alternative<ignored>(bit_length_spec));
+    assert(!std::holds_alternative<ignored>(length_spec));
 }
 
 // constructor for types that have different lengths with DS than DC
@@ -89,6 +93,8 @@ data_def_type::data_def_type(char type,
     , int_type_(int_type)
 {
     type_str = init_type_str(type, extension);
+    assert(!std::holds_alternative<ignored>(bit_length_spec));
+    assert(!std::holds_alternative<ignored>(length_spec));
 }
 
 // for example type X can have bit length 1 to 2048, byte length 1 to 256 with DC,
@@ -97,56 +103,6 @@ data_def_type::data_def_type(char type,
 // modifiers. It takes nominal value enclosed in apostrophes, has alignment to 1 byte and implicit length is as needed.
 // data_def_type('X', '\0', modifier_bound{ 1, 2048 }, modifier_bound{ 1, 256 }, 65535, n_a(), n_a(),
 // nominal_value_type::STRING, no_align, as_needed()) {}
-
-bool data_def_type::check(
-    const data_definition_operand& op, data_instr_type instr_type, const diagnostic_collector& add_diagnostic) const
-{
-    auto [ret, check_nom] = check_base(op, instr_type, add_diagnostic);
-    ret &= check_impl(op, add_diagnostic, check_nom);
-    if (!ret)
-        return false;
-    // if operand is ok, we can call get_length and check if it is not too long
-    if (get_length(op) >= ((1ll << 31) - 1) * 8)
-    {
-        add_diagnostic(diagnostic_op::error_D028(op.operand_range));
-        return false;
-    }
-
-    return true;
-}
-
-template<typename field_val_T>
-bool check_modifier(const data_def_field<field_val_T>& modifier,
-    std::string_view type_str,
-    std::string_view modifier_name,
-    modifier_spec bound,
-    const diagnostic_collector& add_diagnostic)
-{
-    if (!modifier.present || std::holds_alternative<no_check>(bound))
-        return true;
-    if (std::holds_alternative<ignored>(bound))
-    {
-        const bool tolerate = modifier.value == 0;
-        if (tolerate)
-            add_diagnostic(diagnostic_op::warn_D025(modifier.rng, type_str, modifier_name));
-        else
-            add_diagnostic(diagnostic_op::error_D009(modifier.rng, type_str, modifier_name));
-        return tolerate;
-    }
-    if (std::holds_alternative<n_a>(bound))
-    {
-        // modifier not allowed with this type
-        add_diagnostic(diagnostic_op::error_D009(modifier.rng, type_str, modifier_name));
-        return false;
-    }
-    if (const auto [min, max] = std::get<modifier_bound>(bound); modifier.value < min || modifier.value > max)
-    {
-        // modifier out of bounds
-        add_diagnostic(diagnostic_op::error_D008(modifier.rng, type_str, modifier_name, min, max));
-        return false;
-    }
-    return true;
-}
 
 uint64_t data_def_type::get_nominal_length(const reduced_nominal_value_t&) const
 {
@@ -168,32 +124,6 @@ int16_t data_def_type::get_implicit_scale(const reduced_nominal_value_t&) const
     return 0;
 }
 
-std::pair<bool, bool> data_def_type::check_nominal_present(
-    const data_definition_operand& op, data_instr_type instr_type, const diagnostic_collector& add_diagnostic) const
-{
-    // DS does not require nominal value
-    // however if nominal value present, it must be valid
-    if (instr_type == data_instr_type::DS)
-        return { true, op.nominal_value.present };
-
-    // nominal value can be omitted with DC when duplication factor is 0.
-    bool ret = true;
-    bool check_nom = true;
-    if (op.dupl_factor.value == 0 && op.dupl_factor.present)
-        check_nom = false;
-
-    if (!op.nominal_value.present && check_nom)
-    {
-        add_diagnostic(diagnostic_op::error_D016(op.operand_range));
-        ret = false;
-        check_nom = false;
-    }
-    else if (op.nominal_value.present) // however if nominal value present, it must be valid
-        check_nom = true;
-
-    return { ret, check_nom };
-}
-
 modifier_spec data_def_type::get_length_spec(data_instr_type instr_type) const
 {
     if (instr_type == data_instr_type::DC)
@@ -208,37 +138,6 @@ modifier_spec data_def_type::get_bit_length_spec(data_instr_type instr_type) con
         return bit_length_spec_;
     else
         return ds_bit_length_spec_;
-}
-
-bool data_def_type::check_dupl_factor(
-    const data_def_field<int32_t>& dupl_factor, const diagnostic_collector& add_diagnostic) const
-{
-    if (dupl_factor.present)
-        if (dupl_factor.value < 0)
-        {
-            // Duplication factor must be non negative
-            add_diagnostic(diagnostic_op::error_D011(dupl_factor.rng));
-            return false;
-        }
-    return true;
-}
-
-bool data_def_type::check_length(
-    const data_def_length_t& length, data_instr_type instr_type, const diagnostic_collector& add_diagnostic) const
-{
-    if (std::holds_alternative<n_a>(bit_length_spec_) && length.len_type == data_def_length_t::length_type::BIT)
-    {
-        // bit length not allowed with this type
-        add_diagnostic(diagnostic_op::error_D007(length.rng, type_str));
-        return false;
-    }
-    else
-    {
-        if (length.len_type == data_def_length_t::length_type::BIT)
-            return check_modifier(length, type_str, "bit length", get_bit_length_spec(instr_type), add_diagnostic);
-        else
-            return check_modifier(length, type_str, "length", get_length_spec(instr_type), add_diagnostic);
-    }
 }
 
 namespace {
@@ -264,25 +163,25 @@ struct
 } // namespace
 
 bool data_def_type::check_nominal_type(
-    const data_definition_operand& op, const diagnostic_collector& add_diagnostic) const
+    const nominal_value_t& nominal, const diagnostic_collector& add_diagnostic, const range& r) const
 {
     bool ret = true;
     switch (nominal_type)
     {
         case nominal_value_type::STRING:
-            if (!std::holds_alternative<std::string>(op.nominal_value.value))
+            if (!std::holds_alternative<std::string>(nominal.value))
             {
-                add_diagnostic(diagnostic_op::error_D018(op.operand_range, type_str));
+                add_diagnostic(diagnostic_op::error_D018(r, type_str));
                 return false;
             }
             break;
         case nominal_value_type::EXPRESSIONS:
-            if (!std::holds_alternative<nominal_value_expressions>(op.nominal_value.value))
+            if (!std::holds_alternative<nominal_value_expressions>(nominal.value))
             {
-                add_diagnostic(diagnostic_op::error_D017(op.operand_range, type_str));
+                add_diagnostic(diagnostic_op::error_D017(r, type_str));
                 return false;
             }
-            for (auto& p : std::get<nominal_value_expressions>(op.nominal_value.value))
+            for (auto& p : std::get<nominal_value_expressions>(nominal.value))
                 if (std::holds_alternative<data_def_address>(p))
                 {
                     const auto& adr = std::get<data_def_address>(p);
@@ -294,12 +193,12 @@ bool data_def_type::check_nominal_type(
                 return false;
             break;
         case nominal_value_type::ADDRESS_OR_EXPRESSION:
-            if (!std::holds_alternative<nominal_value_expressions>(op.nominal_value.value))
+            if (!std::holds_alternative<nominal_value_expressions>(nominal.value))
             {
-                add_diagnostic(diagnostic_op::error_D017(op.operand_range, type_str));
+                add_diagnostic(diagnostic_op::error_D017(r, type_str));
                 return false;
             }
-            for (const auto& p : std::get<nominal_value_expressions>(op.nominal_value.value))
+            for (const auto& p : std::get<nominal_value_expressions>(nominal.value))
             {
                 if (auto range_o = std::visit(abs_or_addr, p); range_o)
                 {
@@ -318,37 +217,10 @@ bool data_def_type::check_nominal_type(
     return true;
 }
 
-
-std::pair<bool, bool> data_def_type::check_base(
-    const data_definition_operand& op, data_instr_type instr_type, const diagnostic_collector& add_diagnostic) const
+bool data_def_type::check_impl(
+    const data_definition_common&, const nominal_value_t&, const diagnostic_collector&, bool) const
 {
-    assert(op.type.value == type);
-    assert(op.extension.value == extension);
-    bool ret = check_dupl_factor(op.dupl_factor, add_diagnostic);
-    ret &= check_length(op.length, instr_type, add_diagnostic);
-    ret &= check_modifier(op.scale, type_str, "scale", scale_spec_, add_diagnostic);
-    ret &= check_modifier(op.exponent, type_str, "exponent", exponent_spec_, add_diagnostic);
-
-    auto [nom_present_ok, check_nom] = check_nominal_present(op, instr_type, add_diagnostic);
-    ret &= nom_present_ok;
-    if (check_nom)
-    {
-        bool nom_type_ok = check_nominal_type(op, add_diagnostic);
-        ret &= nom_type_ok;
-        check_nom &= nom_type_ok;
-    }
-
-    return { ret, check_nom };
-}
-
-bool data_def_type::check_impl(const data_definition_operand&, const diagnostic_collector&, bool) const { return true; }
-
-context::alignment data_def_type::get_alignment(bool length_present) const
-{
-    if (length_present)
-        return context::no_align;
-    else
-        return alignment_;
+    return true;
 }
 
 size_t data_def_type::get_number_of_values_in_nominal(const reduced_nominal_value_t& nom) const
@@ -364,13 +236,6 @@ size_t data_def_type::get_number_of_values_in_nominal(const reduced_nominal_valu
 }
 
 // this function assumes, that the operand is already checked and was OK
-uint64_t data_def_type::get_length(const data_definition_operand& op) const
-{
-    return get_length(op.dupl_factor.present ? op.dupl_factor.value : -1,
-        op.length.present ? op.length.value : -1,
-        op.length.len_type == data_def_length_t::length_type::BIT,
-        reduce_nominal_value(op.nominal_value));
-}
 uint64_t data_def_type::get_length(
     int32_t dupl_factor, int32_t length, bool length_in_bits, const reduced_nominal_value_t& rnv) const
 {
@@ -478,3 +343,24 @@ const data_def_type* data_def_type::access_data_def_type(char type, char extensi
 }
 
 data_def_type::~data_def_type() = default;
+
+std::string bound_list::to_diag_list() const
+{
+    auto remaining = m_allowed.count();
+    std::string s;
+    for (size_t i = 0; i < m_allowed.size(); ++i)
+    {
+        if (!m_allowed.test(i))
+            continue;
+        --remaining;
+        if (s.empty())
+            std::format_to(std::back_inserter(s), "{}", i);
+        else if (remaining > 0)
+            std::format_to(std::back_inserter(s), ", {}", i);
+        else
+            std::format_to(std::back_inserter(s), " or {}", i);
+    }
+    return s;
+}
+
+} // namespace hlasm_plugin::parser_library::checking

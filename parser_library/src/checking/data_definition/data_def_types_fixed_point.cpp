@@ -47,17 +47,19 @@ public:
     static bool is_sign_char(char c) { return c == 'U' || c == 'u' || c == '+' || c == '-'; }
 };
 
-bool data_def_type_H_F_FD::check_impl(
-    const data_definition_operand& op, const diagnostic_collector& add_diagnostic, bool check_nominal) const
+bool data_def_type_H_F_FD::check_impl(const data_definition_common&,
+    const nominal_value_t& nominal,
+    const diagnostic_collector& add_diagnostic,
+    bool check_nominal) const
 {
     if (!check_nominal)
         return true;
 
     size_t i = 0;
-    std::string_view nom = std::get<std::string>(op.nominal_value.value);
+    std::string_view nom = std::get<std::string>(nominal.value);
     if (nom.empty())
     {
-        add_diagnostic(diagnostic_op::error_D010(op.nominal_value.rng, type_str));
+        add_diagnostic(diagnostic_op::error_D010(nominal.rng, type_str));
         return false;
     }
     while (i < nom.size())
@@ -65,7 +67,7 @@ bool data_def_type_H_F_FD::check_impl(
         // checks number, may begin with +,- or U, ends with exponent or comma
         if (!check_number<H_F_FD_number_spec>(nom, i))
         {
-            add_diagnostic(diagnostic_op::error_D010(op.nominal_value.rng, type_str));
+            add_diagnostic(diagnostic_op::error_D010(nominal.rng, type_str));
             return false;
         }
         if (i >= nom.size())
@@ -75,7 +77,7 @@ bool data_def_type_H_F_FD::check_impl(
         {
             if (!check_exponent(nom, i))
             {
-                add_diagnostic(diagnostic_op::error_D010(op.nominal_value.rng, type_str));
+                add_diagnostic(diagnostic_op::error_D010(nominal.rng, type_str));
                 return false;
             }
             if (i >= nom.size())
@@ -83,14 +85,14 @@ bool data_def_type_H_F_FD::check_impl(
         }
         if (nom[i] != ',')
         {
-            add_diagnostic(diagnostic_op::error_D010(op.nominal_value.rng, type_str));
+            add_diagnostic(diagnostic_op::error_D010(nominal.rng, type_str));
             return false;
         }
         ++i;
     }
     if (nom.back() == ',')
     {
-        add_diagnostic(diagnostic_op::error_D010(op.nominal_value.rng, type_str));
+        add_diagnostic(diagnostic_op::error_D010(nominal.rng, type_str));
         return false;
     }
 
@@ -133,32 +135,34 @@ data_def_type_P_Z::data_def_type_P_Z(char type, integer_type int_type)
           int_type)
 {}
 
-bool data_def_type_P_Z::check_impl(
-    const data_definition_operand& op, const diagnostic_collector& add_diagnostic, bool check_nominal) const
+bool data_def_type_P_Z::check_impl(const data_definition_common&,
+    const nominal_value_t& nominal,
+    const diagnostic_collector& add_diagnostic,
+    bool check_nominal) const
 {
     // TO DO truncation is also an error
     if (!check_nominal)
         return true;
 
     size_t i = 0;
-    std::string_view nom = std::get<std::string>(op.nominal_value.value);
+    std::string_view nom = std::get<std::string>(nominal.value);
     if (nom.empty())
     {
-        add_diagnostic(diagnostic_op::error_D010(op.nominal_value.rng, type_str));
+        add_diagnostic(diagnostic_op::error_D010(nominal.rng, type_str));
         return false;
     }
     while (i < nom.size())
     {
         if (!check_number<P_Z_number_spec>(nom, i))
         {
-            add_diagnostic(diagnostic_op::error_D010(op.nominal_value.rng, type_str));
+            add_diagnostic(diagnostic_op::error_D010(nominal.rng, type_str));
             return false;
         }
         ++i;
     }
     if (nom.back() == ',')
     {
-        add_diagnostic(diagnostic_op::error_D010(op.nominal_value.rng, type_str));
+        add_diagnostic(diagnostic_op::error_D010(nominal.rng, type_str));
         return false;
     }
 

@@ -14,6 +14,7 @@
 #include "gtest/gtest.h"
 
 #include "../../common_testing.h"
+#include "checking/data_definition/data_def_type_base.h"
 #include "context/hlasm_context.h"
 #include "context/ordinary_assembly/ordinary_assembly_dependency_solver.h"
 #include "expressions/data_definition.h"
@@ -617,4 +618,11 @@ O1  EQU 1
     a.analyze();
 
     EXPECT_TRUE(matches_message_codes(a.diags(), { "E031" }));
+}
+
+TEST(data_definition, bound_list_stringify)
+{
+    EXPECT_EQ(checking::bound_list({ 5 }).to_diag_list(), "5");
+    EXPECT_EQ(checking::bound_list({ 5, 9 }).to_diag_list(), "5 or 9");
+    EXPECT_EQ(checking::bound_list({ 3, 5, 9 }).to_diag_list(), "3, 5 or 9");
 }

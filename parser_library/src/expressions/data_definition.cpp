@@ -68,9 +68,8 @@ const checking::data_def_type* data_definition::access_data_def_type() const
 
 context::alignment data_definition::get_alignment() const
 {
-    auto def_type = access_data_def_type();
-    if (def_type)
-        return def_type->get_alignment(length != nullptr);
+    if (auto def_type = access_data_def_type(); def_type && !length)
+        return def_type->alignment_;
     else
         return context::no_align;
 }
@@ -476,7 +475,7 @@ checking::reduced_nominal_value_t data_definition::evaluate_reduced_nominal_valu
 }
 
 long long data_definition::evaluate_total_length(
-    context::dependency_solver& info, checking::data_instr_type checking_rules, diagnostic_op_consumer& diags) const
+    context::dependency_solver& info, checking::data_instr_type instr_type, diagnostic_op_consumer& diags) const
 {
     auto dd_type = checking::data_def_type::access_data_def_type(type, extension);
     if (!dd_type)
@@ -484,14 +483,28 @@ long long data_definition::evaluate_total_length(
     auto dupl = evaluate_dupl_factor(info, diags);
     auto len = evaluate_length(info, diags);
 
-    diagnostic_collector drop_diags;
-
-    if (!dd_type->check_dupl_factor(dupl, drop_diags))
+    if (dupl.present && dupl.value < 0)
         return -1;
 
-    if (!dd_type->check_length(len, checking_rules, drop_diags))
-        return -1;
     const auto bit_len = len.len_type == checking::data_def_length_t::length_type::BIT;
+    if (len.present)
+    {
+        const auto spec = bit_len ? dd_type->get_bit_length_spec(instr_type) : dd_type->get_length_spec(instr_type);
+
+        if (std::holds_alternative<checking::modifier_bound>(spec))
+        {
+            if (const auto [min, max, _] = std::get<checking::modifier_bound>(spec); len.value < min || len.value > max)
+                return -1;
+        }
+        else if (std::holds_alternative<checking::n_a>(spec))
+            return -1;
+        // else if (std::holds_alternative<checking::no_check>(spec));
+        // TODO: the following were previously ignored
+        // else if (std::holds_alternative<checking::bound_list>(spec));
+        else if (len.value < 0) // at least take care of the obvious error
+            return -1;
+        assert(!std::holds_alternative<checking::ignored>(spec));
+    }
 
     auto result = dd_type->get_length(
         dupl.present ? dupl.value : -1, len.present ? len.value : -1, bit_len, evaluate_reduced_nominal_value());

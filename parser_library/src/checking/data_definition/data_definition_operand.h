@@ -17,20 +17,34 @@
 
 #include "data_def_fields.h"
 
+namespace hlasm_plugin::parser_library::expressions {
+class mach_expression;
+} // namespace hlasm_plugin::parser_library::expressions
+
 namespace hlasm_plugin::parser_library::checking {
+struct data_definition_common final
+{
+    std::int32_t dupl_factor = 1;
+    std::int32_t length = 0;
+    std::int32_t exponent = 0;
+    std::int32_t scale = 0;
+
+    const range* rng_dupl_factor = nullptr;
+    const range* rng_length = nullptr;
+    const range* rng_exponent = nullptr;
+    const range* rng_scale = nullptr;
+
+    bool length_in_bits = false;
+
+    [[nodiscard]] constexpr bool has_dupl_factor() const noexcept { return rng_dupl_factor != nullptr; }
+    [[nodiscard]] constexpr bool has_length() const noexcept { return rng_length != nullptr; }
+    [[nodiscard]] constexpr bool has_exponent() const noexcept { return rng_exponent != nullptr; }
+    [[nodiscard]] constexpr bool has_scale() const noexcept { return rng_scale != nullptr; }
+};
+
 // Represents evaluated (resolved machine expressions) data definition operand suitable for checking.
 struct data_definition_operand final
 {
-    range operand_range;
-
-    data_def_field<std::int32_t> dupl_factor;
-    data_def_field<char> type;
-    data_def_field<char> extension;
-    data_def_length_t length;
-
-    exponent_modifier_t exponent;
-    scale_modifier_t scale;
-
     nominal_value_t nominal_value;
 };
 

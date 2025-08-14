@@ -490,17 +490,18 @@ struct diagnostic_op
     static diagnostic_op error_D011(const range& range);
     static diagnostic_op error_D012(const range& range);
     static diagnostic_op error_D013(const range& range, std::string_view type);
-    static diagnostic_op error_D014(const range& range, std::string_view type);
+    static diagnostic_op error_D014(const range& range, std::string_view modifier, std::string_view type);
     static diagnostic_op error_D015(const range& range, std::string_view type);
     static diagnostic_op error_D016(const range& range);
     static diagnostic_op error_D017(const range& range, std::string_view type);
     static diagnostic_op error_D018(const range& range, std::string_view type);
     static diagnostic_op error_D019(const range& range);
     static diagnostic_op error_D020(const range& range, std::string_view type);
-    static diagnostic_op error_D021(const range& range, std::string_view type);
+    static diagnostic_op error_D021(
+        const range& range, std::string_view modifier, std::string_view allowed, std::string_view type);
     static diagnostic_op error_D022(const range& range);
     static diagnostic_op error_D023(const range& range);
-    static diagnostic_op error_D024(const range& range, std::string_view type);
+    // removed static diagnostic_op error_D024(const range& range, std::string_view type);
     static diagnostic_op warn_D025(const range& range, std::string_view type, std::string_view modifier);
     static diagnostic_op error_D026(const range& range);
     static diagnostic_op error_D027(const range& range);

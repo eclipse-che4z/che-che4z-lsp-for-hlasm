@@ -44,7 +44,8 @@ data_def_type_A::data_def_type_A()
 {}
 
 bool check_A_AD_Y_length(std::string_view type,
-    const data_definition_operand& op,
+    const data_definition_common& common,
+    const nominal_value_t& nominal,
     const diagnostic_collector& add_diagnostic,
     int min_byte_abs,
     int max_byte_abs,
@@ -54,10 +55,10 @@ bool check_A_AD_Y_length(std::string_view type,
     int max_bit)
 {
     bool all_absolute = true;
-    if (!op.length.present)
+    if (!common.has_length())
         return true;
 
-    for (auto e : std::get<nominal_value_expressions>(op.nominal_value.value))
+    for (auto e : std::get<nominal_value_expressions>(nominal.value))
     {
         const data_def_expr& expr = std::get<data_def_expr>(e);
         if (!expr.ignored && expr.ex_kind != expr_type::ABS)
@@ -70,67 +71,70 @@ bool check_A_AD_Y_length(std::string_view type,
     // parameters.
     if (all_absolute)
     {
-        if (op.length.len_type == data_def_length_t::length_type::BIT
-            && (op.length.value < min_bit || op.length.value > max_bit))
+        if (common.length_in_bits && (common.length < min_bit || common.length > max_bit))
         {
-            add_diagnostic(diagnostic_op::error_D008(op.length.rng, type, "bit length", min_bit, max_bit));
+            add_diagnostic(diagnostic_op::error_D008(*common.rng_length, type, "bit length", min_bit, max_bit));
             return false;
         }
-        else if (op.length.len_type == data_def_length_t::BYTE
-            && (op.length.value < min_byte_abs || op.length.value > max_byte_abs))
+        else if (!common.length_in_bits && (common.length < min_byte_abs || common.length > max_byte_abs))
         {
-            add_diagnostic(diagnostic_op::error_D008(op.length.rng, type, "length", min_byte_abs, max_byte_abs));
+            add_diagnostic(diagnostic_op::error_D008(*common.rng_length, type, "length", min_byte_abs, max_byte_abs));
             return false;
         }
     }
     else
     { // For relocatable expressions, bit length is not allowed and byte has specific bounds.
-        if (op.length.len_type == data_def_length_t::BIT)
+        if (common.length_in_bits)
         {
-            add_diagnostic(diagnostic_op::error_D007(op.length.rng, type, " with relocatable symbols"));
+            add_diagnostic(diagnostic_op::error_D007(*common.rng_length, type, " with relocatable symbols"));
             return false;
         }
-        else if (op.length.len_type == data_def_length_t::BYTE
-            && (op.length.value < min_byte_sym || op.length.value > max_byte_sym))
+        else if (!common.length_in_bits && (common.length < min_byte_sym || common.length > max_byte_sym))
         {
             add_diagnostic(diagnostic_op::error_D008(
-                op.length.rng, type, "length", min_byte_sym, max_byte_sym, " with relocatable symbols"));
+                *common.rng_length, type, "length", min_byte_sym, max_byte_sym, " with relocatable symbols"));
             return false;
         }
     }
     return true;
 }
 
-bool data_def_type_A::check_impl(
-    const data_definition_operand& op, const diagnostic_collector& add_diagnostic, bool check_nominal) const
+bool data_def_type_A::check_impl(const data_definition_common& common,
+    const nominal_value_t& nominal,
+    const diagnostic_collector& add_diagnostic,
+    bool check_nominal) const
 {
     if (!check_nominal)
         return true;
-    return check_A_AD_Y_length("A", op, add_diagnostic, 1, 8, 2, 4, 1, 128);
+    return check_A_AD_Y_length("A", common, nominal, add_diagnostic, 1, 8, 2, 4, 1, 128);
 }
 
 data_def_type_AD::data_def_type_AD()
     : data_def_type_A_AD_Y('A', 'D', doubleword, 8)
 {}
 
-bool data_def_type_AD::check_impl(
-    const data_definition_operand& op, const diagnostic_collector& add_diagnostic, bool check_nominal) const
+bool data_def_type_AD::check_impl(const data_definition_common& common,
+    const nominal_value_t& nominal,
+    const diagnostic_collector& add_diagnostic,
+    bool check_nominal) const
 {
     if (!check_nominal)
         return true;
-    return check_A_AD_Y_length("AD", op, add_diagnostic, 1, 8, 2, 8, 1, 128);
+    return check_A_AD_Y_length("AD", common, nominal, add_diagnostic, 1, 8, 2, 8, 1, 128);
 }
 
 data_def_type_Y::data_def_type_Y()
     : data_def_type_A_AD_Y('Y', '\0', halfword, 2)
 {}
 
-bool data_def_type_Y::check_impl(
-    const data_definition_operand& op, const diagnostic_collector& add_diagnostic, bool check_nominal) const
+bool data_def_type_Y::check_impl(const data_definition_common& common,
+    const nominal_value_t& nominal,
+    const diagnostic_collector& add_diagnostic,
+    bool check_nominal) const
 {
     if (!check_nominal)
         return true;
-    return check_A_AD_Y_length("Y", op, add_diagnostic, 1, 2, 2, 2, 1, 16);
+    return check_A_AD_Y_length("Y", common, nominal, add_diagnostic, 1, 2, 2, 2, 1, 16);
 }
 
 //***************************   types S, SY   *****************************//
@@ -154,10 +158,10 @@ data_def_type_S::data_def_type_S()
 // Checks S and SY operand, size specifies size of displacement in bits,
 // is_signed specifies whether first bit is sign bit
 template<size_t size, bool is_signed>
-bool check_S_SY_operand(const data_definition_operand& op, const diagnostic_collector& add_diagnostic)
+bool check_S_SY_operand(const nominal_value_t& nominal, const diagnostic_collector& add_diagnostic)
 {
     bool ret = true;
-    for (auto& e : std::get<nominal_value_expressions>(op.nominal_value.value))
+    for (auto& e : std::get<nominal_value_expressions>(nominal.value))
     {
         if (std::holds_alternative<data_def_address>(e))
         {
@@ -213,24 +217,28 @@ bool check_S_SY_operand(const data_definition_operand& op, const diagnostic_coll
     return ret;
 }
 
-bool data_def_type_S::check_impl(
-    const data_definition_operand& op, const diagnostic_collector& add_diagnostic, bool check_nominal) const
+bool data_def_type_S::check_impl(const data_definition_common&,
+    const nominal_value_t& nominal,
+    const diagnostic_collector& add_diagnostic,
+    bool check_nominal) const
 {
     if (!check_nominal)
         return true;
-    return check_S_SY_operand<12, false>(op, add_diagnostic);
+    return check_S_SY_operand<12, false>(nominal, add_diagnostic);
 }
 
 data_def_type_SY::data_def_type_SY()
     : data_def_type_S_SY('Y', 3)
 {}
 
-bool data_def_type_SY::check_impl(
-    const data_definition_operand& op, const diagnostic_collector& add_diagnostic, bool check_nominal) const
+bool data_def_type_SY::check_impl(const data_definition_common&,
+    const nominal_value_t& nominal,
+    const diagnostic_collector& add_diagnostic,
+    bool check_nominal) const
 {
     if (!check_nominal)
         return true;
-    return check_S_SY_operand<20, true>(op, add_diagnostic);
+    return check_S_SY_operand<20, true>(nominal, add_diagnostic);
 }
 
 //***************************   types R, RD   *****************************//
@@ -255,19 +263,8 @@ data_def_type_R::data_def_type_R()
 {}
 
 data_def_type_RD::data_def_type_RD()
-    : data_def_type_single_symbol('R', 'D', no_check(), doubleword, 8)
+    : data_def_type_single_symbol('R', 'D', bound_list { 3, 4, 8 }, doubleword, 8)
 {}
-
-bool data_def_type_RD::check_impl(
-    const data_definition_operand& op, const diagnostic_collector& add_diagnostic, bool) const
-{
-    if (op.length.present && op.length.value != 3 && op.length.value != 4 && op.length.value != 8)
-    {
-        add_diagnostic(diagnostic_op::error_D021(op.length.rng, type_str));
-        return false;
-    }
-    return true;
-}
 
 //***************************   types V, VD   *****************************//
 
@@ -276,19 +273,8 @@ data_def_type_V::data_def_type_V()
 {}
 
 data_def_type_VD::data_def_type_VD()
-    : data_def_type_single_symbol('V', 'D', no_check(), doubleword, 8)
+    : data_def_type_single_symbol('V', 'D', bound_list { 3, 4, 8 }, doubleword, 8)
 {}
-
-bool data_def_type_VD::check_impl(
-    const data_definition_operand& op, const diagnostic_collector& add_diagnostic, bool) const
-{
-    if (op.length.present && op.length.value != 3 && op.length.value != 4 && op.length.value != 8)
-    {
-        add_diagnostic(diagnostic_op::error_D021(op.length.rng, type_str));
-        return false;
-    }
-    return true;
-}
 
 //***************************   types Q, QD, QY   *****************************//
 
@@ -308,34 +294,9 @@ data_def_type_QY::data_def_type_QY()
 //***************************   types J, JD   *****************************//
 
 data_def_type_J::data_def_type_J()
-    : data_def_type_single_symbol('J', '\0', no_check(), fullword, 4)
+    : data_def_type_single_symbol('J', '\0', bound_list { 2, 3, 4 }, fullword, 4)
 {}
-
-bool data_def_type_J::check_impl(
-    const data_definition_operand& op, const diagnostic_collector& add_diagnostic, bool) const
-{
-    if (op.length.present && op.length.value != 2 && op.length.value != 3 && op.length.value != 4
-        && op.length.value != 8)
-    {
-        add_diagnostic(diagnostic_op::error_D024(op.length.rng, type_str));
-        return false;
-    }
-    return true;
-}
-
 
 data_def_type_JD::data_def_type_JD()
-    : data_def_type_single_symbol('J', 'D', no_check(), doubleword, 8)
+    : data_def_type_single_symbol('J', 'D', bound_list { 2, 3, 4, 8 }, doubleword, 8)
 {}
-
-bool data_def_type_JD::check_impl(
-    const data_definition_operand& op, const diagnostic_collector& add_diagnostic, bool) const
-{
-    if (op.length.present && op.length.value != 2 && op.length.value != 3 && op.length.value != 4
-        && op.length.value != 8)
-    {
-        add_diagnostic(diagnostic_op::error_D024(op.length.rng, type_str));
-        return false;
-    }
-    return true;
-}

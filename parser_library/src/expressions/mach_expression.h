@@ -55,7 +55,7 @@ public:
 
     virtual std::int32_t derive_length(std::int32_t mi_length, context::dependency_solver& solver) const = 0;
 
-    range get_range() const;
+    const range& get_range() const { return expr_range_; }
     virtual ~mach_expression() = default;
 
     static mach_expr_ptr assign_expr(mach_expr_ptr expr, range expr_range);

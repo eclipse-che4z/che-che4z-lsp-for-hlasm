@@ -298,9 +298,6 @@ struct data_def_operand : operand
 
     context::dependency_collector get_dependencies(context::dependency_solver& info) const;
 
-    checking::data_definition_operand get_operand_value(
-        context::dependency_solver& info, diagnostic_op_consumer& diags) const;
-
     void apply(operand_visitor& visitor) const final;
 
     void apply_mach_visitor(expressions::mach_expr_visitor&) const;

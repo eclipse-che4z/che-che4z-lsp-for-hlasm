@@ -421,28 +421,6 @@ std::vector<const context::resolvable*> resolvable_list(const args&... expr)
     return list;
 }
 
-checking::data_definition_operand data_def_operand::get_operand_value(
-    context::dependency_solver& info, diagnostic_op_consumer& diags) const
-{
-    checking::data_definition_operand op;
-
-    op.operand_range = operand_range;
-
-    op.dupl_factor = value->evaluate_dupl_factor(info, diags);
-    op.type.value = value->type;
-    op.type.rng = value->type_range;
-    op.extension.present = value->extension != '\0';
-    op.extension.value = value->extension;
-    op.extension.rng = value->extension_range;
-    op.length = value->evaluate_length(info, diags);
-    op.scale = value->evaluate_scale(info, diags);
-    op.exponent = value->evaluate_exponent(info, diags);
-
-    op.nominal_value = value->evaluate_nominal_value(info, diags);
-
-    return op;
-}
-
 void data_def_operand::apply(operand_visitor& visitor) const { visitor.visit(*this); }
 
 void data_def_operand::apply_mach_visitor(expressions::mach_expr_visitor& v) const

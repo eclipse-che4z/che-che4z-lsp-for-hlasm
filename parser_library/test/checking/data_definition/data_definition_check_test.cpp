@@ -563,7 +563,7 @@ A   DXD F
     analyzer a(input);
     a.analyze();
 
-    EXPECT_TRUE(matches_message_codes(a.diags(), { "D024" }));
+    EXPECT_TRUE(matches_message_codes(a.diags(), { "D021" }));
 }
 
 TEST(data_def_checker, J_length_ok)

@@ -157,22 +157,24 @@ matched_special_value try_matching_special_value(
     return matched_special_value::error;
 }
 
-bool data_def_type_E_D_L::check_impl(
-    const data_definition_operand& op, const diagnostic_collector& add_diagnostic, bool check_nominal) const
+bool data_def_type_E_D_L::check_impl(const data_definition_common&,
+    const nominal_value_t& nominal,
+    const diagnostic_collector& add_diagnostic,
+    bool check_nominal) const
 {
     if (!check_nominal)
         return true;
 
     size_t i = 0;
-    std::string_view nom = std::get<std::string>(op.nominal_value.value);
+    std::string_view nom = std::get<std::string>(nominal.value);
     if (nom.empty())
     {
-        add_diagnostic(diagnostic_op::error_D010(op.nominal_value.rng, type_str));
+        add_diagnostic(diagnostic_op::error_D010(nominal.rng, type_str));
         return false;
     }
     else if (nom.back() == ',')
     {
-        add_diagnostic(diagnostic_op::error_D010(op.nominal_value.rng, type_str));
+        add_diagnostic(diagnostic_op::error_D010(nominal.rng, type_str));
         return false;
     }
     while (i < nom.size())
@@ -184,13 +186,13 @@ bool data_def_type_E_D_L::check_impl(
             case matched_special_value::yes:
                 continue;
             case matched_special_value::error:
-                add_diagnostic(diagnostic_op::error_D010(op.nominal_value.rng, type_str));
+                add_diagnostic(diagnostic_op::error_D010(nominal.rng, type_str));
                 return false;
         }
         // the number may end with E, R or ',' and begin with + or -.
         if (!check_number<E_D_L_number_spec>(nom, i))
         {
-            add_diagnostic(diagnostic_op::error_D010(op.nominal_value.rng, type_str));
+            add_diagnostic(diagnostic_op::error_D010(nominal.rng, type_str));
             return false;
         }
 
@@ -202,7 +204,7 @@ bool data_def_type_E_D_L::check_impl(
         {
             if (!check_exponent(nom, i))
             {
-                add_diagnostic(diagnostic_op::error_D010(op.nominal_value.rng, type_str));
+                add_diagnostic(diagnostic_op::error_D010(nominal.rng, type_str));
                 return false;
             }
             if (i >= nom.size())
@@ -224,13 +226,13 @@ bool data_def_type_E_D_L::check_impl(
                 || std::ranges::find(allowed_round_modes, round_mode(extension, round_mode_s))
                     == std::ranges::end(allowed_round_modes))
             {
-                add_diagnostic(diagnostic_op::error_D026(op.nominal_value.rng));
+                add_diagnostic(diagnostic_op::error_D026(nominal.rng));
                 return false;
             }
         }
         if (i < nom.size() && nom[i] != ',')
         {
-            add_diagnostic(diagnostic_op::error_D010(op.nominal_value.rng, type_str));
+            add_diagnostic(diagnostic_op::error_D010(nominal.rng, type_str));
             return false;
         }
         ++i;

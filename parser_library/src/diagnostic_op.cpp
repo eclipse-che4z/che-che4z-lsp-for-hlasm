@@ -1656,10 +1656,10 @@ diagnostic_op diagnostic_op::error_D013(const range& range, std::string_view typ
     return diagnostic_op(diagnostic_severity::error, "D013", concat("Invalid type extension for type ", type), range);
 }
 
-diagnostic_op diagnostic_op::error_D014(const range& range, std::string_view type)
+diagnostic_op diagnostic_op::error_D014(const range& range, std::string_view modifier, std::string_view type)
 {
     return diagnostic_op(
-        diagnostic_severity::error, "D014", concat("The length modifier must be even with type ", type), range);
+        diagnostic_severity::error, "D014", concat("The ", modifier, " modifier must be even with type ", type), range);
 }
 
 diagnostic_op diagnostic_op::error_D015(const range& range, std::string_view type)
@@ -1702,10 +1702,13 @@ diagnostic_op diagnostic_op::error_D020(const range& range, std::string_view typ
         diagnostic_severity::error, "D020", concat("Address in form D(B) is not allowed with type ", type), range);
 }
 
-diagnostic_op diagnostic_op::error_D021(const range& range, std::string_view type)
+diagnostic_op diagnostic_op::error_D021(
+    const range& range, std::string_view modifier, std::string_view allowed, std::string_view type)
 {
-    return diagnostic_op(
-        diagnostic_severity::error, "D021", concat("Only lengths 3, 4 or 8 are allowed with type ", type), range);
+    return diagnostic_op(diagnostic_severity::error,
+        "D021",
+        concat("The ", modifier, " modifier only allows values ", allowed, " with type ", type),
+        range);
 }
 
 diagnostic_op diagnostic_op::error_D022(const range& range)
@@ -1716,14 +1719,6 @@ diagnostic_op diagnostic_op::error_D022(const range& range)
 diagnostic_op diagnostic_op::error_D023(const range& range)
 {
     return diagnostic_op(diagnostic_severity::error, "D023", "Base register must be between 0 and 15", range);
-}
-
-diagnostic_op diagnostic_op::error_D024(const range& range, std::string_view type)
-{
-    return diagnostic_op(diagnostic_severity::error,
-        "D024",
-        concat("With type ", type, " only lengths 2 to 4 and 8 are allowed"),
-        range);
 }
 
 diagnostic_op diagnostic_op::warn_D025(const range& range, std::string_view type, std::string_view modifier)
