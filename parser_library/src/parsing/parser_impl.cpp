@@ -562,7 +562,7 @@ struct parser2
 
     static bool is_type_extension(char type, char ch)
     {
-        return checking::data_def_type::types_and_extensions.contains(std::make_pair(type, ch));
+        return checking::data_def_type::access_data_def_type(type, ch) != nullptr;
     }
 
     static constexpr int digit_to_value(char8_t c) noexcept

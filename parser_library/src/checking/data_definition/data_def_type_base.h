@@ -83,7 +83,7 @@ struct as_needed
 using implicit_length_t = std::variant<uint64_t, as_needed>;
 
 // Type of nominal value that various types of data definition expect.
-enum class nominal_value_type
+enum class nominal_value_type : unsigned char
 {
     STRING,
     EXPRESSIONS,
@@ -92,6 +92,28 @@ enum class nominal_value_type
 
 // To check in context of this file means to report diagnostics using specified diagnostic_collector
 // and return false if there was an error found (if a warning was found, true is returned).
+
+enum class data_definition_type : char
+{
+    A = 'A',
+    B = 'B',
+    C = 'C',
+    D = 'D',
+    E = 'E',
+    F = 'F',
+    G = 'G',
+    H = 'H',
+    J = 'J',
+    L = 'L',
+    P = 'P',
+    Q = 'Q',
+    R = 'R',
+    S = 'S',
+    V = 'V',
+    X = 'X',
+    Y = 'Y',
+    Z = 'Z',
+};
 
 // Base type for all data definition types and type extensions. Checks the operand and gets its attributes and
 // alignment.
@@ -104,7 +126,7 @@ public:
         yes,
     };
     // constructor for types with  the same lengths in DC and DS instruction
-    data_def_type(char type,
+    data_def_type(data_definition_type type,
         char extension,
         modifier_spec bit_length_spec,
         modifier_spec length_spec,
@@ -118,7 +140,7 @@ public:
         bool ignores_scale = false);
 
     // constructor for types with different allowed lengths with DS instruction
-    data_def_type(char type,
+    data_def_type(data_definition_type type,
         char extension,
         modifier_spec bit_length_spec,
         modifier_spec length_spec,
@@ -142,16 +164,10 @@ public:
     // Returns type corresponding to specified type and extension.
     static const data_def_type* access_data_def_type(char type, char extension);
 
-    static const std::map<std::pair<char, char>, std::unique_ptr<const data_def_type>> types_and_extensions;
-
     virtual ~data_def_type() = 0;
 
     [[nodiscard]] constexpr context::integer_type get_int_type() const noexcept { return int_type_; }
     [[nodiscard]] constexpr bool ignores_scale() const noexcept { return ignores_scale_; }
-
-    char type;
-    char extension;
-    std::string type_str;
 
     // When implicit length is "as needed" - it depends on nominal value, returns the implicit length in bytes.
     // All types that have implicit length "as needed" must override this function.
@@ -168,9 +184,6 @@ public:
         const diagnostic_collector& add_diagnostic,
         bool check_nominal) const;
 
-    // Concatenates the two characters and returns resulting string.
-    static std::string init_type_str(char type, char extension);
-
     // Checks if nominal value has the right type and is safe to access. Expects that nominal type is present.
     bool check_nominal_type(
         const nominal_value_t& op, const diagnostic_collector& add_diagnostic, const range& r) const;
@@ -180,6 +193,12 @@ public:
     modifier_spec get_length_spec(data_instr_type instr_type) const;
 
     modifier_spec get_bit_length_spec(data_instr_type instr_type) const;
+
+    data_definition_type type() const noexcept { return (data_definition_type)type_ext[0]; }
+    char extension() const noexcept { return type_ext[1]; }
+    std::string_view type_str() const noexcept { return std::string_view(type_ext, 1 + !!type_ext[1]); }
+
+    char type_ext[2];
 
     nominal_value_type nominal_type;
 

@@ -101,7 +101,7 @@ public:
 class data_def_type_H_F_FD : public data_def_type
 {
 public:
-    data_def_type_H_F_FD(char type, char extension, uint8_t word_length);
+    data_def_type_H_F_FD(data_definition_type type, char extension, uint8_t word_length);
 
     bool check_impl(const data_definition_common& common,
         const nominal_value_t& nominal,
@@ -130,7 +130,7 @@ public:
 class data_def_type_P_Z : public data_def_type
 {
 public:
-    data_def_type_P_Z(char type, context::integer_type int_type);
+    data_def_type_P_Z(data_definition_type type, context::integer_type int_type);
 
     bool check_impl(const data_definition_common& common,
         const nominal_value_t& nominal,
@@ -164,7 +164,8 @@ protected:
 class data_def_type_A_AD_Y : public data_def_type
 {
 public:
-    data_def_type_A_AD_Y(char type, char extension, context::alignment implicit_alignment, uint64_t implicit_length);
+    data_def_type_A_AD_Y(
+        data_definition_type type, char extension, context::alignment implicit_alignment, uint64_t implicit_length);
 };
 
 class data_def_type_A final : public data_def_type_A_AD_Y
@@ -235,7 +236,7 @@ public:
 class data_def_type_single_symbol : public data_def_type
 {
 public:
-    data_def_type_single_symbol(char type,
+    data_def_type_single_symbol(data_definition_type type,
         char extension,
         modifier_spec length_bound,
         context::alignment implicit_alignment,
@@ -301,7 +302,7 @@ public:
 class data_def_type_E_D_L : public data_def_type
 {
 public:
-    data_def_type_E_D_L(char type,
+    data_def_type_E_D_L(data_definition_type type,
         char extension,
         modifier_spec big_length_spec,
         modifier_spec length_spec,

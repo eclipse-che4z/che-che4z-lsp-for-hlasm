@@ -26,7 +26,7 @@ using namespace hlasm_plugin::parser_library;
 
 //***************************   types H, F, FD   *****************************//
 
-data_def_type_H_F_FD::data_def_type_H_F_FD(char type, char extension, uint8_t word_length)
+data_def_type_H_F_FD::data_def_type_H_F_FD(data_definition_type type, char extension, uint8_t word_length)
     : data_def_type(type,
           extension,
           modifier_bound { 1, 64 },
@@ -59,7 +59,7 @@ bool data_def_type_H_F_FD::check_impl(const data_definition_common&,
     std::string_view nom = std::get<std::string>(nominal.value);
     if (nom.empty())
     {
-        add_diagnostic(diagnostic_op::error_D010(nominal.rng, type_str));
+        add_diagnostic(diagnostic_op::error_D010(nominal.rng, type_str()));
         return false;
     }
     while (i < nom.size())
@@ -67,7 +67,7 @@ bool data_def_type_H_F_FD::check_impl(const data_definition_common&,
         // checks number, may begin with +,- or U, ends with exponent or comma
         if (!check_number<H_F_FD_number_spec>(nom, i))
         {
-            add_diagnostic(diagnostic_op::error_D010(nominal.rng, type_str));
+            add_diagnostic(diagnostic_op::error_D010(nominal.rng, type_str()));
             return false;
         }
         if (i >= nom.size())
@@ -77,7 +77,7 @@ bool data_def_type_H_F_FD::check_impl(const data_definition_common&,
         {
             if (!check_exponent(nom, i))
             {
-                add_diagnostic(diagnostic_op::error_D010(nominal.rng, type_str));
+                add_diagnostic(diagnostic_op::error_D010(nominal.rng, type_str()));
                 return false;
             }
             if (i >= nom.size())
@@ -85,14 +85,14 @@ bool data_def_type_H_F_FD::check_impl(const data_definition_common&,
         }
         if (nom[i] != ',')
         {
-            add_diagnostic(diagnostic_op::error_D010(nominal.rng, type_str));
+            add_diagnostic(diagnostic_op::error_D010(nominal.rng, type_str()));
             return false;
         }
         ++i;
     }
     if (nom.back() == ',')
     {
-        add_diagnostic(diagnostic_op::error_D010(nominal.rng, type_str));
+        add_diagnostic(diagnostic_op::error_D010(nominal.rng, type_str()));
         return false;
     }
 
@@ -101,15 +101,15 @@ bool data_def_type_H_F_FD::check_impl(const data_definition_common&,
 }
 
 data_def_type_H::data_def_type_H()
-    : data_def_type_H_F_FD('H', '\0', 2)
+    : data_def_type_H_F_FD(data_definition_type::H, '\0', 2)
 {}
 
 data_def_type_F::data_def_type_F()
-    : data_def_type_H_F_FD('F', '\0', 4)
+    : data_def_type_H_F_FD(data_definition_type::F, '\0', 4)
 {}
 
 data_def_type_FD::data_def_type_FD()
-    : data_def_type_H_F_FD('F', 'D', 8)
+    : data_def_type_H_F_FD(data_definition_type::F, 'D', 8)
 {}
 
 //***************************   types P, Z   *****************************//
@@ -122,7 +122,7 @@ public:
     static bool is_sign_char(char c) { return c == '+' || c == '-'; }
 };
 
-data_def_type_P_Z::data_def_type_P_Z(char type, integer_type int_type)
+data_def_type_P_Z::data_def_type_P_Z(data_definition_type type, context::integer_type int_type)
     : data_def_type(type,
           '\0',
           modifier_bound { 1, 128 },
@@ -148,21 +148,21 @@ bool data_def_type_P_Z::check_impl(const data_definition_common&,
     std::string_view nom = std::get<std::string>(nominal.value);
     if (nom.empty())
     {
-        add_diagnostic(diagnostic_op::error_D010(nominal.rng, type_str));
+        add_diagnostic(diagnostic_op::error_D010(nominal.rng, type_str()));
         return false;
     }
     while (i < nom.size())
     {
         if (!check_number<P_Z_number_spec>(nom, i))
         {
-            add_diagnostic(diagnostic_op::error_D010(nominal.rng, type_str));
+            add_diagnostic(diagnostic_op::error_D010(nominal.rng, type_str()));
             return false;
         }
         ++i;
     }
     if (nom.back() == ',')
     {
-        add_diagnostic(diagnostic_op::error_D010(nominal.rng, type_str));
+        add_diagnostic(diagnostic_op::error_D010(nominal.rng, type_str()));
         return false;
     }
 
@@ -191,7 +191,7 @@ int16_t data_def_type_P_Z::get_implicit_scale(const reduced_nominal_value_t& op)
 }
 
 data_def_type_P::data_def_type_P()
-    : data_def_type_P_Z('P', integer_type::packed)
+    : data_def_type_P_Z(data_definition_type::P, context::integer_type::packed)
 {}
 
 uint64_t data_def_type_P::get_nominal_length(const reduced_nominal_value_t& op) const
@@ -239,7 +239,7 @@ uint32_t hlasm_plugin::parser_library::checking::data_def_type_P::get_nominal_le
 }
 
 data_def_type_Z::data_def_type_Z()
-    : data_def_type_P_Z('Z', integer_type::zoned)
+    : data_def_type_P_Z(data_definition_type::Z, context::integer_type::zoned)
 {}
 
 uint64_t data_def_type_Z::get_nominal_length(const reduced_nominal_value_t& op) const

@@ -25,7 +25,7 @@
 
 namespace hlasm_plugin::parser_library::checking {
 
-data_def_type_E_D_L::data_def_type_E_D_L(char type,
+data_def_type_E_D_L::data_def_type_E_D_L(data_definition_type type,
     char extension,
     modifier_spec bit_length_spec,
     modifier_spec length_spec,
@@ -169,30 +169,30 @@ bool data_def_type_E_D_L::check_impl(const data_definition_common&,
     std::string_view nom = std::get<std::string>(nominal.value);
     if (nom.empty())
     {
-        add_diagnostic(diagnostic_op::error_D010(nominal.rng, type_str));
+        add_diagnostic(diagnostic_op::error_D010(nominal.rng, type_str()));
         return false;
     }
     else if (nom.back() == ',')
     {
-        add_diagnostic(diagnostic_op::error_D010(nominal.rng, type_str));
+        add_diagnostic(diagnostic_op::error_D010(nominal.rng, type_str()));
         return false;
     }
     while (i < nom.size())
     {
-        switch (try_matching_special_value(nom, i, floating_point_special_values(extension)))
+        switch (try_matching_special_value(nom, i, floating_point_special_values(extension())))
         {
             case matched_special_value::no:
                 break;
             case matched_special_value::yes:
                 continue;
             case matched_special_value::error:
-                add_diagnostic(diagnostic_op::error_D010(nominal.rng, type_str));
+                add_diagnostic(diagnostic_op::error_D010(nominal.rng, type_str()));
                 return false;
         }
         // the number may end with E, R or ',' and begin with + or -.
         if (!check_number<E_D_L_number_spec>(nom, i))
         {
-            add_diagnostic(diagnostic_op::error_D010(nominal.rng, type_str));
+            add_diagnostic(diagnostic_op::error_D010(nominal.rng, type_str()));
             return false;
         }
 
@@ -204,7 +204,7 @@ bool data_def_type_E_D_L::check_impl(const data_definition_common&,
         {
             if (!check_exponent(nom, i))
             {
-                add_diagnostic(diagnostic_op::error_D010(nominal.rng, type_str));
+                add_diagnostic(diagnostic_op::error_D010(nominal.rng, type_str()));
                 return false;
             }
             if (i >= nom.size())
@@ -223,7 +223,7 @@ bool data_def_type_E_D_L::check_impl(const data_definition_common&,
             }
 
             if (round_mode_s.size() > round_mode::max_length
-                || std::ranges::find(allowed_round_modes, round_mode(extension, round_mode_s))
+                || std::ranges::find(allowed_round_modes, round_mode(extension(), round_mode_s))
                     == std::ranges::end(allowed_round_modes))
             {
                 add_diagnostic(diagnostic_op::error_D026(nominal.rng));
@@ -232,7 +232,7 @@ bool data_def_type_E_D_L::check_impl(const data_definition_common&,
         }
         if (i < nom.size() && nom[i] != ',')
         {
-            add_diagnostic(diagnostic_op::error_D010(nominal.rng, type_str));
+            add_diagnostic(diagnostic_op::error_D010(nominal.rng, type_str()));
             return false;
         }
         ++i;
@@ -242,25 +242,47 @@ bool data_def_type_E_D_L::check_impl(const data_definition_common&,
 }
 
 data_def_type_E::data_def_type_E()
-    : data_def_type_E_D_L(
-          'E', '\0', modifier_bound { 1, 64 }, modifier_bound { 1, 8 }, modifier_bound { 0, 5 }, context::fullword, 4)
+    : data_def_type_E_D_L(data_definition_type::E,
+          '\0',
+          modifier_bound { 1, 64 },
+          modifier_bound { 1, 8 },
+          modifier_bound { 0, 5 },
+          context::fullword,
+          4)
 {}
 
 data_def_type_EH::data_def_type_EH()
-    : data_def_type_E_D_L(
-          'E', 'H', modifier_bound { 12, 64 }, modifier_bound { 1, 8 }, modifier_bound { 0, 5 }, context::fullword, 4)
+    : data_def_type_E_D_L(data_definition_type::E,
+          'H',
+          modifier_bound { 12, 64 },
+          modifier_bound { 1, 8 },
+          modifier_bound { 0, 5 },
+          context::fullword,
+          4)
 {}
 
 data_def_type_ED::data_def_type_ED()
-    : data_def_type_E_D_L('E', 'D', modifier_bound { 32, 32 }, modifier_bound { 4, 4 }, ignored(), context::fullword, 4)
+    : data_def_type_E_D_L(data_definition_type::E,
+          'D',
+          modifier_bound { 32, 32 },
+          modifier_bound { 4, 4 },
+          ignored(),
+          context::fullword,
+          4)
 {}
 
 data_def_type_EB::data_def_type_EB()
-    : data_def_type_E_D_L('E', 'B', modifier_bound { 32, 32 }, modifier_bound { 4, 4 }, ignored(), context::fullword, 4)
+    : data_def_type_E_D_L(data_definition_type::E,
+          'B',
+          modifier_bound { 32, 32 },
+          modifier_bound { 4, 4 },
+          ignored(),
+          context::fullword,
+          4)
 {}
 
 data_def_type_D::data_def_type_D()
-    : data_def_type_E_D_L('D',
+    : data_def_type_E_D_L(data_definition_type::D,
           '\0',
           modifier_bound { 1, 64 },
           modifier_bound { 1, 8 },
@@ -270,7 +292,7 @@ data_def_type_D::data_def_type_D()
 {}
 
 data_def_type_DH::data_def_type_DH()
-    : data_def_type_E_D_L('D',
+    : data_def_type_E_D_L(data_definition_type::D,
           'H',
           modifier_bound { 12, 64 },
           modifier_bound { 1, 8 },
@@ -280,17 +302,27 @@ data_def_type_DH::data_def_type_DH()
 {}
 
 data_def_type_DB::data_def_type_DB()
-    : data_def_type_E_D_L(
-          'D', 'B', modifier_bound { 64, 64 }, modifier_bound { 8, 8 }, ignored(), context::doubleword, 8)
+    : data_def_type_E_D_L(data_definition_type::D,
+          'B',
+          modifier_bound { 64, 64 },
+          modifier_bound { 8, 8 },
+          ignored(),
+          context::doubleword,
+          8)
 {}
 
 data_def_type_DD::data_def_type_DD()
-    : data_def_type_E_D_L(
-          'D', 'D', modifier_bound { 64, 64 }, modifier_bound { 8, 8 }, ignored(), context::doubleword, 8)
+    : data_def_type_E_D_L(data_definition_type::D,
+          'D',
+          modifier_bound { 64, 64 },
+          modifier_bound { 8, 8 },
+          ignored(),
+          context::doubleword,
+          8)
 {}
 
 data_def_type_L::data_def_type_L()
-    : data_def_type_E_D_L('L',
+    : data_def_type_E_D_L(data_definition_type::L,
           '\0',
           modifier_bound { 1, 128 },
           modifier_bound { 1, 16 },
@@ -300,7 +332,7 @@ data_def_type_L::data_def_type_L()
 {}
 
 data_def_type_LH::data_def_type_LH()
-    : data_def_type_E_D_L('L',
+    : data_def_type_E_D_L(data_definition_type::L,
           'H',
           modifier_bound { 12, 128 },
           modifier_bound { 1, 16 },
@@ -310,7 +342,7 @@ data_def_type_LH::data_def_type_LH()
 {}
 
 data_def_type_LQ::data_def_type_LQ()
-    : data_def_type_E_D_L('L',
+    : data_def_type_E_D_L(data_definition_type::L,
           'Q',
           modifier_bound { 12, 128 },
           modifier_bound { 1, 16 },
@@ -320,12 +352,22 @@ data_def_type_LQ::data_def_type_LQ()
 {}
 
 data_def_type_LD::data_def_type_LD()
-    : data_def_type_E_D_L(
-          'L', 'D', modifier_bound { 128, 128 }, modifier_bound { 16, 16 }, ignored(), context::doubleword, 16)
+    : data_def_type_E_D_L(data_definition_type::L,
+          'D',
+          modifier_bound { 128, 128 },
+          modifier_bound { 16, 16 },
+          ignored(),
+          context::doubleword,
+          16)
 {}
 
 data_def_type_LB::data_def_type_LB()
-    : data_def_type_E_D_L(
-          'L', 'B', modifier_bound { 128, 128 }, modifier_bound { 16, 16 }, ignored(), context::doubleword, 16)
+    : data_def_type_E_D_L(data_definition_type::L,
+          'B',
+          modifier_bound { 128, 128 },
+          modifier_bound { 16, 16 },
+          ignored(),
+          context::doubleword,
+          16)
 {}
 } // namespace hlasm_plugin::parser_library::checking

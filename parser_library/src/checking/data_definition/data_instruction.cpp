@@ -31,18 +31,15 @@ namespace {
 std::pair<const data_def_type*, bool> check_type_and_extension(
     const expressions::data_definition& dd, const diagnostic_collector& add_diagnostic)
 {
-    auto found = data_def_type::types_and_extensions.find({ dd.type, dd.extension });
-
-    if (found != data_def_type::types_and_extensions.end())
-        return { found->second.get(), true };
+    if (const auto found = data_def_type::access_data_def_type(dd.type, dd.extension))
+        return { found, true };
 
     if (dd.extension)
     {
-        found = data_def_type::types_and_extensions.find({ dd.type, '\0' });
-        if (found != data_def_type::types_and_extensions.end())
+        if (const auto found = data_def_type::access_data_def_type(dd.type, '\0'))
         {
             add_diagnostic(diagnostic_op::error_D013(dd.extension_range, std::string_view(&dd.type, 1)));
-            return { found->second.get(), false };
+            return { found, false };
         }
     }
 
@@ -118,7 +115,7 @@ struct check_modifier
 {
     int32_t value;
     const range& expr;
-    std::string_view type_str;
+    const data_def_type& dd;
     std::string_view modifier_name;
     const diagnostic_collector& add_diagnostic;
 
@@ -127,22 +124,22 @@ struct check_modifier
     {
         const bool tolerate = value == 0;
         if (tolerate)
-            add_diagnostic(diagnostic_op::warn_D025(expr, type_str, modifier_name));
+            add_diagnostic(diagnostic_op::warn_D025(expr, dd.type_str(), modifier_name));
         else
-            add_diagnostic(diagnostic_op::error_D009(expr, type_str, modifier_name));
+            add_diagnostic(diagnostic_op::error_D009(expr, dd.type_str(), modifier_name));
         return tolerate;
     }
     bool operator()(const n_a&) const
     {
         // modifier not allowed with this type
-        add_diagnostic(diagnostic_op::error_D009(expr, type_str, modifier_name));
+        add_diagnostic(diagnostic_op::error_D009(expr, dd.type_str(), modifier_name));
         return false;
     }
     bool operator()(const bound_list& list) const
     {
         if (!list.allowed(value))
         {
-            add_diagnostic(diagnostic_op::error_D021(expr, modifier_name, list.to_diag_list(), type_str));
+            add_diagnostic(diagnostic_op::error_D021(expr, modifier_name, list.to_diag_list(), dd.type_str()));
             return false;
         }
         return true;
@@ -153,12 +150,12 @@ struct check_modifier
         if (value < min || value > max)
         {
             // modifier out of bounds
-            add_diagnostic(diagnostic_op::error_D008(expr, type_str, modifier_name, min, max));
+            add_diagnostic(diagnostic_op::error_D008(expr, dd.type_str(), modifier_name, min, max));
             return false;
         }
         else if (even && value % 2 == 1)
         {
-            add_diagnostic(diagnostic_op::error_D014(expr, modifier_name, type_str));
+            add_diagnostic(diagnostic_op::error_D014(expr, modifier_name, dd.type_str()));
             return false;
         }
         return true;
@@ -213,23 +210,22 @@ bool check_base(const data_def_type& type,
         if (std::holds_alternative<n_a>(type.bit_length_spec_) && bits)
         {
             // bit length not allowed with this type
-            add_diagnostic(diagnostic_op::error_D007(*op.rng_length, type.type_str));
+            add_diagnostic(diagnostic_op::error_D007(*op.rng_length, type.type_str()));
             ret = false;
         }
         else if (bits)
-            ret &= std::visit(check_modifier { op.length, *op.rng_length, type.type_str, "bit length", add_diagnostic },
+            ret &= std::visit(check_modifier { op.length, *op.rng_length, type, "bit length", add_diagnostic },
                 type.get_bit_length_spec(instr_type));
         else
-            ret &= std::visit(check_modifier { op.length, *op.rng_length, type.type_str, "length", add_diagnostic },
+            ret &= std::visit(check_modifier { op.length, *op.rng_length, type, "length", add_diagnostic },
                 type.get_length_spec(instr_type));
     }
 
     if (op.has_scale())
-        ret &= std::visit(
-            check_modifier { op.scale, *op.rng_scale, type.type_str, "scale", add_diagnostic }, type.scale_spec_);
+        ret &= std::visit(check_modifier { op.scale, *op.rng_scale, type, "scale", add_diagnostic }, type.scale_spec_);
     if (op.has_exponent())
-        ret &= std::visit(check_modifier { op.exponent, *op.rng_exponent, type.type_str, "exponent", add_diagnostic },
-            type.exponent_spec_);
+        ret &= std::visit(
+            check_modifier { op.exponent, *op.rng_exponent, type, "exponent", add_diagnostic }, type.exponent_spec_);
 
     return ret;
 }

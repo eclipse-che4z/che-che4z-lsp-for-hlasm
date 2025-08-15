@@ -82,7 +82,7 @@ bool check_comma_separated(std::string_view nom, F is_valid_digit)
 
 //******************************   type B   ********************************//
 data_def_type_B::data_def_type_B()
-    : data_def_type('B',
+    : data_def_type(data_definition_type::B,
           '\0',
           modifier_bound { 1, 2048 },
           modifier_bound { 1, 256 },
@@ -104,7 +104,7 @@ bool data_def_type_B::check_impl(const data_definition_common&,
 
     if (!check_comma_separated(std::get<std::string>(nominal.value), [](char c) { return c == '0' || c == '1'; }))
     {
-        add_diagnostic(diagnostic_op::error_D010(nominal.rng, type_str));
+        add_diagnostic(diagnostic_op::error_D010(nominal.rng, type_str()));
         return false;
     }
 
@@ -133,7 +133,7 @@ uint32_t data_def_type_B::get_nominal_length_attribute(const reduced_nominal_val
 
 //******************************   type C   ********************************//
 data_def_type_CA_CE::data_def_type_CA_CE(char extension)
-    : data_def_type('C',
+    : data_def_type(data_definition_type::C,
           extension,
           modifier_bound { 1, 2048 },
           modifier_bound { 1, 256 },
@@ -179,7 +179,7 @@ data_def_type_CE::data_def_type_CE()
 {}
 
 data_def_type_CU::data_def_type_CU()
-    : data_def_type('C',
+    : data_def_type(data_definition_type::C,
           'U',
           n_a(),
           modifier_bound { 1, 256, true },
@@ -214,7 +214,7 @@ uint32_t data_def_type_CU::get_nominal_length_attribute(const reduced_nominal_va
 //******************************   type G   ********************************//
 
 data_def_type_G::data_def_type_G()
-    : data_def_type('G',
+    : data_def_type(data_definition_type::G,
           '\0',
           n_a(),
           modifier_bound { 1, 256, true },
@@ -259,7 +259,7 @@ uint32_t data_def_type_G::get_nominal_length_attribute(const reduced_nominal_val
 
 
 data_def_type_X::data_def_type_X()
-    : data_def_type('X',
+    : data_def_type(data_definition_type::X,
           '\0',
           modifier_bound { 1, 2048 },
           modifier_bound { 1, 256 },
@@ -282,7 +282,7 @@ bool data_def_type_X::check_impl(const data_definition_common&,
 
     if (!check_comma_separated(std::get<std::string>(nominal.value), &is_hexadecimal_digit))
     {
-        add_diagnostic(diagnostic_op::error_D010(nominal.rng, type_str));
+        add_diagnostic(diagnostic_op::error_D010(nominal.rng, type_str()));
         return false;
     }
     return true;

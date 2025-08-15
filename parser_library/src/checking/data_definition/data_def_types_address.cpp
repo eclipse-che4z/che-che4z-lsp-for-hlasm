@@ -26,7 +26,8 @@ using namespace hlasm_plugin::parser_library;
 
 //***************************   types A, Y   *****************************//
 
-data_def_type_A_AD_Y::data_def_type_A_AD_Y(char type, char extension, alignment align, uint64_t implicit_length)
+data_def_type_A_AD_Y::data_def_type_A_AD_Y(
+    data_definition_type type, char extension, context::alignment align, uint64_t implicit_length)
     : data_def_type(type,
           extension,
           no_check(),
@@ -40,7 +41,7 @@ data_def_type_A_AD_Y::data_def_type_A_AD_Y(char type, char extension, alignment 
 {}
 
 data_def_type_A::data_def_type_A()
-    : data_def_type_A_AD_Y('A', '\0', fullword, 4)
+    : data_def_type_A_AD_Y(data_definition_type::A, '\0', context::fullword, 4)
 {}
 
 bool check_A_AD_Y_length(std::string_view type,
@@ -110,7 +111,7 @@ bool data_def_type_A::check_impl(const data_definition_common& common,
 }
 
 data_def_type_AD::data_def_type_AD()
-    : data_def_type_A_AD_Y('A', 'D', doubleword, 8)
+    : data_def_type_A_AD_Y(data_definition_type::A, 'D', context::doubleword, 8)
 {}
 
 bool data_def_type_AD::check_impl(const data_definition_common& common,
@@ -124,7 +125,7 @@ bool data_def_type_AD::check_impl(const data_definition_common& common,
 }
 
 data_def_type_Y::data_def_type_Y()
-    : data_def_type_A_AD_Y('Y', '\0', halfword, 2)
+    : data_def_type_A_AD_Y(data_definition_type::Y, '\0', context::halfword, 2)
 {}
 
 bool data_def_type_Y::check_impl(const data_definition_common& common,
@@ -140,7 +141,7 @@ bool data_def_type_Y::check_impl(const data_definition_common& common,
 //***************************   types S, SY   *****************************//
 
 data_def_type_S_SY::data_def_type_S_SY(char extension, int size)
-    : data_def_type('S',
+    : data_def_type(data_definition_type::S,
           extension,
           n_a(),
           modifier_bound { size, size },
@@ -243,8 +244,11 @@ bool data_def_type_SY::check_impl(const data_definition_common&,
 
 //***************************   types R, RD   *****************************//
 
-data_def_type_single_symbol::data_def_type_single_symbol(
-    char type, char extension, modifier_spec length_bound, alignment align, uint64_t implicit_length)
+data_def_type_single_symbol::data_def_type_single_symbol(data_definition_type type,
+    char extension,
+    modifier_spec length_bound,
+    context::alignment align,
+    uint64_t implicit_length)
     : data_def_type(type,
           extension,
           n_a(),
@@ -259,44 +263,44 @@ data_def_type_single_symbol::data_def_type_single_symbol(
 {}
 
 data_def_type_R::data_def_type_R()
-    : data_def_type_single_symbol('R', '\0', modifier_bound { 3, 4 }, fullword, 4)
+    : data_def_type_single_symbol(data_definition_type::R, '\0', modifier_bound { 3, 4 }, context::fullword, 4)
 {}
 
 data_def_type_RD::data_def_type_RD()
-    : data_def_type_single_symbol('R', 'D', bound_list { 3, 4, 8 }, doubleword, 8)
+    : data_def_type_single_symbol(data_definition_type::R, 'D', bound_list { 3, 4, 8 }, context::doubleword, 8)
 {}
 
 //***************************   types V, VD   *****************************//
 
 data_def_type_V::data_def_type_V()
-    : data_def_type_single_symbol('V', '\0', modifier_bound { 3, 4 }, fullword, 4)
+    : data_def_type_single_symbol(data_definition_type::V, '\0', modifier_bound { 3, 4 }, context::fullword, 4)
 {}
 
 data_def_type_VD::data_def_type_VD()
-    : data_def_type_single_symbol('V', 'D', bound_list { 3, 4, 8 }, doubleword, 8)
+    : data_def_type_single_symbol(data_definition_type::V, 'D', bound_list { 3, 4, 8 }, context::doubleword, 8)
 {}
 
 //***************************   types Q, QD, QY   *****************************//
 
 data_def_type_Q::data_def_type_Q()
-    : data_def_type_single_symbol('Q', '\0', modifier_bound { 1, 4 }, fullword, 4)
+    : data_def_type_single_symbol(data_definition_type::Q, '\0', modifier_bound { 1, 4 }, context::fullword, 4)
 {}
 
 data_def_type_QD::data_def_type_QD()
-    : data_def_type_single_symbol('Q', 'D', modifier_bound { 1, 8 }, quadword, 8)
+    : data_def_type_single_symbol(data_definition_type::Q, 'D', modifier_bound { 1, 8 }, context::quadword, 8)
 {}
 
 data_def_type_QY::data_def_type_QY()
-    : data_def_type_single_symbol('Q', 'Y', modifier_bound { 3, 3 }, halfword, 3)
+    : data_def_type_single_symbol(data_definition_type::Q, 'Y', modifier_bound { 3, 3 }, context::halfword, 3)
 {}
 
 
 //***************************   types J, JD   *****************************//
 
 data_def_type_J::data_def_type_J()
-    : data_def_type_single_symbol('J', '\0', bound_list { 2, 3, 4 }, fullword, 4)
+    : data_def_type_single_symbol(data_definition_type::J, '\0', bound_list { 2, 3, 4 }, context::fullword, 4)
 {}
 
 data_def_type_JD::data_def_type_JD()
-    : data_def_type_single_symbol('J', 'D', bound_list { 2, 3, 4, 8 }, doubleword, 8)
+    : data_def_type_single_symbol(data_definition_type::J, 'D', bound_list { 2, 3, 4, 8 }, context::doubleword, 8)
 {}

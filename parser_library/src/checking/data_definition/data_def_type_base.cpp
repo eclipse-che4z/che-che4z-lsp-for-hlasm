@@ -25,17 +25,8 @@
 
 namespace hlasm_plugin::parser_library::checking {
 
-std::string data_def_type::init_type_str(char type, char extension)
-{
-    std::string type_str;
-    type_str.push_back(type);
-    if (extension)
-        type_str.push_back(extension);
-    return type_str;
-}
-
 // constructor for types that have same checking for DS and DC
-data_def_type::data_def_type(char type,
+data_def_type::data_def_type(data_definition_type type,
     char extension,
     modifier_spec bit_length_spec,
     modifier_spec length_spec,
@@ -47,8 +38,7 @@ data_def_type::data_def_type(char type,
     context::integer_type int_type,
     expects_single_symbol_t single_symbol,
     bool ignores_scale)
-    : type(type)
-    , extension(extension)
+    : type_ext { (char)type, extension }
     , nominal_type(nominal_type)
     , bit_length_spec_(bit_length_spec)
     , length_spec_(length_spec)
@@ -62,13 +52,12 @@ data_def_type::data_def_type(char type,
     , ignores_scale_(ignores_scale)
     , single_symbol(single_symbol)
 {
-    type_str = init_type_str(type, extension);
     assert(!std::holds_alternative<ignored>(bit_length_spec));
     assert(!std::holds_alternative<ignored>(length_spec));
 }
 
 // constructor for types that have different lengths with DS than DC
-data_def_type::data_def_type(char type,
+data_def_type::data_def_type(data_definition_type type,
     char extension,
     modifier_spec bit_length_spec,
     modifier_spec length_spec,
@@ -79,8 +68,7 @@ data_def_type::data_def_type(char type,
     context::alignment implicit_alignment,
     implicit_length_t implicit_length,
     context::integer_type int_type)
-    : type(type)
-    , extension(extension)
+    : type_ext { (char)type, extension }
     , nominal_type(nominal_type)
     , bit_length_spec_(bit_length_spec)
     , length_spec_(length_spec)
@@ -92,7 +80,6 @@ data_def_type::data_def_type(char type,
     , implicit_length_(implicit_length)
     , int_type_(int_type)
 {
-    type_str = init_type_str(type, extension);
     assert(!std::holds_alternative<ignored>(bit_length_spec));
     assert(!std::holds_alternative<ignored>(length_spec));
 }
@@ -171,14 +158,14 @@ bool data_def_type::check_nominal_type(
         case nominal_value_type::STRING:
             if (!std::holds_alternative<std::string>(nominal.value))
             {
-                add_diagnostic(diagnostic_op::error_D018(r, type_str));
+                add_diagnostic(diagnostic_op::error_D018(r, type_str()));
                 return false;
             }
             break;
         case nominal_value_type::EXPRESSIONS:
             if (!std::holds_alternative<nominal_value_expressions>(nominal.value))
             {
-                add_diagnostic(diagnostic_op::error_D017(r, type_str));
+                add_diagnostic(diagnostic_op::error_D017(r, type_str()));
                 return false;
             }
             for (auto& p : std::get<nominal_value_expressions>(nominal.value))
@@ -186,7 +173,7 @@ bool data_def_type::check_nominal_type(
                 {
                     const auto& adr = std::get<data_def_address>(p);
                     add_diagnostic(
-                        diagnostic_op::error_D020({ adr.displacement.rng.start, adr.base.rng.end }, type_str));
+                        diagnostic_op::error_D020({ adr.displacement.rng.start, adr.base.rng.end }, type_str()));
                     ret = false;
                 }
             if (!ret)
@@ -195,7 +182,7 @@ bool data_def_type::check_nominal_type(
         case nominal_value_type::ADDRESS_OR_EXPRESSION:
             if (!std::holds_alternative<nominal_value_expressions>(nominal.value))
             {
-                add_diagnostic(diagnostic_op::error_D017(r, type_str));
+                add_diagnostic(diagnostic_op::error_D017(r, type_str()));
                 return false;
             }
             for (const auto& p : std::get<nominal_value_expressions>(nominal.value))
@@ -225,8 +212,8 @@ bool data_def_type::check_impl(
 
 size_t data_def_type::get_number_of_values_in_nominal(const reduced_nominal_value_t& nom) const
 {
-    if (type == 'C' || type == 'G') // C and G do not support multiple nominal values
-        return 1;
+    if (type() == data_definition_type::C || type() == data_definition_type::G)
+        return 1; // C and G do not support multiple nominal values
     else if (std::holds_alternative<std::string_view>(nom))
         return std::ranges::count(std::get<std::string_view>(nom), ',') + 1;
     else if (std::holds_alternative<size_t>(nom))
@@ -292,7 +279,7 @@ int16_t data_def_type::get_scale_attribute(const scale_modifier_t& scale, const 
         return get_implicit_scale(nominal);
 }
 
-const std::map<std::pair<char, char>, std::unique_ptr<const data_def_type>> data_def_type::types_and_extensions = []() {
+const std::map<std::pair<char, char>, std::unique_ptr<const data_def_type>> types_and_extensions = []() {
     std::map<std::pair<char, char>, std::unique_ptr<const data_def_type>> ret;
     ret.emplace(std::make_pair('B', '\0'), std::make_unique<data_def_type_B>());
     ret.emplace(std::make_pair('C', '\0'), std::make_unique<data_def_type_C>());
