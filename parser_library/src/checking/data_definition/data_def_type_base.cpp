@@ -127,28 +127,6 @@ modifier_spec data_def_type::get_bit_length_spec(data_instr_type instr_type) con
         return ds_bit_length_spec_;
 }
 
-namespace {
-struct
-{
-    std::optional<range> operator()(const data_def_expr& e) const
-    {
-        if (e.ignored)
-            return std::nullopt;
-        if (e.ex_kind != expr_type::ABS)
-            return e.rng;
-        return std::nullopt;
-    }
-    std::optional<range> operator()(const data_def_address& a) const
-    {
-        if (a.ignored)
-            return std::nullopt;
-        if (!a.displacement.present || !a.base.present)
-            return a.total;
-        return std::nullopt;
-    }
-} const abs_or_addr;
-} // namespace
-
 bool data_def_type::check_nominal_type(
     const nominal_value_t& nominal, const diagnostic_collector& add_diagnostic, const range& r) const
 {
@@ -169,15 +147,13 @@ bool data_def_type::check_nominal_type(
                 return false;
             }
             for (auto& p : std::get<nominal_value_expressions>(nominal.value))
-                if (std::holds_alternative<data_def_address>(p))
+            {
+                if (p.base.present)
                 {
-                    const auto& adr = std::get<data_def_address>(p);
-                    add_diagnostic(
-                        diagnostic_op::error_D020({ adr.displacement.rng.start, adr.base.rng.end }, type_str()));
+                    add_diagnostic(diagnostic_op::error_D020(p.total, type_str()));
                     ret = false;
                 }
-            if (!ret)
-                return false;
+            }
             break;
         case nominal_value_type::ADDRESS_OR_EXPRESSION:
             if (!std::holds_alternative<nominal_value_expressions>(nominal.value))
@@ -185,23 +161,23 @@ bool data_def_type::check_nominal_type(
                 add_diagnostic(diagnostic_op::error_D017(r, type_str()));
                 return false;
             }
-            for (const auto& p : std::get<nominal_value_expressions>(nominal.value))
+            for (auto& p : std::get<nominal_value_expressions>(nominal.value))
             {
-                if (auto range_o = std::visit(abs_or_addr, p); range_o)
+                if (p.ignored)
+                    continue;
+                if ((p.base.present && !p.displacement.present)
+                    || (!p.base.present && p.displacement_kind != expr_type::ABS))
                 {
-                    add_diagnostic(diagnostic_op::error_D033(*range_o));
+                    add_diagnostic(diagnostic_op::error_D033(p.total));
                     ret = false;
                 }
             }
-            if (!ret)
-                return false;
-
             break;
         default:
             assert(false);
             return true;
     }
-    return true;
+    return ret;
 }
 
 bool data_def_type::check_impl(

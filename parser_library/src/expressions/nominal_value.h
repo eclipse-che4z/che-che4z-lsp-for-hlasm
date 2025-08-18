@@ -62,6 +62,7 @@ struct nominal_value_string final : public nominal_value_t
 struct address_nominal final : public context::dependable
 {
     context::dependency_collector get_dependencies(context::dependency_solver& solver) const override;
+    address_nominal() = default;
     address_nominal(mach_expr_ptr displacement, mach_expr_ptr base, range r);
     mach_expr_ptr displacement;
     mach_expr_ptr base;
@@ -72,15 +73,12 @@ struct address_nominal final : public context::dependable
     size_t hash() const;
 };
 
-using expr_or_address = std::variant<mach_expr_ptr, address_nominal>;
-using expr_or_address_list = std::vector<expr_or_address>;
-
 struct nominal_value_exprs final : public nominal_value_t
 {
     context::dependency_collector get_dependencies(context::dependency_solver& solver) const override;
 
-    nominal_value_exprs(expr_or_address_list exprs, range rng);
-    expr_or_address_list exprs;
+    nominal_value_exprs(std::vector<address_nominal> exprs, range rng);
+    std::vector<address_nominal> exprs;
 
     friend bool is_similar(const nominal_value_exprs& l, const nominal_value_exprs& r);
 

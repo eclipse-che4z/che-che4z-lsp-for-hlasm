@@ -20,9 +20,7 @@
 #include "context/ordinary_assembly/symbol_attributes.h"
 #include "data_def_types.h"
 
-using namespace hlasm_plugin::parser_library::checking;
-using namespace hlasm_plugin::parser_library::context;
-using namespace hlasm_plugin::parser_library;
+namespace hlasm_plugin::parser_library::checking {
 
 //***************************   types H, F, FD   *****************************//
 
@@ -36,7 +34,7 @@ data_def_type_H_F_FD::data_def_type_H_F_FD(data_definition_type type, char exten
           nominal_value_type::STRING,
           { 0, word_length },
           word_length,
-          integer_type::fixed)
+          context::integer_type::fixed)
 {}
 
 class H_F_FD_number_spec
@@ -47,6 +45,37 @@ public:
     static bool is_sign_char(char c) { return c == 'U' || c == 'u' || c == '+' || c == '-'; }
 };
 
+nominal_diag_func check_nominal_H_F_FD(std::string_view nom) noexcept
+{
+    size_t i = 0;
+    if (nom.empty())
+        return nullptr;
+    while (i < nom.size())
+    {
+        // checks number, may begin with +,- or U, ends with exponent or comma
+        if (!check_number<H_F_FD_number_spec>(nom, i))
+            return diagnostic_op::error_D010;
+        if (i >= nom.size())
+            return nullptr;
+        // check exponent
+        if (nom[i] == 'E' || nom[i] == 'e')
+        {
+            if (!check_exponent(nom, i))
+                return diagnostic_op::error_D010;
+            if (i >= nom.size())
+                return nullptr;
+        }
+        if (nom[i] != ',')
+            return diagnostic_op::error_D010;
+        ++i;
+    }
+    if (nom.back() == ',')
+        return diagnostic_op::error_D010;
+
+    return nullptr;
+    // TODO truncation is also an error
+}
+
 bool data_def_type_H_F_FD::check_impl(const data_definition_common&,
     const nominal_value_t& nominal,
     const diagnostic_collector& add_diagnostic,
@@ -55,49 +84,13 @@ bool data_def_type_H_F_FD::check_impl(const data_definition_common&,
     if (!check_nominal)
         return true;
 
-    size_t i = 0;
-    std::string_view nom = std::get<std::string>(nominal.value);
-    if (nom.empty())
+    if (const auto f = check_nominal_H_F_FD(std::get<std::string>(nominal.value)))
     {
-        add_diagnostic(diagnostic_op::error_D010(nominal.rng, type_str()));
-        return false;
-    }
-    while (i < nom.size())
-    {
-        // checks number, may begin with +,- or U, ends with exponent or comma
-        if (!check_number<H_F_FD_number_spec>(nom, i))
-        {
-            add_diagnostic(diagnostic_op::error_D010(nominal.rng, type_str()));
-            return false;
-        }
-        if (i >= nom.size())
-            return true;
-        // check exponent
-        if (nom[i] == 'E' || nom[i] == 'e')
-        {
-            if (!check_exponent(nom, i))
-            {
-                add_diagnostic(diagnostic_op::error_D010(nominal.rng, type_str()));
-                return false;
-            }
-            if (i >= nom.size())
-                return true;
-        }
-        if (nom[i] != ',')
-        {
-            add_diagnostic(diagnostic_op::error_D010(nominal.rng, type_str()));
-            return false;
-        }
-        ++i;
-    }
-    if (nom.back() == ',')
-    {
-        add_diagnostic(diagnostic_op::error_D010(nominal.rng, type_str()));
+        add_diagnostic(f(nominal.rng, type_str()));
         return false;
     }
 
     return true;
-    // TODO truncation is also an error
 }
 
 data_def_type_H::data_def_type_H()
@@ -130,39 +123,41 @@ data_def_type_P_Z::data_def_type_P_Z(data_definition_type type, context::integer
           n_a(),
           n_a(),
           nominal_value_type::STRING,
-          no_align,
+          context::no_align,
           as_needed(),
           int_type)
 {}
+
+nominal_diag_func check_nominal_P_Z(std::string_view nom) noexcept
+{
+    // TO DO truncation is also an error
+    size_t i = 0;
+    if (nom.empty())
+        return diagnostic_op::error_D010;
+
+    while (i < nom.size())
+    {
+        if (!check_number<P_Z_number_spec>(nom, i))
+            return diagnostic_op::error_D010;
+        ++i;
+    }
+    if (nom.back() == ',')
+        return diagnostic_op::error_D010;
+
+    return nullptr;
+}
 
 bool data_def_type_P_Z::check_impl(const data_definition_common&,
     const nominal_value_t& nominal,
     const diagnostic_collector& add_diagnostic,
     bool check_nominal) const
 {
-    // TO DO truncation is also an error
     if (!check_nominal)
         return true;
 
-    size_t i = 0;
-    std::string_view nom = std::get<std::string>(nominal.value);
-    if (nom.empty())
+    if (const auto f = check_nominal_P_Z(std::get<std::string>(nominal.value)))
     {
-        add_diagnostic(diagnostic_op::error_D010(nominal.rng, type_str()));
-        return false;
-    }
-    while (i < nom.size())
-    {
-        if (!check_number<P_Z_number_spec>(nom, i))
-        {
-            add_diagnostic(diagnostic_op::error_D010(nominal.rng, type_str()));
-            return false;
-        }
-        ++i;
-    }
-    if (nom.back() == ',')
-    {
-        add_diagnostic(diagnostic_op::error_D010(nominal.rng, type_str()));
+        add_diagnostic(f(nominal.rng, type_str()));
         return false;
     }
 
@@ -269,3 +264,4 @@ uint32_t data_def_type_Z::get_nominal_length_attribute(const reduced_nominal_val
 
     return first_value_len;
 }
+} // namespace hlasm_plugin::parser_library::checking

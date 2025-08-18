@@ -589,9 +589,9 @@ struct parser2
 
     result_t<expressions::data_definition> lex_data_def_base();
 
-    result_t<expressions::expr_or_address> lex_expr_or_addr();
+    result_t<expressions::address_nominal> lex_expr_or_addr();
 
-    result_t<expressions::expr_or_address_list> lex_literal_nominal_addr();
+    result_t<std::vector<expressions::address_nominal>> lex_literal_nominal_addr();
 
     result_t<expressions::nominal_value_ptr> lex_literal_nominal();
 
@@ -2278,7 +2278,7 @@ result_t<expressions::data_definition> parser2::lex_data_def_base()
     return result;
 }
 
-result_t<expressions::expr_or_address> parser2::lex_expr_or_addr()
+result_t<expressions::address_nominal> parser2::lex_expr_or_addr()
 {
     const auto start = cur_pos_adjusted();
     auto [error, e] = lex_mach_expr();
@@ -2286,22 +2286,21 @@ result_t<expressions::expr_or_address> parser2::lex_expr_or_addr()
         return failure;
 
     if (!try_consume<u8'('>(hl_scopes::operator_symbol))
-        return { std::move(e) };
+        return { std::move(e), nullptr, range_from(start) };
     auto [error2, e2] = lex_mach_expr();
     if (error2)
         return failure;
     if (!match<u8')'>(hl_scopes::operator_symbol, diagnostic_op::error_S0011))
         return failure;
-    return expressions::expr_or_address(
-        std::in_place_type<expressions::address_nominal>, std::move(e), std::move(e2), range_from(start));
+    return { std::move(e), std::move(e2), range_from(start) };
 }
 
-result_t<expressions::expr_or_address_list> parser2::lex_literal_nominal_addr()
+result_t<std::vector<expressions::address_nominal>> parser2::lex_literal_nominal_addr()
 {
     assert(follows<u8'('>());
     consume(hl_scopes::operator_symbol);
 
-    expressions::expr_or_address_list result;
+    std::vector<expressions::address_nominal> result;
 
     auto [error, e] = lex_expr_or_addr();
     if (error)

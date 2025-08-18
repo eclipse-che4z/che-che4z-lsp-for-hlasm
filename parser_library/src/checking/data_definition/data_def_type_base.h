@@ -26,6 +26,7 @@
 
 namespace hlasm_plugin::parser_library {
 class diagnostic_collector;
+struct diagnostic_op;
 namespace context {
 enum class integer_type : unsigned char;
 }
@@ -89,6 +90,16 @@ enum class nominal_value_type : unsigned char
     EXPRESSIONS,
     ADDRESS_OR_EXPRESSION
 };
+
+using nominal_diag_func = diagnostic_op (*)(const range&, std::string_view);
+nominal_diag_func check_A_length(const data_definition_common& common, bool all_absolute) noexcept;
+nominal_diag_func check_AD_length(const data_definition_common& common, bool all_absolute) noexcept;
+nominal_diag_func check_Y_length(const data_definition_common& common, bool all_absolute) noexcept;
+bool check_S_SY_operand(const data_def_address& addr, const diagnostic_collector& add_diagnostic, bool extended);
+bool check_S_SY_operands(const nominal_value_t& nominal, const diagnostic_collector& add_diagnostic, bool extended);
+nominal_diag_func check_nominal_H_F_FD(std::string_view nom) noexcept;
+nominal_diag_func check_nominal_P_Z(std::string_view nom) noexcept;
+nominal_diag_func check_nominal_E_D_L(std::string_view nom, char extension) noexcept;
 
 // To check in context of this file means to report diagnostics using specified diagnostic_collector
 // and return false if there was an error found (if a warning was found, true is returned).

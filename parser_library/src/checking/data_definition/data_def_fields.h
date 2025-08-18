@@ -49,22 +49,15 @@ struct data_def_field
     T value;
     range rng;
 };
+
 // Specifies whether expression was absolute, relocatable or complex relocatable.
-enum class expr_type
+enum class expr_type : unsigned char
 {
     ABS,
     RELOC,
     COMPLEX
 };
-// Represents an expression in nominal value of data definition operand.
-struct data_def_expr
-{
-    int32_t value;
-    expr_type ex_kind;
-    range rng;
-    // When ignored is true, the expression should be ignored by checker.
-    bool ignored = false;
-};
+
 // Represents the length modifier, adds length type.
 struct data_def_length_t : data_def_field<int32_t>
 {
@@ -89,12 +82,12 @@ struct data_def_address
 {
     data_def_field<int32_t> base;
     data_def_field<int32_t> displacement;
+    expr_type displacement_kind;
     bool ignored = false;
     range total;
 };
 
-using expr_or_address = std::variant<data_def_expr, data_def_address>;
-using nominal_value_expressions = std::vector<expr_or_address>;
+using nominal_value_expressions = std::vector<data_def_address>;
 using nominal_value_t = data_def_field<std::variant<std::string, nominal_value_expressions>>;
 using reduced_nominal_value_t = std::variant<std::monostate, std::string_view, size_t>;
 using scale_modifier_t = data_def_field<int16_t>;
