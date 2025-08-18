@@ -100,20 +100,6 @@ inline T round_up(T n, T m)
     return ((n + m - 1) / m) * m;
 }
 
-inline reduced_nominal_value_t reduce_nominal_value(const nominal_value_t& n)
-{
-    struct
-    {
-        reduced_nominal_value_t operator()(const std::string& s) const { return s; }
-        reduced_nominal_value_t operator()(const nominal_value_expressions& e) const { return e.size(); }
-    } visitor;
-    if (!n.present)
-        return std::monostate();
-    else
-        return std::visit(visitor, n.value);
-}
-reduced_nominal_value_t reduce_nominal_value(nominal_value_t&& n) = delete;
-
 } // namespace hlasm_plugin::parser_library::checking
 
 #endif // !HLASMPLUGIN_PARSERLIBRARY_CHECKING_DATA_DEF_FIELDS_H

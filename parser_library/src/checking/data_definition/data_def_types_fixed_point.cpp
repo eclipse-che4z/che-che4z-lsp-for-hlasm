@@ -16,9 +16,9 @@
 // these types: P, Z, H, F
 
 #include "checking/checker_helper.h"
-#include "checking/diagnostic_collector.h"
 #include "context/ordinary_assembly/symbol_attributes.h"
 #include "data_def_types.h"
+#include "diagnostic_op.h"
 
 namespace hlasm_plugin::parser_library::checking {
 
@@ -31,7 +31,6 @@ data_def_type_H_F_FD::data_def_type_H_F_FD(data_definition_type type, char exten
           modifier_bound { 1, 8 },
           modifier_bound { -187, 346 },
           modifier_bound { -85, 75 },
-          nominal_value_type::STRING,
           { 0, word_length },
           word_length,
           context::integer_type::fixed)
@@ -76,23 +75,6 @@ nominal_diag_func check_nominal_H_F_FD(std::string_view nom) noexcept
     // TODO truncation is also an error
 }
 
-bool data_def_type_H_F_FD::check_impl(const data_definition_common&,
-    const nominal_value_t& nominal,
-    const diagnostic_collector& add_diagnostic,
-    bool check_nominal) const
-{
-    if (!check_nominal)
-        return true;
-
-    if (const auto f = check_nominal_H_F_FD(std::get<std::string>(nominal.value)))
-    {
-        add_diagnostic(f(nominal.rng, type_str()));
-        return false;
-    }
-
-    return true;
-}
-
 data_def_type_H::data_def_type_H()
     : data_def_type_H_F_FD(data_definition_type::H, '\0', 2)
 {}
@@ -122,7 +104,6 @@ data_def_type_P_Z::data_def_type_P_Z(data_definition_type type, context::integer
           modifier_bound { 1, 16 },
           n_a(),
           n_a(),
-          nominal_value_type::STRING,
           context::no_align,
           as_needed(),
           int_type)
@@ -145,23 +126,6 @@ nominal_diag_func check_nominal_P_Z(std::string_view nom) noexcept
         return diagnostic_op::error_D010;
 
     return nullptr;
-}
-
-bool data_def_type_P_Z::check_impl(const data_definition_common&,
-    const nominal_value_t& nominal,
-    const diagnostic_collector& add_diagnostic,
-    bool check_nominal) const
-{
-    if (!check_nominal)
-        return true;
-
-    if (const auto f = check_nominal_P_Z(std::get<std::string>(nominal.value)))
-    {
-        add_diagnostic(f(nominal.rng, type_str()));
-        return false;
-    }
-
-    return true;
 }
 
 int16_t data_def_type_P_Z::get_implicit_scale(const reduced_nominal_value_t& op) const

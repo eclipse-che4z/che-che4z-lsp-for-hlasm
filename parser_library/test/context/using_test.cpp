@@ -1485,7 +1485,7 @@ A     CSECT
     analyzer a(input);
     a.analyze();
 
-    EXPECT_TRUE(matches_message_codes(a.diags(), { "D033", "D034" }));
+    EXPECT_TRUE(matches_message_codes(a.diags(), { "D034" }));
 }
 
 TEST(using, mnemonic_check_in_range)

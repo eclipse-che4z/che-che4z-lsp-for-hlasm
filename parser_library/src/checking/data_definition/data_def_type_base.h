@@ -83,20 +83,10 @@ struct as_needed
 {};
 using implicit_length_t = std::variant<uint64_t, as_needed>;
 
-// Type of nominal value that various types of data definition expect.
-enum class nominal_value_type : unsigned char
-{
-    STRING,
-    EXPRESSIONS,
-    ADDRESS_OR_EXPRESSION
-};
-
 using nominal_diag_func = diagnostic_op (*)(const range&, std::string_view);
 nominal_diag_func check_A_length(const data_definition_common& common, bool all_absolute) noexcept;
 nominal_diag_func check_AD_length(const data_definition_common& common, bool all_absolute) noexcept;
 nominal_diag_func check_Y_length(const data_definition_common& common, bool all_absolute) noexcept;
-bool check_S_SY_operand(const data_def_address& addr, const diagnostic_collector& add_diagnostic, bool extended);
-bool check_S_SY_operands(const nominal_value_t& nominal, const diagnostic_collector& add_diagnostic, bool extended);
 nominal_diag_func check_nominal_H_F_FD(std::string_view nom) noexcept;
 nominal_diag_func check_nominal_P_Z(std::string_view nom) noexcept;
 nominal_diag_func check_nominal_E_D_L(std::string_view nom, char extension) noexcept;
@@ -131,11 +121,6 @@ enum class data_definition_type : char
 class data_def_type
 {
 public:
-    enum class expects_single_symbol_t : bool
-    {
-        no,
-        yes,
-    };
     // constructor for types with  the same lengths in DC and DS instruction
     data_def_type(data_definition_type type,
         char extension,
@@ -143,11 +128,9 @@ public:
         modifier_spec length_spec,
         modifier_spec scale_spec,
         modifier_spec exponent_spec,
-        nominal_value_type nominal_type,
         context::alignment implicit_alignment,
         implicit_length_t implicit_length,
         context::integer_type int_type_,
-        expects_single_symbol_t single_symbol = expects_single_symbol_t::no,
         bool ignores_scale = false);
 
     // constructor for types with different allowed lengths with DS instruction
@@ -158,12 +141,9 @@ public:
         int max_ds_length_spec,
         modifier_spec scale_spec,
         modifier_spec exponent_spec,
-        nominal_value_type nominal_type,
         context::alignment implicit_alignment,
         implicit_length_t implicit_length,
         context::integer_type int_type_);
-
-    bool expects_single_symbol() const noexcept { return single_symbol == expects_single_symbol_t::yes; }
 
     // returns length of the operand in bits
     uint64_t get_length(
@@ -188,17 +168,6 @@ public:
     // Gets the value of scale attribute when there is no scale modifier defined by user.
     virtual int16_t get_implicit_scale(const reduced_nominal_value_t& op) const;
 
-    // Data def types override this function to implement type-specific check. check_nominal specifies whether it is
-    // safe to access nominal value of operand(has correct type, etc..).
-    virtual bool check_impl(const data_definition_common& common,
-        const nominal_value_t& nominal,
-        const diagnostic_collector& add_diagnostic,
-        bool check_nominal) const;
-
-    // Checks if nominal value has the right type and is safe to access. Expects that nominal type is present.
-    bool check_nominal_type(
-        const nominal_value_t& op, const diagnostic_collector& add_diagnostic, const range& r) const;
-
     size_t get_number_of_values_in_nominal(const reduced_nominal_value_t& nom) const;
 
     modifier_spec get_length_spec(data_instr_type instr_type) const;
@@ -210,8 +179,6 @@ public:
     std::string_view type_str() const noexcept { return std::string_view(type_ext, 1 + !!type_ext[1]); }
 
     char type_ext[2];
-
-    nominal_value_type nominal_type;
 
     modifier_spec bit_length_spec_;
     modifier_spec length_spec_;
@@ -226,7 +193,6 @@ public:
 
     context::integer_type int_type_;
     bool ignores_scale_ = false;
-    expects_single_symbol_t single_symbol = expects_single_symbol_t::no;
 };
 
 } // namespace hlasm_plugin::parser_library::checking

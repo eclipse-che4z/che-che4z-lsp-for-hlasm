@@ -14,12 +14,11 @@
 
 #include "data_def_type_base.h"
 
+#include <algorithm>
 #include <cassert>
 #include <format>
 #include <iterator>
-#include <optional>
 
-#include "checking/diagnostic_collector.h"
 #include "checking/instr_operand.h"
 #include "data_def_types.h"
 
@@ -32,14 +31,11 @@ data_def_type::data_def_type(data_definition_type type,
     modifier_spec length_spec,
     modifier_spec scale_spec,
     modifier_spec exponent_spec,
-    nominal_value_type nominal_type,
     context::alignment implicit_alignment,
     implicit_length_t implicit_length,
     context::integer_type int_type,
-    expects_single_symbol_t single_symbol,
     bool ignores_scale)
     : type_ext { (char)type, extension }
-    , nominal_type(nominal_type)
     , bit_length_spec_(bit_length_spec)
     , length_spec_(length_spec)
     , ds_length_spec_(length_spec)
@@ -50,7 +46,6 @@ data_def_type::data_def_type(data_definition_type type,
     , implicit_length_(implicit_length)
     , int_type_(int_type)
     , ignores_scale_(ignores_scale)
-    , single_symbol(single_symbol)
 {
     assert(!std::holds_alternative<ignored>(bit_length_spec));
     assert(!std::holds_alternative<ignored>(length_spec));
@@ -64,12 +59,10 @@ data_def_type::data_def_type(data_definition_type type,
     int max_ds_length_spec,
     modifier_spec scale_spec,
     modifier_spec exponent_spec,
-    nominal_value_type nominal_type,
     context::alignment implicit_alignment,
     implicit_length_t implicit_length,
     context::integer_type int_type)
     : type_ext { (char)type, extension }
-    , nominal_type(nominal_type)
     , bit_length_spec_(bit_length_spec)
     , length_spec_(length_spec)
     , ds_length_spec_(modifier_bound { 1, max_ds_length_spec })
@@ -125,65 +118,6 @@ modifier_spec data_def_type::get_bit_length_spec(data_instr_type instr_type) con
         return bit_length_spec_;
     else
         return ds_bit_length_spec_;
-}
-
-bool data_def_type::check_nominal_type(
-    const nominal_value_t& nominal, const diagnostic_collector& add_diagnostic, const range& r) const
-{
-    bool ret = true;
-    switch (nominal_type)
-    {
-        case nominal_value_type::STRING:
-            if (!std::holds_alternative<std::string>(nominal.value))
-            {
-                add_diagnostic(diagnostic_op::error_D018(r, type_str()));
-                return false;
-            }
-            break;
-        case nominal_value_type::EXPRESSIONS:
-            if (!std::holds_alternative<nominal_value_expressions>(nominal.value))
-            {
-                add_diagnostic(diagnostic_op::error_D017(r, type_str()));
-                return false;
-            }
-            for (auto& p : std::get<nominal_value_expressions>(nominal.value))
-            {
-                if (p.base.present)
-                {
-                    add_diagnostic(diagnostic_op::error_D020(p.total, type_str()));
-                    ret = false;
-                }
-            }
-            break;
-        case nominal_value_type::ADDRESS_OR_EXPRESSION:
-            if (!std::holds_alternative<nominal_value_expressions>(nominal.value))
-            {
-                add_diagnostic(diagnostic_op::error_D017(r, type_str()));
-                return false;
-            }
-            for (auto& p : std::get<nominal_value_expressions>(nominal.value))
-            {
-                if (p.ignored)
-                    continue;
-                if ((p.base.present && !p.displacement.present)
-                    || (!p.base.present && p.displacement_kind != expr_type::ABS))
-                {
-                    add_diagnostic(diagnostic_op::error_D033(p.total));
-                    ret = false;
-                }
-            }
-            break;
-        default:
-            assert(false);
-            return true;
-    }
-    return ret;
-}
-
-bool data_def_type::check_impl(
-    const data_definition_common&, const nominal_value_t&, const diagnostic_collector&, bool) const
-{
-    return true;
 }
 
 size_t data_def_type::get_number_of_values_in_nominal(const reduced_nominal_value_t& nom) const

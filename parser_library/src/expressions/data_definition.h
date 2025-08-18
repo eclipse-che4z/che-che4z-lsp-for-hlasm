@@ -84,25 +84,15 @@ struct data_definition final : public context::dependable
     context::symbol_attributes get_symbol_attributes(
         context::dependency_solver& info, diagnostic_op_consumer& diags) const;
 
-    // Returns true, if this data definition has one of the types, that take expressions consisting of only one
-    // symbol (like V or R)
-    bool expects_single_symbol() const;
-    // Returns true, if data definition does not violate the single symbol rule, if the type requires it.
-    bool check_single_symbol_ok(diagnostic_op_consumer& diags) const;
-
     // When any of the evaluated expressions have dependencies, resulting modifier will have data_def_field::present set
     // to false
     checking::dupl_factor_modifier_t evaluate_dupl_factor(
         context::dependency_solver& info, diagnostic_op_consumer& diags) const;
     checking::data_def_length_t evaluate_length(context::dependency_solver& info, diagnostic_op_consumer& diags) const;
     checking::scale_modifier_t evaluate_scale(context::dependency_solver& info, diagnostic_op_consumer& diags) const;
-    checking::exponent_modifier_t evaluate_exponent(
-        context::dependency_solver& info, diagnostic_op_consumer& diags) const;
 
     // When any of the evaluated expressions have dependencies, resulting modifier will have
     // data_def_expr::ignored or data_def_address::ignored set to false
-    checking::nominal_value_t evaluate_nominal_value(
-        context::dependency_solver& info, diagnostic_op_consumer& diags) const;
     checking::reduced_nominal_value_t evaluate_reduced_nominal_value() const;
 
     long long evaluate_total_length(context::dependency_solver& info,

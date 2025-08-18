@@ -15,10 +15,9 @@
 // This file contains implementation of the data_def_type for
 // these types: B, C, G, X
 
+#include <algorithm>
 #include <concepts>
 
-#include "checking/checker_helper.h"
-#include "checking/diagnostic_collector.h"
 #include "context/ordinary_assembly/symbol_attributes.h"
 #include "data_def_types.h"
 #include "utils/unicode_text.h"
@@ -88,28 +87,10 @@ data_def_type_B::data_def_type_B()
           modifier_bound { 1, 256 },
           n_a(),
           n_a(),
-          nominal_value_type::STRING,
           no_align,
           as_needed(),
           integer_type::undefined)
 {}
-
-bool data_def_type_B::check_impl(const data_definition_common&,
-    const nominal_value_t& nominal,
-    const diagnostic_collector& add_diagnostic,
-    bool check_nominal) const
-{
-    if (!check_nominal)
-        return true;
-
-    if (!check_comma_separated(std::get<std::string>(nominal.value), [](char c) { return c == '0' || c == '1'; }))
-    {
-        add_diagnostic(diagnostic_op::error_D010(nominal.rng, type_str()));
-        return false;
-    }
-
-    return true;
-}
 
 uint64_t data_def_type_B::get_nominal_length(const reduced_nominal_value_t& op) const
 {
@@ -140,7 +121,6 @@ data_def_type_CA_CE::data_def_type_CA_CE(char extension)
           65535,
           n_a(),
           n_a(),
-          nominal_value_type::STRING,
           no_align,
           as_needed(),
           integer_type::undefined)
@@ -185,7 +165,6 @@ data_def_type_CU::data_def_type_CU()
           modifier_bound { 1, 256, true },
           n_a(),
           n_a(),
-          nominal_value_type::STRING,
           no_align,
           as_needed(),
           integer_type::undefined)
@@ -221,7 +200,6 @@ data_def_type_G::data_def_type_G()
           65534,
           n_a(),
           n_a(),
-          nominal_value_type::STRING,
           no_align,
           as_needed(),
           integer_type::undefined)
@@ -266,27 +244,10 @@ data_def_type_X::data_def_type_X()
           65535,
           n_a(),
           n_a(),
-          nominal_value_type::STRING,
           no_align,
           as_needed(),
           integer_type::undefined)
 {}
-
-bool data_def_type_X::check_impl(const data_definition_common&,
-    const nominal_value_t& nominal,
-    const diagnostic_collector& add_diagnostic,
-    bool check_nominal) const
-{
-    if (!check_nominal)
-        return true;
-
-    if (!check_comma_separated(std::get<std::string>(nominal.value), &is_hexadecimal_digit))
-    {
-        add_diagnostic(diagnostic_op::error_D010(nominal.rng, type_str()));
-        return false;
-    }
-    return true;
-}
 
 uint64_t data_def_type_X::get_nominal_length(const reduced_nominal_value_t& op) const
 {

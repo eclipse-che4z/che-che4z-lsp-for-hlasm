@@ -27,11 +27,6 @@ class data_def_type_B final : public data_def_type
 public:
     data_def_type_B();
 
-    bool check_impl(const data_definition_common& common,
-        const nominal_value_t& nominal,
-        const diagnostic_collector& add_diagnostic,
-        bool check_nominal) const override;
-
     uint64_t get_nominal_length(const reduced_nominal_value_t& op) const override;
     uint32_t get_nominal_length_attribute(const reduced_nominal_value_t& op) const override;
 };
@@ -86,11 +81,6 @@ class data_def_type_X final : public data_def_type
 public:
     data_def_type_X();
 
-    bool check_impl(const data_definition_common& common,
-        const nominal_value_t& nominal,
-        const diagnostic_collector& add_diagnostic,
-        bool check_nominal) const override;
-
     uint64_t get_nominal_length(const reduced_nominal_value_t& op) const override;
     uint32_t get_nominal_length_attribute(const reduced_nominal_value_t& op) const override;
 };
@@ -102,11 +92,6 @@ class data_def_type_H_F_FD : public data_def_type
 {
 public:
     data_def_type_H_F_FD(data_definition_type type, char extension, uint8_t word_length);
-
-    bool check_impl(const data_definition_common& common,
-        const nominal_value_t& nominal,
-        const diagnostic_collector& add_diagnostic,
-        bool check_nominal) const override;
 };
 
 class data_def_type_H final : public data_def_type_H_F_FD
@@ -132,10 +117,6 @@ class data_def_type_P_Z : public data_def_type
 public:
     data_def_type_P_Z(data_definition_type type, context::integer_type int_type);
 
-    bool check_impl(const data_definition_common& common,
-        const nominal_value_t& nominal,
-        const diagnostic_collector& add_diagnostic,
-        bool check_nominal) const override;
     int16_t get_implicit_scale(const reduced_nominal_value_t& op) const override;
 };
 
@@ -172,33 +153,18 @@ class data_def_type_A final : public data_def_type_A_AD_Y
 {
 public:
     data_def_type_A();
-
-    bool check_impl(const data_definition_common& common,
-        const nominal_value_t& nominal,
-        const diagnostic_collector& add_diagnostic,
-        bool check_nominal) const override;
 };
 
 class data_def_type_AD final : public data_def_type_A_AD_Y
 {
 public:
     data_def_type_AD();
-
-    bool check_impl(const data_definition_common& common,
-        const nominal_value_t& nominal,
-        const diagnostic_collector& add_diagnostic,
-        bool check_nominal) const override;
 };
 
 class data_def_type_Y final : public data_def_type_A_AD_Y
 {
 public:
     data_def_type_Y();
-
-    bool check_impl(const data_definition_common& common,
-        const nominal_value_t& nominal,
-        const diagnostic_collector& add_diagnostic,
-        bool check_nominal) const override;
 };
 
 
@@ -213,22 +179,12 @@ class data_def_type_S final : public data_def_type_S_SY
 {
 public:
     data_def_type_S();
-
-    bool check_impl(const data_definition_common& common,
-        const nominal_value_t& nominal,
-        const diagnostic_collector& add_diagnostic,
-        bool check_nominal) const override;
 };
 
 class data_def_type_SY final : public data_def_type_S_SY
 {
 public:
     data_def_type_SY();
-
-    bool check_impl(const data_definition_common& common,
-        const nominal_value_t& nominal,
-        const diagnostic_collector& add_diagnostic,
-        bool check_nominal) const override;
 };
 
 //************* single symbol types *****************
@@ -309,11 +265,6 @@ public:
         modifier_spec scale_spec,
         context::alignment align,
         uint64_t implicit_length);
-
-    bool check_impl(const data_definition_common& common,
-        const nominal_value_t& nominal,
-        const diagnostic_collector& add_diagnostic,
-        bool check_nominal) const override;
 };
 
 class data_def_type_E final : public data_def_type_E_D_L

@@ -19,9 +19,10 @@
 #include <string_view>
 
 #include "checking/checker_helper.h"
-#include "checking/diagnostic_collector.h"
 #include "context/ordinary_assembly/symbol_attributes.h"
 #include "data_def_types.h"
+#include "diagnostic_op.h"
+#include "utils/insist.h"
 
 namespace hlasm_plugin::parser_library::checking {
 
@@ -38,11 +39,9 @@ data_def_type_E_D_L::data_def_type_E_D_L(data_definition_type type,
           length_spec,
           scale_spec,
           modifier_bound { -85, 75 },
-          nominal_value_type::STRING,
           align,
           implicit_length,
           context::integer_type::hexfloat,
-          expects_single_symbol_t::no,
           extension == 'D' || extension == 'B')
 {}
 
@@ -215,23 +214,6 @@ nominal_diag_func check_nominal_E_D_L(std::string_view nom, char extension) noex
     }
 
     return nullptr;
-}
-
-bool data_def_type_E_D_L::check_impl(const data_definition_common&,
-    const nominal_value_t& nominal,
-    const diagnostic_collector& add_diagnostic,
-    bool check_nominal) const
-{
-    if (!check_nominal)
-        return true;
-
-    if (const auto f = check_nominal_E_D_L(std::get<std::string>(nominal.value), extension()))
-    {
-        add_diagnostic(f(nominal.rng, type_str()));
-        return false;
-    }
-
-    return true;
 }
 
 data_def_type_E::data_def_type_E()
