@@ -15,6 +15,7 @@
 // This file contains implementation of the data_def_type for
 // these types: A, Y, S, R, V, Q, J
 
+#include "checking/data_definition/data_definition_operand.h"
 #include "context/ordinary_assembly/symbol_attributes.h"
 #include "data_def_types.h"
 #include "diagnostic_op.h"

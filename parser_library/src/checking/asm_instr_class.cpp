@@ -22,8 +22,7 @@
 #include "checker_helper.h"
 #include "diagnostic_collector.h"
 
-using namespace hlasm_plugin::parser_library;
-using namespace hlasm_plugin::parser_library::checking;
+namespace hlasm_plugin::parser_library::checking {
 
 bool assembler_instruction::is_param_in_vector(
     std::string_view parameter, const std::vector<std::string_view>& options) const
@@ -857,3 +856,5 @@ bool assembler_instruction::check_assembler_process_operand(
     }
     return true;
 }
+
+} // namespace hlasm_plugin::parser_library::checking

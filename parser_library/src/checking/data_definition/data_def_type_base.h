@@ -80,7 +80,27 @@ using modifier_spec = std::variant<modifier_bound, n_a, no_check, ignored, bound
 
 // Implicit length is either fixed number or is derived from (string) nominal value.
 struct as_needed
-{};
+{
+    struct impl_t
+    {
+        uint64_t (*get_nominal_length)(const reduced_nominal_value_t& op);
+        uint32_t (*get_nominal_length_attribute)(const reduced_nominal_value_t& op);
+    };
+
+    uint64_t get_nominal_length(const reduced_nominal_value_t& op) const { return impl->get_nominal_length(op); }
+    uint32_t get_nominal_length_attribute(const reduced_nominal_value_t& op) const
+    {
+        return impl->get_nominal_length_attribute(op);
+    }
+
+    explicit constexpr as_needed(const impl_t& impl) noexcept
+        : impl(&impl)
+    {}
+    as_needed(impl_t&& impl) noexcept = delete;
+
+private:
+    const impl_t* impl;
+};
 using implicit_length_t = std::variant<uint64_t, as_needed>;
 
 using nominal_diag_func = diagnostic_op (*)(const range&, std::string_view);
@@ -160,13 +180,8 @@ public:
     [[nodiscard]] constexpr context::integer_type get_int_type() const noexcept { return int_type_; }
     [[nodiscard]] constexpr bool ignores_scale() const noexcept { return ignores_scale_; }
 
-    // When implicit length is "as needed" - it depends on nominal value, returns the implicit length in bytes.
-    // All types that have implicit length "as needed" must override this function.
-    virtual uint64_t get_nominal_length(const reduced_nominal_value_t& op) const;
-
-    virtual uint32_t get_nominal_length_attribute(const reduced_nominal_value_t& op) const;
     // Gets the value of scale attribute when there is no scale modifier defined by user.
-    virtual int16_t get_implicit_scale(const reduced_nominal_value_t& op) const;
+    int16_t get_implicit_scale(const reduced_nominal_value_t& op) const;
 
     size_t get_number_of_values_in_nominal(const reduced_nominal_value_t& nom) const;
 

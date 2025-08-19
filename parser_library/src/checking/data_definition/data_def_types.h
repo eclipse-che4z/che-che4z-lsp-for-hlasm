@@ -16,7 +16,6 @@
 #define HLASMPLUGIN_PARSERLIBRARY_CHECKING_DATA_DEF_TYPES_H
 
 #include "data_def_type_base.h"
-#include "data_definition_operand.h"
 
 // This file defines all existing data_definition types, all implement the abstract class data_def_type.
 
@@ -26,18 +25,12 @@ class data_def_type_B final : public data_def_type
 {
 public:
     data_def_type_B();
-
-    uint64_t get_nominal_length(const reduced_nominal_value_t& op) const override;
-    uint32_t get_nominal_length_attribute(const reduced_nominal_value_t& op) const override;
 };
 
 class data_def_type_CA_CE : public data_def_type
 {
 public:
     data_def_type_CA_CE(char extension);
-
-    uint64_t get_nominal_length(const reduced_nominal_value_t& op) const override;
-    uint32_t get_nominal_length_attribute(const reduced_nominal_value_t& op) const override;
 };
 
 class data_def_type_C final : public data_def_type_CA_CE
@@ -62,27 +55,18 @@ class data_def_type_CU final : public data_def_type
 {
 public:
     data_def_type_CU();
-
-    uint64_t get_nominal_length(const reduced_nominal_value_t& op) const override;
-    uint32_t get_nominal_length_attribute(const reduced_nominal_value_t& op) const override;
 };
 
 class data_def_type_G final : public data_def_type
 {
 public:
     data_def_type_G();
-
-    uint64_t get_nominal_length(const reduced_nominal_value_t& op) const override;
-    uint32_t get_nominal_length_attribute(const reduced_nominal_value_t& op) const override;
 };
 
 class data_def_type_X final : public data_def_type
 {
 public:
     data_def_type_X();
-
-    uint64_t get_nominal_length(const reduced_nominal_value_t& op) const override;
-    uint32_t get_nominal_length_attribute(const reduced_nominal_value_t& op) const override;
 };
 
 //************* fixed point types *****************
@@ -115,29 +99,19 @@ public:
 class data_def_type_P_Z : public data_def_type
 {
 public:
-    data_def_type_P_Z(data_definition_type type, context::integer_type int_type);
-
-    int16_t get_implicit_scale(const reduced_nominal_value_t& op) const override;
+    data_def_type_P_Z(data_definition_type type, context::integer_type int_type, as_needed extras);
 };
 
 class data_def_type_P final : public data_def_type_P_Z
 {
 public:
     data_def_type_P();
-
-protected:
-    uint64_t get_nominal_length(const reduced_nominal_value_t& op) const override;
-    uint32_t get_nominal_length_attribute(const reduced_nominal_value_t& op) const override;
 };
 
 class data_def_type_Z final : public data_def_type_P_Z
 {
 public:
     data_def_type_Z();
-
-protected:
-    uint64_t get_nominal_length(const reduced_nominal_value_t& op) const override;
-    uint32_t get_nominal_length_attribute(const reduced_nominal_value_t& op) const override;
 };
 
 //************* address types *****************

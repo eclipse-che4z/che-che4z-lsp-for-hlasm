@@ -84,24 +84,35 @@ data_def_type::data_def_type(data_definition_type type,
 // data_def_type('X', '\0', modifier_bound{ 1, 2048 }, modifier_bound{ 1, 256 }, 65535, n_a(), n_a(),
 // nominal_value_type::STRING, no_align, as_needed()) {}
 
-uint64_t data_def_type::get_nominal_length(const reduced_nominal_value_t&) const
+int16_t data_def_type::get_implicit_scale(const reduced_nominal_value_t& op) const
 {
-    // all types that have implicit length as needed must override this function
-    assert(false);
-    return uint64_t();
-}
+    switch (type())
+    {
+        case data_definition_type::P:
+        case data_definition_type::Z: {
+            if (!std::holds_alternative<std::string_view>(op))
+                return 0;
+            // Count number of characters between the first . and first ,
 
-uint32_t data_def_type::get_nominal_length_attribute(const reduced_nominal_value_t&) const
-{
-    // all types that have implicit length as needed must override this function
-    assert(false);
-    return uint32_t();
-}
+            uint16_t count = 0;
+            bool do_count = false;
+            for (char c : std::get<std::string_view>(op))
+            {
+                if (c == ',')
+                    break;
 
-int16_t data_def_type::get_implicit_scale(const reduced_nominal_value_t&) const
-{
-    // All types except P and Z have implicit scale 0.
-    return 0;
+                if (c == '.')
+                    do_count = true;
+                else if (do_count)
+                    ++count;
+            }
+            return count;
+        }
+
+        default:
+            // All types except P and Z have implicit scale 0.
+            return 0;
+    }
 }
 
 modifier_spec data_def_type::get_length_spec(data_instr_type instr_type) const
@@ -146,7 +157,7 @@ uint64_t data_def_type::get_length(
             len_in_bits *= 8;
     }
     else if (std::holds_alternative<as_needed>(implicit_length_))
-        len_in_bits = get_nominal_length(rnv) * 8;
+        len_in_bits = std::get<as_needed>(implicit_length_).get_nominal_length(rnv) * 8;
     else if (std::holds_alternative<std::monostate>(rnv))
         len_in_bits = std::get<uint64_t>(implicit_length_) * 8;
     else
@@ -174,7 +185,7 @@ uint32_t data_def_type::get_length_attribute(
         return len_attr;
     }
     else if (std::holds_alternative<as_needed>(implicit_length_))
-        return get_nominal_length_attribute(nominal);
+        return std::get<as_needed>(implicit_length_).get_nominal_length_attribute(nominal);
     else
         return (uint32_t)std::get<uint64_t>(implicit_length_);
 }

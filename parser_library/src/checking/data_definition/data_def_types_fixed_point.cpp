@@ -97,7 +97,7 @@ public:
     static bool is_sign_char(char c) { return c == '+' || c == '-'; }
 };
 
-data_def_type_P_Z::data_def_type_P_Z(data_definition_type type, context::integer_type int_type)
+data_def_type_P_Z::data_def_type_P_Z(data_definition_type type, context::integer_type int_type, as_needed extras)
     : data_def_type(type,
           '\0',
           modifier_bound { 1, 128 },
@@ -105,7 +105,7 @@ data_def_type_P_Z::data_def_type_P_Z(data_definition_type type, context::integer
           n_a(),
           n_a(),
           context::no_align,
-          as_needed(),
+          extras,
           int_type)
 {}
 
@@ -128,32 +128,7 @@ nominal_diag_func check_nominal_P_Z(std::string_view nom) noexcept
     return nullptr;
 }
 
-int16_t data_def_type_P_Z::get_implicit_scale(const reduced_nominal_value_t& op) const
-{
-    if (!std::holds_alternative<std::string_view>(op))
-        return 0;
-    // Count number of characters between the first . and first ,
-
-    uint16_t count = 0;
-    bool do_count = false;
-    for (char c : std::get<std::string_view>(op))
-    {
-        if (c == ',')
-            break;
-
-        if (c == '.')
-            do_count = true;
-        else if (do_count)
-            ++count;
-    }
-    return count;
-}
-
-data_def_type_P::data_def_type_P()
-    : data_def_type_P_Z(data_definition_type::P, context::integer_type::packed)
-{}
-
-uint64_t data_def_type_P::get_nominal_length(const reduced_nominal_value_t& op) const
+uint64_t get_P_nominal_length(const reduced_nominal_value_t& op)
 {
     if (!std::holds_alternative<std::string_view>(op))
         return 1;
@@ -177,8 +152,7 @@ uint64_t data_def_type_P::get_nominal_length(const reduced_nominal_value_t& op) 
     return bytes_count;
 }
 
-uint32_t hlasm_plugin::parser_library::checking::data_def_type_P::get_nominal_length_attribute(
-    const reduced_nominal_value_t& op) const
+uint32_t get_P_nominal_length_attribute(const reduced_nominal_value_t& op)
 {
     if (!std::holds_alternative<std::string_view>(op))
         return 1;
@@ -197,11 +171,13 @@ uint32_t hlasm_plugin::parser_library::checking::data_def_type_P::get_nominal_le
     // each digit is assembled as 4 bits, 4 more sign bits are assembled per each number
 }
 
-data_def_type_Z::data_def_type_Z()
-    : data_def_type_P_Z(data_definition_type::Z, context::integer_type::zoned)
+constexpr as_needed::impl_t P_nominal_extras { get_P_nominal_length, get_P_nominal_length_attribute };
+
+data_def_type_P::data_def_type_P()
+    : data_def_type_P_Z(data_definition_type::P, context::integer_type::packed, as_needed(P_nominal_extras))
 {}
 
-uint64_t data_def_type_Z::get_nominal_length(const reduced_nominal_value_t& op) const
+uint64_t get_Z_nominal_length(const reduced_nominal_value_t& op)
 {
     if (!std::holds_alternative<std::string_view>(op))
         return 1;
@@ -210,7 +186,7 @@ uint64_t data_def_type_Z::get_nominal_length(const reduced_nominal_value_t& op) 
     return std::ranges::count_if(std::get<std::string_view>(op), &is_digit);
 }
 
-uint32_t data_def_type_Z::get_nominal_length_attribute(const reduced_nominal_value_t& op) const
+uint32_t get_Z_nominal_length_attribute(const reduced_nominal_value_t& op)
 {
     if (!std::holds_alternative<std::string_view>(op))
         return 1;
@@ -228,4 +204,11 @@ uint32_t data_def_type_Z::get_nominal_length_attribute(const reduced_nominal_val
 
     return first_value_len;
 }
+
+constexpr as_needed::impl_t Z_nominal_extras { get_Z_nominal_length, get_Z_nominal_length_attribute };
+
+data_def_type_Z::data_def_type_Z()
+    : data_def_type_P_Z(data_definition_type::Z, context::integer_type::zoned, as_needed(Z_nominal_extras))
+{}
+
 } // namespace hlasm_plugin::parser_library::checking
