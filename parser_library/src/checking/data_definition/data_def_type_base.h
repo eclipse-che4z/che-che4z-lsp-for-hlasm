@@ -15,10 +15,10 @@
 #ifndef HLASMPLUGIN_PARSERLIBRARY_CHECKING_DATA_DEF_TYPE_BASE_H
 #define HLASMPLUGIN_PARSERLIBRARY_CHECKING_DATA_DEF_TYPE_BASE_H
 
+#include <array>
 #include <bitset>
 #include <cstdint>
-#include <map>
-#include <memory>
+#include <numeric>
 #include <variant>
 
 #include "context/ordinary_assembly/alignment.h"
@@ -47,8 +47,8 @@ enum class data_instr_type
 // Modifier spec specifies allowed values for modifiers.
 // modifier_bound: specifies inclusive range of allowed values.
 // n_a: the modifier cannot be specified, a diagnostic is registered otherwise.
-// no_check: the modifier is not checked at all, typically derived data_def_type checks it in other way.
 // ignored: the modifier is ignored during assembly, a warning is registered if present.
+// bound_list: a list of allowed lengths
 struct modifier_bound
 {
     int min;
@@ -57,8 +57,6 @@ struct modifier_bound
 };
 struct n_a
 {};
-struct no_check
-{};
 struct ignored
 {};
 class bound_list
@@ -66,17 +64,19 @@ class bound_list
     std::bitset<32> m_allowed;
 
 public:
-    bound_list(std::initializer_list<unsigned> l) noexcept
+    constexpr bound_list(std::initializer_list<unsigned> l) noexcept
+        : m_allowed(std::accumulate(l.begin(), l.end(), 0ULL, [](auto acc, auto v) { return acc | 1ULL << v; }))
     {
-        for (unsigned i : l)
-            m_allowed.set(i);
+        // C++23: for (unsigned i : l) m_allowed.set(i);
     }
 
     bool allowed(int32_t i) const noexcept { return i >= 0 && (uint32_t)i < m_allowed.size() && m_allowed.test(i); }
 
     std::string to_diag_list() const;
+
+    bool operator==(const bound_list&) const = default;
 };
-using modifier_spec = std::variant<modifier_bound, n_a, no_check, ignored, bound_list>;
+using modifier_spec = std::variant<modifier_bound, n_a, ignored, bound_list>;
 
 // Implicit length is either fixed number or is derived from (string) nominal value.
 struct as_needed
@@ -103,10 +103,15 @@ private:
 };
 using implicit_length_t = std::variant<uint64_t, as_needed>;
 
+extern constinit const as_needed::impl_t B_nominal_extras;
+extern constinit const as_needed::impl_t CA_CE_nominal_extras;
+extern constinit const as_needed::impl_t CU_nominal_extras;
+extern constinit const as_needed::impl_t G_nominal_extras;
+extern constinit const as_needed::impl_t X_nominal_extras;
+extern constinit const as_needed::impl_t P_nominal_extras;
+extern constinit const as_needed::impl_t Z_nominal_extras;
+
 using nominal_diag_func = diagnostic_op (*)(const range&, std::string_view);
-nominal_diag_func check_A_length(const data_definition_common& common, bool all_absolute) noexcept;
-nominal_diag_func check_AD_length(const data_definition_common& common, bool all_absolute) noexcept;
-nominal_diag_func check_Y_length(const data_definition_common& common, bool all_absolute) noexcept;
 nominal_diag_func check_nominal_H_F_FD(std::string_view nom) noexcept;
 nominal_diag_func check_nominal_P_Z(std::string_view nom) noexcept;
 nominal_diag_func check_nominal_E_D_L(std::string_view nom, char extension) noexcept;
@@ -142,7 +147,7 @@ class data_def_type
 {
 public:
     // constructor for types with  the same lengths in DC and DS instruction
-    data_def_type(data_definition_type type,
+    consteval data_def_type(data_definition_type type,
         char extension,
         modifier_spec bit_length_spec,
         modifier_spec length_spec,
@@ -151,10 +156,10 @@ public:
         context::alignment implicit_alignment,
         implicit_length_t implicit_length,
         context::integer_type int_type_,
-        bool ignores_scale = false);
+        bool ignores_scale = false) noexcept;
 
     // constructor for types with different allowed lengths with DS instruction
-    data_def_type(data_definition_type type,
+    consteval data_def_type(data_definition_type type,
         char extension,
         modifier_spec bit_length_spec,
         modifier_spec length_spec,
@@ -163,7 +168,7 @@ public:
         modifier_spec exponent_spec,
         context::alignment implicit_alignment,
         implicit_length_t implicit_length,
-        context::integer_type int_type_);
+        context::integer_type int_type_) noexcept;
 
     // returns length of the operand in bits
     uint64_t get_length(
@@ -174,8 +179,6 @@ public:
     int16_t get_scale_attribute(const scale_modifier_t& scale, const reduced_nominal_value_t& nominal) const;
     // Returns type corresponding to specified type and extension.
     static const data_def_type* access_data_def_type(char type, char extension);
-
-    virtual ~data_def_type() = 0;
 
     [[nodiscard]] constexpr context::integer_type get_int_type() const noexcept { return int_type_; }
     [[nodiscard]] constexpr bool ignores_scale() const noexcept { return ignores_scale_; }
@@ -191,9 +194,9 @@ public:
 
     data_definition_type type() const noexcept { return (data_definition_type)type_ext[0]; }
     char extension() const noexcept { return type_ext[1]; }
-    std::string_view type_str() const noexcept { return std::string_view(type_ext, 1 + !!type_ext[1]); }
+    std::string_view type_str() const noexcept { return std::string_view(type_ext.data(), 1 + !!type_ext[1]); }
 
-    char type_ext[2];
+    std::array<char, 2> type_ext;
 
     modifier_spec bit_length_spec_;
     modifier_spec length_spec_;

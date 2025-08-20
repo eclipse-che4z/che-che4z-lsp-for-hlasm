@@ -272,7 +272,6 @@ long long data_definition::evaluate_total_length(
         }
         else if (std::holds_alternative<checking::n_a>(spec))
             return -1;
-        // else if (std::holds_alternative<checking::no_check>(spec));
         // TODO: the following were previously ignored
         // else if (std::holds_alternative<checking::bound_list>(spec));
         else if (len.value < 0) // at least take care of the obvious error

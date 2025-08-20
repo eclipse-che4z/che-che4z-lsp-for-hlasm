@@ -13,7 +13,7 @@
  */
 
 #include "../../common_testing.h"
-#include "checking/data_definition/data_def_types.h"
+#include "checking/data_definition/data_def_type_base.h"
 #include "context/hlasm_context.h"
 #include "context/ordinary_assembly/ordinary_assembly_dependency_solver.h"
 #include "expressions/data_definition.h"
@@ -81,406 +81,406 @@ TEST(data_def_operands_length, explicit_byte)
 
 TEST(data_def_length, B_multiple)
 {
-    data_def_type_B t;
+    const auto* t = data_def_type::access_data_def_type('B', 0);
 
-    EXPECT_EQ(t.get_length(-1, -1, false, "111010101,10100010,011"), (size_t)(4 * 8));
+    EXPECT_EQ(t->get_length(-1, -1, false, "111010101,10100010,011"), (size_t)(4 * 8));
 }
 
 TEST(data_def_length_attribute, B_multiple)
 {
-    data_def_type_B t;
+    const auto* t = data_def_type::access_data_def_type('B', 0);
 
-    EXPECT_EQ(t.get_length_attribute({}, "111010101,10100010,011"), 2U);
+    EXPECT_EQ(t->get_length_attribute({}, "111010101,10100010,011"), 2U);
 }
 
 TEST(data_def_length_attribute, B_explicit)
 {
-    data_def_type_B t;
+    const auto* t = data_def_type::access_data_def_type('B', 0);
 
-    EXPECT_EQ(t.get_length_attribute(data_def_length_t(5), "111010101,10100010,011"), 5U);
+    EXPECT_EQ(t->get_length_attribute(data_def_length_t(5), "111010101,10100010,011"), 5U);
 }
 
 TEST(data_def_length, dupl_factor_bit_length)
 {
-    data_def_type_B t;
+    const auto* t = data_def_type::access_data_def_type('B', 0);
 
-    EXPECT_EQ(t.get_length(3, 4, true, "111010101,10100010,011"), 12U * 3);
+    EXPECT_EQ(t->get_length(3, 4, true, "111010101,10100010,011"), 12U * 3);
 }
 
 TEST(data_def_length, dupl_factor_implicit_length)
 {
-    data_def_type_A t;
+    const auto* t = data_def_type::access_data_def_type('A', 0);
 
-    EXPECT_EQ(t.get_length(5, -1, false, (size_t)2), (size_t)(8 * 5 * 8));
+    EXPECT_EQ(t->get_length(5, -1, false, (size_t)2), (size_t)(8 * 5 * 8));
 }
 
 TEST(data_def_length, B_one_bit)
 {
-    data_def_type_B t;
+    const auto* t = data_def_type::access_data_def_type('B', 0);
 
-    EXPECT_EQ(t.get_length(-1, -1, false, "1"), (size_t)(1 * 8));
+    EXPECT_EQ(t->get_length(-1, -1, false, "1"), (size_t)(1 * 8));
 }
 
 TEST(data_def_length, B_explicit_length)
 {
-    data_def_type_B t;
+    const auto* t = data_def_type::access_data_def_type('B', 0);
 
-    EXPECT_EQ(t.get_length(-1, 4, false, "111010101,10100010,011"), (size_t)(12 * 8));
+    EXPECT_EQ(t->get_length(-1, 4, false, "111010101,10100010,011"), (size_t)(12 * 8));
 }
 
 TEST(data_def_length, B_no_nominal)
 {
-    data_def_type_B t;
+    const auto* t = data_def_type::access_data_def_type('B', 0);
 
-    EXPECT_EQ(t.get_length(-1, -1, false, {}), 8U);
+    EXPECT_EQ(t->get_length(-1, -1, false, {}), 8U);
 }
 
 TEST(data_def_length, CA)
 {
-    data_def_type_CA t;
+    const auto* t = data_def_type::access_data_def_type('C', 'A');
 
-    EXPECT_EQ(t.get_length(-1, -1, false, "ASCII"), 5U * 8);
+    EXPECT_EQ(t->get_length(-1, -1, false, "ASCII"), 5U * 8);
 }
 
 TEST(data_def_length_attribute, CA)
 {
-    data_def_type_CA t;
+    const auto* t = data_def_type::access_data_def_type('C', 'A');
 
-    EXPECT_EQ(t.get_length_attribute({}, "ASCII"), 5U);
+    EXPECT_EQ(t->get_length_attribute({}, "ASCII"), 5U);
 }
 
 TEST(data_def_length_attribute, CA_bit_length)
 {
-    data_def_type_CA t;
+    const auto* t = data_def_type::access_data_def_type('C', 'A');
 
     data_def_length_t len(30);
     len.len_type = data_def_length_t::BIT;
 
-    EXPECT_EQ(t.get_length_attribute(len, "ASCII"), 4U);
+    EXPECT_EQ(t->get_length_attribute(len, "ASCII"), 4U);
 }
 
 
 TEST(data_def_length, CA_no_nominal)
 {
-    data_def_type_CA t;
+    const auto* t = data_def_type::access_data_def_type('C', 'A');
 
-    EXPECT_EQ(t.get_length(-1, -1, false, {}), 8U);
+    EXPECT_EQ(t->get_length(-1, -1, false, {}), 8U);
 }
 
 TEST(data_def_length, CA_explicit_length)
 {
-    data_def_type_CA t;
+    const auto* t = data_def_type::access_data_def_type('C', 'A');
 
-    EXPECT_EQ(t.get_length(-1, 4, false, "ASCII,ASCII"), 4U * 8);
+    EXPECT_EQ(t->get_length(-1, 4, false, "ASCII,ASCII"), 4U * 8);
 }
 
 TEST(data_def_length, CE)
 {
-    data_def_type_CE t;
+    const auto* t = data_def_type::access_data_def_type('C', 'E');
 
-    EXPECT_EQ(t.get_length(-1, -1, false, "ebcdic"), 6U * 8);
+    EXPECT_EQ(t->get_length(-1, -1, false, "ebcdic"), 6U * 8);
 }
 
 TEST(data_def_length, CU)
 {
-    data_def_type_CU t;
+    const auto* t = data_def_type::access_data_def_type('C', 'U');
 
-    EXPECT_EQ(t.get_length(-1, -1, false, "utf16"), 5U * 2 * 8);
+    EXPECT_EQ(t->get_length(-1, -1, false, "utf16"), 5U * 2 * 8);
 }
 
 TEST(data_def_length_attribute, CU)
 {
-    data_def_type_CU t;
+    const auto* t = data_def_type::access_data_def_type('C', 'U');
 
-    EXPECT_EQ(t.get_length_attribute({}, "utf,16"), 12U);
+    EXPECT_EQ(t->get_length_attribute({}, "utf,16"), 12U);
 }
 
 TEST(data_def_length, CU_no_nominal)
 {
-    data_def_type_CU t;
+    const auto* t = data_def_type::access_data_def_type('C', 'U');
 
-    EXPECT_EQ(t.get_length(-1, -1, false, {}), 16U);
+    EXPECT_EQ(t->get_length(-1, -1, false, {}), 16U);
 }
 
 TEST(data_def_length, CU_explicit_length)
 {
-    data_def_type_CU t;
+    const auto* t = data_def_type::access_data_def_type('C', 'U');
 
-    EXPECT_EQ(t.get_length(-1, 4, false, "utf,16"), 4U * 8);
+    EXPECT_EQ(t->get_length(-1, 4, false, "utf,16"), 4U * 8);
 }
 
 
 TEST(data_def_length, G)
 {
-    data_def_type_G t;
+    const auto* t = data_def_type::access_data_def_type('G', 0);
 
-    EXPECT_EQ(t.get_length(-1, -1, false, "<.A.B>"), 4U * 8);
+    EXPECT_EQ(t->get_length(-1, -1, false, "<.A.B>"), 4U * 8);
 }
 
 TEST(data_def_length, G_explicit_length)
 {
-    data_def_type_G t;
+    const auto* t = data_def_type::access_data_def_type('G', 0);
 
-    EXPECT_EQ(t.get_length(-1, 4, false, "<.A.,.B>"), 4U * 8);
+    EXPECT_EQ(t->get_length(-1, 4, false, "<.A.,.B>"), 4U * 8);
 }
 
 TEST(data_def_length, G_no_nominal)
 {
-    data_def_type_G t;
+    const auto* t = data_def_type::access_data_def_type('G', 0);
 
-    EXPECT_EQ(t.get_length(-1, -1, false, {}), 16U);
+    EXPECT_EQ(t->get_length(-1, -1, false, {}), 16U);
 }
 
 TEST(data_def_length, X_odd)
 {
-    data_def_type_X t;
+    const auto* t = data_def_type::access_data_def_type('X', 0);
 
-    EXPECT_EQ(t.get_length(-1, -1, false, "ABC"), 2U * 8);
+    EXPECT_EQ(t->get_length(-1, -1, false, "ABC"), 2U * 8);
 }
 
 TEST(data_def_length_attribute, X_multiple)
 {
-    data_def_type_X t;
+    const auto* t = data_def_type::access_data_def_type('X', 0);
 
-    EXPECT_EQ(t.get_length_attribute({}, "ABC,CD,1234"), 2U);
+    EXPECT_EQ(t->get_length_attribute({}, "ABC,CD,1234"), 2U);
 }
 
 TEST(data_def_length, X_even)
 {
-    data_def_type_X t;
+    const auto* t = data_def_type::access_data_def_type('X', 0);
 
-    EXPECT_EQ(t.get_length(-1, -1, false, "ABCD"), 2U * 8);
+    EXPECT_EQ(t->get_length(-1, -1, false, "ABCD"), 2U * 8);
 }
 
 TEST(data_def_length, X_multiple)
 {
-    data_def_type_X t;
+    const auto* t = data_def_type::access_data_def_type('X', 0);
 
-    EXPECT_EQ(t.get_length(-1, -1, false, "ABCD,A,ABC,01235"), 8U * 8);
+    EXPECT_EQ(t->get_length(-1, -1, false, "ABCD,A,ABC,01235"), 8U * 8);
 }
 
 TEST(data_def_length, X_no_nominal)
 {
-    data_def_type_X t;
+    const auto* t = data_def_type::access_data_def_type('X', 0);
 
-    EXPECT_EQ(t.get_length(-1, -1, false, {}), 8U);
+    EXPECT_EQ(t->get_length(-1, -1, false, {}), 8U);
 }
 
 TEST(data_def_length, F)
 {
-    data_def_type_F t;
+    const auto* t = data_def_type::access_data_def_type('F', 0);
 
-    EXPECT_EQ(t.get_length(-1, -1, false, "1.23E3"), 4U * 8);
+    EXPECT_EQ(t->get_length(-1, -1, false, "1.23E3"), 4U * 8);
 }
 
 TEST(data_def_length_attribute, F)
 {
-    data_def_type_F t;
+    const auto* t = data_def_type::access_data_def_type('F', 0);
 
-    EXPECT_EQ(t.get_length_attribute({}, "1.23E3,123"), 4U);
+    EXPECT_EQ(t->get_length_attribute({}, "1.23E3,123"), 4U);
 }
 
 TEST(data_def_length, F_no_nominal)
 {
-    data_def_type_F t;
+    const auto* t = data_def_type::access_data_def_type('F', 0);
 
-    EXPECT_EQ(t.get_length(-1, -1, false, {}), 4U * 8);
+    EXPECT_EQ(t->get_length(-1, -1, false, {}), 4U * 8);
 }
 
 TEST(data_def_length, F_multiple)
 {
-    data_def_type_F t;
+    const auto* t = data_def_type::access_data_def_type('F', 0);
 
-    EXPECT_EQ(t.get_length(-1, -1, false, "1.23E3,1,1.45"), 3U * 4 * 8);
+    EXPECT_EQ(t->get_length(-1, -1, false, "1.23E3,1,1.45"), 3U * 4 * 8);
 }
 
 TEST(data_def_length, FD_multiple)
 {
-    data_def_type_FD t;
+    const auto* t = data_def_type::access_data_def_type('F', 'D');
 
-    EXPECT_EQ(t.get_length(-1, -1, false, "1.23E3,1,1.45"), 3U * 8 * 8);
+    EXPECT_EQ(t->get_length(-1, -1, false, "1.23E3,1,1.45"), 3U * 8 * 8);
 }
 
 TEST(data_def_length, H_multiple)
 {
-    data_def_type_H t;
+    const auto* t = data_def_type::access_data_def_type('H', 0);
 
-    EXPECT_EQ(t.get_length(-1, -1, false, "1.23E3,1,1.45"), 3U * 2 * 8);
+    EXPECT_EQ(t->get_length(-1, -1, false, "1.23E3,1,1.45"), 3U * 2 * 8);
 }
 
 TEST(data_def_length, P)
 {
-    data_def_type_P t;
+    const auto* t = data_def_type::access_data_def_type('P', 0);
 
-    EXPECT_EQ(t.get_length(-1, -1, false, "456,-12,4.587"), (size_t)(2 + 2 + 3) * 8);
+    EXPECT_EQ(t->get_length(-1, -1, false, "456,-12,4.587"), (size_t)(2 + 2 + 3) * 8);
 }
 
 TEST(data_def_length_attribute, P_multiple)
 {
-    data_def_type_P t;
+    const auto* t = data_def_type::access_data_def_type('P', 0);
 
-    EXPECT_EQ(t.get_length_attribute({}, "456.174,-12,4.587"), 4U);
+    EXPECT_EQ(t->get_length_attribute({}, "456.174,-12,4.587"), 4U);
 }
 
 TEST(data_def_length_attribute, P_simple)
 {
-    data_def_type_P t;
+    const auto* t = data_def_type::access_data_def_type('P', 0);
 
-    EXPECT_EQ(t.get_length_attribute({}, "456"), 2U);
+    EXPECT_EQ(t->get_length_attribute({}, "456"), 2U);
 }
 
 TEST(data_def_length, Z)
 {
-    data_def_type_Z t;
+    const auto* t = data_def_type::access_data_def_type('Z', 0);
 
-    EXPECT_EQ(t.get_length(-1, -1, false, "456,-12,4.587"), (size_t)(3 + 2 + 4) * 8);
+    EXPECT_EQ(t->get_length(-1, -1, false, "456,-12,4.587"), (size_t)(3 + 2 + 4) * 8);
 }
 
 TEST(data_def_length_attribute, Z_multiple)
 {
-    data_def_type_Z t;
+    const auto* t = data_def_type::access_data_def_type('Z', 0);
 
-    EXPECT_EQ(t.get_length_attribute({}, "45.12,-12,4.587"), 4U);
+    EXPECT_EQ(t->get_length_attribute({}, "45.12,-12,4.587"), 4U);
 }
 
 TEST(data_def_length_attribute, Z_simple)
 {
-    data_def_type_Z t;
+    const auto* t = data_def_type::access_data_def_type('Z', 0);
 
-    EXPECT_EQ(t.get_length_attribute({}, "45"), 2U);
+    EXPECT_EQ(t->get_length_attribute({}, "45"), 2U);
 }
 
 TEST(data_def_length, A)
 {
-    data_def_type_A t;
+    const auto* t = data_def_type::access_data_def_type('A', 0);
 
-    EXPECT_EQ(t.get_length(-1, -1, false, (size_t)3), (size_t)(4 + 4 + 4) * 8);
+    EXPECT_EQ(t->get_length(-1, -1, false, (size_t)3), (size_t)(4 + 4 + 4) * 8);
 }
 
 TEST(data_def_length, A_no_nominal)
 {
-    data_def_type_A t;
+    const auto* t = data_def_type::access_data_def_type('A', 0);
 
-    EXPECT_EQ(t.get_length(-1, -1, false, {}), 4U * 8);
+    EXPECT_EQ(t->get_length(-1, -1, false, {}), 4U * 8);
 }
 
 TEST(data_def_length, A_explicit_length)
 {
-    data_def_type_A t;
+    const auto* t = data_def_type::access_data_def_type('A', 0);
 
-    EXPECT_EQ(t.get_length(-1, 3, false, (size_t)3), (size_t)(3 + 3 + 3) * 8);
+    EXPECT_EQ(t->get_length(-1, 3, false, (size_t)3), (size_t)(3 + 3 + 3) * 8);
 }
 
 TEST(data_def_length, AD)
 {
-    data_def_type_AD t;
+    const auto* t = data_def_type::access_data_def_type('A', 'D');
 
-    EXPECT_EQ(t.get_length(-1, -1, false, (size_t)3), (size_t)(8 + 8 + 8) * 8);
+    EXPECT_EQ(t->get_length(-1, -1, false, (size_t)3), (size_t)(8 + 8 + 8) * 8);
 }
 
 TEST(data_def_length, Y)
 {
-    data_def_type_Y t;
+    const auto* t = data_def_type::access_data_def_type('Y', 0);
 
-    EXPECT_EQ(t.get_length(-1, -1, false, (size_t)3), (size_t)(2 + 2 + 2) * 8);
+    EXPECT_EQ(t->get_length(-1, -1, false, (size_t)3), (size_t)(2 + 2 + 2) * 8);
 }
 
 TEST(data_def_length, R)
 {
-    data_def_type_R t;
+    const auto* t = data_def_type::access_data_def_type('R', 0);
 
-    EXPECT_EQ(t.get_length(-1, -1, false, (size_t)2), (size_t)(4 + 4) * 8);
+    EXPECT_EQ(t->get_length(-1, -1, false, (size_t)2), (size_t)(4 + 4) * 8);
 }
 
 TEST(data_def_length, RD)
 {
-    data_def_type_RD t;
+    const auto* t = data_def_type::access_data_def_type('R', 'D');
 
-    EXPECT_EQ(t.get_length(-1, -1, false, (size_t)2), (size_t)(8 + 8) * 8);
+    EXPECT_EQ(t->get_length(-1, -1, false, (size_t)2), (size_t)(8 + 8) * 8);
 }
 
 TEST(data_def_length, RD_no_nominal)
 {
-    data_def_type_RD t;
+    const auto* t = data_def_type::access_data_def_type('R', 'D');
 
-    EXPECT_EQ(t.get_length(-1, -1, false, {}), 8U * 8);
+    EXPECT_EQ(t->get_length(-1, -1, false, {}), 8U * 8);
 }
 
 TEST(data_def_length, RD_explicit_length)
 {
-    data_def_type_RD t;
+    const auto* t = data_def_type::access_data_def_type('R', 'D');
 
-    EXPECT_EQ(t.get_length(-1, 4, false, (size_t)2), (size_t)(4 + 4) * 8);
+    EXPECT_EQ(t->get_length(-1, 4, false, (size_t)2), (size_t)(4 + 4) * 8);
 }
 
 
 TEST(data_def_length, S)
 {
-    data_def_type_S t;
+    const auto* t = data_def_type::access_data_def_type('S', 0);
 
-    EXPECT_EQ(t.get_length(-1, -1, false, (size_t)1), 2U * 8);
+    EXPECT_EQ(t->get_length(-1, -1, false, (size_t)1), 2U * 8);
 }
 
 TEST(data_def_length, SY)
 {
-    data_def_type_SY t;
+    const auto* t = data_def_type::access_data_def_type('S', 'Y');
 
-    EXPECT_EQ(t.get_length(-1, -1, false, (size_t)1), 3U * 8);
+    EXPECT_EQ(t->get_length(-1, -1, false, (size_t)1), 3U * 8);
 }
 
 TEST(data_def_length, J)
 {
-    data_def_type_J t;
+    const auto* t = data_def_type::access_data_def_type('J', 0);
 
-    EXPECT_EQ(t.get_length(-1, -1, false, (size_t)2), (size_t)(4 + 4) * 8);
+    EXPECT_EQ(t->get_length(-1, -1, false, (size_t)2), (size_t)(4 + 4) * 8);
 }
 
 
 TEST(data_def_length, E)
 {
-    data_def_type_E t;
+    const auto* t = data_def_type::access_data_def_type('E', 0);
 
-    EXPECT_EQ(t.get_length(-1, -1, false, "456E10,45"), (size_t)(4 + 4) * 8);
+    EXPECT_EQ(t->get_length(-1, -1, false, "456E10,45"), (size_t)(4 + 4) * 8);
 }
 
 TEST(data_def_length, ED)
 {
-    data_def_type_ED t;
+    const auto* t = data_def_type::access_data_def_type('E', 'D');
 
-    EXPECT_EQ(t.get_length(-1, -1, false, "456E7R8"), 4U * 8);
+    EXPECT_EQ(t->get_length(-1, -1, false, "456E7R8"), 4U * 8);
 }
 
 TEST(data_def_length, D)
 {
-    data_def_type_D t;
+    const auto* t = data_def_type::access_data_def_type('D', 0);
 
-    EXPECT_EQ(t.get_length(-1, -1, false, "456E7"), 8U * 8);
+    EXPECT_EQ(t->get_length(-1, -1, false, "456E7"), 8U * 8);
 }
 
 TEST(data_def_length, DD)
 {
-    data_def_type_DD t;
+    const auto* t = data_def_type::access_data_def_type('D', 'D');
 
-    EXPECT_EQ(t.get_length(-1, -1, false, "456,14"), (size_t)(8 + 8) * 8);
+    EXPECT_EQ(t->get_length(-1, -1, false, "456,14"), (size_t)(8 + 8) * 8);
 }
 
 TEST(data_def_length, L)
 {
-    data_def_type_L t;
+    const auto* t = data_def_type::access_data_def_type('L', 0);
 
-    EXPECT_EQ(t.get_length(-1, -1, false, "+4E7"), 16U * 8);
+    EXPECT_EQ(t->get_length(-1, -1, false, "+4E7"), 16U * 8);
 }
 
 TEST(data_def_length, LB)
 {
-    data_def_type_LB t;
+    const auto* t = data_def_type::access_data_def_type('L', 'B');
 
-    EXPECT_EQ(t.get_length(-1, -1, false, "-13.14E7"), 16U * 8);
+    EXPECT_EQ(t->get_length(-1, -1, false, "-13.14E7"), 16U * 8);
 }
 
 TEST(data_def_length, LQ)
 {
-    data_def_type_LQ t;
+    const auto* t = data_def_type::access_data_def_type('L', 'Q');
 
-    EXPECT_EQ(t.get_length(-1, -1, false, "-1E7"), 16U * 8);
+    EXPECT_EQ(t->get_length(-1, -1, false, "-1E7"), 16U * 8);
 }

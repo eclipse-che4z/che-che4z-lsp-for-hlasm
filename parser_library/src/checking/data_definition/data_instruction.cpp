@@ -125,7 +125,6 @@ struct check_modifier
     std::string_view modifier_name;
     const diagnostic_collector& add_diagnostic;
 
-    bool operator()(const no_check&) const { return true; }
     bool operator()(const ignored&) const
     {
         const bool tolerate = value == 0;
@@ -464,30 +463,19 @@ bool check_nominal(const data_def_type& dd,
     // TODO: we are still missing length checks on nominal length for C, G, or X
     switch (dd.type())
     {
-        case data_definition_type::A: {
-            const auto* exprs = has_only_simple_expressions(dd, nominal, add_diagnostic);
-            if (!exprs)
-                return false;
-            if (!common.has_length())
-                return true;
-
-            const auto all_abs = all_values_are_absolute(exprs->exprs, dep_solver, diags);
-            if (dd.extension() == 'D')
-                diag_func = check_AD_length(common, all_abs);
-            else
-                diag_func = check_A_length(common, all_abs);
-            break;
-        }
-
+        case data_definition_type::A:
         case data_definition_type::Y: {
             const auto* exprs = has_only_simple_expressions(dd, nominal, add_diagnostic);
             if (!exprs)
                 return false;
-            if (!common.has_length())
-                return true;
 
-            diag_func = check_Y_length(common, all_values_are_absolute(exprs->exprs, dep_solver, diags));
-            break;
+            if (!all_values_are_absolute(exprs->exprs, dep_solver, diags) && common.length_in_bits)
+            {
+                static constexpr std::string_view reloc_suffix = " with relocatable symbols";
+                add_diagnostic(diagnostic_op::error_D007(nominal.value_range, dd.type_str(), reloc_suffix));
+                return false;
+            }
+            return true;
         }
 
         case data_definition_type::Q:

@@ -18,8 +18,8 @@
 #include <algorithm>
 #include <concepts>
 
-#include "context/ordinary_assembly/symbol_attributes.h"
-#include "data_def_types.h"
+#include "checking/data_definition/data_def_fields.h"
+#include "checking/data_definition/data_def_type_base.h"
 #include "utils/unicode_text.h"
 
 namespace hlasm_plugin::parser_library::checking {
@@ -96,19 +96,7 @@ uint32_t get_B_nominal_length_attribute(const reduced_nominal_value_t& nom)
     else
         return get_X_B_length_attr(std::get<std::string_view>(nom), 8);
 }
-constexpr as_needed::impl_t B_nominal_extras { get_B_nominal_length, get_B_nominal_length_attribute };
-
-data_def_type_B::data_def_type_B()
-    : data_def_type(data_definition_type::B,
-          '\0',
-          modifier_bound { 1, 2048 },
-          modifier_bound { 1, 256 },
-          n_a(),
-          n_a(),
-          context::no_align,
-          as_needed(B_nominal_extras),
-          context::integer_type::undefined)
-{}
+constinit const as_needed::impl_t B_nominal_extras { get_B_nominal_length, get_B_nominal_length_attribute };
 
 //******************************   type C   ********************************//
 uint64_t get_CA_CE_nominal_length(const reduced_nominal_value_t& op)
@@ -131,32 +119,7 @@ uint32_t get_CA_CE_nominal_length_attribute(const reduced_nominal_value_t& nom)
         return (uint32_t)utils::length_utf32_no_validation(std::get<std::string_view>(nom));
 }
 
-constexpr as_needed::impl_t CA_CE_nominal_extras { get_CA_CE_nominal_length, get_CA_CE_nominal_length_attribute };
-
-data_def_type_CA_CE::data_def_type_CA_CE(char extension)
-    : data_def_type(data_definition_type::C,
-          extension,
-          modifier_bound { 1, 2048 },
-          modifier_bound { 1, 256 },
-          65535,
-          n_a(),
-          n_a(),
-          context::no_align,
-          as_needed(CA_CE_nominal_extras),
-          context::integer_type::undefined)
-{}
-
-data_def_type_C::data_def_type_C()
-    : data_def_type_CA_CE('\0')
-{}
-
-data_def_type_CA::data_def_type_CA()
-    : data_def_type_CA_CE('A')
-{}
-
-data_def_type_CE::data_def_type_CE()
-    : data_def_type_CA_CE('E')
-{}
+constinit const as_needed::impl_t CA_CE_nominal_extras { get_CA_CE_nominal_length, get_CA_CE_nominal_length_attribute };
 
 uint64_t get_CU_nominal_length(const reduced_nominal_value_t& op)
 {
@@ -178,19 +141,7 @@ uint32_t get_CU_nominal_length_attribute(const reduced_nominal_value_t& nom)
         return 2 * (uint32_t)utils::length_utf16_no_validation(std::get<std::string_view>(nom));
 }
 
-constexpr as_needed::impl_t CU_nominal_extras = { get_CU_nominal_length, get_CU_nominal_length_attribute };
-
-data_def_type_CU::data_def_type_CU()
-    : data_def_type(data_definition_type::C,
-          'U',
-          n_a(),
-          modifier_bound { 1, 256, true },
-          n_a(),
-          n_a(),
-          context::no_align,
-          as_needed(CU_nominal_extras),
-          context::integer_type::undefined)
-{}
+constinit const as_needed::impl_t CU_nominal_extras { get_CU_nominal_length, get_CU_nominal_length_attribute };
 
 //******************************   type G   ********************************//
 uint64_t get_G_nominal_length(const reduced_nominal_value_t& op)
@@ -221,20 +172,7 @@ uint32_t get_G_nominal_length_attribute(const reduced_nominal_value_t& nom)
     }
 }
 
-constexpr as_needed::impl_t G_nominal_extras = { get_G_nominal_length, get_G_nominal_length_attribute };
-
-data_def_type_G::data_def_type_G()
-    : data_def_type(data_definition_type::G,
-          '\0',
-          n_a(),
-          modifier_bound { 1, 256, true },
-          65534,
-          n_a(),
-          n_a(),
-          context::no_align,
-          as_needed(G_nominal_extras),
-          context::integer_type::undefined)
-{}
+constinit const as_needed::impl_t G_nominal_extras { get_G_nominal_length, get_G_nominal_length_attribute };
 
 //******************************   type X   ********************************//
 uint64_t get_X_nominal_length(const reduced_nominal_value_t& op)
@@ -255,18 +193,6 @@ uint32_t get_X_nominal_length_attribute(const reduced_nominal_value_t& nom)
     else
         return get_X_B_length_attr(std::get<std::string_view>(nom), 2);
 }
-constexpr as_needed::impl_t X_nominal_extras { get_X_nominal_length, get_X_nominal_length_attribute };
+constinit const as_needed::impl_t X_nominal_extras { get_X_nominal_length, get_X_nominal_length_attribute };
 
-data_def_type_X::data_def_type_X()
-    : data_def_type(data_definition_type::X,
-          '\0',
-          modifier_bound { 1, 2048 },
-          modifier_bound { 1, 256 },
-          65535,
-          n_a(),
-          n_a(),
-          context::no_align,
-          as_needed(X_nominal_extras),
-          context::integer_type::undefined)
-{}
 } // namespace hlasm_plugin::parser_library::checking

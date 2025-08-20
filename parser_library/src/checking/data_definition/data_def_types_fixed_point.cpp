@@ -16,25 +16,12 @@
 // these types: P, Z, H, F
 
 #include "checking/checker_helper.h"
-#include "context/ordinary_assembly/symbol_attributes.h"
-#include "data_def_types.h"
+#include "checking/data_definition/data_def_type_base.h"
 #include "diagnostic_op.h"
 
 namespace hlasm_plugin::parser_library::checking {
 
 //***************************   types H, F, FD   *****************************//
-
-data_def_type_H_F_FD::data_def_type_H_F_FD(data_definition_type type, char extension, uint8_t word_length)
-    : data_def_type(type,
-          extension,
-          modifier_bound { 1, 64 },
-          modifier_bound { 1, 8 },
-          modifier_bound { -187, 346 },
-          modifier_bound { -85, 75 },
-          { 0, word_length },
-          word_length,
-          context::integer_type::fixed)
-{}
 
 class H_F_FD_number_spec
 {
@@ -75,18 +62,6 @@ nominal_diag_func check_nominal_H_F_FD(std::string_view nom) noexcept
     // TODO truncation is also an error
 }
 
-data_def_type_H::data_def_type_H()
-    : data_def_type_H_F_FD(data_definition_type::H, '\0', 2)
-{}
-
-data_def_type_F::data_def_type_F()
-    : data_def_type_H_F_FD(data_definition_type::F, '\0', 4)
-{}
-
-data_def_type_FD::data_def_type_FD()
-    : data_def_type_H_F_FD(data_definition_type::F, 'D', 8)
-{}
-
 //***************************   types P, Z   *****************************//
 
 class P_Z_number_spec
@@ -96,18 +71,6 @@ public:
 
     static bool is_sign_char(char c) { return c == '+' || c == '-'; }
 };
-
-data_def_type_P_Z::data_def_type_P_Z(data_definition_type type, context::integer_type int_type, as_needed extras)
-    : data_def_type(type,
-          '\0',
-          modifier_bound { 1, 128 },
-          modifier_bound { 1, 16 },
-          n_a(),
-          n_a(),
-          context::no_align,
-          extras,
-          int_type)
-{}
 
 nominal_diag_func check_nominal_P_Z(std::string_view nom) noexcept
 {
@@ -171,11 +134,7 @@ uint32_t get_P_nominal_length_attribute(const reduced_nominal_value_t& op)
     // each digit is assembled as 4 bits, 4 more sign bits are assembled per each number
 }
 
-constexpr as_needed::impl_t P_nominal_extras { get_P_nominal_length, get_P_nominal_length_attribute };
-
-data_def_type_P::data_def_type_P()
-    : data_def_type_P_Z(data_definition_type::P, context::integer_type::packed, as_needed(P_nominal_extras))
-{}
+constinit const as_needed::impl_t P_nominal_extras { get_P_nominal_length, get_P_nominal_length_attribute };
 
 uint64_t get_Z_nominal_length(const reduced_nominal_value_t& op)
 {
@@ -205,10 +164,6 @@ uint32_t get_Z_nominal_length_attribute(const reduced_nominal_value_t& op)
     return first_value_len;
 }
 
-constexpr as_needed::impl_t Z_nominal_extras { get_Z_nominal_length, get_Z_nominal_length_attribute };
-
-data_def_type_Z::data_def_type_Z()
-    : data_def_type_P_Z(data_definition_type::Z, context::integer_type::zoned, as_needed(Z_nominal_extras))
-{}
+constinit const as_needed::impl_t Z_nominal_extras { get_Z_nominal_length, get_Z_nominal_length_attribute };
 
 } // namespace hlasm_plugin::parser_library::checking

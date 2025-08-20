@@ -19,31 +19,11 @@
 #include <string_view>
 
 #include "checking/checker_helper.h"
-#include "context/ordinary_assembly/symbol_attributes.h"
-#include "data_def_types.h"
+#include "checking/data_definition/data_def_type_base.h"
 #include "diagnostic_op.h"
 #include "utils/insist.h"
 
 namespace hlasm_plugin::parser_library::checking {
-
-data_def_type_E_D_L::data_def_type_E_D_L(data_definition_type type,
-    char extension,
-    modifier_spec bit_length_spec,
-    modifier_spec length_spec,
-    modifier_spec scale_spec,
-    context::alignment align,
-    uint64_t implicit_length)
-    : data_def_type(type,
-          extension,
-          bit_length_spec,
-          length_spec,
-          scale_spec,
-          modifier_bound { -85, 75 },
-          align,
-          implicit_length,
-          context::integer_type::hexfloat,
-          extension == 'D' || extension == 'B')
-{}
 
 namespace {
 struct round_mode
@@ -216,133 +196,4 @@ nominal_diag_func check_nominal_E_D_L(std::string_view nom, char extension) noex
     return nullptr;
 }
 
-data_def_type_E::data_def_type_E()
-    : data_def_type_E_D_L(data_definition_type::E,
-          '\0',
-          modifier_bound { 1, 64 },
-          modifier_bound { 1, 8 },
-          modifier_bound { 0, 5 },
-          context::fullword,
-          4)
-{}
-
-data_def_type_EH::data_def_type_EH()
-    : data_def_type_E_D_L(data_definition_type::E,
-          'H',
-          modifier_bound { 12, 64 },
-          modifier_bound { 1, 8 },
-          modifier_bound { 0, 5 },
-          context::fullword,
-          4)
-{}
-
-data_def_type_ED::data_def_type_ED()
-    : data_def_type_E_D_L(data_definition_type::E,
-          'D',
-          modifier_bound { 32, 32 },
-          modifier_bound { 4, 4 },
-          ignored(),
-          context::fullword,
-          4)
-{}
-
-data_def_type_EB::data_def_type_EB()
-    : data_def_type_E_D_L(data_definition_type::E,
-          'B',
-          modifier_bound { 32, 32 },
-          modifier_bound { 4, 4 },
-          ignored(),
-          context::fullword,
-          4)
-{}
-
-data_def_type_D::data_def_type_D()
-    : data_def_type_E_D_L(data_definition_type::D,
-          '\0',
-          modifier_bound { 1, 64 },
-          modifier_bound { 1, 8 },
-          modifier_bound { 0, 13 },
-          context::doubleword,
-          8)
-{}
-
-data_def_type_DH::data_def_type_DH()
-    : data_def_type_E_D_L(data_definition_type::D,
-          'H',
-          modifier_bound { 12, 64 },
-          modifier_bound { 1, 8 },
-          modifier_bound { 0, 13 },
-          context::doubleword,
-          8)
-{}
-
-data_def_type_DB::data_def_type_DB()
-    : data_def_type_E_D_L(data_definition_type::D,
-          'B',
-          modifier_bound { 64, 64 },
-          modifier_bound { 8, 8 },
-          ignored(),
-          context::doubleword,
-          8)
-{}
-
-data_def_type_DD::data_def_type_DD()
-    : data_def_type_E_D_L(data_definition_type::D,
-          'D',
-          modifier_bound { 64, 64 },
-          modifier_bound { 8, 8 },
-          ignored(),
-          context::doubleword,
-          8)
-{}
-
-data_def_type_L::data_def_type_L()
-    : data_def_type_E_D_L(data_definition_type::L,
-          '\0',
-          modifier_bound { 1, 128 },
-          modifier_bound { 1, 16 },
-          modifier_bound { 0, 27 },
-          context::doubleword,
-          16)
-{}
-
-data_def_type_LH::data_def_type_LH()
-    : data_def_type_E_D_L(data_definition_type::L,
-          'H',
-          modifier_bound { 12, 128 },
-          modifier_bound { 1, 16 },
-          modifier_bound { 0, 27 },
-          context::doubleword,
-          16)
-{}
-
-data_def_type_LQ::data_def_type_LQ()
-    : data_def_type_E_D_L(data_definition_type::L,
-          'Q',
-          modifier_bound { 12, 128 },
-          modifier_bound { 1, 16 },
-          modifier_bound { 0, 27 },
-          context::quadword,
-          16)
-{}
-
-data_def_type_LD::data_def_type_LD()
-    : data_def_type_E_D_L(data_definition_type::L,
-          'D',
-          modifier_bound { 128, 128 },
-          modifier_bound { 16, 16 },
-          ignored(),
-          context::doubleword,
-          16)
-{}
-
-data_def_type_LB::data_def_type_LB()
-    : data_def_type_E_D_L(data_definition_type::L,
-          'B',
-          modifier_bound { 128, 128 },
-          modifier_bound { 16, 16 },
-          ignored(),
-          context::doubleword,
-          16)
-{}
 } // namespace hlasm_plugin::parser_library::checking

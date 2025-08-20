@@ -626,3 +626,27 @@ TEST(data_definition, bound_list_stringify)
     EXPECT_EQ(checking::bound_list({ 5, 9 }).to_diag_list(), "5 or 9");
     EXPECT_EQ(checking::bound_list({ 3, 5, 9 }).to_diag_list(), "3, 5 or 9");
 }
+
+TEST(data_definition, bound_list_constexpr)
+{
+    constexpr checking::bound_list l({ 3, 5, 9 });
+
+    EXPECT_FALSE(l.allowed(-1));
+    EXPECT_FALSE(l.allowed(0));
+    EXPECT_FALSE(l.allowed(1));
+    EXPECT_FALSE(l.allowed(2));
+
+    EXPECT_TRUE(l.allowed(3));
+
+    EXPECT_FALSE(l.allowed(4));
+
+    EXPECT_TRUE(l.allowed(5));
+
+    EXPECT_FALSE(l.allowed(6));
+    EXPECT_FALSE(l.allowed(7));
+    EXPECT_FALSE(l.allowed(8));
+
+    EXPECT_TRUE(l.allowed(9));
+
+    EXPECT_FALSE(l.allowed(123));
+}

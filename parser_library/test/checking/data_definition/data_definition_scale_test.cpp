@@ -14,42 +14,42 @@
 
 #include "gtest/gtest.h"
 
-#include "checking/data_definition/data_def_types.h"
+#include "checking/data_definition/data_def_type_base.h"
 
 using namespace hlasm_plugin::parser_library::checking;
 
 
 TEST(data_def_scale_attribute, P)
 {
-    data_def_type_P t;
+    const auto* t = data_def_type::access_data_def_type('P', 0);
 
-    EXPECT_EQ(t.get_scale_attribute({}, "456.1234,-12,4.587"), 4);
+    EXPECT_EQ(t->get_scale_attribute({}, "456.1234,-12,4.587"), 4);
 }
 
 TEST(data_def_scale_attribute, P_no_integral)
 {
-    data_def_type_P t;
+    const auto* t = data_def_type::access_data_def_type('P', 0);
 
-    EXPECT_EQ(t.get_scale_attribute({}, ".1234"), 4);
+    EXPECT_EQ(t->get_scale_attribute({}, ".1234"), 4);
 }
 
 TEST(data_def_scale_attribute, P_no_fraction)
 {
-    data_def_type_P t;
+    const auto* t = data_def_type::access_data_def_type('P', 0);
 
-    EXPECT_EQ(t.get_scale_attribute({}, "3."), 0);
+    EXPECT_EQ(t->get_scale_attribute({}, "3."), 0);
 }
 
 TEST(data_def_scale_attribute, P_simple_number)
 {
-    data_def_type_P t;
+    const auto* t = data_def_type::access_data_def_type('P', 0);
 
-    EXPECT_EQ(t.get_scale_attribute({}, "3"), 0);
+    EXPECT_EQ(t->get_scale_attribute({}, "3"), 0);
 }
 
 TEST(data_def_scale_attribute, H_explicit)
 {
-    data_def_type_H t;
+    const auto* t = data_def_type::access_data_def_type('P', 0);
 
-    EXPECT_EQ(t.get_scale_attribute(5, "3"), 5);
+    EXPECT_EQ(t->get_scale_attribute(5, "3"), 5);
 }

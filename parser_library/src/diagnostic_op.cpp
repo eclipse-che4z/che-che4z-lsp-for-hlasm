@@ -1615,17 +1615,17 @@ diagnostic_op diagnostic_op::error_D007(const range& range, std::string_view typ
 }
 
 diagnostic_op diagnostic_op::error_D008(
-    const range& range, std::string_view type, std::string_view modifier, int min, int max, std::string_view suffix)
+    const range& range, std::string_view type, std::string_view modifier, int min, int max)
 {
     if (min == max)
         return diagnostic_op(diagnostic_severity::error,
             "D008",
-            concat("The ", modifier, " modifier of type ", type, suffix, " must be ", min),
+            concat("The ", modifier, " modifier of type ", type, " must be ", min),
             range);
     else
         return diagnostic_op(diagnostic_severity::error,
             "D008",
-            concat("The ", modifier, " modifier of type ", type, suffix, " must be between ", min, " and ", max),
+            concat("The ", modifier, " modifier of type ", type, " must be between ", min, " and ", max),
             range);
 }
 

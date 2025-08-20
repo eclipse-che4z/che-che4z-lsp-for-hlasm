@@ -494,7 +494,7 @@ TEST(data_def_checker, A_sym_length_too_big)
 
 TEST(data_def_checker, A_abs_length_ok)
 {
-    std::string input = R"( DC AL8(0,0))";
+    std::string input = R"( DC ADL8(0,0))";
     analyzer a(input);
     a.analyze();
 
