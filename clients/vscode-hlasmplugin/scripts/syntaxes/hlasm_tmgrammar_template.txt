@@ -140,9 +140,6 @@
           "include": "#sequenceSymbolOperandField"
         },
         {
-          "include": "#asmArguments"
-        },
-        {
           "match": "(?<=,)(\\s.*)(?<=^${listingDetails}$.{0,71})",
           "comment": "Operands will continue on next line",
           "captures": {
@@ -168,6 +165,9 @@
               "include": "#remarksLine"
             }
           ]
+        },
+        {
+          "include": "#asmArguments"
         },
         {
           "include": "#lineEnd"

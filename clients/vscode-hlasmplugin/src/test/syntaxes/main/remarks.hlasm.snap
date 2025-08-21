@@ -1,0 +1,28 @@
+>         L     0,0                     remark
+#^^^^^^^^^ source.hlasm
+#         ^ source.hlasm entity.name.function.hlasm
+#          ^^^^^ source.hlasm
+#               ^ source.hlasm punctuation.definition.tag.hlasm constant.numeric.hlasm
+#                ^ source.hlasm
+#                 ^ source.hlasm punctuation.definition.tag.hlasm constant.numeric.hlasm
+#                  ^ source.hlasm
+#                   ^^^^^^^^^^^^^^^^^^^^^^^^^^ source.hlasm comment.hlasm
+>         L     0,0                     (remark)
+#^^^^^^^^^ source.hlasm
+#         ^ source.hlasm entity.name.function.hlasm
+#          ^^^^^ source.hlasm
+#               ^ source.hlasm punctuation.definition.tag.hlasm constant.numeric.hlasm
+#                ^ source.hlasm
+#                 ^ source.hlasm punctuation.definition.tag.hlasm constant.numeric.hlasm
+#                  ^ source.hlasm
+#                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.hlasm comment.hlasm
+>         L     0,0                     'remark'
+#^^^^^^^^^ source.hlasm
+#         ^ source.hlasm entity.name.function.hlasm
+#          ^^^^^ source.hlasm
+#               ^ source.hlasm punctuation.definition.tag.hlasm constant.numeric.hlasm
+#                ^ source.hlasm
+#                 ^ source.hlasm punctuation.definition.tag.hlasm constant.numeric.hlasm
+#                  ^ source.hlasm
+#                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.hlasm comment.hlasm
+>
