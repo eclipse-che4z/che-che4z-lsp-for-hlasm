@@ -83,15 +83,22 @@ struct as_needed
 {
     struct impl_t
     {
-        uint64_t (*get_nominal_length)(const reduced_nominal_value_t& op);
-        uint32_t (*get_nominal_length_attribute)(const reduced_nominal_value_t& op);
+        uint64_t (*get_nominal_length)(std::string_view) noexcept;
+        uint32_t (*get_nominal_length_attribute)(std::string_view) noexcept;
+        uint32_t empty_length;
+        uint32_t error_length = 0;
     };
 
-    uint64_t get_nominal_length(const reduced_nominal_value_t& op) const { return impl->get_nominal_length(op); }
-    uint32_t get_nominal_length_attribute(const reduced_nominal_value_t& op) const
+    [[nodiscard]] uint64_t get_nominal_length(std::string_view nom) const noexcept
     {
-        return impl->get_nominal_length_attribute(op);
+        return impl->get_nominal_length(nom);
     }
+    [[nodiscard]] uint32_t get_nominal_length_attribute(std::string_view nom) const noexcept
+    {
+        return impl->get_nominal_length_attribute(nom);
+    }
+    [[nodiscard]] uint32_t get_empty_length() const noexcept { return impl->empty_length; }
+    [[nodiscard]] uint32_t get_error_length() const noexcept { return impl->error_length; }
 
     explicit constexpr as_needed(const impl_t& impl) noexcept
         : impl(&impl)

@@ -94,11 +94,11 @@ void utf8_resize(std::string& s, size_t count, char pad);
 
 // returns the length of the string in utf-16 symbols
 size_t length_utf16(std::string_view text);
-size_t length_utf16_no_validation(std::string_view text);
+size_t length_utf16_no_validation(std::string_view text) noexcept;
 
 // return the length in unicode codepoints
 size_t length_utf32(std::string_view text);
-size_t length_utf32_no_validation(std::string_view text);
+size_t length_utf32_no_validation(std::string_view text) noexcept;
 
 template<size_t>
 struct counter_index_t

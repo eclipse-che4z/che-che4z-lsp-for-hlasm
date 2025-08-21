@@ -91,15 +91,12 @@ nominal_diag_func check_nominal_P_Z(std::string_view nom) noexcept
     return nullptr;
 }
 
-uint64_t get_P_nominal_length(const reduced_nominal_value_t& op)
+uint64_t get_P_nominal_length(std::string_view op) noexcept
 {
-    if (!std::holds_alternative<std::string_view>(op))
-        return 1;
-
     uint64_t bytes_count = 0;
     // 4 sign bits are added to each assembled number
     uint64_t halfbytes_count = 1;
-    for (char c : std::get<std::string_view>(op))
+    for (char c : op)
     {
         if (c == ',')
         {
@@ -115,14 +112,11 @@ uint64_t get_P_nominal_length(const reduced_nominal_value_t& op)
     return bytes_count;
 }
 
-uint32_t get_P_nominal_length_attribute(const reduced_nominal_value_t& op)
+uint32_t get_P_nominal_length_attribute(std::string_view op) noexcept
 {
-    if (!std::holds_alternative<std::string_view>(op))
-        return 1;
-
     // 4 sign bits are added to each assembled number
     uint32_t halfbytes_count = 1;
-    for (char c : std::get<std::string_view>(op))
+    for (char c : op)
     {
         if (c == ',')
             break;
@@ -134,24 +128,18 @@ uint32_t get_P_nominal_length_attribute(const reduced_nominal_value_t& op)
     // each digit is assembled as 4 bits, 4 more sign bits are assembled per each number
 }
 
-constinit const as_needed::impl_t P_nominal_extras { get_P_nominal_length, get_P_nominal_length_attribute };
+constinit const as_needed::impl_t P_nominal_extras { get_P_nominal_length, get_P_nominal_length_attribute, 1, 1 };
 
-uint64_t get_Z_nominal_length(const reduced_nominal_value_t& op)
+uint64_t get_Z_nominal_length(std::string_view op) noexcept
 {
-    if (!std::holds_alternative<std::string_view>(op))
-        return 1;
-
     // each digit is assembled as one byte
-    return std::ranges::count_if(std::get<std::string_view>(op), &is_digit);
+    return std::ranges::count_if(op, &is_digit);
 }
 
-uint32_t get_Z_nominal_length_attribute(const reduced_nominal_value_t& op)
+uint32_t get_Z_nominal_length_attribute(std::string_view op) noexcept
 {
-    if (!std::holds_alternative<std::string_view>(op))
-        return 1;
-
     uint32_t first_value_len = 0;
-    for (char c : std::get<std::string_view>(op))
+    for (char c : op)
     {
         if (c == ',')
             break;
@@ -164,6 +152,6 @@ uint32_t get_Z_nominal_length_attribute(const reduced_nominal_value_t& op)
     return first_value_len;
 }
 
-constinit const as_needed::impl_t Z_nominal_extras { get_Z_nominal_length, get_Z_nominal_length_attribute };
+constinit const as_needed::impl_t Z_nominal_extras { get_Z_nominal_length, get_Z_nominal_length_attribute, 1, 1 };
 
 } // namespace hlasm_plugin::parser_library::checking

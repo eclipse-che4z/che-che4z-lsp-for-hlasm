@@ -157,8 +157,16 @@ uint64_t data_def_type::get_length(
         if (!length_in_bits)
             len_in_bits *= 8;
     }
-    else if (std::holds_alternative<as_needed>(implicit_length_))
-        len_in_bits = std::get<as_needed>(implicit_length_).get_nominal_length(rnv) * 8;
+    else if (const auto* an = std::get_if<as_needed>(&implicit_length_))
+    {
+        if (std::holds_alternative<std::monostate>(rnv))
+            len_in_bits = an->get_empty_length();
+        else if (!std::holds_alternative<std::string_view>(rnv))
+            len_in_bits = an->get_error_length();
+        else
+            len_in_bits = an->get_nominal_length(std::get<std::string_view>(rnv));
+        len_in_bits *= 8;
+    }
     else if (std::holds_alternative<std::monostate>(rnv))
         len_in_bits = std::get<uint64_t>(implicit_length_) * 8;
     else
@@ -171,8 +179,7 @@ uint64_t data_def_type::get_length(
     return len_in_bits;
 }
 
-uint32_t data_def_type::get_length_attribute(
-    const data_def_length_t& length, const reduced_nominal_value_t& nominal) const
+uint32_t data_def_type::get_length_attribute(const data_def_length_t& length, const reduced_nominal_value_t& rnv) const
 {
     if (length.present)
     {
@@ -185,8 +192,15 @@ uint32_t data_def_type::get_length_attribute(
         }
         return len_attr;
     }
-    else if (std::holds_alternative<as_needed>(implicit_length_))
-        return std::get<as_needed>(implicit_length_).get_nominal_length_attribute(nominal);
+    else if (const auto* an = std::get_if<as_needed>(&implicit_length_))
+    {
+        if (std::holds_alternative<std::monostate>(rnv))
+            return an->get_empty_length();
+        else if (!std::holds_alternative<std::string_view>(rnv))
+            return an->get_error_length();
+        else
+            return an->get_nominal_length_attribute(std::get<std::string_view>(rnv));
+    }
     else
         return (uint32_t)std::get<uint64_t>(implicit_length_);
 }

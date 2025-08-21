@@ -165,7 +165,7 @@ std::string replace_non_utf8_chars(std::string_view text)
 
 
 template<bool validate>
-std::pair<size_t, size_t> substr_step(std::string_view& s, size_t& chars)
+std::pair<size_t, size_t> substr_step(std::string_view& s, size_t& chars) noexcept(!validate)
 {
     std::pair<size_t, size_t> result = { 0, 0 };
 
@@ -252,7 +252,7 @@ size_t length_utf16(std::string_view s)
     return utf16;
 }
 
-size_t length_utf16_no_validation(std::string_view s)
+size_t length_utf16_no_validation(std::string_view s) noexcept
 {
     auto len = (size_t)-1;
 
@@ -270,7 +270,7 @@ size_t length_utf32(std::string_view text)
     return char_count;
 }
 
-size_t length_utf32_no_validation(std::string_view text)
+size_t length_utf32_no_validation(std::string_view text) noexcept
 {
     auto len = (size_t)-1;
 

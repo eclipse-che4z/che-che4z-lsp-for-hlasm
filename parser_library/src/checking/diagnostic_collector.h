@@ -15,11 +15,8 @@
 #ifndef HLASMPLUGIN_PARSERLIBRARY_DIAGNOSTIC_COLLECTOR_H
 #define HLASMPLUGIN_PARSERLIBRARY_DIAGNOSTIC_COLLECTOR_H
 
-#include <vector>
-
 #include "context/source_context.h"
 #include "diagnostic_op.h"
-#include "protocol.h"
 
 namespace hlasm_plugin::parser_library {
 
@@ -31,7 +28,6 @@ class diagnostic_collector
 {
     diagnosable_ctx* diagnoser_;
     context::processing_stack_t location_stack_;
-    range diag_range_;
 
 public:
     // constructor with explicit location stack
