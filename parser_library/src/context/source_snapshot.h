@@ -30,7 +30,7 @@ struct source_position
     size_t rewind_target = 0;
 
     source_position() = default;
-    explicit source_position(size_t rewind_target)
+    explicit source_position(size_t rewind_target) noexcept
         : rewind_target(rewind_target)
     {}
 

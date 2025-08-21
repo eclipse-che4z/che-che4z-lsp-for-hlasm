@@ -75,13 +75,18 @@ void statement_provider::trigger_attribute_lookahead(std::vector<context::id_ind
     const expressions::evaluation_context& eval_ctx,
     processing::processing_state_listener& listener)
 {
-    auto&& [statement_position, snapshot] = eval_ctx.hlasm_ctx.get_begin_snapshot(false);
+    auto snapshot = eval_ctx.hlasm_ctx.current_source().create_snapshot();
+    const bool has_copybooks = !snapshot.copy_frames.empty();
+    const auto in_macro = eval_ctx.hlasm_ctx.is_in_macro();
+    const auto opencode_line = has_copybooks || in_macro ? snapshot.end_index : snapshot.begin_index;
+    if (has_copybooks && !in_macro)
+        snapshot.copy_frames.back().statement_offset.value -= 1;
 
     std::ranges::sort(references_buffer);
 
     listener.start_lookahead(
         lookahead_start_data(std::vector(references_buffer.begin(), std::ranges::unique(references_buffer).begin()),
-            statement_position,
+            context::source_position(opencode_line),
             std::move(snapshot)));
 }
 

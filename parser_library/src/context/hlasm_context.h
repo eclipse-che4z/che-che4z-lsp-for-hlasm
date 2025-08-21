@@ -170,9 +170,6 @@ public:
     // sets current source file indices
     void set_source_indices(size_t begin_index, size_t end_index);
 
-    std::pair<source_position, source_snapshot> get_begin_snapshot(bool ignore_macros) const;
-    std::pair<source_position, source_snapshot> get_end_snapshot() const;
-
     // pushes new kind of statement processing
     void push_statement_processing(const processing::processing_kind kind);
     // pushes new kind of statement processing as well as new source
@@ -190,7 +187,6 @@ public:
     // gets macro nest
     const std::deque<code_scope>& scope_stack() const;
     // gets copy nest of current statement processing
-    const std::vector<copy_member_invocation>& current_copy_stack() const;
     std::vector<copy_member_invocation>& current_copy_stack();
     // gets top level (opencode) copy stack
     const std::vector<copy_member_invocation>& opencode_copy_stack() const;

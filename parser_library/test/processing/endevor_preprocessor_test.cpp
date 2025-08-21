@@ -163,3 +163,24 @@ TESTVAL EQU 42
 
     EXPECT_EQ(get_symbol_abs(a.hlasm_ctx(), "TESTVAL"), 42);
 }
+
+TEST(endevor_preprocessor, copy_interaction)
+{
+    mock_parse_lib_provider libs({
+        { "@0", R"(
+        AIF  (4).S
+        COPY @1
+)" },
+        { "@1", R"(
+I       COPY @0
+)" },
+    });
+    std::string input = R"(
+ &@(I'I)COPY @1
+
+-INC @0
+)";
+
+    analyzer a(input, analyzer_options { &libs, endevor_preprocessor_options {} });
+    EXPECT_NO_THROW(a.analyze());
+}

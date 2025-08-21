@@ -380,9 +380,8 @@ void processing_manager::jump_in_statements(context::id_index target, range symb
         }
         else
         {
-            auto&& [statement_position, snapshot] = hlasm_ctx_.get_end_snapshot();
-            start_lookahead(
-                lookahead_start_data(target, symbol_range, std::move(statement_position), std::move(snapshot)));
+            const auto& src = hlasm_ctx_.current_source();
+            start_lookahead({ target, symbol_range, context::source_position(src.end_index), src.create_snapshot() });
         }
     }
     else
@@ -451,10 +450,14 @@ std::unique_ptr<context::opencode_sequence_symbol> processing_manager::create_op
     auto loc = hlasm_ctx_.current_statement_location(false);
     loc.pos = symbol_range.start;
 
-    auto&& [statement_position, snapshot] = hlasm_ctx_.get_begin_snapshot(lookahead_active());
+    auto snapshot = hlasm_ctx_.current_source().create_snapshot();
+    const bool has_copybooks = !snapshot.copy_frames.empty();
+    const auto opencode_line = has_copybooks ? snapshot.end_index : snapshot.begin_index;
+    if (has_copybooks)
+        snapshot.copy_frames.back().statement_offset.value -= 1;
 
     return std::make_unique<context::opencode_sequence_symbol>(
-        name, std::move(loc), statement_position, std::move(snapshot));
+        name, std::move(loc), context::source_position(opencode_line), std::move(snapshot));
 }
 
 void processing_manager::perform_opencode_jump(

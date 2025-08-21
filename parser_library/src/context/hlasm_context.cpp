@@ -371,42 +371,6 @@ void hlasm_context::set_source_indices(size_t begin_index, size_t end_index)
     source_stack_.back().end_index = end_index;
 }
 
-std::pair<source_position, source_snapshot> hlasm_context::get_begin_snapshot(bool ignore_macros) const
-{
-    context::source_position statement_position;
-
-    bool is_in_macros = ignore_macros ? false : scope_stack_.size() > 1;
-
-    if (!is_in_macros && current_copy_stack().empty())
-    {
-        statement_position.rewind_target = current_source().begin_index;
-    }
-    else
-    {
-        statement_position.rewind_target = current_source().end_index;
-    }
-
-    context::source_snapshot snapshot = current_source().create_snapshot();
-
-    if (!snapshot.copy_frames.empty() && is_in_macros)
-        ++snapshot.copy_frames.back().statement_offset.value;
-
-    return std::make_pair(std::move(statement_position), std::move(snapshot));
-}
-
-std::pair<source_position, source_snapshot> hlasm_context::get_end_snapshot() const
-{
-    context::source_position statement_position;
-    statement_position.rewind_target = current_source().end_index;
-
-    context::source_snapshot snapshot = current_source().create_snapshot();
-
-    if (!snapshot.copy_frames.empty())
-        ++snapshot.copy_frames.back().statement_offset.value;
-
-    return std::make_pair(std::move(statement_position), std::move(snapshot));
-}
-
 void hlasm_context::push_statement_processing(const processing::processing_kind kind)
 {
     assert(!source_stack_.empty());
@@ -547,11 +511,6 @@ const utils::resource::resource_location& hlasm_context::current_statement_sourc
 const std::deque<code_scope>& hlasm_context::scope_stack() const { return scope_stack_; }
 
 const source_context& hlasm_context::current_source() const { return source_stack_.back(); }
-
-const std::vector<copy_member_invocation>& hlasm_context::current_copy_stack() const
-{
-    return source_stack_.back().copy_stack;
-}
 
 std::vector<copy_member_invocation>& hlasm_context::current_copy_stack() { return source_stack_.back().copy_stack; }
 
@@ -1046,17 +1005,19 @@ void hlasm_context::apply_source_snapshot(source_snapshot snapshot)
                [](const auto& source) { return source.proc_stack.size(); })
         == 1);
 
-    source_stack_.back().current_instruction = std::move(snapshot.instruction);
-    source_stack_.back().begin_index = snapshot.begin_index;
-    source_stack_.back().end_index = snapshot.end_index;
+    auto& last_source = source_stack_.back();
 
-    source_stack_.back().copy_stack.clear();
+    last_source.current_instruction = std::move(snapshot.instruction);
+    last_source.begin_index = snapshot.begin_index;
+    last_source.end_index = snapshot.end_index;
 
-    for (auto& frame : snapshot.copy_frames)
+    auto& last_copy_stack = source_stack_.back().copy_stack;
+
+    last_copy_stack.clear();
+    for (const auto& frame : snapshot.copy_frames)
     {
-        copy_member_invocation invo(copy_members_.at(frame.copy_member));
-        invo.current_statement = frame.statement_offset;
-        source_stack_.back().copy_stack.push_back(std::move(invo));
+        const auto& copy = copy_members_.at(frame.copy_member);
+        last_copy_stack.emplace_back(copy).current_statement = frame.statement_offset;
     }
 }
 

@@ -32,9 +32,6 @@ source_snapshot source_context::create_snapshot() const
     for (auto& member : copy_stack)
         copy_frames.emplace_back(member.name(), member.current_statement);
 
-    if (!copy_frames.empty())
-        --copy_frames.back().statement_offset.value;
-
     return source_snapshot { current_instruction, begin_index, end_index, std::move(copy_frames) };
 }
 
