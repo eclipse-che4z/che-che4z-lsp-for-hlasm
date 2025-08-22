@@ -5,7 +5,7 @@
 #### Added
 - Support file change notification registration
 - Validate operand length in machine instructions
-- Provide bulk copybook download via Zowe Explorer
+- Bulk dependency retrieval supports Zowe API
 - Support program and assembler type symbol attributes
 - Support SYSATTRA and SYSATTRP functions
 - Show program and assembler type attributes in hover text
