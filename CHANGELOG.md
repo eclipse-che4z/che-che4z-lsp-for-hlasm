@@ -1,3 +1,48 @@
+## [1.19.0](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/compare/1.18.0...1.19.0) (2025-09-03)
+
+### Features
+
+* Provide bulk copybook download via Zowe Explorer ([187dbd8](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/187dbd8b2fbe60d6b07cf44a78aa7a37c9061e16))
+* Show program and assembler type attributes in hover text ([4aa4e6b](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/4aa4e6b5a5a4492cb5f62929a35204fa593d5ddc))
+* Support file change notification registration ([3aa71e2](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/3aa71e2c0fe9dbf02eb2bbd7dd1ebd07771edc18))
+* Support program and assembler type symbol attributes ([05da805](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/05da805f2cb7a6819211dbbd1d75a595abf6d1be))
+* Support SYSATTRA and SYSATTRP functions ([7c9f913](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/7c9f913a99be83f35e915674855f75176ad231a9))
+* Validate operand length in machine instructions ([9751b14](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/9751b145c33aa50e64a99d7583f979b0d3310b43))
+
+### Fixes
+
+* CCW is assigned incorrect symbol attributes in the lookahead mode ([47ada9f](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/47ada9f543ddb31d761587a7ac1c91ab0ac264bb))
+* Comment highlighting improvements in TextMate grammar ([df066dc](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/df066dc3d9754e739079c9b20fcafa54d9b49088)), closes [eclipse-che4z/che-che4z-lsp-for-hlasm#306](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/issues/306)
+* Improved navigation for external symbols ([5e6f6f5](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/5e6f6f58bf8107cb0e7f370a4c7b6523a83247ff))
+* Literals in listings are highlighted as instructions ([a3cc7e8](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/a3cc7e8a08cda63a933cefa39a5035e426ae738f)), closes [eclipse-che4z/che-che4z-lsp-for-hlasm#303](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/issues/303)
+* Logs produced by language server in WebAssembly mode are not visible ([d483028](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/d483028e1360e83e8f284b63e7abe9200731e9c7))
+* Scale and integer attributes are not processed correctly ([ef6d18b](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/ef6d18b6ce53c87f53cb9649a16f2a2bdb4dd0c5))
+* Statement operands are improperly cached after encountering OPSYN ([e753702](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/e75370287d99bff44c7b97dbd4b9c2e527a7bbe7))
+* The language server crashes after exiting the lookahead mode ([097d52e](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/097d52e403696413ef567aa66ef65b1572fe8e9f))
+
+### Other changes
+
+* Avoid copying JSONs while processing requests ([43c0398](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/43c0398179f4df6d59e66ddd08561ba4e1bde870))
+* Bump tools and images ([309298f](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/309298f2d5bff83953cc94faaa5e01470eaf16ce))
+* Cleanup headers ([aaafa37](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/aaafa37a857f8db4fbe608c6846647311d923609))
+* Data instruction checker ([a67695d](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/a67695da7a6f2bd4ba58a3d4cdbcd09d98f32586))
+* Inject commit hash into VSIX ([5e39350](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/5e3935077fdc0b8c764a440b3bde26e5335127bc))
+* Machine operands ([3d74c46](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/3d74c46185392f0fc6ba5cf69745471787eda02d))
+* Patch big endian support on emscripten 4.0.10 ([1d4fd1e](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/1d4fd1e7e1dc012ff121508142aaeb7a5214fdb0))
+* Reorganize instructions ([3d9b261](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/3d9b2617b45ecd3816f8e14b063b484df21cf700))
+* Streamline data instruction checking (1 of n) ([0669d99](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/0669d99677816be4a7daff7512c3daea8f4a4322))
+* Streamline data instruction checking (10 of n) ([a97dce8](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/a97dce8f0ac3a2c99e061fcc1daeff01bcdc1ad5))
+* Streamline data instruction checking (11 of n) ([a2ed930](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/a2ed930e66ddc3a192528f90e2483317b6bdadc7))
+* Streamline data instruction checking (12 of 12) ([72917c4](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/72917c4061e36b1b906e4bae1f8f63068c4fc8d1))
+* Streamline data instruction checking (2 of n) ([b8aa755](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/b8aa755b68ec24e1f6ddb56394525a2914f55551))
+* Streamline data instruction checking (3 of n) ([67f370e](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/67f370eddb2a43f0a2449737ca7d1a2da1d309bb))
+* Streamline data instruction checking (4 of n) ([223dbed](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/223dbedfcc4e06c46037997f335dc836d75330d7))
+* Streamline data instruction checking (5 of n) ([7c01188](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/7c01188c0841a9d6f3c82d605bf286b494ae241c))
+* Streamline data instruction checking (6 of n) ([56daf96](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/56daf96dc2d8342d14e6b4eddf0874bf024f3592))
+* Streamline data instruction checking (7 of n) ([b91109e](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/b91109e41a5f7d326adc807d6e17bd50bfcfb0a3))
+* Streamline data instruction checking (8 of n) ([a8ff373](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/a8ff373913dc577138428136ccca04934051022f))
+* Streamline data instruction checking (9 of n) ([c230a1d](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/c230a1d183eda7cc451605c78bfa3ed331cf6af5))
+* Switch toolchain mirrors ([4ddc4ea](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/4ddc4eafd8e47f48408b1bb0059c2da84ee36bd1))
 ## [1.18.0](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/compare/1.17.0...1.18.0) (2025-06-20)
 
 ### Features
