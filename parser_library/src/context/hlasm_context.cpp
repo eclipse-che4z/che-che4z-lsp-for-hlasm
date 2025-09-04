@@ -1094,10 +1094,10 @@ const section* extract_symbol_base(const symbol* s)
     const auto& bases = s->value().get_reloc().bases();
     if (bases.size() != 1)
         return nullptr;
-    const auto& [base, mult] = bases.front();
+    const auto& [qual, owner, mult] = bases.front();
     if (mult != 1)
         return nullptr;
-    return base.owner;
+    return owner;
 }
 
 bool psect_compatible_symbol(const symbol* s)

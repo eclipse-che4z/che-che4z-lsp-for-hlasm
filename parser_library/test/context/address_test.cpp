@@ -82,8 +82,8 @@ TEST(address, constructors)
 
     space_storage spaces { sp2 };
 
-    address addr1({ sect, id_index() }, 12345, spaces);
-    address addr2({ sect, id_index() }, 12345, std::move(spaces));
+    address addr1({ id_index(), sect }, 12345, spaces);
+    address addr2({ id_index(), sect }, 12345, std::move(spaces));
 
     auto diff = addr1 - addr2;
 
@@ -97,11 +97,11 @@ TEST(address, subtract_optimization)
     hlasm_context ctx;
     auto sect = ctx.ord_ctx.set_section(id_index("TEST"), section_kind::COMMON, library_info_transitional::empty);
 
-    address addr2({ sect, id_index() }, 12345, {});
+    address addr2({ id_index(), sect }, 12345, {});
 
     auto diff = address() - addr2;
 
-    std::array expected_bases { address::base_entry { sect, -1 } };
+    std::array expected_bases { address::base_entry { {}, sect, -1 } };
 
     EXPECT_THAT(diff.bases(), Pointwise(Eq(), expected_bases));
 }

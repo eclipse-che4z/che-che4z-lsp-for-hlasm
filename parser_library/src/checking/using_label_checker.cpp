@@ -30,7 +30,7 @@ void using_label_checker::visit(const expressions::mach_expr_data_attr& attr)
     const auto& reloc = symbol->value().get_reloc();
     if (!reloc.is_simple())
         return;
-    const auto* section = reloc.bases().front().first.owner;
+    const auto* section = reloc.bases().front().owner;
     if (!solver.using_active(attr.qualifier, section))
         diags.add_diagnostic(diagnostic_op::error_ME005(
             attr.qualifier.to_string_view(), section->name.to_string_view(), attr.get_range()));
@@ -46,7 +46,7 @@ void using_label_checker::visit(const expressions::mach_expr_symbol& expr)
     const auto& reloc = value.get_reloc();
     if (!reloc.is_simple())
         return;
-    const auto* section = reloc.bases().front().first.owner;
+    const auto* section = reloc.bases().front().owner;
     if (!solver.using_active(expr.qualifier, section))
         diags.add_diagnostic(diagnostic_op::error_ME005(
             expr.qualifier.to_string_view(), section->name.to_string_view(), expr.get_range()));

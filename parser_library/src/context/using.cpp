@@ -130,7 +130,7 @@ auto using_collection::using_drop_definition::abs_or_reloc(const using_collectio
     }
     if (value.value_kind() == symbol_value_kind::RELOC && value.get_reloc().is_simple())
     {
-        const auto& base = value.get_reloc().bases().front().first;
+        const auto& base = value.get_reloc().bases().front();
         return { qualified_address(base.qualifier, base.owner, value.get_reloc().offset()), rng };
     }
 

@@ -51,7 +51,7 @@ E EQU *
 
     const auto& reloc = e_value.get_reloc();
     ASSERT_EQ(reloc.bases().size(), 1);
-    EXPECT_EQ(reloc.bases().front().first.owner, s);
+    EXPECT_EQ(reloc.bases().front().owner, s);
     EXPECT_EQ(reloc.offset(), 8);
 }
 

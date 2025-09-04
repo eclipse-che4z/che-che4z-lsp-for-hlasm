@@ -166,7 +166,7 @@ symbol_value symbol_value::ignore_qualification() const
         return *this;
 
     auto result = get_reloc();
-    if (std::ranges::all_of(result.bases(), [](const auto& be) { return be.first.qualifier.empty(); }))
+    if (std::ranges::all_of(result.bases(), [](const auto& be) { return be.qualifier.empty(); }))
     {
         if (result.bases().empty() && !result.has_unresolved_space())
             return result.offset();
@@ -176,18 +176,18 @@ symbol_value symbol_value::ignore_qualification() const
 
     auto bases = std::make_shared<std::vector<address::base_entry>>(result.bases().begin(), result.bases().end());
 
-    std::ranges::for_each(*bases, [](auto& e) { e.first.qualifier = id_index(); });
+    std::ranges::for_each(*bases, [](auto& e) { e.qualifier = id_index(); });
 
-    std::ranges::sort(*bases, {}, [](const auto& e) { return e.first.owner; });
+    std::ranges::sort(*bases, {}, [](const auto& e) { return e.owner; });
 
     bases->erase(aggregate(
                      bases->begin(),
                      bases->end(),
-                     [](const auto& l, const auto& r) { return l.first.owner == r.first.owner; },
-                     [](auto& t, const auto& e) { t.second += e.second; }),
+                     [](const auto& l, const auto& r) { return l.owner == r.owner; },
+                     [](auto& t, const auto& e) { t.cardinality += e.cardinality; }),
         bases->end());
 
-    std::erase_if(*bases, [](const auto& e) { return e.second == 0; });
+    std::erase_if(*bases, [](const auto& e) { return e.cardinality == 0; });
 
     if (bases->empty() && !result.has_unresolved_space())
         return result.offset();

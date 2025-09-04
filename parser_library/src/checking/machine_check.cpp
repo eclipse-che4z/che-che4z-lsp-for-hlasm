@@ -255,7 +255,7 @@ machine_operand* evaluate_operands(machine_operand* out,
                 add_diagnostic(diagnostic_op::error_ME009(mop->operand_range));
                 return nullptr;
             }
-            const auto& base = reloc.bases().front().first;
+            const auto& base = reloc.bases().front();
             const bool long_displacement = is_long_disp(*fmt);
             auto translated_addr = solver.using_evaluate(base.qualifier, base.owner, reloc.offset(), long_displacement);
             if (translated_addr.reg == context::using_collection::invalid_register)

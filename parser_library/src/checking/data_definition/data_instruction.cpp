@@ -340,7 +340,7 @@ std::pair<int32_t, int32_t> transate_address_via_using(const context::address& a
     const range& r,
     bool extended)
 {
-    const auto& base = addr.bases().front().first;
+    const auto& base = addr.bases().front();
     const auto translated_addr = dep_solver.using_evaluate(base.qualifier, base.owner, addr.offset(), extended);
 
     if (translated_addr.reg == context::using_collection::invalid_register)

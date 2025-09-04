@@ -77,10 +77,10 @@ std::string hover_text(const context::symbol& sym)
         bool first = true;
         const auto& reloc = sym.value().get_reloc();
         auto bases = std::vector<context::address::base_entry>(reloc.bases().begin(), reloc.bases().end());
-        std::ranges::sort(bases, {}, [](const auto& e) { return std::tie(e.first.owner->name, e.first.qualifier); });
-        for (const auto& [base, d] : bases)
+        std::ranges::sort(bases, {}, [](const auto& e) { return std::tie(e.owner->name, e.qualifier); });
+        for (const auto& [qualifier, owner, d] : bases)
         {
-            if (base.owner->name.empty() || d == 0)
+            if (owner->name.empty() || d == 0)
                 continue;
 
             bool was_first = std::exchange(first, false);
@@ -92,9 +92,9 @@ std::string hover_text(const context::symbol& sym)
             if (d != 1 && d != -1)
                 markdown.append(std::to_string(d < 0 ? -(unsigned)d : (unsigned)d)).append("*");
 
-            if (!base.qualifier.empty())
-                markdown.append(base.qualifier.to_string_view()).append(".");
-            markdown.append(base.owner->name.to_string_view());
+            if (!qualifier.empty())
+                markdown.append(qualifier.to_string_view()).append(".");
+            markdown.append(owner->name.to_string_view());
         }
         if (!first)
             markdown.append(" + ");

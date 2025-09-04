@@ -54,7 +54,7 @@ struct test_context : public dependency_solver
 
     address addr(const std::string& name, const std::string& sect, int offset)
     {
-        address result({ create_section(sect) }, offset, {});
+        address result({ {}, create_section(sect) }, offset, {});
         m_symbols.try_emplace(id(name), id(name), result, symbol_attributes(symbol_origin::EQU), processing_stack_t());
         return result;
     }

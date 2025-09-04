@@ -115,10 +115,10 @@ std::optional<std::pair<int, std::string>> get_symbol_address(hlasm_context& ctx
 
     const auto& val = s->value().get_reloc();
 
-    if (val.bases().size() != 1 && val.bases().front().second != 1)
+    if (val.bases().size() != 1 && val.bases().front().cardinality != 1)
         return std::nullopt;
 
-    return std::pair<int, std::string>(val.offset(), val.bases().front().first.owner->name.to_string());
+    return std::pair<int, std::string>(val.offset(), val.bases().front().owner->name.to_string());
 }
 template<typename T>
 std::optional<std::unordered_map<size_t, T>> get_var_vector_map(hlasm_context& ctx, std::string name)

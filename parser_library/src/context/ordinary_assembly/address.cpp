@@ -177,8 +177,8 @@ std::pair<std::vector<address::space_entry>, int> address::normalized_spaces() c
     return normalized_spaces(spaces_.spaces);
 }
 
-address::address(base address_base, int offset, const space_storage& spaces)
-    : bases_(std::make_shared<base_entry>(std::move(address_base), 1))
+address::address(base_entry address_base, int offset, const space_storage& spaces)
+    : bases_(std::make_shared<base_entry>(std::move(address_base)))
     , offset_(offset)
 {
     if (spaces.empty())
@@ -191,8 +191,8 @@ address::address(base address_base, int offset, const space_storage& spaces)
     spaces_.owner = std::move(new_spaces);
 }
 
-address::address(base address_base, int offset, space_storage&& spaces)
-    : bases_(std::make_shared<base_entry>(std::move(address_base), 1))
+address::address(base_entry address_base, int offset, space_storage&& spaces)
+    : bases_(std::make_shared<base_entry>(std::move(address_base)))
     , offset_(offset)
 {
     if (spaces.empty())
@@ -204,6 +204,8 @@ address::address(base address_base, int offset, space_storage&& spaces)
     spaces_.spaces = std::span(new_spaces.get(), spaces.size());
     spaces_.owner = std::move(new_spaces);
 }
+
+constexpr auto without_cardinality = [](const address::base_entry& b) { return std::tie(b.owner, b.qualifier); };
 
 template<merge_op operation>
 address::base_list merge_bases(const address::base_list& l, const address::base_list& r)
@@ -225,7 +227,7 @@ address::base_list merge_bases(const address::base_list& l, const address::base_
             std::span result(result_owner.get(), total);
 
             std::ranges::transform(r.bases, result.begin(), [](auto e) {
-                e.second *= -1;
+                e.cardinality *= -1;
                 return e;
             });
 
@@ -239,17 +241,17 @@ address::base_list merge_bases(const address::base_list& l, const address::base_
 
     result->reserve(l.bases.size() + r.bases.size());
 
-    for (auto& [b, cnt] : r.bases)
-        result->emplace_back(b, operation == merge_op::add ? cnt : -cnt);
+    for (const auto& [qual, owner, cnt] : r.bases)
+        result->emplace_back(qual, owner, operation == merge_op::add ? cnt : -cnt);
 
-    std::ranges::sort(*result, {}, &address::base_entry::first);
+    std::ranges::sort(*result, {}, without_cardinality);
     utils::merge_unsorted(
         *result,
         l.bases,
-        [](const auto& l, const auto& r) { return l.first <=> r.first; },
-        [](auto& r, const auto& e) { r.second += e.second; });
+        [](const auto& le, const auto& re) { return without_cardinality(le) <=> without_cardinality(re); },
+        [](auto& re, const auto& e) { re.cardinality += e.cardinality; });
 
-    std::erase_if(*result, [](const auto& e) { return e.second == 0; });
+    std::erase_if(*result, [](const auto& e) { return e.cardinality == 0; });
 
     return address::base_list(std::move(result));
 }
@@ -342,7 +344,7 @@ address address::operator-() const
     std::span inv_bases(inv_bases_owner.get(), total);
 
     std::ranges::transform(bases_.bases, inv_bases.begin(), [](auto b) {
-        b.second = -b.second;
+        b.cardinality = -b.cardinality;
         return b;
     });
 
@@ -360,7 +362,7 @@ bool address::in_same_loctr(const address& addr) const
     if (!is_simple() || !addr.is_simple())
         return false;
 
-    if (addr.bases_.bases[0].first != bases_.bases[0].first)
+    if (without_cardinality(addr.bases_.bases[0]) != without_cardinality(bases_.bases[0]))
         return false;
 
     auto [spaces, _] = normalized_spaces();
@@ -381,7 +383,7 @@ bool address::in_same_loctr(const address& addr) const
     }
 }
 
-bool address::is_simple() const { return bases_.bases.size() == 1 && bases_.bases[0].second == 1; }
+bool address::is_simple() const { return bases_.bases.size() == 1 && bases_.bases[0].cardinality == 1; }
 
 bool address::has_dependant_space() const
 {

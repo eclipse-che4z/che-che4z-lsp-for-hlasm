@@ -39,16 +39,15 @@ using aligned_addr = std::pair<address, space_ptr>;
 // structure representing relative address in a section
 struct address
 {
-    struct base
-    {
-        const section* owner = nullptr;
-        id_index qualifier;
-
-        friend auto operator<=>(const base&, const base&) = default;
-    };
-
     using space_entry = std::pair<space_ptr, int>;
-    using base_entry = std::pair<base, int>;
+    struct base_entry
+    {
+        id_index qualifier;
+        const section* owner = nullptr;
+        int32_t cardinality = 1;
+
+        constexpr bool operator==(const base_entry&) const noexcept = default;
+    };
 
     struct space_list
     {
@@ -111,8 +110,8 @@ public:
     std::pair<std::vector<space_entry>, int> normalized_spaces() const;
 
     address() = default;
-    address(base address_base, int offset, const space_storage& spaces);
-    address(base address_base, int offset, space_storage&& spaces);
+    address(base_entry address_base, int offset, const space_storage& spaces);
+    address(base_entry address_base, int offset, space_storage&& spaces);
 
     address operator+(const address& addr) const;
     address operator+(int offs) const;

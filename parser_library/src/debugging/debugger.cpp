@@ -526,11 +526,11 @@ public:
         std::string text;
 
         auto bases = std::vector<context::address::base_entry>(reloc.bases().begin(), reloc.bases().end());
-        std::ranges::sort(bases, {}, [](const auto& e) { return e.first.owner->name; });
+        std::ranges::sort(bases, {}, [](const auto& e) { return e.owner->name; });
         bool first = true;
-        for (const auto& [base, d] : bases)
+        for (const auto& [qualifier, owner, d] : bases)
         {
-            if (base.owner->name.empty() || d == 0)
+            if (owner->name.empty() || d == 0)
                 continue;
 
             bool was_first = std::exchange(first, false);
@@ -542,9 +542,9 @@ public:
             if (d != 1 && d != -1)
                 text.append(std::to_string(d < 0 ? -(unsigned)d : (unsigned)d)).append("*");
 
-            if (!base.qualifier.empty())
-                text.append(base.qualifier.to_string_view()).append(".");
-            text.append(base.owner->name.to_string_view());
+            if (!qualifier.empty())
+                text.append(qualifier.to_string_view()).append(".");
+            text.append(owner->name.to_string_view());
         }
         if (!first)
             text.append(" + ");

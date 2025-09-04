@@ -452,7 +452,7 @@ std::vector<std::pair<const context::symbol*, context::id_index>> compute_reacha
 
         for (const auto& [sect, label] : reachable_sections)
         {
-            if (sect != reloc.bases().front().first.owner)
+            if (sect != reloc.bases().front().owner)
                 continue;
             reachable_symbols.emplace_back(sym, label);
         }

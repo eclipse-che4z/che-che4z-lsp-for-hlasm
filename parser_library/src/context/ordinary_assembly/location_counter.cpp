@@ -28,7 +28,7 @@ size_t location_counter::storage() const { return curr_data().storage; }
 location_counter::location_counter(id_index name, section& owner, loctr_kind kind)
     : switched_(nullptr)
     , layout_created_(false)
-    , base_list_(std::make_shared<address::base_entry>(address::base { &owner, id_index() }, 1))
+    , base_list_(std::make_shared<address::base_entry>(id_index(), &owner, 1))
     , name(name)
     , owner(owner)
     , kind(kind)

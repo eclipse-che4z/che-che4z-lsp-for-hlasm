@@ -1017,7 +1017,7 @@ Z   DS    A
     ASSERT_TRUE(z);
     ASSERT_TRUE(s);
 
-    std::vector<address::base_entry> expected_bases { { { s, id_index() }, 1 } };
+    std::vector<address::base_entry> expected_bases { { id_index(), s, 1 } };
 
     EXPECT_TRUE(std::ranges::equal(z->bases(), expected_bases));
     EXPECT_EQ(z->offset(), 1004);

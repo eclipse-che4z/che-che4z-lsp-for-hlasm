@@ -646,7 +646,7 @@ void lsp_analyzer::collect_branch_info(
 
         if (!dep_ctx.loctr_address || !dep_ctx.loctr_address->is_simple())
             continue;
-        if (dep_ctx.loctr_address->bases().front().first.owner->kind == context::section_kind::DUMMY)
+        if (dep_ctx.loctr_address->bases().front().owner->kind == context::section_kind::DUMMY)
             continue;
 
         const auto pos = loc.frame().pos;
