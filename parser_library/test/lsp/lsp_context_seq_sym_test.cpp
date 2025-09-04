@@ -93,24 +93,20 @@ TEST_F(lsp_context_seq_sym, completion_in_macro)
 {
     auto res_v = a.context().lsp_ctx->completion(opencode_loc, { 6, 1 }, '\0', completion_trigger_kind::invoked);
 
-    ASSERT_TRUE(std::holds_alternative<const context::label_storage*>(res_v));
+    const auto* res = std::get<const std::unordered_map<context::id_index, context::macro_sequence_symbol>*>(res_v);
 
-    const auto& res = *std::get<const context::label_storage*>(res_v);
-
-    ASSERT_EQ(res.size(), 1U);
-    EXPECT_EQ(res.begin()->first.to_string_view(), "INMAC");
+    ASSERT_EQ(res->size(), 1U);
+    EXPECT_EQ(res->begin()->first.to_string_view(), "INMAC");
 }
 
 TEST_F(lsp_context_seq_sym, completion_out_of_macro)
 {
     auto res_v = a.context().lsp_ctx->completion(opencode_loc, { 13, 1 }, '\0', completion_trigger_kind::invoked);
 
-    ASSERT_TRUE(std::holds_alternative<const context::label_storage*>(res_v));
+    const auto* res = std::get<const std::unordered_map<context::id_index, context::opencode_sequence_symbol>*>(res_v);
 
-    const auto& res = *std::get<const context::label_storage*>(res_v);
-
-    ASSERT_EQ(res.size(), 1U);
-    EXPECT_EQ(res.begin()->first.to_string_view(), "OUTMAC");
+    ASSERT_EQ(res->size(), 1U);
+    EXPECT_EQ(res->begin()->first.to_string_view(), "OUTMAC");
 }
 
 TEST_F(lsp_context_seq_sym, definition_no_definition)

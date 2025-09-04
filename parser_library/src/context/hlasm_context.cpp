@@ -573,38 +573,30 @@ variable_symbol* hlasm_context::get_var_sym(id_index name) const
     return get_var_sym(name, current_scope(), system_variables);
 }
 
-void hlasm_context::add_opencode_sequence_symbol(std::unique_ptr<opencode_sequence_symbol> seq_sym)
+hlasm_context::opencode_sequence_symbol_result hlasm_context::create_opencode_sequence_symbol(
+    context::id_index target, const range& symbol_range)
 {
-    opencode_sequence_symbols.try_emplace(seq_sym->name, std::move(seq_sym));
-}
+    auto loc = current_statement_location(false);
+    loc.pos = symbol_range.start;
 
-const sequence_symbol* hlasm_context::get_sequence_symbol(id_index name) const
-{
-    const auto* scope = curr_scope();
-    label_storage::const_iterator found, end;
+    const auto& src = current_source();
+    auto snapshot = src.create_snapshot();
+    const bool has_copybooks = !snapshot.copy_frames.empty();
+    const auto opencode_line = has_copybooks ? snapshot.end_index : snapshot.begin_index;
+    if (has_copybooks)
+        snapshot.copy_frames.back().statement_offset.value -= 1;
 
-    if (scope->is_in_macro())
-    {
-        found = scope->this_macro->labels.find(name);
-        end = scope->this_macro->labels.end();
-    }
+    const auto [it, inserted] = opencode_sequence_symbols.try_emplace(
+        target, std::move(loc), context::source_position(opencode_line), std::move(snapshot));
+
+    if (inserted)
+        return opencode_sequence_symbol_result::created;
+
+    // snapshot was not moved
+    if (it->second.snapshot == snapshot)
+        return opencode_sequence_symbol_result::compatible;
     else
-    {
-        found = opencode_sequence_symbols.find(name);
-        end = opencode_sequence_symbols.end();
-    }
-
-    if (found != end)
-        return found->second.get();
-    else
-        return nullptr;
-}
-
-const sequence_symbol* hlasm_context::get_opencode_sequence_symbol(id_index name) const
-{
-    if (const auto& sym = opencode_sequence_symbols.find(name); sym != opencode_sequence_symbols.end())
-        return sym->second.get();
-    return nullptr;
+        return opencode_sequence_symbol_result::conflict;
 }
 
 size_t hlasm_context::set_branch_counter(A_t value)
@@ -822,7 +814,7 @@ macro_def_ptr hlasm_context::add_macro(id_index name,
     std::vector<macro_arg> params,
     statement_block definition,
     copy_nest_storage copy_nests,
-    label_storage labels,
+    macro_label_storage labels,
     location definition_location,
     std::unordered_set<copy_member_ptr> used_copy_members,
     bool external)

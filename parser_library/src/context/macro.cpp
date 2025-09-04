@@ -36,7 +36,7 @@ macro_definition::macro_definition(id_index name,
     std::vector<macro_arg> params,
     statement_block definition,
     copy_nest_storage copy_nests,
-    label_storage labels,
+    macro_label_storage labels,
     location definition_location,
     std::unordered_set<copy_member_ptr> used_copy_members)
     : label_param_name_(label_param_name)
@@ -179,7 +179,7 @@ const id_index& macro_definition::get_label_param_name() const { return label_pa
 macro_invocation::macro_invocation(id_index name,
     cached_block& cached_definition,
     const copy_nest_storage& copy_nests,
-    const label_storage& labels,
+    const macro_label_storage& labels,
     std::unordered_map<id_index, std::unique_ptr<macro_param_base>> named_params,
     const location& definition_location)
     : id(name)

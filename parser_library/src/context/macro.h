@@ -43,7 +43,7 @@ class macro_definition;
 struct macro_invocation;
 struct copy_member;
 using macro_def_ptr = std::shared_ptr<macro_definition>;
-using label_storage = std::unordered_map<id_index, sequence_symbol_ptr>;
+using macro_label_storage = std::unordered_map<id_index, macro_sequence_symbol>;
 
 struct copy_nest_item
 {
@@ -75,7 +75,7 @@ public:
     // vector assigning each statement its copy nest
     const copy_nest_storage copy_nests;
     // storage of sequence symbols in the macro
-    const label_storage labels;
+    const macro_label_storage labels;
     // location of the macro definition in code
     const location definition_location;
     const std::unordered_set<std::shared_ptr<copy_member>> used_copy_members;
@@ -85,7 +85,7 @@ public:
         std::vector<macro_arg> params,
         statement_block definition,
         copy_nest_storage copy_nests,
-        label_storage labels,
+        macro_label_storage labels,
         location definition_location,
         std::unordered_set<std::shared_ptr<copy_member>> used_copy_members);
 
@@ -118,7 +118,7 @@ public:
     // vector assigning each statement its copy nest
     const copy_nest_storage& copy_nests;
     // storage of sequence symbols in the macro
-    const label_storage& labels;
+    const macro_label_storage& labels;
     // location of the macro definition in code
     const location& definition_location;
     // index to definition vector
@@ -127,7 +127,7 @@ public:
     macro_invocation(id_index name,
         cached_block& cached_definition,
         const copy_nest_storage& copy_nests,
-        const label_storage& labels,
+        const macro_label_storage& labels,
         std::unordered_map<id_index, std::unique_ptr<macro_param_base>> named_params,
         const location& definition_location);
 

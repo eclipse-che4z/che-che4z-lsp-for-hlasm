@@ -523,18 +523,12 @@ void macrodef_processor::process_sequence_symbol(const semantics::label_si& labe
     {
         auto& seq = std::get<semantics::seq_sym>(label.value);
 
-        if (result_.sequence_symbols.find(seq.name) != result_.sequence_symbols.end())
-        {
+        const auto [_, inserted] = result_.sequence_symbols.try_emplace(seq.name,
+            location(label.field_range.start, hlasm_ctx.current_statement_source()),
+            context::statement_id { result_.definition.size() });
+
+        if (!inserted)
             add_diagnostic(diagnostic_op::error_E044(seq.symbol_range));
-        }
-        else
-        {
-            auto& sym = result_.sequence_symbols[seq.name];
-            if (!sym)
-                sym = std::make_unique<context::macro_sequence_symbol>(seq.name,
-                    location(label.field_range.start, hlasm_ctx.current_statement_source()),
-                    context::statement_id { result_.definition.size() });
-        }
     }
 }
 

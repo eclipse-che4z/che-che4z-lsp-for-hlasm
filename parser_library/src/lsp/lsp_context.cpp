@@ -108,10 +108,10 @@ std::vector<document_symbol_item> lsp_context::document_symbol(
         auto& m = result.emplace_back(def->id.to_string(), MACRO, block(first_line, last_line));
         for (const auto& [name, seq] : def->labels)
         {
-            if (seq->symbol_location.resource_loc != dl)
+            if (seq.symbol_location.resource_loc != dl)
                 continue;
 
-            m.children.emplace_back("." + name.to_string(), SEQ, one_line(seq->symbol_location.pos.line));
+            m.children.emplace_back("." + name.to_string(), SEQ, one_line(seq.symbol_location.pos.line));
         }
         if (m.children.empty())
             continue;
@@ -524,7 +524,10 @@ completion_list_source lsp_context::complete_seq(const file_info& file, position
 {
     const auto* macro_i = file.find_scope(pos);
 
-    return macro_i ? &macro_i->macro_definition->labels : &m_hlasm_ctx->get_opencode_sequence_symbols();
+    if (macro_i)
+        return &macro_i->macro_definition->labels;
+    else
+        return &m_hlasm_ctx->get_opencode_sequence_symbols();
 }
 
 completion_list_source lsp_context::complete_instr(const file_info& fi, position pos) const
@@ -601,6 +604,13 @@ location lsp_context::find_symbol_definition_location(
         return sym.symbol_location();
 }
 
+std::optional<location> find_symbol_location(const auto& seq_syms, context::id_index name)
+{
+    if (const auto sym = seq_syms.find(name); sym != seq_syms.end())
+        return sym->second.symbol_location;
+    return std::nullopt;
+}
+
 std::optional<location> lsp_context::find_definition_location(const symbol_occurrence& occ,
     const macro_info* macro_scope_i,
     const utils::resource::resource_location& document_loc,
@@ -613,13 +623,12 @@ std::optional<location> lsp_context::find_definition_location(const symbol_occur
                 return find_symbol_definition_location(*sym, document_loc, pos);
             break;
         }
-        case lsp::occurrence_kind::SEQ: {
-            const context::label_storage& seq_syms =
-                macro_scope_i ? macro_scope_i->macro_definition->labels : m_hlasm_ctx->get_opencode_sequence_symbols();
-            if (auto sym = seq_syms.find(occ.name); sym != seq_syms.end())
-                return sym->second->symbol_location;
-            break;
-        }
+        case lsp::occurrence_kind::SEQ:
+            if (macro_scope_i)
+                return find_symbol_location(macro_scope_i->macro_definition->labels, occ.name);
+            else
+                return find_symbol_location(m_hlasm_ctx->get_opencode_sequence_symbols(), occ.name);
+
         case lsp::occurrence_kind::VAR: {
             const vardef_storage& var_syms =
                 macro_scope_i ? macro_scope_i->var_definitions : m_opencode->variable_definitions;

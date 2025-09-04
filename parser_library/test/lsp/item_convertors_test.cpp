@@ -33,18 +33,18 @@ using namespace hlasm_plugin::parser_library::lsp;
 constexpr auto zero_stmt_id = context::statement_id { 0 };
 TEST(item_convertors, macro_sequence_symbol)
 {
-    const macro_sequence_symbol seq(id_index("INMAC"), location(), zero_stmt_id);
+    const macro_sequence_symbol seq { location(), zero_stmt_id };
     const completion_item expected(".INMAC", "Sequence symbol", ".INMAC", "", completion_item_kind::seq_sym);
 
-    EXPECT_EQ(generate_completion_item(seq), expected);
+    EXPECT_EQ(generate_completion_item(id_index("INMAC"), seq), expected);
 }
 
 TEST(item_convertors, opencode_sequence_symbol)
 {
-    const opencode_sequence_symbol seq(id_index("OUTMAC"), location(), source_position(), source_snapshot());
+    const opencode_sequence_symbol seq { location(), source_position(), source_snapshot() };
     const completion_item expected(".OUTMAC", "Sequence symbol", ".OUTMAC", "", completion_item_kind::seq_sym);
 
-    EXPECT_EQ(generate_completion_item(seq), expected);
+    EXPECT_EQ(generate_completion_item(id_index("OUTMAC"), seq), expected);
 }
 
 TEST(item_convertors, macro_param)
@@ -149,7 +149,7 @@ TEST(item_convertors, macro)
         std::move(params),
         statement_block {},
         copy_nest_storage {},
-        label_storage {},
+        macro_label_storage {},
         location(position(4, 0), hlasm_plugin::utils::resource::resource_location()),
         std::unordered_set<std::shared_ptr<copy_member>> {});
     macro_info mi(

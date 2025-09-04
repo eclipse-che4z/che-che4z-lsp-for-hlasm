@@ -139,7 +139,7 @@ private:
 
     unsigned mnote_max = 0;
 
-    label_storage opencode_sequence_symbols;
+    std::unordered_map<id_index, opencode_sequence_symbol> opencode_sequence_symbols;
 
     std::unordered_map<id_index, std::pair<id_index, processing_stack_t>> psect_registrations;
 
@@ -217,14 +217,14 @@ public:
     // return variable symbol in current scope
     variable_symbol* get_var_sym(id_index name) const; // testing only
 
-    // registers sequence symbol
-    void add_opencode_sequence_symbol(std::unique_ptr<opencode_sequence_symbol> seq_sym);
-    // return sequence symbol in current scope
-    // returns nullptr if there is none in the current scope
-    const sequence_symbol* get_sequence_symbol(id_index name) const;
-    // return opencode sequence symbol
-    // returns nullptr if there is none
-    const sequence_symbol* get_opencode_sequence_symbol(id_index name) const;
+    enum class opencode_sequence_symbol_result
+    {
+        created,
+        compatible,
+        conflict,
+    };
+    opencode_sequence_symbol_result create_opencode_sequence_symbol(
+        context::id_index target, const range& symbol_range);
 
     size_t set_branch_counter(A_t value);
     A_t get_branch_counter() const;
@@ -260,7 +260,7 @@ public:
         std::vector<macro_arg> params,
         statement_block definition,
         copy_nest_storage copy_nests,
-        label_storage labels,
+        macro_label_storage labels,
         location definition_location,
         std::unordered_set<copy_member_ptr> used_copy_members,
         bool external);

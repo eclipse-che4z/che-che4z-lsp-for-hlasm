@@ -303,10 +303,18 @@ std::string get_logical_line(const text_data_view& text, size_t definition_line)
     return result;
 }
 
-completion_item generate_completion_item(const context::sequence_symbol& sym)
+completion_item generate_completion_item_seq(context::id_index name)
 {
-    std::string label = "." + sym.name.to_string();
+    std::string label = "." + name.to_string();
     return completion_item(label, "Sequence symbol", label, "", completion_item_kind::seq_sym);
+}
+completion_item generate_completion_item(context::id_index name, const context::opencode_sequence_symbol&)
+{
+    return generate_completion_item_seq(name);
+}
+completion_item generate_completion_item(context::id_index name, const context::macro_sequence_symbol&)
+{
+    return generate_completion_item_seq(name);
 }
 
 completion_item generate_completion_item(const variable_symbol_definition& vardef)
@@ -348,13 +356,25 @@ std::vector<completion_item> generate_completion(const vardef_storage* var_defs)
     return items;
 }
 
-std::vector<completion_item> generate_completion(const context::label_storage* seq_syms)
+std::vector<completion_item> generate_completion(
+    const std::unordered_map<context::id_index, context::opencode_sequence_symbol>* seq_syms)
 {
     std::vector<completion_item> items;
     items.reserve(seq_syms->size());
-    for (const auto& [_, sym] : *seq_syms)
+    for (const auto& [name, sym] : *seq_syms)
     {
-        items.emplace_back(generate_completion_item(*sym));
+        items.emplace_back(generate_completion_item(name, sym));
+    }
+    return items;
+}
+
+std::vector<completion_item> generate_completion(const context::macro_label_storage* seq_syms)
+{
+    std::vector<completion_item> items;
+    items.reserve(seq_syms->size());
+    for (const auto& [name, sym] : *seq_syms)
+    {
+        items.emplace_back(generate_completion_item(name, sym));
     }
     return items;
 }

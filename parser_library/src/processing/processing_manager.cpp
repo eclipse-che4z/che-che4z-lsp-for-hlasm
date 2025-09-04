@@ -371,46 +371,45 @@ void processing_manager::start_macro_definition(
 
 void processing_manager::jump_in_statements(context::id_index target, range symbol_range)
 {
-    auto symbol = hlasm_ctx_.get_sequence_symbol(target);
-    if (!symbol)
+    if (const auto& scope = hlasm_ctx_.current_scope(); scope.is_in_macro())
     {
-        if (hlasm_ctx_.is_in_macro())
+        auto& mac = *scope.this_macro;
+        const auto& labels = mac.labels;
+        const auto label = labels.find(target);
+        if (label == labels.end())
         {
             diag_ctx.add_diagnostic(diagnostic_op::error_E047(target.to_string_view(), symbol_range));
+            return;
         }
-        else
-        {
-            const auto& src = hlasm_ctx_.current_source();
-            start_lookahead({ target, symbol_range, context::source_position(src.end_index), src.create_snapshot() });
-        }
+
+        mac.current_statement = context::statement_id { label->second.statement_offset.value - 1 };
     }
     else
     {
-        if (symbol->kind == context::sequence_symbol_kind::MACRO)
+        const auto& labels = hlasm_ctx_.get_opencode_sequence_symbols();
+        const auto label = labels.find(target);
+        if (label == labels.end())
         {
-            assert(hlasm_ctx_.is_in_macro());
-            hlasm_ctx_.scope_stack().back().this_macro->current_statement =
-                context::statement_id { symbol->access_macro_symbol()->statement_offset.value - 1 };
+            const auto& src = hlasm_ctx_.current_source();
+            start_lookahead({ target, symbol_range, context::source_position(src.end_index), src.create_snapshot() });
+            return;
+        }
+
+        if (auto it = m_lookahead_seq_redifinitions.find(target); it != m_lookahead_seq_redifinitions.end()
+            && it->second.first != pending_seq_redifinition_state::lookahead_done)
+        {
+            for (auto& d : it->second.second)
+                diag_ctx.add_raw_diagnostic(std::move(d));
+            it->second.second.clear();
+            // TODO: Should we decrement the branch counter in the situation?
         }
         else
         {
-            if (auto it = m_lookahead_seq_redifinitions.find(target); it != m_lookahead_seq_redifinitions.end()
-                && it->second.first != pending_seq_redifinition_state::lookahead_done)
-            {
-                for (auto& d : it->second.second)
-                    diag_ctx.add_raw_diagnostic(std::move(d));
-                it->second.second.clear();
-            }
-            else
-            {
-                auto opencode_symbol = symbol->access_opencode_symbol();
-
-                perform_opencode_jump(opencode_symbol->statement_position, opencode_symbol->snapshot);
-            }
+            perform_opencode_jump(label->second.statement_position, label->second.snapshot);
         }
-
-        hlasm_ctx_.decrement_branch_counter();
     }
+
+    hlasm_ctx_.decrement_branch_counter();
 }
 
 void processing_manager::register_sequence_symbol(context::id_index target, range symbol_range)
@@ -418,46 +417,32 @@ void processing_manager::register_sequence_symbol(context::id_index target, rang
     if (!attr_lookahead_active() && hlasm_ctx_.is_in_macro())
         return;
 
-    auto symbol = hlasm_ctx_.get_opencode_sequence_symbol(target);
-    auto new_symbol = create_opencode_sequence_symbol(target, symbol_range);
+    const auto result = hlasm_ctx_.create_opencode_sequence_symbol(target, symbol_range);
 
-    if (!symbol)
+    using enum context::hlasm_context::opencode_sequence_symbol_result;
+    switch (result)
     {
-        hlasm_ctx_.add_opencode_sequence_symbol(std::move(new_symbol));
-        if (lookahead_active())
-            m_pending_seq_redifinitions.emplace_back(m_lookahead_seq_redifinitions.try_emplace(target).first);
+        case created:
+            if (lookahead_active())
+                m_pending_seq_redifinitions.emplace_back(m_lookahead_seq_redifinitions.try_emplace(target).first);
+            break;
+        case compatible:
+            break;
+        case conflict:
+            if (!lookahead_active())
+                diag_ctx.add_diagnostic(diagnostic_op::error_E045(target.to_string_view(), symbol_range));
+            else if (auto it = m_lookahead_seq_redifinitions.find(target); it == m_lookahead_seq_redifinitions.end()
+                     || it->second.first != pending_seq_redifinition_state::lookahead_pending)
+            {
+                // already defined either in normal processing or previous lookahead, so silently ignore
+            }
+            else
+            {
+                it->second.second.push_back(add_stack_details(
+                    diagnostic_op::error_E045(target.to_string_view(), symbol_range), hlasm_ctx_.processing_stack()));
+            }
+            break;
     }
-    else if (!(*symbol->access_opencode_symbol() == *new_symbol))
-    {
-        if (!lookahead_active())
-            diag_ctx.add_diagnostic(diagnostic_op::error_E045(target.to_string_view(), symbol_range));
-        else if (auto it = m_lookahead_seq_redifinitions.find(target); it == m_lookahead_seq_redifinitions.end()
-                 || it->second.first != pending_seq_redifinition_state::lookahead_pending)
-        {
-            // already defined either in normal processing or previous lookahead, so silently ignore
-        }
-        else
-        {
-            it->second.second.push_back(add_stack_details(
-                diagnostic_op::error_E045(target.to_string_view(), symbol_range), hlasm_ctx_.processing_stack()));
-        }
-    }
-}
-
-std::unique_ptr<context::opencode_sequence_symbol> processing_manager::create_opencode_sequence_symbol(
-    context::id_index name, range symbol_range)
-{
-    auto loc = hlasm_ctx_.current_statement_location(false);
-    loc.pos = symbol_range.start;
-
-    auto snapshot = hlasm_ctx_.current_source().create_snapshot();
-    const bool has_copybooks = !snapshot.copy_frames.empty();
-    const auto opencode_line = has_copybooks ? snapshot.end_index : snapshot.begin_index;
-    if (has_copybooks)
-        snapshot.copy_frames.back().statement_offset.value -= 1;
-
-    return std::make_unique<context::opencode_sequence_symbol>(
-        name, std::move(loc), context::source_position(opencode_line), std::move(snapshot));
 }
 
 void processing_manager::perform_opencode_jump(

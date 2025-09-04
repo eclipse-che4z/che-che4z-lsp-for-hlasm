@@ -133,8 +133,6 @@ private:
 
     void jump_in_statements(context::id_index target, range symbol_range) override;
     void register_sequence_symbol(context::id_index target, range symbol_range) override;
-    std::unique_ptr<context::opencode_sequence_symbol> create_opencode_sequence_symbol(
-        context::id_index name, range symbol_range);
 
     void perform_opencode_jump(context::source_position statement_position, context::source_snapshot snapshot);
 };

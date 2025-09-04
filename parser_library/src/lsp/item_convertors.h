@@ -28,7 +28,8 @@ struct completion_item;
 namespace context {
 class macro_definition;
 class section;
-struct sequence_symbol;
+struct opencode_sequence_symbol;
+struct macro_sequence_symbol;
 class symbol;
 struct using_context_description;
 } // namespace context
@@ -50,7 +51,8 @@ std::string get_logical_line(const text_data_view& text, size_t definition_line)
 std::string get_macro_signature(const context::macro_definition& m);
 bool is_continued_line(std::string_view line);
 
-completion_item generate_completion_item(const context::sequence_symbol& sym);
+completion_item generate_completion_item(context::id_index name, const context::opencode_sequence_symbol&);
+completion_item generate_completion_item(context::id_index name, const context::macro_sequence_symbol&);
 completion_item generate_completion_item(const variable_symbol_definition& sym);
 completion_item generate_completion_item(const macro_info& sym, const file_info* info);
 
@@ -58,7 +60,9 @@ std::vector<completion_item> generate_completion(const completion_list_source& c
 std::vector<completion_item> generate_completion(std::monostate);
 std::vector<completion_item> generate_completion(const std::vector<variable_symbol_definition>*);
 std::vector<completion_item> generate_completion(
-    const std::unordered_map<context::id_index, std::unique_ptr<context::sequence_symbol>>*);
+    const std::unordered_map<context::id_index, context::opencode_sequence_symbol>*);
+std::vector<completion_item> generate_completion(
+    const std::unordered_map<context::id_index, context::macro_sequence_symbol>*);
 std::vector<completion_item> generate_completion(const completion_list_instructions&);
 std::vector<completion_item> generate_completion(const std::pair<const context::macro_definition*,
     std::vector<std::pair<const context::symbol*, context::id_index>>>&);

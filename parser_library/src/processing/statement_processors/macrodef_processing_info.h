@@ -59,7 +59,7 @@ struct macrodef_processing_result
 
     context::statement_block definition;
     context::copy_nest_storage nests;
-    context::label_storage sequence_symbols;
+    context::macro_label_storage sequence_symbols;
     std::unordered_set<context::copy_member_ptr> used_copy_members;
 
     lsp::vardef_storage variable_symbols;

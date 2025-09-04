@@ -83,9 +83,8 @@ TEST(lsp_completion, completion_list_vars)
 
 TEST(lsp_completion, completion_list_labels)
 {
-    context::label_storage labels;
-    labels.try_emplace(context::id_index("LABEL"),
-        std::make_unique<context::macro_sequence_symbol>(context::id_index("LABEL"), location(), zero_stmt_id));
+    context::macro_label_storage labels;
+    labels.try_emplace(context::id_index("LABEL"), location(), zero_stmt_id);
 
     auto result = lsp::generate_completion(&labels);
 

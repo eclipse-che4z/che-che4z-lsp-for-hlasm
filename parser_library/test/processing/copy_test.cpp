@@ -227,7 +227,7 @@ TEST(copy, copy_enter_success)
 
     EXPECT_EQ(a.hlasm_ctx().macros().size(), (size_t)1);
 
-    EXPECT_TRUE(a.hlasm_ctx().get_sequence_symbol(id_index("A")));
+    EXPECT_TRUE(a.hlasm_ctx().get_opencode_sequence_symbols().contains(id_index("A")));
 
     EXPECT_EQ(a.diags().size(), (size_t)0);
 }
