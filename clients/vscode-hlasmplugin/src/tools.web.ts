@@ -26,12 +26,10 @@ function makeReadable(data: Uint8Array) {
 }
 
 export async function deflate(data: Uint8Array): Promise<Uint8Array> {
-    // @ts-ignore
     return new Uint8Array(await new Response(makeReadable(data).pipeThrough(new CompressionStream('deflate'))).arrayBuffer());
 }
 
 export async function inflate(data: Uint8Array): Promise<Uint8Array> {
-    // @ts-ignore
     return new Uint8Array(await new Response(makeReadable(data).pipeThrough(new DecompressionStream('deflate'))).arrayBuffer());
 }
 

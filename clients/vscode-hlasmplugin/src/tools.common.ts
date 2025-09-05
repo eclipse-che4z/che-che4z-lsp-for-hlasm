@@ -24,7 +24,7 @@ export function textDecodeStrict(input: Uint8Array): string {
     return decoderStrict.decode(input);
 }
 
-export function textEncode(input: string): Uint8Array {
+export function textEncode(input: string) {
     return encoder.encode(input);
 }
 
