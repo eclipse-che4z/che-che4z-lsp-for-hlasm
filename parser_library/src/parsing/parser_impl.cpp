@@ -2779,13 +2779,20 @@ std::pair<semantics::operand_list, range> parser2::macro_ops(bool reparse)
     semantics::concat_chain cc;
     bool pending = true;
 
-    const auto push_operand = [&]() {
+    const auto push_operand = [&](bool last) {
         if (!pending)
             return;
         if (cc.empty())
+        {
+            if (last && result.empty())
+                return;
             result.push_back(std::make_unique<semantics::empty_operand>(range_from(start)));
+        }
         else
+        {
+            resolve_concat_chain(cc);
             result.push_back(std::make_unique<semantics::macro_operand>(std::move(cc), range_from(start)));
+        }
     };
 
     // process operands
@@ -2794,13 +2801,13 @@ std::pair<semantics::operand_list, range> parser2::macro_ops(bool reparse)
         switch (*input.next)
         {
             case u8' ':
-                push_operand();
+                push_operand(true);
                 pending = false;
                 lex_last_remark();
                 goto end;
 
             case u8',':
-                push_operand();
+                push_operand(false);
                 consume(hl_scopes::operator_symbol);
                 process_optional_line_remark();
                 start = cur_pos_adjusted();
@@ -2932,7 +2939,7 @@ std::pair<semantics::operand_list, range> parser2::macro_ops(bool reparse)
         }
     }
 end:;
-    push_operand();
+    push_operand(true);
 
     return { std::move(result), range_from(line_start) };
 }
@@ -3035,7 +3042,7 @@ std::pair<semantics::operand_list, range> parser2::ca_args()
         auto [continue_loop, op] = (this->*arg)(start);
         if (op)
             result.push_back(std::move(op));
-        else
+        else if (continue_loop && (!result.empty() || follows<u8','>()))
             result.push_back(std::make_unique<semantics::empty_operand>(empty_range(start)));
         pending = false;
 
@@ -4208,7 +4215,10 @@ std::optional<semantics::op_rem> parser2::with_model(bool reparse, bool model_al
 
     bool has_error = false;
     if (follows<u8','>())
-        operands.push_back(std::make_unique<EmptyOperand>(cur_pos_range()));
+    {
+        if constexpr (rest != nullptr)
+            operands.push_back(std::make_unique<EmptyOperand>(cur_pos_range()));
+    }
     else if (auto [error, op] = (this->*first)(); !(has_error = error))
         operands.push_back(std::move(op));
 
@@ -4576,9 +4586,10 @@ void parser2::lookahead_operands_and_remarks_asm()
     if (auto [error, op] = asm_op(); error)
     {
         errors = true;
-        operands.push_back(std::make_unique<semantics::empty_operand>(empty_range(op_start)));
         while (except<u8',', u8' '>())
             consume();
+        if (follows<u8','>())
+            operands.push_back(std::make_unique<semantics::empty_operand>(empty_range(op_start)));
     }
     else
         operands.push_back(std::move(op));

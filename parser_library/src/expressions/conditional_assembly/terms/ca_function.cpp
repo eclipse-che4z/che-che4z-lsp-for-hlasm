@@ -83,21 +83,19 @@ void ca_function::resolve_expression_tree(ca_expression_ctx expr_ctx, diagnostic
         { 0, 0, 1, 0 },
         { 0, 0, 0, 1 },
     };
+    const auto [param_size, param_kind] = ca_common_expr_policy::get_function_param_info(function, expr_kind);
 
     if (!allowed_combinations[static_cast<int>(expr_ctx.kind)][static_cast<int>(expr_kind)])
         diags.add_diagnostic(diagnostic_op::error_CE004(expr_range));
     else if (duplication_factor && expr_kind != context::SET_t_enum::C_TYPE)
         diags.add_diagnostic(diagnostic_op::error_CE005(duplication_factor->expr_range));
-    else if (auto [param_size, param_kind] = ca_common_expr_policy::get_function_param_info(function, expr_kind);
-             parameters.size() != param_size)
+    else if (parameters.size() != param_size)
         diags.add_diagnostic(diagnostic_op::error_CE006(expr_range));
-    else
+
+    expr_ctx.kind = param_kind;
+    for (auto&& expr : parameters)
     {
-        expr_ctx.kind = param_kind;
-        for (auto&& expr : parameters)
-        {
-            expr->resolve_expression_tree(expr_ctx, diags);
-        }
+        expr->resolve_expression_tree(expr_ctx, diags);
     }
 }
 

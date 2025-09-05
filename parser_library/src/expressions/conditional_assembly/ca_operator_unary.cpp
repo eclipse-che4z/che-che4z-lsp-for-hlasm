@@ -37,8 +37,8 @@ void ca_unary_operator::resolve_expression_tree(ca_expression_ctx expr_ctx, diag
 {
     if (expr_kind != expr_ctx.kind)
         diags.add_diagnostic(diagnostic_op::error_CE004(expr_range));
-    else
-        expr->resolve_expression_tree(expr_ctx, diags);
+
+    expr->resolve_expression_tree(expr_ctx, diags);
 }
 
 bool ca_unary_operator::is_character_expression(character_expression_purpose purpose) const

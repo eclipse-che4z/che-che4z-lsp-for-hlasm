@@ -138,25 +138,24 @@ void ca_function_binary_operator::resolve_expression_tree(ca_expression_ctx expr
         diags.add_diagnostic(
             diagnostic_op::error_CE005(range(left_expr->expr_range.start, right_expr->expr_range.end)));
     else
-    {
         m_expr_ctx = expr_ctx;
-        context::SET_t_enum operands_kind;
 
-        if (is_relational())
-        {
-            // 'A' eq UPPER('a') is ok
-            // UPPER('a') eq 'A' is not
-            operands_kind = left_expr->is_character_expression(character_expression_purpose::left_side_of_comparison)
-                ? context::SET_t_enum::C_TYPE
-                : context::SET_t_enum::A_TYPE;
-        }
-        else
-            operands_kind = ca_common_expr_policy::get_operands_type(function, expr_ctx.kind);
+    context::SET_t_enum operands_kind;
 
-        expr_ctx.kind = operands_kind;
-        left_expr->resolve_expression_tree(expr_ctx, diags);
-        right_expr->resolve_expression_tree(expr_ctx, diags);
+    if (is_relational())
+    {
+        // 'A' eq UPPER('a') is ok
+        // UPPER('a') eq 'A' is not
+        operands_kind = left_expr->is_character_expression(character_expression_purpose::left_side_of_comparison)
+            ? context::SET_t_enum::C_TYPE
+            : context::SET_t_enum::A_TYPE;
     }
+    else
+        operands_kind = ca_common_expr_policy::get_operands_type(function, expr_ctx.kind);
+
+    expr_ctx.kind = operands_kind;
+    left_expr->resolve_expression_tree(expr_ctx, diags);
+    right_expr->resolve_expression_tree(expr_ctx, diags);
 }
 
 context::A_t shift_operands(context::A_t lhs, context::A_t rhs, ca_expr_ops shift)

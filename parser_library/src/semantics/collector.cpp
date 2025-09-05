@@ -239,7 +239,7 @@ context::shared_stmt_ptr collector::extract_statement(processing::processing_sta
 
     if (deferred_hint)
     {
-        assert(lit_.empty());
+        // lit_ may contain literals due to &VAR(L'=A(0)) in macros
         if (!def_)
             def_.emplace(instr_->field_range, 0, lexing::u8string_with_newlines(), std::vector<vs_ptr>());
         return std::make_shared<deferred_statement>(union_range(lbl_->field_range, def_->field_range),
