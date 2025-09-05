@@ -173,11 +173,11 @@ struct space
     space(const space&) = delete;
 
     // fill space with a length
-    static void resolve(space_ptr this_space, int length, resolve_reason r);
+    void resolve(int length, resolve_reason r);
     // replace space with another
-    static void resolve(space_ptr this_space, space_ptr value);
+    void resolve(space_ptr value);
     // fill space with the whole address
-    static void resolve(space_ptr this_space, int length, std::vector<address::space_entry> unresolved);
+    void resolve(int length, std::vector<address::space_entry> unresolved);
 
     bool resolved() const { return resolved_; }
     int resolved_length;

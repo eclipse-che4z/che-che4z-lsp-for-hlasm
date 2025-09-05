@@ -48,51 +48,53 @@ space::space(location_counter& owner, alignment align, size_t boundary, int offs
     , resolved_(false)
 {}
 
-void space::resolve(space_ptr this_space, int length, resolve_reason r)
+void space::resolve(int length, resolve_reason r)
 {
-    if (this_space->resolved_)
+    if (resolved_)
         return;
 
-    if (this_space->kind == space_kind::ALIGNMENT)
+    if (kind == space_kind::ALIGNMENT)
     {
-        alignment& align = this_space->align;
         if (length % align.boundary != align.byte)
             length = (int)((align.boundary - (length % align.boundary)) + align.byte) % align.boundary;
         else
             length = 0;
     }
 
-    this_space->resolved_length = length;
+    resolved_length = length;
 
-    this_space->owner.resolve_space(this_space.get(), length, r);
+    owner.resolve_space(this, length, r);
 
-    this_space->resolved_ = true;
+    resolved_ = true;
 }
 
-void space::resolve(space_ptr this_space, space_ptr value)
+void space::resolve(space_ptr value)
 {
-    if (this_space->resolved_)
+    if (resolved_)
         return;
 
-    assert(this_space->kind == space_kind::LOCTR_UNKNOWN);
+    assert(kind == space_kind::LOCTR_UNKNOWN);
+    assert(this != value.get());
 
-    this_space->resolved_ptrs.emplace_back(std::move(value), 1);
+    resolved_ptrs.emplace_back(std::move(value), 1);
 
-    this_space->resolved_ = true;
+    resolved_ = true;
 }
 
-void space::resolve(space_ptr this_space, int length, std::vector<address::space_entry> unresolved)
+void space::resolve(int length, std::vector<address::space_entry> unresolved)
 {
-    if (this_space->resolved_)
+    if (resolved_)
         return;
 
-    assert(this_space->kind == space_kind::LOCTR_UNKNOWN);
+    assert(kind == space_kind::LOCTR_UNKNOWN);
+    assert(std::ranges::find(unresolved, this, [](const auto& se) { return se.first.get(); })
+        == std::ranges::end(unresolved));
 
-    this_space->resolved_length = length;
+    resolved_length = length;
 
-    this_space->resolved_ptrs = std::move(unresolved);
+    resolved_ptrs = std::move(unresolved);
 
-    this_space->resolved_ = true;
+    resolved_ = true;
 }
 
 std::span<const address::base_entry> address::bases() const { return bases_.bases; }

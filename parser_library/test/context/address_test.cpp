@@ -38,7 +38,7 @@ TEST(address, normalized_spaces)
 
     auto addr = ctx.ord_ctx.current_section()->current_location_counter().current_address();
 
-    space::resolve(sp1, sp2);
+    sp1->resolve(sp2);
 
     auto [normalized, _] = addr.normalized_spaces();
 
@@ -63,11 +63,11 @@ TEST(address, has_unresolved_spaces)
 
     auto addr = ctx.ord_ctx.current_section()->current_location_counter().current_address();
 
-    space::resolve(sp1, sp2);
+    sp1->resolve(sp2);
 
     ASSERT_TRUE(addr.has_unresolved_space());
 
-    space::resolve(sp2, 1, resolve_reason::normal);
+    sp2->resolve(1, resolve_reason::normal);
 
     ASSERT_FALSE(addr.has_unresolved_space());
 }

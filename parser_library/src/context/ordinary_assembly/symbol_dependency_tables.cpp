@@ -130,7 +130,7 @@ struct resolve_dependant_visitor
             resolve_unknown_loctr_dependency(sp, val, stmt);
         }
         else
-            space::resolve(sp, length, resolve_reason::normal);
+            sp->resolve(length, resolve_reason::normal);
     }
 
     void resolve_unknown_loctr_dependency(
@@ -185,13 +185,13 @@ struct resolve_dependant_visitor
         sym_ctx.set_location_counter(tmp_loctr_name);
 
         if (std::holds_alternative<space_ptr>(ret))
-            context::space::resolve(std::move(sp), std::move(std::get<space_ptr>(ret)));
+            sp->resolve(std::move(std::get<space_ptr>(ret)));
         else
         {
             auto& new_addr = std::get<address>(ret);
             auto pure_offset = new_addr.unresolved_offset();
             auto [space, offset_correction] = std::move(new_addr).normalized_spaces();
-            context::space::resolve(std::move(sp), pure_offset + offset_correction, std::move(space));
+            sp->resolve(pure_offset + offset_correction, std::move(space));
         }
 
         if (!sym_ctx.symbol_dependencies().check_cycle(std::move(new_sp), li))
@@ -265,7 +265,7 @@ struct resolve_dependant_default_visitor
         auto tmp_sym = m_sym_ctx.get_symbol(symbol);
         tmp_sym->set_value(0);
     }
-    void operator()(const space_ptr& sp) const { space::resolve(sp, 1, resolve_reason::cycle_removal); }
+    void operator()(const space_ptr& sp) const { sp->resolve(1, resolve_reason::cycle_removal); }
 };
 
 void symbol_dependency_tables::resolve_dependant_default(const dependant& target)

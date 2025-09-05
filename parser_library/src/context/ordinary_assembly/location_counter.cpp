@@ -209,7 +209,7 @@ space_ptr location_counter::finish_layout(size_t offset)
     if (kind == loctr_kind::NONSTARTING)
     {
         auto sp = org_data_.front().fist_space();
-        space::resolve(sp, (int)offset, resolve_reason::normal);
+        sp->resolve((int)offset, resolve_reason::normal);
         return sp;
     }
 
