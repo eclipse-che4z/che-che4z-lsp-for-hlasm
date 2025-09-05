@@ -820,7 +820,9 @@ extract_next_logical_line_result opencode_provider::extract_next_logical_line_fr
         m_current_logical_line_source.last_index = m_next_line_index;
         m_current_logical_line_source.source = logical_line_origin::source_type::copy;
 
-        copy_file.resume();
+        // The copybook needs to be re-suspended to allow for two-phase ordinary processing
+        // On the second run the stmt_line == line will be true and copybook will resume
+        copy_file.suspend(line + m_current_logical_line.segments.size());
 
         return extract_next_logical_line_result::normal; // unaligned statement extracted
     }

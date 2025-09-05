@@ -614,3 +614,35 @@ TEST(aread, normal_processing_recovery_line_skipped)
     EXPECT_FALSE(a1.has_value());
     EXPECT_EQ(a2, 2);
 }
+
+TEST(aread, continued_statement_aread_recovery)
+{
+    std::string input = R"(
+-INC     COPYBOOK
+.LOOKAHEAD ANOP
+)";
+    mock_parse_lib_provider lib_provider {
+        { "MAC", R"(*
+          MACRO
+          MAC
+&VAR      AREAD
+          MEND
+)" },
+        { "EXT", R"(*
+          MACRO
+          EXT
+          MNOTE 0,'EXT'
+          MEND
+)" },
+        { "COPYBOOK", R"( MAC
+          CONSUMED LINE                                                X
+                   EXT
+          AGO      .LOOKAHEAD
+)" },
+    };
+
+    analyzer a(input, analyzer_options { &lib_provider, endevor_preprocessor_options() });
+    a.analyze();
+
+    EXPECT_TRUE(matches_message_text(a.diags(), { "EXT" }));
+}
