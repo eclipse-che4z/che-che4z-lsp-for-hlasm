@@ -55,7 +55,7 @@ void mach_processor::process(std::shared_ptr<const processing::resolved_statemen
 
     register_literals(rebuilt_stmt, context::halfword, hlasm_ctx.ord_ctx.next_unique_id());
 
-    auto loctr = hlasm_ctx.ord_ctx.align(context::halfword, lib_info);
+    auto loctr = hlasm_ctx.ord_ctx.align(context::halfword);
 
     auto label_name = find_label_symbol(rebuilt_stmt);
 
@@ -79,7 +79,7 @@ void mach_processor::process(std::shared_ptr<const processing::resolved_statemen
         std::make_unique<postponed_statement_impl>(std::move(rebuilt_stmt), hlasm_ctx.processing_stack()),
         std::move(dep_solver).derive_current_dependency_evaluation_context());
 
-    (void)hlasm_ctx.ord_ctx.reserve_storage_area(opcode_size, context::halfword, lib_info);
+    (void)hlasm_ctx.ord_ctx.reserve_storage_area(opcode_size, context::halfword);
 }
 
 } // namespace hlasm_plugin::parser_library::processing

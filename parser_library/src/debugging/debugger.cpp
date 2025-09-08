@@ -573,7 +573,7 @@ public:
             // do not introduce a private section by accident
             // TODO: the alignment will be wrong
             //       - it is instruction and argument dependent which is not available yet
-            ctx_->ord_ctx.current_section() ? ctx_->ord_ctx.align(context::no_align, lib_info) : context::address(),
+            ctx_->ord_ctx.current_section() ? ctx_->ord_ctx.align(context::no_align) : context::address(),
             lib_info);
 
         if (auto d = expr.get_dependencies(dep_solver); d.has_error)

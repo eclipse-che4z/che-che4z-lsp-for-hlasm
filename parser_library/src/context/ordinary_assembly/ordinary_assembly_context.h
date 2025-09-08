@@ -122,24 +122,17 @@ public:
     void set_location_counter(location_counter& l);
 
     // sets value of the current location counter
-    void set_location_counter_value(const address& addr,
-        size_t boundary,
+    void set_location_counter_value(size_t boundary,
         int offset,
-        const resolvable* undefined_address,
+        const resolvable& undefined_address,
         std::unique_ptr<postponed_statement> dependency_source,
-        const dependency_evaluation_context& dep_ctx,
-        const library_info& li);
-    void set_location_counter_value(const address& addr, size_t boundary, int offset, const library_info& li);
-    space_ptr set_location_counter_value_space(const address& addr,
-        size_t boundary,
-        int offset,
-        const resolvable* undefined_address,
-        std::unique_ptr<postponed_statement> dependency_source,
-        const dependency_evaluation_context& dep_ctx,
-        const library_info& li);
+        const dependency_evaluation_context& dep_ctx);
+    void set_location_counter_value(const address& addr, size_t boundary, int offset);
+    space_ptr set_location_counter_value_space(
+        const address& addr, size_t boundary, int offset, const dependency_evaluation_context& dep_ctx);
 
     // sets next available value for the current location counter
-    void set_available_location_counter_value(const library_info& li);
+    void set_available_location_counter_value();
 
     // check whether symbol is already defined
     bool symbol_defined(id_index name) const;
@@ -149,13 +142,12 @@ public:
     bool counter_defined(id_index name);
 
     // reserves storage area of specified length and alignment
-    address reserve_storage_area(
-        size_t length, alignment align, const dependency_evaluation_context& dep_ctx, const library_info& li);
-    address reserve_storage_area(size_t length, alignment align, const library_info& li);
+    address reserve_storage_area(size_t length, alignment align, const dependency_evaluation_context& dep_ctx);
+    address reserve_storage_area(size_t length, alignment align);
 
     // aligns storage
-    address align(alignment align, const dependency_evaluation_context& dep_ctx, const library_info& li);
-    address align(alignment a, const library_info& li);
+    address align(alignment align, const dependency_evaluation_context& dep_ctx);
+    address align(alignment a);
 
     // adds space to the current location counter
     space_ptr register_ordinary_space(alignment align);
@@ -194,7 +186,7 @@ public:
 private:
     void create_private_section();
     std::pair<address, space_ptr> reserve_storage_area_space(
-        size_t length, alignment align, const dependency_evaluation_context& dep_ctx, const library_info& li);
+        size_t length, alignment align, const dependency_evaluation_context& dep_ctx);
     section* create_section(id_index name, section_kind kind);
     section* create_section(id_index name, section_kind kind, goff_details details);
 

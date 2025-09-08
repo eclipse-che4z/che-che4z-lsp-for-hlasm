@@ -96,10 +96,10 @@ class symbol_dependency_tables
     std::vector<bool> m_dependencies_has_t_attr;
     std::vector<bool> m_dependencies_space_ptr_type;
 
-    dependency_value* insert_depenency(
+    dependency_value& insert_depenency(
         dependant target, const resolvable* dependency_source, const dependency_evaluation_context& dep_ctx);
 
-    dependant delete_dependency(std::unordered_map<dependant, dependency_value>::iterator it);
+    void delete_dependency(std::unordered_map<dependant, dependency_value>::iterator it);
 
     class dep_value;
     class dep_reference;
@@ -121,7 +121,8 @@ class symbol_dependency_tables
     index_t<postponed_statements_t> add_postponed(post_stmt_ptr, T&&);
     void delete_postponed(index_t<postponed_statements_t>);
 
-    bool check_cycle(dependant target, std::vector<dependant> dependencies, const library_info& li);
+    bool has_cycle(dependant target, std::vector<dependant> dependencies, const library_info& li);
+    bool has_cycle(space_ptr target, const library_info& li);
 
     void resolve_dependant(dependant target,
         const resolvable* dep_src,
@@ -129,8 +130,7 @@ class symbol_dependency_tables
         const dependency_evaluation_context& dep_ctx,
         const library_info& li);
     void resolve_dependant_default(const dependant& target);
-    void resolve(
-        std::variant<id_index, space_ptr> what_changed, diagnostic_consumer* diag_consumer, const library_info& li);
+    void resolve_loop(diagnostic_consumer* diag_consumer, const library_info& li);
 
     const dependency_value* find_dependency_value(const dependant& target) const;
 
@@ -138,9 +138,12 @@ class symbol_dependency_tables
         const resolvable* dependency_source, const dependency_evaluation_context& dep_ctx, const library_info& li);
     bool update_dependencies(const dependency_value& v, const library_info& li);
 
-    dependency_value* add_dependency(dependant target,
+    dependency_value* add_dependency_with_cycle_check(id_index target,
         const resolvable* dependency_source,
-        bool check_cycle,
+        const dependency_evaluation_context& dep_ctx,
+        const library_info& li);
+    dependency_value* add_dependency_with_cycle_check(attr_ref target,
+        const resolvable* dependency_source,
         const dependency_evaluation_context& dep_ctx,
         const library_info& li);
 
@@ -149,47 +152,24 @@ class symbol_dependency_tables
 public:
     symbol_dependency_tables(ordinary_assembly_context& sym_ctx);
 
-    // add symbol dependency on statement
-    // returns false if cyclic dependency occured
-    [[nodiscard]] bool add_dependency(id_index target,
-        const resolvable* dependency_source,
-        post_stmt_ptr dependency_source_stmt,
-        const dependency_evaluation_context& dep_ctx,
-        const library_info& li);
-
-    // add symbol attribute dependency on statement
-    // returns false if cyclic dependency occured
-    [[nodiscard]] bool add_dependency(id_index target,
-        data_attr_kind attr,
-        const resolvable* dependency_source,
-        post_stmt_ptr dependency_source_stmt,
-        const dependency_evaluation_context& dep_ctx,
-        const library_info& li);
-
     // add space dependency
-    void add_dependency(space_ptr target,
-        const resolvable* dependency_source,
-        post_stmt_ptr dependency_source_stmt,
-        const dependency_evaluation_context& dep_ctx,
-        const library_info& li);
     void add_dependency(space_ptr target,
         addr_res_ptr dependency_source,
         const dependency_evaluation_context& dep_ctx,
-        const library_info& li,
         post_stmt_ptr dependency_source_stmt = nullptr);
-    bool check_cycle(space_ptr target, const library_info& li);
 
     void add_postponed_statement(post_stmt_ptr target, dependency_evaluation_context dep_ctx);
 
     // method for creating more than one dependency assigned to one statement
     dependency_adder add_dependencies(
         post_stmt_ptr dependency_source_stmt, const dependency_evaluation_context& dep_ctx, const library_info& li);
+    dependency_adder add_dependencies(
+        post_stmt_ptr dependency_source_stmt, const dependency_evaluation_context& dep_ctx, library_info&& li) = delete;
 
     // registers that some symbol has been defined
     // if resolver is present, location counter dependencies are checked as well (not just symbol deps)
-    void add_defined(const std::variant<id_index, space_ptr>& what_changed,
-        diagnostic_consumer* diag_consumer,
-        const library_info& li);
+    void add_defined(id_index what_changed, diagnostic_consumer* diag_consumer, const library_info& li);
+    void add_defined(space_ptr what_changed, diagnostic_consumer* diag_consumer, const library_info& li);
 
     // checks for cycle in location counter value
     bool check_loctr_cycle(const library_info& li);
@@ -218,18 +198,20 @@ class dependency_adder
         , m_li(li)
     {}
 
-    [[nodiscard]] symbol_dependency_tables::dependency_value* add_dependency(
-        dependant target, const resolvable* dependency_source, bool check_cycle);
+    [[nodiscard]] const dependency_evaluation_context& get_context() const noexcept;
+
+    template<typename T>
+    [[nodiscard]] bool add_dependency_with_cycle_check(T target, const resolvable* dependency_source) const;
 
 public:
     // add symbol dependency on statement
-    [[nodiscard]] bool add_dependency(id_index target, const resolvable* dependency_source);
+    [[nodiscard]] bool add_dependency(id_index target, const resolvable* dependency_source) const;
 
     // add symbol attribute dependency on statement
-    [[nodiscard]] bool add_dependency(id_index target, data_attr_kind attr, const resolvable* dependency_source);
+    [[nodiscard]] bool add_dependency(id_index target, data_attr_kind attr, const resolvable* dependency_source) const;
 
     // add space dependency
-    void add_dependency(space_ptr target, const resolvable* dependency_source);
+    void add_dependency(space_ptr target, const resolvable* dependency_source) const;
 };
 
 } // namespace hlasm_plugin::parser_library::context

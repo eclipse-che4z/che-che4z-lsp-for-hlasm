@@ -161,7 +161,7 @@ void ordinary_processor::end_processing()
     if (hlasm_ctx.ord_ctx.literals().get_pending_count())
     {
         hlasm_ctx.ord_ctx.set_location_counter(hlasm_ctx.ord_ctx.implicit_ltorg_target());
-        hlasm_ctx.ord_ctx.set_available_location_counter_value(lib_info);
+        hlasm_ctx.ord_ctx.set_available_location_counter_value();
 
         hlasm_ctx.ord_ctx.generate_pool(diag_ctx, hlasm_ctx.using_current(), lib_info);
     }

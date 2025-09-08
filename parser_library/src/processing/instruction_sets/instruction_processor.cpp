@@ -24,7 +24,7 @@ void instruction_processor::register_literals(
 {
     if (auto literals = stmt.literals(); !literals.empty())
     {
-        auto loctr = hlasm_ctx.ord_ctx.align(loctr_alignment, lib_info);
+        auto loctr = hlasm_ctx.ord_ctx.align(loctr_alignment);
         for (const auto& l : literals)
             hlasm_ctx.ord_ctx.literals().add_literal(l->get_text(),
                 std::shared_ptr<const expressions::data_definition>(l, &l->get_dd()),

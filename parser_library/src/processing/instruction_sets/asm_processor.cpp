@@ -221,7 +221,7 @@ void asm_processor::process_EQU(rebuilt_statement&& stmt)
 {
     using context::symbol_attributes;
 
-    auto loctr = hlasm_ctx.ord_ctx.align(context::no_align, lib_info);
+    auto loctr = hlasm_ctx.ord_ctx.align(context::no_align);
     context::ordinary_assembly_dependency_solver dep_solver(hlasm_ctx.ord_ctx, std::move(loctr), lib_info);
 
     auto symbol_name = find_label_symbol(stmt);
@@ -338,11 +338,11 @@ void asm_processor::process_EQU(rebuilt_statement&& stmt)
     {
         const auto stmt_range = stmt.stmt_range_ref();
         create_symbol(symbol_name, context::symbol_value(), attrs);
-        if (!hlasm_ctx.ord_ctx.symbol_dependencies().add_dependency(symbol_name,
-                expr_op->expression.get(),
-                std::make_unique<postponed_statement_impl>(std::move(stmt), hlasm_ctx.processing_stack()),
-                std::move(dep_solver).derive_current_dependency_evaluation_context(),
-                lib_info))
+        const auto adder = hlasm_ctx.ord_ctx.symbol_dependencies().add_dependencies(
+            std::make_unique<postponed_statement_impl>(std::move(stmt), hlasm_ctx.processing_stack()),
+            std::move(dep_solver).derive_current_dependency_evaluation_context(),
+            lib_info);
+        if (!adder.add_dependency(symbol_name, expr_op->expression.get()))
             add_diagnostic(diagnostic_op::error_E033(stmt_range));
     }
 }
@@ -364,7 +364,7 @@ void asm_processor::process_data_instruction(rebuilt_statement&& stmt)
 
     // enforce alignment of the first operand
     context::alignment al = first_op->access_data_def()->value->get_alignment();
-    context::address loctr = hlasm_ctx.ord_ctx.align(al, lib_info);
+    context::address loctr = hlasm_ctx.ord_ctx.align(al);
     context::ordinary_assembly_dependency_solver dep_solver(hlasm_ctx.ord_ctx, loctr, lib_info);
 
     // process label
@@ -434,7 +434,7 @@ void asm_processor::process_data_instruction(rebuilt_statement&& stmt)
         const auto start = it;
 
         const auto initial_alignment = (*it)->access_data_def()->value->get_alignment();
-        context::address op_loctr = hlasm_ctx.ord_ctx.align(initial_alignment, lib_info);
+        context::address op_loctr = hlasm_ctx.ord_ctx.align(initial_alignment);
         data_def_dependency_solver op_solver(dep_solver, &op_loctr);
 
         auto current_alignment = initial_alignment;
@@ -476,7 +476,7 @@ void asm_processor::process_data_instruction(rebuilt_statement&& stmt)
         else
         {
             auto length = data_def_dependency<instr_type>::get_operands_length(b, e, op_solver, drop_diagnostic_op);
-            hlasm_ctx.ord_ctx.reserve_storage_area(length, context::no_align, lib_info);
+            hlasm_ctx.ord_ctx.reserve_storage_area(length, context::no_align);
         }
     }
 
@@ -484,7 +484,7 @@ void asm_processor::process_data_instruction(rebuilt_statement&& stmt)
         std::move(stmt), hlasm_ctx.processing_stack(), std::move(dependencies));
     const auto& deps = dep_stmt->get_dependencies();
 
-    auto adder = hlasm_ctx.ord_ctx.symbol_dependencies().add_dependencies(
+    const auto adder = hlasm_ctx.ord_ctx.symbol_dependencies().add_dependencies(
         std::move(dep_stmt), std::move(dep_solver).derive_current_dependency_evaluation_context(), lib_info);
 
     bool cycle_ok = true;
@@ -617,7 +617,7 @@ void asm_processor::process_ORG(rebuilt_statement&& stmt)
     find_sequence_symbol(stmt);
 
     auto label = find_label_symbol(stmt);
-    auto loctr = hlasm_ctx.ord_ctx.align(context::no_align, lib_info);
+    auto loctr = hlasm_ctx.ord_ctx.align(context::no_align);
 
     if (!label.empty())
     {
@@ -633,7 +633,7 @@ void asm_processor::process_ORG(rebuilt_statement&& stmt)
         || (ops.size() == 2 && ops[0]->type == semantics::operand_type::EMPTY
             && ops[1]->type == semantics::operand_type::EMPTY))
     {
-        hlasm_ctx.ord_ctx.set_available_location_counter_value(lib_info);
+        hlasm_ctx.ord_ctx.set_available_location_counter_value();
         return;
     }
 
@@ -730,19 +730,17 @@ void asm_processor::process_ORG(rebuilt_statement&& stmt)
     }
 
     if (undefined_absolute_part)
-        hlasm_ctx.ord_ctx.set_location_counter_value(reloc_val,
-            boundary,
+        hlasm_ctx.ord_ctx.set_location_counter_value(boundary,
             offset,
-            reloc_expr->expression.get(),
+            *reloc_expr->expression,
             std::make_unique<postponed_statement_impl>(std::move(stmt), hlasm_ctx.processing_stack()),
-            std::move(dep_solver).derive_current_dependency_evaluation_context(),
-            lib_info);
+            std::move(dep_solver).derive_current_dependency_evaluation_context());
     else
-        hlasm_ctx.ord_ctx.set_location_counter_value(reloc_val, boundary, offset, lib_info);
+        hlasm_ctx.ord_ctx.set_location_counter_value(reloc_val, boundary, offset);
 
     if (boundary > 1 && offset == 0)
     {
-        hlasm_ctx.ord_ctx.align(context::alignment { 0, boundary }, lib_info);
+        hlasm_ctx.ord_ctx.align(context::alignment { 0, boundary });
     }
 }
 
@@ -966,7 +964,7 @@ void asm_processor::process_CCW(rebuilt_statement&& stmt)
     constexpr context::alignment ccw_align = context::doubleword;
     constexpr size_t ccw_length = 8U;
 
-    auto loctr = hlasm_ctx.ord_ctx.align(ccw_align, lib_info);
+    auto loctr = hlasm_ctx.ord_ctx.align(ccw_align);
     find_sequence_symbol(stmt);
 
     if (auto label = find_label_symbol(stmt); !label.empty())
@@ -979,7 +977,7 @@ void asm_processor::process_CCW(rebuilt_statement&& stmt)
 
     context::ordinary_assembly_dependency_solver dep_solver(hlasm_ctx.ord_ctx, std::move(loctr), lib_info);
 
-    hlasm_ctx.ord_ctx.reserve_storage_area(ccw_length, ccw_align, lib_info);
+    hlasm_ctx.ord_ctx.reserve_storage_area(ccw_length, ccw_align);
 
     hlasm_ctx.ord_ctx.symbol_dependencies().add_postponed_statement(
         std::make_unique<postponed_statement_impl>(std::move(stmt), hlasm_ctx.processing_stack()),
@@ -988,7 +986,7 @@ void asm_processor::process_CCW(rebuilt_statement&& stmt)
 
 void asm_processor::process_CNOP(rebuilt_statement&& stmt)
 {
-    auto loctr = hlasm_ctx.ord_ctx.align(context::halfword, lib_info);
+    auto loctr = hlasm_ctx.ord_ctx.align(context::halfword);
     find_sequence_symbol(stmt);
 
     if (auto label = find_label_symbol(stmt); !label.empty())
@@ -1011,7 +1009,7 @@ void asm_processor::process_CNOP(rebuilt_statement&& stmt)
             && ((*boundary_value) & (*boundary_value - 1)) == 0 && *byte_value < *boundary_value
             && *byte_value % 2 == 0)
             hlasm_ctx.ord_ctx.reserve_storage_area(
-                0, context::alignment { (size_t)*byte_value, (size_t)*boundary_value }, lib_info);
+                0, context::alignment { (size_t)*byte_value, (size_t)*boundary_value });
     }
 
     hlasm_ctx.ord_ctx.symbol_dependencies().add_postponed_statement(
@@ -1119,7 +1117,7 @@ void asm_processor::process_ALIAS(rebuilt_statement&& stmt)
 void asm_processor::process_LTORG(rebuilt_statement&& stmt)
 {
     constexpr size_t sectalgn = 8;
-    auto loctr = hlasm_ctx.ord_ctx.align(context::alignment { 0, sectalgn }, lib_info);
+    auto loctr = hlasm_ctx.ord_ctx.align(context::alignment { 0, sectalgn });
 
     find_sequence_symbol(stmt);
 
@@ -1145,7 +1143,7 @@ void asm_processor::process_USING(rebuilt_statement&& stmt)
 {
     using namespace expressions;
 
-    auto loctr = hlasm_ctx.ord_ctx.align(context::no_align, lib_info);
+    auto loctr = hlasm_ctx.ord_ctx.align(context::no_align);
     context::ordinary_assembly_dependency_solver dep_solver(hlasm_ctx.ord_ctx, std::move(loctr), lib_info);
 
     auto label = find_using_label(stmt);
@@ -1226,7 +1224,7 @@ void asm_processor::process_DROP(rebuilt_statement&& stmt)
 {
     using namespace expressions;
 
-    auto loctr = hlasm_ctx.ord_ctx.align(context::no_align, lib_info);
+    auto loctr = hlasm_ctx.ord_ctx.align(context::no_align);
 
     if (auto label = find_label_symbol(stmt); !label.empty())
     {
@@ -1402,7 +1400,7 @@ void asm_processor::process_MNOTE(rebuilt_statement&& stmt)
 
 void asm_processor::process_CXD(rebuilt_statement&& stmt)
 {
-    context::address loctr = hlasm_ctx.ord_ctx.align(context::fullword, lib_info);
+    context::address loctr = hlasm_ctx.ord_ctx.align(context::fullword);
     constexpr uint32_t cxd_length = 4;
 
     // process label
@@ -1418,7 +1416,7 @@ void asm_processor::process_CXD(rebuilt_statement&& stmt)
             add_diagnostic(diagnostic_op::error_E031("symbol", stmt.label_ref().field_range));
     }
 
-    hlasm_ctx.ord_ctx.reserve_storage_area(cxd_length, context::no_align, lib_info);
+    hlasm_ctx.ord_ctx.reserve_storage_area(cxd_length, context::no_align);
 }
 
 struct title_label_visitor

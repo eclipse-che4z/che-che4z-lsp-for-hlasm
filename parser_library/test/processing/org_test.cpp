@@ -1125,3 +1125,17 @@ O SAM31
 
     EXPECT_TRUE(matches_message_codes(a.diags(), { "E033", "E033" }));
 }
+
+TEST(org, avoid_nested_resolve_loop)
+{
+    std::string_view input = R"(
+ DC (A)O
+O5 DS @L(O-*)
+O DS @L(O-J)
+J ORG =L(O)
+a DC (*)A
+)";
+
+    analyzer a(input);
+    EXPECT_NO_THROW(a.analyze());
+}

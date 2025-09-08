@@ -52,13 +52,13 @@ address address_resolver::extract_dep_address(const address& addr, size_t bounda
 }
 
 alignable_address_resolver::alignable_address_resolver(
-    address dependency_address, std::vector<address> base_addrs, size_t boundary, int offset)
+    address dependency_address, address base_addrs, size_t boundary, int offset)
     : address_resolver(std::move(dependency_address), boundary)
     , base_addrs(std::move(base_addrs))
     , offset(offset)
 {}
 
-symbol_value alignable_address_resolver::resolve(dependency_solver&) const { return resolve(base_addrs.front()); }
+symbol_value alignable_address_resolver::resolve(dependency_solver&) const { return resolve(base_addrs); }
 
 symbol_value alignable_address_resolver::resolve(const address& addr) const
 {

@@ -5,6 +5,7 @@
 #### Fixed
 - Variable index expression is not evaluated correctly on macro calls
 - Macro calls originating from statements partially consumed by AREAD instructions might not be performed
+- The language server might crash while evaluating symbol dependencies
 
 ## [1.19.0](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/compare/1.18.0...1.19.0) (2025-09-03)
 

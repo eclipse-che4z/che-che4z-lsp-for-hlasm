@@ -170,7 +170,7 @@ void literal_pool::generate_pool(diagnosable_ctx& diags, index_t<using_collectio
     std::ranges::stable_sort(m_pending_literals, std::ranges::greater(), &pending_literal::alignment);
 
     constexpr auto sectalign = doubleword;
-    ord_ctx.align(sectalign, li);
+    ord_ctx.align(sectalign);
 
     for (const auto& [it, size, alignment] : m_pending_literals)
     {
@@ -194,7 +194,7 @@ void literal_pool::generate_pool(diagnosable_ctx& diags, index_t<using_collectio
         // TODO: warn on align > sectalign
 
         (void)ord_ctx.create_symbol(id_index(&lit_val.text),
-            ord_ctx.align(lit_val.align_on_halfword ? halfword : no_align, li),
+            ord_ctx.align(lit_val.align_on_halfword ? halfword : no_align),
             symbol_attributes(symbol_origin::DAT,
                 ebcdic_encoding::to_ebcdic((unsigned char)lit->get_type_attribute()),
                 lit->get_length_attribute(solver, diags),
@@ -207,7 +207,7 @@ void literal_pool::generate_pool(diagnosable_ctx& diags, index_t<using_collectio
             continue;
         }
 
-        ord_ctx.reserve_storage_area(size, no_align, li);
+        ord_ctx.reserve_storage_area(size, no_align);
 
         ord_ctx.symbol_dependencies().add_postponed_statement(
             std::make_unique<literal_postponed_statement>(lit, lit_val),

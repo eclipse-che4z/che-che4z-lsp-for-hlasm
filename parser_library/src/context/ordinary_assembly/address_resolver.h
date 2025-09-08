@@ -46,13 +46,12 @@ protected:
 // provides resolvable interface for address that require certain alignment
 struct alignable_address_resolver final : public address_resolver
 {
-    alignable_address_resolver(
-        address dependency_address, std::vector<address> base_addrs, size_t boundary, int offset);
+    alignable_address_resolver(address dependency_address, address base_addrs, size_t boundary, int offset);
 
     symbol_value resolve(dependency_solver& solver) const override;
 
 private:
-    std::vector<address> base_addrs;
+    address base_addrs;
     int offset;
     symbol_value resolve(const address& addr) const;
 };
