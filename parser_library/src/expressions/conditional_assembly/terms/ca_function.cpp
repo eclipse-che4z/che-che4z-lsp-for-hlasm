@@ -93,10 +93,11 @@ void ca_function::resolve_expression_tree(ca_expression_ctx expr_ctx, diagnostic
         diags.add_diagnostic(diagnostic_op::error_CE006(expr_range));
 
     expr_ctx.kind = param_kind;
+
+    if (duplication_factor)
+        duplication_factor->resolve_expression_tree({ context::SET_t_enum::A_TYPE, expr_ctx.kind, true }, diags);
     for (auto&& expr : parameters)
-    {
         expr->resolve_expression_tree(expr_ctx, diags);
-    }
 }
 
 bool ca_function::is_character_expression(character_expression_purpose purpose) const

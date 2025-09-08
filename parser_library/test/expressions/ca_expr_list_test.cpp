@@ -219,3 +219,9 @@ TEST(ca_expr_list, resolve_unconditionally_2)
     analyzer a(R"(&@ SETA (0AND(N O))'')");
     EXPECT_NO_THROW(a.analyze());
 }
+
+TEST(ca_expr_list, resolve_unconditionally_3)
+{
+    analyzer a(R"( &@((2@)D2C('')))");
+    EXPECT_NO_THROW(a.analyze());
+}
