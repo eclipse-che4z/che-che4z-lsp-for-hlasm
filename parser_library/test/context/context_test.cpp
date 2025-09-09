@@ -497,7 +497,7 @@ TEST(context_macro, recurr_call)
     args.emplace_back(nullptr, op3);
 
     // prototype->|&LBL        MAC        &KEY=,&OP1,,&OP3
-    auto m = ctx.add_macro(idx, lbl, std::move(args), {}, {}, {}, {}, {}, false);
+    auto m = ctx.add_macro(idx, lbl, std::move(args), {}, { {} }, {}, {}, {}, false);
 
     // creating param data
     macro_data_ptr lb(std::make_unique<macro_param_data_single>("lbl"));
@@ -521,6 +521,7 @@ TEST(context_macro, recurr_call)
     EXPECT_FALSE(t2);
     ASSERT_TRUE(ctx.current_macro() == m2);
     ASSERT_TRUE(ctx.is_in_macro());
+    ctx.current_scope().this_macro->current_statement.value += 1;
 
     params.clear();
 

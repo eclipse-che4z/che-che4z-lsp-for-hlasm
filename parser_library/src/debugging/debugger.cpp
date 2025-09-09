@@ -406,7 +406,7 @@ public:
         // we show only global variables that are valid for current scope,
         // moreover if we show variable in globals, we do not show it in locals
 
-        const auto& current_scope = proc_stack_[frame_id].scope;
+        const auto& current_scope = proc_stack_[frame_id].scope();
 
         if (current_scope.is_in_macro())
         {
@@ -673,7 +673,7 @@ public:
         if (frame_id >= proc_stack_.size())
             return evaluated_expression_error("Invalid frame id");
 
-        const auto& scope = proc_stack_[frame_id].scope;
+        const auto& scope = proc_stack_[frame_id].scope();
         auto [sysvars, _] = last_system_variables_.try_emplace(
             frame_id, utils::factory([this, &scope]() { return ctx_->get_system_variables(scope); }));
 

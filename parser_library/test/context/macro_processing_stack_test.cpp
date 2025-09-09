@@ -452,3 +452,31 @@ TEST(macro_processing_stack, double_copy_with_nested_3)
     ASSERT_TRUE(matches_message_codes(a.diags(), { "MNOTE" }));
     EXPECT_TRUE(matches_diagnostic_stack(a.diags().front(), { "COPY2", "COPY1", "MAC", "opencode" }));
 }
+
+TEST(macro_processing_stack, aread_does_not_change_stack)
+{
+    mock_parse_lib_provider lib({
+        { "INNER", " MAC" },
+        { "OUTER", R"(
+    COPY INNER
+*   TEXT
+)" },
+        { "MAC", R"(.*
+    MACRO
+    MAC
+&C  AREAD
+&C  AREAD
+    MNOTE 0,'HERE'
+    MEND
+)" },
+    });
+    std::string input = R"(
+    COPY OUTER
+*   TEXT
+)";
+    analyzer a(input, analyzer_options { opencode, &lib });
+    a.analyze();
+
+    ASSERT_TRUE(matches_message_codes(a.diags(), { "MNOTE" }));
+    EXPECT_TRUE(matches_diagnostic_stack(a.diags().front(), { "MAC", "INNER", "OUTER", "opencode" }));
+}

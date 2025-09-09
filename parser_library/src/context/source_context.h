@@ -79,17 +79,15 @@ struct processing_frame
 
 struct processing_frame_details
 {
-    processing_frame_details(position pos,
-        const utils::resource::resource_location& resource_loc,
-        const code_scope& scope,
-        file_processing_type proc_type,
-        id_index member);
+    processing_frame_details(const processing_frame& frame, const code_scope& scope);
 
     position pos;
     utils::resource::resource_location resource_loc;
-    const code_scope& scope;
+    const code_scope* scope_ptr;
     id_index member_name;
     file_processing_type proc_type;
+
+    const auto& scope() const noexcept { return *scope_ptr; }
 };
 
 using processing_stack_details_t = std::vector<processing_frame_details>;

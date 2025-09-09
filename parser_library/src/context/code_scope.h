@@ -17,6 +17,7 @@
 
 #include <variant>
 
+#include "context/source_context.h"
 #include "macro.h"
 #include "utils/time.h"
 #include "variables/set_symbol.h"
@@ -71,6 +72,8 @@ struct code_scope
     size_t branch_counter_change = 0;
     // the ACTR branch counter
     A_t branch_counter = 4096;
+    // stack at the time of enter_macro
+    processing_stack_t stack = {};
 
     bool is_in_macro() const { return !!this_macro; }
 

@@ -150,6 +150,9 @@ private:
     const opcode_t* search_opcodes(id_index name, Pred p, Proj proj = Proj()) const;
     const opcode_t* search_opcodes(id_index name, opcode_generation gen) const;
 
+    processing_stack_t processing_stack(processing_stack_t cur, const source_context& source);
+    processing_stack_t processing_stack(processing_stack_t cur, const code_scope& scope);
+
 public:
     static std::shared_ptr<id_storage> make_default_id_storage();
 
