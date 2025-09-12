@@ -225,3 +225,11 @@ TEST(ca_expr_list, resolve_unconditionally_3)
     analyzer a(R"( &@((2@)D2C('')))");
     EXPECT_NO_THROW(a.analyze());
 }
+
+TEST(ca_expr_list, resolve_unconditionally_4)
+{
+    analyzer a(R"(&V((E INDEX S SLA(S))) S)");
+    EXPECT_NO_THROW(a.analyze());
+
+    EXPECT_TRUE(contains_message_codes(a.diags(), { "CE018" }));
+}

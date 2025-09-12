@@ -153,6 +153,9 @@ void ca_function_binary_operator::resolve_expression_tree(ca_expression_ctx expr
     else
         operands_kind = ca_common_expr_policy::get_operands_type(function, expr_ctx.kind);
 
+    if (operands_kind == context::SET_t_enum::UNDEF_TYPE)
+        diags.add_diagnostic(diagnostic_op::error_CE018(expr_range, to_string(function)));
+
     expr_ctx.kind = operands_kind;
     left_expr->resolve_expression_tree(expr_ctx, diags);
     right_expr->resolve_expression_tree(expr_ctx, diags);

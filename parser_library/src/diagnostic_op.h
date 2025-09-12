@@ -753,6 +753,8 @@ struct diagnostic_op
 
     static diagnostic_op error_CE017_character_expression_expected(const range& range);
 
+    static diagnostic_op error_CE018(const range& range, std::string_view func);
+
     static diagnostic_op error_CW001(const range& range);
 
     static diagnostic_op error_S100(std::string_view message, const range& range);

@@ -2426,6 +2426,12 @@ diagnostic_op diagnostic_op::error_CE017_character_expression_expected(const ran
     return diagnostic_op(diagnostic_severity::error, "CE017", "Character expression expected", range);
 }
 
+diagnostic_op diagnostic_op::error_CE018(const range& range, std::string_view func)
+{
+    return diagnostic_op(
+        diagnostic_severity::error, "CE018", concat("Function ", func, " is not allowed in this context"), range);
+}
+
 diagnostic_op diagnostic_op::error_CW001(const range& range)
 {
     return diagnostic_op(diagnostic_severity::warning, "CW001", "Substring count points past string end", range);

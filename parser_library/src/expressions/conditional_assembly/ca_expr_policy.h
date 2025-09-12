@@ -58,6 +58,8 @@ enum class ca_expr_ops
     UNKNOWN
 };
 
+[[nodiscard]] std::string_view to_string(ca_expr_ops op) noexcept;
+
 struct ca_expr_op
 {
     ca_expr_ops op;

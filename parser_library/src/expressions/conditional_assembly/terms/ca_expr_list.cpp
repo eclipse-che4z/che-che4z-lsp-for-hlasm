@@ -61,7 +61,7 @@ void ca_expr_list::resolve_expression_tree(ca_expression_ctx expr_ctx, diagnosti
     else if (expr_kind == context::SET_t_enum::C_TYPE)
         resolve<context::C_t>(expr_ctx, diags);
     else
-        assert(false);
+        expr_list.clear();
 }
 
 bool ca_expr_list::is_character_expression(character_expression_purpose purpose) const
