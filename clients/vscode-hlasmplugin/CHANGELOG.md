@@ -2,6 +2,9 @@
 
 ## ****Unreleased****
 
+#### Added
+- Macro call can now define a sequence symbol in the opencode
+
 #### Fixed
 - Variable index expression is not evaluated correctly on macro calls
 - Macro calls originating from statements partially consumed by AREAD instructions might not be performed

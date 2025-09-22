@@ -21,6 +21,7 @@
 #include "context/hlasm_context.h"
 #include "ebcdic_encoding.h"
 #include "parsing/parser_impl.h"
+#include "processing/branching_provider.h"
 #include "semantics/operand_impls.h"
 
 namespace hlasm_plugin::parser_library::processing {
@@ -50,6 +51,11 @@ void macro_processor::process(std::shared_ptr<const processing::resolved_stateme
             hlasm_ctx.ord_ctx.add_symbol_reference(
                 id, context::symbol_attributes(context::symbol_origin::MACH, 'M'_ebcdic), lib_info);
         }
+    }
+    else if (label.type == semantics::label_si_type::SEQ && stmt->format_ref().kind != processing_kind::MACRO)
+    {
+        const auto& seq_sym = std::get<semantics::seq_sym>(label.value);
+        branch_provider.register_sequence_symbol(seq_sym.name, seq_sym.symbol_range);
     }
 
     auto [named, symbolic] = get_args(*stmt);

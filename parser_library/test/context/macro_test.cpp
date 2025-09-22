@@ -1590,3 +1590,65 @@ TEST(macro, expressions_in_macro_ops)
 
     EXPECT_TRUE(matches_message_text(a.diags(), { "C" }));
 }
+
+TEST(macro, defines_seq_symbol)
+{
+    std::string input = R"(
+      MACRO
+      MAC
+      MNOTE 0,'MAC'
+      MEND
+
+.X    MAC
+&A    SETA &A+1
+      AIF  (&A LT 2).X
+)";
+    analyzer a(input);
+    a.analyze();
+
+    EXPECT_TRUE(matches_message_text(a.diags(), { "MAC", "MAC" }));
+}
+
+TEST(macro, defines_seq_symbol_from_copy)
+{
+    mock_parse_lib_provider lib({
+        { "COPYBOOK", R"(
+      MACRO
+      MAC
+      MNOTE 0,'MAC'
+      MEND
+
+.X    MAC
+&A    SETA &A+1
+      AIF  (&A LT 2).X
+ )" },
+    });
+    std::string input = R"(
+    COPY COPYBOOK
+)";
+    analyzer a(input, analyzer_options(&lib));
+    a.analyze();
+
+    EXPECT_TRUE(matches_message_text(a.diags(), { "MAC", "MAC" }));
+}
+
+TEST(macro, defines_seq_symbol_only_in_opencode)
+{
+    std::string input = R"(
+      MACRO
+      MAC2
+      MEND
+
+      MACRO
+      MAC
+.X    MAC2
+      MEND
+
+      MAC
+      AGO  .X
+)";
+    analyzer a(input);
+    a.analyze();
+
+    EXPECT_TRUE(matches_message_codes(a.diags(), { "E047" }));
+}
