@@ -191,7 +191,7 @@ jobs:
             native: win32_arm64
             artifacts-ext: .exe
             skip-test: true
-          - os: macos-13
+          - os: macos-15-intel
             native: darwin_x64
           - os: macos-15
             native: darwin_arm64
@@ -281,6 +281,9 @@ jobs:
             chmod: true
           - os: macos-15
             native: darwin_arm64
+            chmod: true
+          - os: macos-15-intel
+            native: darwin_x64
             chmod: true
 
     env:
