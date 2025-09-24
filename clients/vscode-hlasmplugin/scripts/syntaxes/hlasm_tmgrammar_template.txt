@@ -176,7 +176,7 @@
     },
     "literalPool": {
       "begin": "^${listingDetails}$\\s{15}(?==)",
-      "end": "(?=^${listingDetails}$(?<=\\d ))",
+      "end": "(?=^${listingDetails}$(?<=\\d[ +=>-]))",
       "applyEndPatternLast": 0,
       "patterns": [
         {
