@@ -731,12 +731,13 @@ public:
         return last_text_state->value;
     }
 
+    template<bool hl = true>
     void push_last_text()
     {
         if (!last_text_state)
             return;
         last_text_state->conc_range = p.remap_range(parser_position { last_text_state->conc_range.start }, p.cur_pos());
-        if (highlighting)
+        if (highlighting && hl)
             p.add_hl_symbol(last_text_state->conc_range, hl_scopes::operand);
         last_text_state = nullptr;
     }
@@ -3909,7 +3910,7 @@ result_t<void> parser2::lex_rest_of_model_string(concat_chain_builder& ccb)
                     consume_into(ccb.last_text_value());
                     break;
                 }
-                ccb.push_last_text();
+                ccb.push_last_text<false>();
                 if (auto [error, vs] = lex_variable(); error)
                     return failure;
                 else
@@ -3926,6 +3927,7 @@ result_t<void> parser2::lex_rest_of_model_string(concat_chain_builder& ccb)
 
             case u8'\'':
                 consume_into(ccb.last_text_value());
+                ccb.push_last_text<false>();
                 return {};
 
             default:
@@ -4065,6 +4067,7 @@ result_t<std::optional<semantics::op_rem>> parser2::try_model_ops(parser_positio
                     .remarks = std::move(remarks),
                     .line_range = range_from(line_start),
                 };
+                ccb.push_last_text();
                 semantics::concatenation_point::clear_concat_chain(cc);
                 resolve_concat_chain(cc);
                 result.operands.emplace_back(std::make_unique<semantics::model_operand>(

@@ -1214,6 +1214,20 @@ TEST(mnote, nonprintable_characters)
     EXPECT_TRUE(matches_message_text(a.diags(), { "<01><01>" }));
 }
 
+TEST(mnote, empty)
+{
+    std::string input = R"(
+&C  SETC ''
+    MNOTE 0,'&C'
+)";
+
+    analyzer a(input);
+    a.analyze();
+
+    EXPECT_TRUE(matches_message_codes(a.diags(), { "MNOTE" }));
+    EXPECT_TRUE(matches_message_properties(a.diags(), { range({ 2, 12 }, { 2, 16 }) }, &diagnostic::diag_range));
+}
+
 TEST(mnote, output)
 {
     std::string input = " MNOTE 1,'test string'";
