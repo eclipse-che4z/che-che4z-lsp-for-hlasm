@@ -138,10 +138,11 @@ std::string opencode_provider::aread_from_copybook() const
 {
     auto& opencode_stack = m_ctx.hlasm_ctx->opencode_copy_stack();
     auto& copy = opencode_stack.back();
-    const auto line = copy.suspended_at;
+    const auto line = copy.pending_resume != (size_t)-1 ? copy.pending_resume : copy.suspended_at;
     std::string_view remaining_text = m_ctx.lsp_ctx->get_file_info(copy.definition_location()->resource_loc)
                                           ->data.get_lines_beginning_at({ line, 0 });
     std::string result(lexing::extract_line(remaining_text).first);
+    copy.pending_resume = context::copy_member_invocation::no_pending_resume;
     if (remaining_text.empty())
         copy.resume();
     else
@@ -472,14 +473,16 @@ utils::resource::resource_location generate_virtual_file_name(virtual_file_id id
 }
 
 namespace {
-size_t extract_current_line(size_t next_line_index, const document& doc)
+std::pair<size_t, size_t> extract_current_line(size_t next_line_index, const document& doc)
 {
+    size_t skipped = 0;
     while (next_line_index--)
     {
         if (const auto& lineno = doc.at(next_line_index).lineno(); lineno.has_value())
-            return lineno.value() + 1;
+            return { lineno.value() + 1, skipped };
+        ++skipped;
     }
-    return 0;
+    return { 0, skipped };
 }
 } // namespace
 
@@ -497,7 +500,8 @@ std::pair<virtual_file_handle, std::string_view> opencode_provider::file_generat
 
 utils::task opencode_provider::run_preprocessor()
 {
-    const auto current_line = extract_current_line(m_next_line_index, m_input_document);
+    const auto [current_line, skipped] = extract_current_line(m_next_line_index, m_input_document);
+    m_next_line_index -= skipped;
 
     std::string preprocessor_text;
     auto it = m_input_document.begin() + m_next_line_index;
@@ -525,7 +529,9 @@ utils::task opencode_provider::run_preprocessor()
     if (!inserted)
     {
         assert(preprocessor_text == new_file->second); // isn't moved if insert fails
-        m_ctx.hlasm_ctx->enter_copy_member(virtual_file_name);
+        auto& invo = m_ctx.hlasm_ctx->enter_copy_member(virtual_file_name);
+        if (skipped)
+            invo.suspend(skipped);
         return utils::task();
     }
     else
@@ -540,12 +546,13 @@ utils::task opencode_provider::run_preprocessor()
                 m_ctx,
                 analyzer_options::dependency(virtual_file_name.to_string(), processing_kind::COPY),
             },
-            virtual_file_name);
+            virtual_file_name,
+            skipped);
     }
 }
 
 utils::task opencode_provider::start_nested_parser(
-    std::string_view text, analyzer_options opts, context::id_index vf_name) const
+    std::string_view text, analyzer_options opts, context::id_index vf_name, size_t skipped) const
 {
     analyzer a(text, std::move(opts));
     co_await a.co_analyze();
@@ -553,7 +560,9 @@ utils::task opencode_provider::start_nested_parser(
     for (auto&& d : a.diags())
         m_diagnoser->add_diagnostic(std::move(d));
 
-    m_ctx.hlasm_ctx->enter_copy_member(vf_name);
+    auto& invo = m_ctx.hlasm_ctx->enter_copy_member(vf_name);
+    if (skipped)
+        invo.suspend(skipped);
 }
 
 bool opencode_provider::suspend_copy_processing(remove_empty re) const
@@ -618,7 +627,8 @@ utils::task opencode_provider::convert_ainsert_buffer_to_copybook()
             m_ctx,
             analyzer_options::dependency(virtual_copy_name.to_string(), processing_kind::COPY),
         },
-        virtual_copy_name);
+        virtual_copy_name,
+        0);
 }
 
 context::shared_stmt_ptr opencode_provider::get_next(const statement_processor& proc)
@@ -781,11 +791,15 @@ extract_next_logical_line_result opencode_provider::extract_next_logical_line_fr
     assert(m_ctx.hlasm_ctx->in_opencode());
 
     auto& opencode_copy_stack = m_ctx.hlasm_ctx->opencode_copy_stack();
+
     while (!opencode_copy_stack.empty())
     {
         auto& copy_file = opencode_copy_stack.back();
         if (!copy_file.suspended())
             return extract_next_logical_line_result::failed; // copy processing resumed
+        if (const auto sr = std::exchange(copy_file.pending_resume, context::copy_member_invocation::no_pending_resume);
+            sr != context::copy_member_invocation::no_pending_resume)
+            opencode_copy_stack.back().suspend(sr);
         const auto line = copy_file.suspended_at;
 
         context::statement_id resync;
@@ -822,7 +836,7 @@ extract_next_logical_line_result opencode_provider::extract_next_logical_line_fr
 
         // The copybook needs to be re-suspended to allow for two-phase ordinary processing
         // On the second run the stmt_line == line will be true and copybook will resume
-        copy_file.suspend(line + m_current_logical_line.segments.size());
+        copy_file.pending_resume = line + m_current_logical_line.segments.size();
 
         return extract_next_logical_line_result::normal; // unaligned statement extracted
     }

@@ -42,15 +42,24 @@ struct copy_frame
 {
     id_index copy_member;
     statement_id statement_offset;
+    size_t suspended_at;
+    size_t pending_resume;
 
-    copy_frame(id_index copy_member, statement_id statement_offset)
+    copy_frame(id_index copy_member, statement_id statement_offset, size_t suspended_at, size_t pending_resume)
         : copy_member(copy_member)
         , statement_offset(statement_offset)
+        , suspended_at(suspended_at)
+        , pending_resume(pending_resume)
     {}
 
-    bool operator==(const copy_frame& oth) const
+    bool operator==(const copy_frame& oth) const noexcept = default;
+
+    void adjust_to_beginning() noexcept
     {
-        return copy_member == oth.copy_member && statement_offset == oth.statement_offset;
+        if (suspended_at == (size_t)-1)
+            statement_offset.value -= 1;
+        else
+            pending_resume = (size_t)-1;
     }
 };
 

@@ -52,6 +52,9 @@ struct copy_member_invocation
     static constexpr size_t not_suspended = (size_t)-1;
     size_t suspended_at = not_suspended;
 
+    static constexpr std::size_t no_pending_resume = (std::size_t)-1;
+    std::size_t pending_resume = no_pending_resume;
+
     explicit copy_member_invocation(copy_member_ptr copy_member)
         : copy_member_definition(std::move(copy_member))
     {}
@@ -62,7 +65,9 @@ struct copy_member_invocation
 
     position current_statement_position() const
     {
-        if (current_statement != statement_id())
+        if (suspended())
+            return { suspended_at, 0 };
+        else if (current_statement != statement_id())
             return cached_definition()->at(current_statement.value).get_base()->statement_position();
         else
             return {};

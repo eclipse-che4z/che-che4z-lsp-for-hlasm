@@ -281,7 +281,7 @@ public:
     void add_copy_member(copy_member_ptr member);
     copy_member_ptr get_copy_member(id_index member) const;
     // enters a copy member
-    void enter_copy_member(id_index member);
+    copy_member_invocation& enter_copy_member(id_index member);
     // leaves current copy member
     void leave_copy_member();
 

@@ -80,7 +80,7 @@ void statement_provider::trigger_attribute_lookahead(std::vector<context::id_ind
     const auto in_macro = eval_ctx.hlasm_ctx.is_in_macro();
     const auto opencode_line = has_copybooks || in_macro ? snapshot.end_index : snapshot.begin_index;
     if (has_copybooks && !in_macro)
-        snapshot.copy_frames.back().statement_offset.value -= 1;
+        snapshot.copy_frames.back().adjust_to_beginning();
 
     std::ranges::sort(references_buffer);
 

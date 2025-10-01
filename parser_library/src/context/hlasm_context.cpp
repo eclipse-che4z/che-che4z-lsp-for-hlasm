@@ -580,7 +580,7 @@ hlasm_context::opencode_sequence_symbol_result hlasm_context::create_opencode_se
     const bool has_copybooks = !snapshot.copy_frames.empty();
     const auto opencode_line = has_copybooks ? snapshot.end_index : snapshot.begin_index;
     if (has_copybooks)
-        snapshot.copy_frames.back().statement_offset.value -= 1;
+        snapshot.copy_frames.back().adjust_to_beginning();
 
     const auto [it, inserted] = opencode_sequence_symbols.try_emplace(
         target, std::move(loc), context::source_position(opencode_line), std::move(snapshot));
@@ -940,14 +940,14 @@ copy_member_ptr hlasm_context::get_copy_member(id_index member) const
     return nullptr;
 }
 
-void hlasm_context::enter_copy_member(id_index member_name)
+copy_member_invocation& hlasm_context::enter_copy_member(id_index member_name)
 {
     auto tmp = copy_members_.find(member_name);
     assert(tmp != copy_members_.end());
 
     const auto& [name, member] = *tmp;
 
-    source_stack_.back().copy_stack.emplace_back(copy_member_invocation(member));
+    return source_stack_.back().copy_stack.emplace_back(copy_member_invocation(member));
 }
 
 const hlasm_context::copy_member_storage& hlasm_context::copy_members() { return copy_members_; }
@@ -1009,7 +1009,10 @@ void hlasm_context::apply_source_snapshot(source_snapshot snapshot)
     for (const auto& frame : snapshot.copy_frames)
     {
         const auto& copy = copy_members_.at(frame.copy_member);
-        last_copy_stack.emplace_back(copy).current_statement = frame.statement_offset;
+        auto& invo = last_copy_stack.emplace_back(copy);
+        invo.current_statement = frame.statement_offset;
+        invo.suspended_at = frame.suspended_at;
+        invo.pending_resume = frame.pending_resume;
     }
 }
 
