@@ -13,6 +13,7 @@
 - Incorrect highlighting in listings after encountering a literal pool
 - Inaccurate ranges produced for diagnostics related to model statements
 - Inconsistent behavior while AREADing from a preprocessor output
+- Symbol location is not recorded correctly when the symbol is defined in a nested macro call
 
 ## [1.19.0](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/compare/1.18.0...1.19.0) (2025-09-03)
 

@@ -291,6 +291,30 @@ X EQU 1
     EXPECT_EQ(get_symbol(a.hlasm_ctx(), "XXX")->symbol_location(), location({ 0, 0 }, resource_location("COPYF")));
 }
 
+TEST(ordinary_symbols, symbol_location_macros)
+{
+    std::string input = R"(
+ MACRO
+ OUTER
+ COPY   COPYBOOK
+ DEFSYM
+ MEND
+
+ OUTER
+)";
+    const std::string defsym = R"(.*
+    MACRO
+    DEFSYM
+SYMBOL DS C
+    MEND
+)";
+    mock_parse_lib_provider mock { { "COPYBOOK", R"( DEFSYM )" }, { "DEFSYM", defsym } };
+    analyzer a(input, analyzer_options { resource_location("test"), &mock });
+    a.analyze();
+
+    EXPECT_EQ(get_symbol(a.hlasm_ctx(), "SYMBOL")->symbol_location(), location({ 3, 0 }, resource_location("DEFSYM")));
+}
+
 TEST(ordinary_symbols, alignment_cycle)
 {
     std::string input = R"(

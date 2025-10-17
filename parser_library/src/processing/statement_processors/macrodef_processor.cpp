@@ -189,8 +189,11 @@ void macrodef_processor::update_outer_position(const context::hlasm_statement& s
 {
     if (hlasm_ctx.current_copy_stack().size() != copy_nest_limit.front())
         return;
-    if (const auto* mac = hlasm_ctx.current_macro(); mac && mac->get_current_copy_nest().size() >= 2)
-        return;
+    if (hlasm_ctx.in_opencode())
+    {
+        if (const auto* mac = hlasm_ctx.current_macro(); mac && mac->get_current_copy_nest().size() >= 2)
+            return;
+    }
 
     curr_outer_position_ = stmt.statement_position();
 }
