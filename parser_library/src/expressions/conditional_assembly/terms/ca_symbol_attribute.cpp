@@ -139,7 +139,7 @@ void ca_symbol_attribute::resolve_expression_tree(ca_expression_ctx expr_ctx, di
 {
     if (expr_ctx.kind == context::SET_t_enum::C_TYPE && expr_ctx.kind != expr_kind)
         diags.add_diagnostic(diagnostic_op::error_CE004(expr_range));
-    else if (std::holds_alternative<semantics::vs_ptr>(symbol))
+    if (std::holds_alternative<semantics::vs_ptr>(symbol))
         std::get<semantics::vs_ptr>(symbol)->resolve(expr_ctx.parent_expr_kind, diags);
 }
 

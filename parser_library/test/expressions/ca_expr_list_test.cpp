@@ -233,3 +233,9 @@ TEST(ca_expr_list, resolve_unconditionally_4)
 
     EXPECT_TRUE(contains_message_codes(a.diags(), { "CE018" }));
 }
+
+TEST(ca_expr_list, resolve_unconditionally_5)
+{
+    analyzer a(R"( SETC I'&c((u F)))");
+    EXPECT_NO_THROW(a.analyze());
+}
