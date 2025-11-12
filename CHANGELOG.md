@@ -1,3 +1,32 @@
+## [1.20.0](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/compare/1.19.0...1.20.0) (2025-11-12)
+
+### Features
+
+* Macro call can now define a sequence symbol in the opencode ([2a56a51](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/2a56a5164c83b8030304e5363413614c5a705194))
+
+### Fixes
+
+* Adjust instruction format for z17 ([3c29442](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/3c294421197322af8825095bc6327f971aaf2d47))
+* AREAD modifies macro processing stack ([8ca8140](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/8ca8140d85905e00778e7a7ffec46564764b78f8))
+* Inaccurate ranges produced for diagnostics related to model statements ([7092ad7](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/7092ad72d8f8192923c373617546f95ce839b9d8))
+* Inconsistent behavior while AREADing from a preprocessor output ([2e121c4](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/2e121c403c2a216840a25cca10811dcc258b4147))
+* Incorrect highlighting in listings after encountering a literal pool ([390ad3c](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/390ad3c1c2f40d51abd33626fb2cb68efd84ce6d))
+* Macro calls originating from statements partially consumed by AREAD instructions might not be performed ([c69acb0](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/c69acb08e1feaef2e6f341f324ec75c0d67a6094))
+* Missing resolve calls ([1f8ecab](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/1f8ecab227766fcfd7d06176012c9c8452048118))
+* Resolve CA expressions in unexpected contexts ([76feaec](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/76feaec36d3d416c6d11228db9f307986d2ea33b))
+* Symbol location is not recorded correctly when the symbol is defined in a nested macro call ([74fb68c](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/74fb68cbfca0684ecf929d76f936b18615ba1d16))
+* The language server might crash while evaluating symbol dependencies ([9b26f55](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/9b26f5599f4e1aa5bcffd56e38b1df7020dca6b4))
+* Unresolved CA expression in a symbol attribute expression ([0b03caf](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/0b03caf0574030b8c4a0a164fb3558bf5bd31a25))
+* Variable index expression is not evaluated correctly on macro calls ([db9f330](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/db9f33000b63ae6a31c52e4e9b17734dbf04e932))
+
+### Other changes
+
+* Address base entry ([5b26900](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/5b2690002e31be4fad1b6abbab43747e2fa6e805))
+* MacOS 13 runner removal ([6c87726](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/6c87726ef39b960b335f518790c04b162af13076))
+* Run WebAssembly tests on big endian platform ([1962dbc](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/1962dbc4d18bf62601c0b22e7ded4cad1e636f75))
+* Simpler sequence symbol representation ([75dc64b](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/75dc64b2aa12e5dd49d91f7c1a3e7341b76d0622))
+* Space resolve cleanup ([f5492a2](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/f5492a2dae953b0197e7f1aefd4de55cf532cdec))
+* Upgrade MacOS x64 runner ([2620e72](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/2620e72419c1b838455d3a73313d9bb74834a04a))
 ## [1.19.0](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/compare/1.18.0...1.19.0) (2025-09-03)
 
 ### Features
