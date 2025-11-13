@@ -7,5 +7,6 @@
     "hlasm.arguments": [
         "--log-level=1"
     ],
-    "emptyVariable": ""
+    "emptyVariable": "",
+    "chat.disableAIFeatures": true
 }
