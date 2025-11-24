@@ -167,8 +167,8 @@ The order of libraries that are selected by a path mask is arbitrary. We therefo
         "SYSPARM": "ZOS210"
       },
       "external_functions": {
-        "FUNC1": 0,
-        "FUNC2": 1
+        "FUNC1": 1,
+        "FUNC2": "STRING"
       }
     },
     {
