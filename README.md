@@ -134,7 +134,7 @@ Visual Studio Code workspace variables can be referenced in both configuration f
 
 ### Example `proc_grps.json`:
 
-The following example defines two processor groups, GROUP1 and GROUP2, and a list of directories to search for macros and COPY files, it also defines the _SYSPARM_ assembler parameter for GROUP1. Additionally, if the library `MACLIB/` does not exist in the workspace, the plugin does not report it as an error.
+The following example defines two processor groups, GROUP1 and GROUP2, and a list of directories to search for macros and COPY files, it also defines the _SYSPARM_ assembler parameter and values for two external functions for GROUP1. Additionally, if the library `MACLIB/` does not exist in the workspace, the plugin does not report it as an error.
 
 The `SYS1.MACLIB` data set is accessed via an FTP client and required members are downloaded.
 
@@ -165,6 +165,10 @@ The order of libraries that are selected by a path mask is arbitrary. We therefo
       ],
       "asm_options": {
         "SYSPARM": "ZOS210"
+      },
+      "external_functions": {
+        "FUNC1": 0,
+        "FUNC2": 1
       }
     },
     {
