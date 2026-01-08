@@ -4,7 +4,7 @@
 
 #### Added
 - SETAF and SETCF instruction support
-- Constant external functions can be specified in processor group configuration.
+- Constant external functions can be specified in processor group configuration
 
 #### Fixed
 - Incorrect `SYSIN_MEMBER` variable value
