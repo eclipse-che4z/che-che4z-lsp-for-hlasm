@@ -3137,6 +3137,7 @@ std::pair<bool, semantics::operand_ptr> parser2::ca_var_def_ops(parser_position 
     else
     {
         auto& cc = std::get<semantics::concat_chain>(var_name);
+        resolve_concat_chain(cc);
         var = std::make_unique<semantics::created_variable_symbol>(std::move(cc), std::move(num), r);
     }
     return { true, std::make_unique<semantics::var_ca_operand>(std::move(var), r) };

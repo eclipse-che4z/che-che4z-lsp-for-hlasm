@@ -239,3 +239,9 @@ TEST(ca_expr_list, resolve_unconditionally_5)
     analyzer a(R"( SETC I'&c((u F)))");
     EXPECT_NO_THROW(a.analyze());
 }
+
+TEST(ca_expr_list, resolve_unconditionally_6)
+{
+    analyzer a(R"( LCLB (&V((N 6))))");
+    EXPECT_NO_THROW(a.analyze());
+}
