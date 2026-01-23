@@ -1,3 +1,23 @@
+## [1.21.0](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/compare/1.20.0...1.21.0) (2026-01-23)
+
+### Features
+
+* Introduce configuration options allowing to define constant external functions ([26e171c](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/26e171c15812892cd6bad7b28ff9e541e2111cec))
+* SETAF and SETCF instruction support ([6ee5ba8](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/6ee5ba861734115b90985c5a220723b805a55f13))
+
+### Fixes
+
+* Improve accuracy of EQU evaluation in conditional assembly ([8e08f8e](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/8e08f8e4621bc29506dd03e94161d8e29b9a912a))
+* Improve accuracy of T attribute ([fb7ee5f](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/fb7ee5f282e277ef7aefce333bfdab26e33cf1bc))
+* Incorrect  variable value ([0c7cca3](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/0c7cca39d94d0597bef38eae874b8ba080946aae))
+* Missing copybook reported in inactive code ([a597fb6](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/a597fb68b5d9bc83c1c8e937b6fb9619cf2a47c5))
+* Sequence symbol redefinition reported in the lookahead mode ([16b8e8e](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/16b8e8ea99988f17f02a2b87be617d2dbbca9e69))
+* The language server crashes after encountering an invalid variable declaration ([61e64f4](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/61e64f47f7211b204057577b4176c80a3cc9f3b2))
+
+### Other changes
+
+* CA instruction operand forms ([c350641](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/c350641f34da5fc4e7fd85c01e78988acd5104b4))
+* Run web test in ESM mode ([31429a4](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/31429a45e6b59a4a7730577cf3534f72eee096d0))
 ## [1.20.0](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/compare/1.19.0...1.20.0) (2025-11-12)
 
 ### Features
