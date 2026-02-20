@@ -11,21 +11,21 @@ HLASM Language Support is an IDE extension that supports the High Level Assemble
 
 HLASM Language Support is part of the Che4z open-source project. Feel free to contribute at our [GitHub repository](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/). For project documentation, see the [wiki](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/wiki/). 
 
-HLASM Language Support is also part of [Code4z](https://techdocs.broadcom.com/code4z), an all-round VS Code extension package that offers a modern experience for mainframe application developers, including tools for language support, data editing, testing, and source code management. For an interactive overview of Code4z, see the [Code4z Developer Cockpit](https://mainframe.broadcom.com/code4z-developer-cockpit).
+## Address Software Requirements
+
+There are no client or server-side software requirements for HLASM Language Support.
 
 ## Integration with Explorer for Endevor and Zowe Explorer
 
 Integrate HLASM Language Support with [Explorer for Endevor](https://marketplace.visualstudio.com/items?itemName=broadcomMFD.explorer-for-endevor) to retrieve your HLASM source code from Endevor locations and edit it in VS Code. HLASM Language Support automatically retrieve dependencies associated with Endevor elements written in HLASM. We also recommend that you use HLASM Language Support with [Zowe Explorer](https://marketplace.visualstudio.com/items?itemName=Zowe.vscode-extension-for-zowe) to open your High Level Assembler programs stored on mainframe data sets.
 
-HLASM Language Support, Explorer for Endevor and Zowe Explorer are all available as part of the [Code4z](https://marketplace.visualstudio.com/items?itemName=broadcomMFD.code4z-extension-pack) package.
+To enable automatic dependency retrieval from Endevor, ensure your site has enabled the Endevor REST API version 2.16 or higher (PTF LU09053).
 
-<a href="https://www.openmainframeproject.org/all-projects/zowe/conformance"><img alt="This extension is Zowe v3 conformant" src="https://artwork.openmainframeproject.org/other/zowe-conformant/zowev3/explorer-vs-code/color/zowe-conformant-zowev3-explorer-vs-code-color.png" width=20% height=20% /></a>
+HLASM Language Support, Explorer for Endevor and Zowe Explorer are all available as part of the [Code4z Foundation](https://marketplace.visualstudio.com/items?itemName=broadcomMFD.code4z-extension-pack) pack.
 
-## Prerequisites
-
-To enable automatic dependency retrieval from Endevor, install the following:
-- Endevor REST API version 2.16 or higher (PTF LU09053).
-- Explorer for Endevor version 1.7.0 or higher.
+<div align="center">
+<a href="https://www.openmainframeproject.org/all-projects/zowe/conformance"><img alt="This extension is Zowe v3 conformant" src="https://artwork.openmainframeproject.org/other/zowe-conformant/zowev3/explorer-vs-code/color/zowe-conformant-zowev3-explorer-vs-code-color.png" width=208 height=156 /></a>
+</div>
 
 ## Compatibility
 
