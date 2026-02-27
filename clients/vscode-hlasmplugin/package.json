@@ -62,7 +62,7 @@
     "vscode-tmgrammar-test": "^0.1.3"
   },
   "dependencies": {
-    "basic-ftp": "^5.0.0",
+    "basic-ftp": "^5.2.0",
     "terse.js": "file:./terse/terse.js-1.0.0.tgz",
     "vscode-languageclient": "^9.0.1"
   },

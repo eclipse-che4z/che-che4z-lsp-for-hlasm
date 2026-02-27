@@ -23,7 +23,7 @@ fs.mkdirSync(path.join(base, "bin"), { recursive: true });
 // remove non-standard LIST command
 const basic_ftp_client_js = path.join(base, "node_modules", "basic-ftp", "dist", "Client.js");
 const basic_ftp_client = fs.readFileSync(basic_ftp_client_js, "utf8");
-fs.writeFileSync(basic_ftp_client_js, basic_ftp_client.replace('const LIST_COMMANDS_DEFAULT = ["LIST -a", "LIST"];', 'const LIST_COMMANDS_DEFAULT = ["LIST"];'));
+fs.writeFileSync(basic_ftp_client_js, basic_ftp_client.replace('const LIST_COMMANDS_DEFAULT = () => ["LIST -a", "LIST"];', 'const LIST_COMMANDS_DEFAULT = () => ["LIST"];'));
 // some servers hard close the data channel when no traffic occured, causing ECONNRESET to be raised, tolerate such behavior
 const basic_ftp_ftpcontext_js = path.join(base, "node_modules", "basic-ftp", "dist", "FtpContext.js");
 const basic_ftp_ftpcontext = fs.readFileSync(basic_ftp_ftpcontext_js, "utf8");
