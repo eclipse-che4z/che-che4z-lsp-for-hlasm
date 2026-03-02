@@ -532,7 +532,7 @@ jobs:
     needs: VSIX
     strategy:
       matrix:
-        theia: ["ghcr.io/eclipse-theia/theia-ide/theia-ide:1.60.100"]
+        theia: ["ghcr.io/eclipse-theia/theia-ide/theia-ide:1.68.200"]
 # theiaide images not supported anymore
     container:
       image: ${{ matrix.theia }}
