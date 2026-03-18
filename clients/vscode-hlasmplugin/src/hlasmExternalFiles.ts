@@ -555,7 +555,8 @@ export class HLASMExternalFiles {
         }
         content.references.add(msg.url);
 
-        const { response, cache } = await this.transformResult(msg.id, content, x => responseTransform(x, x => `${this.magicScheme}:/${service}${x}`));
+        const base = vscode.Uri.parse(`${this.magicScheme}:/${service}`);
+        const { response, cache } = await this.transformResult(msg.id, content, x => responseTransform(x, x => vscode.Uri.joinPath(base, x).toString()));
 
         if (cache && instance && !content.cached)
             content.cached = await this.storeCachedResult(await serverId(details, instance), service, details.normalizedPath(), content.result);

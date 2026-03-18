@@ -2,6 +2,9 @@
 
 ## ****Unreleased****
 
+#### Fixed
+- Data set members with name containing `#` are not processed correctly
+
 ## [1.21.0](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/compare/1.20.0...1.21.0) (2026-01-23)
 
 #### Added
