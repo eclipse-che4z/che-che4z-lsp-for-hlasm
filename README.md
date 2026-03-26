@@ -334,7 +334,7 @@ If you experience encoding errors when you load your source code from the mainfr
 
 After you change this setting, restart the extension to apply the change.
 
-**Note**: This feature does not reencode names of files and macros used in your source code.
+**Note**: This feature does not reencode filenames of macros and other dependencies when you retrieve them from the mainframe.
 
 ## Download Mainframe Dependencies
 
