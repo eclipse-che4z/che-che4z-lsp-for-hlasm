@@ -324,6 +324,18 @@ For files that use macros extensively but do not have the definitions available,
 ```
 In the `pgm_conf.json` example above, the `source_code` file has a configuration, so all discovered diagnostics are always shown. However, if you open another file and do not assign a processor group to it, its diagnostics are not shown if there are more than 15 of them.
 
+### Configure Character Reencoding
+
+If you experience encoding errors when you load your source code from the mainframe, you can configure HLASM Language Support to reencode the source in your native charset. To do this, open the HLASM Language Support extension settings and edit the setting **Hlasm > Pseudo Charset**. The following options are supported:
+
+* **IBM1148** (default)
+* **IBM1143**
+* **IBM278**
+
+After you change this setting, restart the extension to apply the change.
+
+**Note**: This feature does not reencode names of files and macros used in your source code.
+
 ## Download Mainframe Dependencies
 
 You can use the HLASM Language Support extension to download dependencies from mainframe data sets specified in `proc_grps.json` to your workspace. To connect to the mainframe, we recommend setting up a `zowe zosmf` or `zowe zftp` profile to store your credentials and connection information.
