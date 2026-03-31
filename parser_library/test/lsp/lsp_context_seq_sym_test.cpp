@@ -84,14 +84,14 @@ TEST_F(lsp_context_seq_sym, references_out_of_macro)
 
 TEST_F(lsp_context_seq_sym, hover)
 {
-    auto res = a.context().lsp_ctx->hover(opencode_loc, { 4, 12 });
+    auto res = a.context().lsp_ctx->hover(opencode_loc, { 4, 12 }, nullptr);
 
     EXPECT_EQ(res, "Sequence symbol");
 }
 
 TEST_F(lsp_context_seq_sym, completion_in_macro)
 {
-    auto res_v = a.context().lsp_ctx->completion(opencode_loc, { 6, 1 }, '\0', completion_trigger_kind::invoked);
+    auto res_v = a.context().lsp_ctx->completion(opencode_loc, { 6, 1 }, U'\0', completion_trigger_kind::invoked);
 
     const auto* res = std::get<const std::unordered_map<context::id_index, context::macro_sequence_symbol>*>(res_v);
 
@@ -101,7 +101,7 @@ TEST_F(lsp_context_seq_sym, completion_in_macro)
 
 TEST_F(lsp_context_seq_sym, completion_out_of_macro)
 {
-    auto res_v = a.context().lsp_ctx->completion(opencode_loc, { 13, 1 }, '\0', completion_trigger_kind::invoked);
+    auto res_v = a.context().lsp_ctx->completion(opencode_loc, { 13, 1 }, U'\0', completion_trigger_kind::invoked);
 
     const auto* res = std::get<const std::unordered_map<context::id_index, context::opencode_sequence_symbol>*>(res_v);
 

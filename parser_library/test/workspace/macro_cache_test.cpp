@@ -63,7 +63,7 @@ auto parse_dependency(std::shared_ptr<file> f, analyzing_context ctx, processing
     auto filename = f->get_location().filename();
     auto filename_id = ctx.hlasm_ctx->add_id(filename);
     std::pair result {
-        std::make_unique<analyzer>(f->get_text(),
+        std::make_unique<analyzer>(f->get_converted_text(),
             analyzer_options {
                 f->get_location(),
                 std::move(ctx),

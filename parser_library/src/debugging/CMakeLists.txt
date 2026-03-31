@@ -11,7 +11,6 @@
 #   Broadcom, Inc. - initial API and implementation
 
 target_sources(parser_library PRIVATE
-    attribute_variable.cpp
     debug_lib_provider.cpp
     debug_lib_provider.h
     debugger.cpp

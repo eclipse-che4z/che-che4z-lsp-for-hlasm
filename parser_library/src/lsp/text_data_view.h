@@ -46,7 +46,7 @@ public:
 
     // Returns a character before the specified position
     // If the position points to the first character, returns '\0'
-    char get_character_before(position pos) const;
+    char32_t get_character_before(position pos) const;
 
     size_t get_number_of_lines() const;
 };

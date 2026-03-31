@@ -22,6 +22,8 @@ import { AsyncMutex } from './asyncMutex';
 import { Writable } from 'stream';
 import { concat, isCancellationError } from './helpers';
 import { textDecode } from './tools.common';
+import { getConfig } from './eventsHandler';
+import { SupportedPseudoCharset } from './serverFactory.common';
 
 const checkResponse = (resp: ftp.FTPResponse) => {
     if (resp.code < 200 || resp.code > 299) throw Error("FTP Error: " + resp.message);
@@ -133,7 +135,10 @@ async function ZoweAsMFClient(info: ZoweConnectionInfo): Promise<MFClient> {
                     getResult() { return textDecode(concat(...this.chunks)); }
                 }
                 const stream = new StringWritable();
-                const content = await mvs.getContents(`${dataset}(${member})`, { stream });
+                const content = await mvs.getContents(`${dataset}(${member})`, {
+                    stream,
+                    encoding: info.loadedProfile.profile?.encoding,
+                });
                 if (content.success)
                     return stream.getResult();
                 else
@@ -203,7 +208,7 @@ async function FTPAsMFClient(info: FtpConnectionInfo): Promise<MFClient> {
         },
         read: async (dataset: string, member: string): Promise<string | null> => {
             try {
-                const buffer = new FBWritable();
+                const buffer = new FBWritable(80, getConfig<SupportedPseudoCharset>('pseudoCharset', 'IBM1148'));
                 buffer.on('error', err => { throw err });
 
                 await checkedCommand(client, 'TYPE I');

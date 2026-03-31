@@ -79,7 +79,7 @@ R1 EQU 1,,,C'F',GR32 R1 comment                                        X
     EXPECT_TRUE(a.diags().empty());
 
 
-    EXPECT_EQ(a.context().lsp_ctx->hover(empty_loc, { 1, 5 }), R"(X'1' (1)
+    EXPECT_EQ(a.context().lsp_ctx->hover(empty_loc, { 1, 5 }, nullptr), R"(X'1' (1)
 
 ---
 
@@ -111,7 +111,7 @@ R  DS  H comment
 
     EXPECT_TRUE(a.diags().empty());
 
-    auto res = a.context().lsp_ctx->hover(empty_loc, { 3, 0 });
+    auto res = a.context().lsp_ctx->hover(empty_loc, { 3, 0 }, nullptr);
 
     EXPECT_EQ(res, R"(C + X'2' (2)
 
@@ -149,10 +149,10 @@ D  EQU 0-C1-C1
 
     EXPECT_TRUE(a.diags().empty());
 
-    EXPECT_TRUE(a.context().lsp_ctx->hover(empty_loc, { 5, 0 }).starts_with("-C2 + X'FFFFFFFF' (-1)"));
-    EXPECT_TRUE(a.context().lsp_ctx->hover(empty_loc, { 6, 0 }).starts_with("-C1 + C2 + X'1' (1)"));
-    EXPECT_TRUE(a.context().lsp_ctx->hover(empty_loc, { 7, 0 }).starts_with("C0 - C1 + X'0' (0)"));
-    EXPECT_TRUE(a.context().lsp_ctx->hover(empty_loc, { 8, 0 }).starts_with("-2*C1 + X'0' (0)"));
+    EXPECT_TRUE(a.context().lsp_ctx->hover(empty_loc, { 5, 0 }, nullptr).starts_with("-C2 + X'FFFFFFFF' (-1)"));
+    EXPECT_TRUE(a.context().lsp_ctx->hover(empty_loc, { 6, 0 }, nullptr).starts_with("-C1 + C2 + X'1' (1)"));
+    EXPECT_TRUE(a.context().lsp_ctx->hover(empty_loc, { 7, 0 }, nullptr).starts_with("C0 - C1 + X'0' (0)"));
+    EXPECT_TRUE(a.context().lsp_ctx->hover(empty_loc, { 8, 0 }, nullptr).starts_with("-2*C1 + X'0' (0)"));
 }
 
 TEST(hover, model_statement)
@@ -167,7 +167,7 @@ R1       EQU   1
 
     EXPECT_TRUE(a.diags().empty());
 
-    EXPECT_TRUE(a.context().lsp_ctx->hover(empty_loc, { 2, 16 }).starts_with("X'1'"));
+    EXPECT_TRUE(a.context().lsp_ctx->hover(empty_loc, { 2, 16 }, nullptr).starts_with("X'1'"));
 }
 
 TEST(hover, model_statement_continuation)
@@ -182,8 +182,8 @@ R1       EQU   1
     a.analyze();
 
     EXPECT_TRUE(a.diags().empty());
-    EXPECT_TRUE(a.context().lsp_ctx->hover(empty_loc, { 2, 70 }).starts_with("X'1'"));
-    EXPECT_TRUE(a.context().lsp_ctx->hover(empty_loc, { 3, 15 }).starts_with("X'1'"));
+    EXPECT_TRUE(a.context().lsp_ctx->hover(empty_loc, { 2, 70 }, nullptr).starts_with("X'1'"));
+    EXPECT_TRUE(a.context().lsp_ctx->hover(empty_loc, { 3, 15 }, nullptr).starts_with("X'1'"));
     EXPECT_EQ(a.context().lsp_ctx->references(empty_loc, { 2, 70 }).size(), 4);
     EXPECT_EQ(a.context().lsp_ctx->references(empty_loc, { 3, 15 }).size(), 4);
 }
@@ -238,5 +238,5 @@ TEST(hover, using)
     EXPECT_TRUE(a.diags().empty());
 
 
-    EXPECT_THAT(a.context().lsp_ctx->hover(empty_loc, { 2, 5 }), StartsWith("Active USINGs: **(PC)"));
+    EXPECT_THAT(a.context().lsp_ctx->hover(empty_loc, { 2, 5 }, nullptr), StartsWith("Active USINGs: **(PC)"));
 }

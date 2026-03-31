@@ -474,11 +474,11 @@ TEST_F(lsp_context_db2_preprocessor_include_test, refs_include)
 TEST_F(lsp_context_db2_preprocessor_include_test, hover_label)
 {
     // A
-    EXPECT_TRUE(reloc_symbol_checker(a.context().lsp_ctx->hover(source_loc, position(1, 1))));
+    EXPECT_TRUE(reloc_symbol_checker(a.context().lsp_ctx->hover(source_loc, position(1, 1), nullptr)));
     // B
-    EXPECT_TRUE(reloc_symbol_checker(a.context().lsp_ctx->hover(source_loc, position(2, 0))));
+    EXPECT_TRUE(reloc_symbol_checker(a.context().lsp_ctx->hover(source_loc, position(2, 0), nullptr)));
     // C
-    EXPECT_TRUE(reloc_symbol_checker(a.context().lsp_ctx->hover(source_loc, position(3, 1))));
+    EXPECT_TRUE(reloc_symbol_checker(a.context().lsp_ctx->hover(source_loc, position(3, 1), nullptr)));
 }
 
 class lsp_context_db2_preprocessor_exec_sql_args_test : public lsp_context_preprocessor_test
@@ -560,14 +560,14 @@ TEST_F(lsp_context_db2_preprocessor_exec_sql_args_test, refs)
 TEST_F(lsp_context_db2_preprocessor_exec_sql_args_test, hover)
 {
     // XWV
-    EXPECT_TRUE(reloc_symbol_checker(a.context().lsp_ctx->hover(source_loc, position(6, 17))));
+    EXPECT_TRUE(reloc_symbol_checker(a.context().lsp_ctx->hover(source_loc, position(6, 17), nullptr)));
     // ABCDE
-    EXPECT_TRUE(reloc_symbol_checker(a.context().lsp_ctx->hover(source_loc, position(6, 48))));
+    EXPECT_TRUE(reloc_symbol_checker(a.context().lsp_ctx->hover(source_loc, position(6, 48), nullptr)));
     // ZYXWV:ABCDE - ZYXWV part
-    EXPECT_TRUE(reloc_symbol_checker(a.context().lsp_ctx->hover(source_loc, position(9, 37))));
+    EXPECT_TRUE(reloc_symbol_checker(a.context().lsp_ctx->hover(source_loc, position(9, 37), nullptr)));
     // ZYXWV:ABCDE - ABCDE part
-    EXPECT_TRUE(reloc_symbol_checker(a.context().lsp_ctx->hover(source_loc, position(9, 38))));
+    EXPECT_TRUE(reloc_symbol_checker(a.context().lsp_ctx->hover(source_loc, position(9, 38), nullptr)));
 
     // ZY
-    EXPECT_TRUE(a.context().lsp_ctx->hover(source_loc, position(5, 71)).empty());
+    EXPECT_TRUE(a.context().lsp_ctx->hover(source_loc, position(5, 71), nullptr).empty());
 }

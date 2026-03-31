@@ -12,18 +12,22 @@
  *   Broadcom, Inc. - initial API and implementation
  */
 
-import { convertBuffer } from "./conversions";
+import { convertBuffer, convertTable } from "./conversions";
 import { concat } from "./helpers";
+import { SupportedPseudoCharset } from "./serverFactory.common";
 import { textDecode } from "./tools.common";
 
 export class FBStreamingConvertor {
     private pending: Uint8Array = new Uint8Array();
     private resultChunks: string[] = [];
+    private readonly conversionTable: Uint8Array[];
 
-    constructor(private lrecl: number = 80) { }
+    constructor(private readonly lrecl: number, convert: SupportedPseudoCharset) {
+        this.conversionTable = convertTable(convert);
+    }
 
     private processBlock(b: Uint8Array) {
-        this.resultChunks.push(textDecode(convertBuffer(b, this.lrecl)));
+        this.resultChunks.push(textDecode(convertBuffer(b, this.lrecl, this.conversionTable)));
     }
 
     write(chunk: Uint8Array) {

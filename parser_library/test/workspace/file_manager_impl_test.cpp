@@ -12,12 +12,15 @@
  *   Broadcom, Inc. - initial API and implementation
  */
 
+#include <array>
+
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
 #include "external_file_reader_mock.h"
 #include "utils/platform.h"
 #include "utils/resource_location.h"
+#include "utils/text_convertor.h"
 #include "workspaces/file.h"
 #include "workspaces/file_manager_impl.h"
 
@@ -50,7 +53,7 @@ TEST(file_manager, update_file)
     const std::string text2 = "bbb";
 
     NiceMock<external_file_reader_mock> reader_mock;
-    file_manager_impl fm(reader_mock);
+    file_manager_impl fm(reader_mock, nullptr);
 
     // nobody is working with the file, so assume it has not changed
     EXPECT_EQ(run_or_default(fm.update_file(file), file_content_state::identical), file_content_state::identical);
@@ -60,15 +63,18 @@ TEST(file_manager, update_file)
     auto f = fm.add_file(file).run().value();
 
     EXPECT_EQ(f->get_text(), text1);
+    EXPECT_EQ(f->get_converted_text(), text1);
 
     EXPECT_CALL(reader_mock, load_text(file)).WillRepeatedly(Invoke(load_text_coroutine(text2)));
 
     EXPECT_EQ(run_or_default(fm.update_file(file), file_content_state::identical), file_content_state::changed_content);
     EXPECT_EQ(f->get_text(), text1); // old file version
+    EXPECT_EQ(f->get_converted_text(), text1); // old file version
     EXPECT_EQ(run_or_default(fm.update_file(file), file_content_state::identical), file_content_state::identical);
 
     f = fm.add_file(file).run().value();
     EXPECT_EQ(f->get_text(), text2);
+    EXPECT_EQ(f->get_converted_text(), text2);
 
     EXPECT_EQ(run_or_default(fm.update_file(file), file_content_state::identical), file_content_state::identical);
 }
@@ -79,7 +85,7 @@ TEST(file_manger, keep_content_on_close)
     const std::string text = "aaa";
 
     NiceMock<external_file_reader_mock> reader_mock;
-    file_manager_impl fm(reader_mock);
+    file_manager_impl fm(reader_mock, nullptr);
 
     fm.did_open_file(file, 1, text);
 
@@ -106,4 +112,41 @@ TEST(file_manager, get_file_content)
     // nobody is working with the file, so assume it has not changed
     EXPECT_TRUE(fm.get_file_content(correct).run().value().has_value());
     EXPECT_FALSE(fm.get_file_content(notexists).run().value().has_value());
+}
+
+TEST(file_manager, conversions)
+{
+    using namespace hlasm_plugin::parser_library;
+    using namespace std::string_view_literals;
+
+    NiceMock<external_file_reader_mock> reader_mock;
+    struct : text_convertor
+    {
+        void from(std::string& dst, std::string_view src) const override
+        {
+            std::ranges::transform(src, std::back_inserter(dst), [](auto c) { return c == 'A' ? 'B' : c; });
+        }
+        void to(std::string&, std::string_view) const override { assert(false); }
+    } constexpr tc;
+    file_manager_impl fm(reader_mock, &tc);
+
+    const resource_location file("filename");
+    const std::string text = "ABC";
+
+    fm.did_open_file(file, 1, text);
+
+    EXPECT_EQ(fm.get_file_content(file).run().value(), "ABC");
+    EXPECT_EQ(fm.get_converted_file_content(file).run().value(), "BBC");
+
+    fm.did_change_file(file, 2, std::array<document_change, 1> { { { range(), "A"sv } } });
+
+    EXPECT_EQ(fm.get_file_content(file).run().value(), "AABC");
+    EXPECT_EQ(fm.get_converted_file_content(file).run().value(), "BBBC");
+
+    [[maybe_unused]] auto f = fm.add_file(file); // while holding a reference
+
+    fm.did_change_file(file, 3, std::array<document_change, 1> { { { range(), "A"sv } } });
+
+    EXPECT_EQ(fm.get_file_content(file).run().value(), "AAABC");
+    EXPECT_EQ(fm.get_converted_file_content(file).run().value(), "BBBBC");
 }

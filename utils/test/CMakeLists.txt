@@ -29,6 +29,7 @@ target_sources(hlasm_utils_test PRIVATE
     unicode_text_test.cpp
     time_test.cpp
     task_test.cpp
+    text_convertor_test.cpp
 )
 
 target_link_libraries(hlasm_utils_test hlasm_utils)

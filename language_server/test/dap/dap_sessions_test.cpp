@@ -61,7 +61,7 @@ TEST(dap_sessions, simple_start_stop)
     std::atomic<bool> term = false;
     dummy_debugger_configuration_provider mock_dc;
     stream_json_sink session_out;
-    dap::session session(term, mock_dc, session_out);
+    dap::session session(term, mock_dc, session_out, nullptr, nullptr, nullptr);
 
     EXPECT_TRUE(session.is_running());
     EXPECT_EQ(session.get_session_id(), "hlasm/dap_tunnel/0");
@@ -76,7 +76,7 @@ TEST(dap_sessions, session_manager)
 {
     dummy_debugger_configuration_provider mock_dc;
     stream_json_sink session_out;
-    dap::session_manager sess_mgr(mock_dc, session_out);
+    dap::session_manager sess_mgr(mock_dc, session_out, nullptr, nullptr, nullptr);
 
     auto session_manager_matcher = sess_mgr.get_filtering_predicate();
     EXPECT_TRUE(session_manager_matcher(nlohmann::json { { "method", "hlasm/dap_tunnel" } }));

@@ -119,7 +119,7 @@ TEST(workspace_manager, extended_scheme_allowed_list)
     NiceMock<workspace_manager_external_file_requests_mock> ext_mock;
     diag_consumer_mock diags;
 
-    auto ws_mngr = create_workspace_manager(&ext_mock, true);
+    auto ws_mngr = create_workspace_manager({ .external_requests = &ext_mock, .vscode_extensions = true });
     ws_mngr->register_diagnostics_consumer(&diags);
 
     bool called = false;
@@ -154,7 +154,7 @@ TEST(workspace_manager, implicit_configuration)
     NiceMock<workspace_manager_external_file_requests_mock> ext_mock;
     diag_consumer_mock diags;
 
-    auto ws_mngr = create_workspace_manager(&ext_mock, true);
+    auto ws_mngr = create_workspace_manager({ .external_requests = &ext_mock, .vscode_extensions = true });
     ws_mngr->register_diagnostics_consumer(&diags);
     ws_mngr->add_workspace("dir", "test:/dir");
     ws_mngr->configuration_changed({},
@@ -185,7 +185,7 @@ TEST(workspace_manager, implicit_configuration_base_changed)
     NiceMock<workspace_manager_external_file_requests_mock> ext_mock;
     diag_consumer_mock diags;
 
-    auto ws_mngr = create_workspace_manager(&ext_mock, true);
+    auto ws_mngr = create_workspace_manager({ .external_requests = &ext_mock, .vscode_extensions = true });
     ws_mngr->register_diagnostics_consumer(&diags);
     ws_mngr->add_workspace("dir", "test:/dir");
     ws_mngr->change_implicit_group_base("test:/dir");

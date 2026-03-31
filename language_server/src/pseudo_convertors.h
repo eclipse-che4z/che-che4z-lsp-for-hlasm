@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019 Broadcom.
+ * Copyright (c) 2026 Broadcom.
  * The term "Broadcom" refers to Broadcom Inc. and/or its subsidiaries.
  *
  * This program and the accompanying materials are made
@@ -12,17 +12,14 @@
  *   Broadcom, Inc. - initial API and implementation
  */
 
-#include "debug_types.h"
-#include "variable.h"
+#ifndef HLASMPLUGIN_LANGUAGESERVER_PSEUDO_CONVERTORS_H
+#define HLASMPLUGIN_LANGUAGESERVER_PSEUDO_CONVERTORS_H
 
-namespace hlasm_plugin::parser_library::debugging {
+#include "server_options.h"
+#include "utils/text_convertor.h"
 
-variable generate_attribute_variable(std::string name, std::string value)
-{
-    return variable {
-        .name = std::move(name),
-        .value = std::move(value),
-    };
+namespace hlasm_plugin::language_server {
+const utils::text_convertor* get_text_convertor(pseudo_charsets pc) noexcept;
 }
 
-} // namespace hlasm_plugin::parser_library::debugging
+#endif

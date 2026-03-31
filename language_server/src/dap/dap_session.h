@@ -24,6 +24,10 @@
 #include "telemetry_sink.h"
 #include "workspace_manager.h"
 
+namespace hlasm_plugin::utils {
+struct text_convertor;
+}
+
 namespace hlasm_plugin::language_server {
 class external_file_reader;
 }
@@ -41,6 +45,7 @@ class session final : public json_sink, parser_library::debugger_configuration_p
     std::atomic<bool> running = true;
     telemetry_sink* telemetry_reporter;
     external_file_reader* ext_files;
+    const utils::text_convertor* tc;
 
     void thread_routine();
 
@@ -51,8 +56,9 @@ public:
     session(size_t session_id,
         parser_library::debugger_configuration_provider& dc_provider,
         json_sink& out,
-        telemetry_sink* telemetry_reporter = nullptr,
-        external_file_reader* ext_files = nullptr);
+        telemetry_sink* telemetry_reporter,
+        external_file_reader* ext_files,
+        const utils::text_convertor* tc);
     ~session();
 
     message_router::message_predicate get_message_matcher() const;

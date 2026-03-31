@@ -34,7 +34,7 @@ TEST(language_features, completion)
 {
     test::ws_mngr_mock ws_mngr;
     NiceMock<response_provider_mock> response_mock;
-    lsp::feature_language_features f(ws_mngr, response_mock);
+    lsp::feature_language_features f(ws_mngr, response_mock, nullptr);
     std::map<std::string, method> notifs;
     f.register_methods(notifs);
 
@@ -51,7 +51,7 @@ TEST(language_features, completion_resolve)
 {
     test::ws_mngr_mock ws_mngr;
     NiceMock<response_provider_mock> response_mock;
-    lsp::feature_language_features f(ws_mngr, response_mock);
+    lsp::feature_language_features f(ws_mngr, response_mock, nullptr);
     std::map<std::string, method> notifs;
     f.register_methods(notifs);
 
@@ -82,7 +82,7 @@ TEST(language_features, completion_resolve_invalid)
 {
     test::ws_mngr_mock ws_mngr;
     NiceMock<response_provider_mock> response_mock;
-    lsp::feature_language_features f(ws_mngr, response_mock);
+    lsp::feature_language_features f(ws_mngr, response_mock, nullptr);
     std::map<std::string, method> notifs;
     f.register_methods(notifs);
 
@@ -97,7 +97,7 @@ TEST(language_features, hover)
 {
     test::ws_mngr_mock ws_mngr;
     NiceMock<response_provider_mock> response_mock;
-    lsp::feature_language_features f(ws_mngr, response_mock);
+    lsp::feature_language_features f(ws_mngr, response_mock, nullptr);
     std::map<std::string, method> notifs;
     f.register_methods(notifs);
 
@@ -114,7 +114,7 @@ TEST(language_features, definition)
     auto ws_mngr = parser_library::create_workspace_manager();
 
     NiceMock<response_provider_mock> response_mock;
-    lsp::feature_language_features f(*ws_mngr, response_mock);
+    lsp::feature_language_features f(*ws_mngr, response_mock, nullptr);
     std::map<std::string, method> notifs;
     f.register_methods(notifs);
 
@@ -131,7 +131,7 @@ TEST(language_features, references)
 {
     test::ws_mngr_mock ws_mngr;
     NiceMock<response_provider_mock> response_mock;
-    lsp::feature_language_features f(ws_mngr, response_mock);
+    lsp::feature_language_features f(ws_mngr, response_mock, nullptr);
     std::map<std::string, method> notifs;
     f.register_methods(notifs);
 
@@ -146,7 +146,7 @@ TEST(language_features, document_symbol)
 {
     auto ws_mngr = parser_library::create_workspace_manager();
     response_provider_mock response_mock;
-    lsp::feature_language_features f(*ws_mngr, response_mock);
+    lsp::feature_language_features f(*ws_mngr, response_mock, nullptr);
     std::map<std::string, method> notifs;
     f.register_methods(notifs);
 
@@ -177,7 +177,7 @@ TEST(language_features, semantic_tokens)
 {
     auto ws_mngr = parser_library::create_workspace_manager();
     response_provider_mock response_mock;
-    lsp::feature_language_features f(*ws_mngr, response_mock);
+    lsp::feature_language_features f(*ws_mngr, response_mock, nullptr);
     std::map<std::string, method> notifs;
     f.register_methods(notifs);
 
@@ -198,7 +198,7 @@ TEST(language_features, semantic_tokens_cancelled)
 {
     auto ws_mngr = parser_library::create_workspace_manager();
     response_provider_mock response_mock;
-    lsp::feature_language_features f(*ws_mngr, response_mock);
+    lsp::feature_language_features f(*ws_mngr, response_mock, nullptr);
     std::map<std::string, method> notifs;
     f.register_methods(notifs);
 
@@ -225,7 +225,7 @@ TEST(language_features, semantic_tokens_multiline)
 {
     auto ws_mngr = parser_library::create_workspace_manager();
     response_provider_mock response_mock;
-    lsp::feature_language_features f(*ws_mngr, response_mock);
+    lsp::feature_language_features f(*ws_mngr, response_mock, nullptr);
     std::map<std::string, method> notifs;
     f.register_methods(notifs);
 
@@ -259,7 +259,7 @@ TEST(language_features, semantic_tokens_multiline_overlap)
 {
     auto ws_mngr = parser_library::create_workspace_manager();
     response_provider_mock response_mock;
-    lsp::feature_language_features f(*ws_mngr, response_mock);
+    lsp::feature_language_features f(*ws_mngr, response_mock, nullptr);
     std::map<std::string, method> notifs;
     f.register_methods(notifs);
 
@@ -402,7 +402,7 @@ TEST(language_features, opcode_suggestion)
 {
     auto ws_mngr = parser_library::create_workspace_manager();
     NiceMock<response_provider_mock> response_mock;
-    lsp::feature_language_features f(*ws_mngr, response_mock);
+    lsp::feature_language_features f(*ws_mngr, response_mock, nullptr);
     std::map<std::string, method> notifs;
     f.register_methods(notifs);
 
@@ -422,7 +422,7 @@ TEST(language_features, branch_information)
 {
     test::ws_mngr_mock ws_mngr;
     NiceMock<response_provider_mock> response_mock;
-    lsp::feature_language_features f(ws_mngr, response_mock);
+    lsp::feature_language_features f(ws_mngr, response_mock, nullptr);
     std::map<std::string, method> notifs;
     f.register_methods(notifs);
 
@@ -472,7 +472,7 @@ TEST(language_features, folding)
 {
     auto ws_mngr = parser_library::create_workspace_manager();
     response_provider_mock response_mock;
-    lsp::feature_language_features f(*ws_mngr, response_mock);
+    lsp::feature_language_features f(*ws_mngr, response_mock, nullptr);
     std::map<std::string, method> notifs;
     f.register_methods(notifs);
 
@@ -498,7 +498,7 @@ TEST(language_features, retrieve_output)
 {
     auto ws_mngr = parser_library::create_workspace_manager();
     response_provider_mock response_mock;
-    lsp::feature_language_features f(*ws_mngr, response_mock);
+    lsp::feature_language_features f(*ws_mngr, response_mock, nullptr);
     std::map<std::string, method> notifs;
     f.register_methods(notifs);
 
@@ -527,7 +527,7 @@ TEST(language_features, retrieve_output_empty)
 {
     auto ws_mngr = parser_library::create_workspace_manager();
     response_provider_mock response_mock;
-    lsp::feature_language_features f(*ws_mngr, response_mock);
+    lsp::feature_language_features f(*ws_mngr, response_mock, nullptr);
     std::map<std::string, method> notifs;
     f.register_methods(notifs);
 

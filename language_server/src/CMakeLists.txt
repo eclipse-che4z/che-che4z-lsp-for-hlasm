@@ -28,6 +28,8 @@ target_sources(hlasm_language_server_base PRIVATE
     message_router.h
     parsing_metadata_serialization.cpp
     parsing_metadata_serialization.h
+    pseudo_convertors.cpp
+    pseudo_convertors.h
     send_message_provider.h
     server.cpp
     server.h

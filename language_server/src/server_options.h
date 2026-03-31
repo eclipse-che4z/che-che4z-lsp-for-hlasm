@@ -18,13 +18,23 @@
 #include <cstdint>
 #include <optional>
 #include <span>
+#include <string_view>
 
 namespace hlasm_plugin::language_server {
+enum class pseudo_charsets
+{
+    ibm1148,
+    ibm1143,
+    ibm278,
+};
+std::string_view to_string(pseudo_charsets pc);
+
 struct server_options
 {
     uint16_t port = 0;
     bool enable_vscode_extension = false;
     signed char log_level = -1;
+    pseudo_charsets pseudo_charset = {};
 };
 std::optional<server_options> parse_options(std::span<const char* const> args);
 

@@ -20,7 +20,7 @@ import { HLASMConfigurationProvider, getCurrentProgramName, getProgramName } fro
 import { insertContinuation, removeContinuation, rearrangeSequenceNumbers } from './continuationHandler';
 import { CustomEditorCommands } from './customEditorCommands';
 import { EventsHandler, getConfig } from './eventsHandler';
-import { ServerVariant } from './serverFactory.common';
+import { ServerVariant, SupportedPseudoCharset } from './serverFactory.common';
 import { createLanguageServer } from './serverFactory';
 import { HLASMDebugAdapterFactory } from './hlasmDebugAdapterFactory';
 import { Telemetry, createDummyTelemetry } from './telemetry';
@@ -90,6 +90,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<HlasmE
     registerConfigurationFileSystemProvider(context.extensionUri);
 
     const serverVariant = getConfig<ServerVariant>('serverVariant', 'native');
+    const pseudoCharset = getConfig<SupportedPseudoCharset | undefined>('pseudoCharset', undefined);
     const version = whenString(context.extension.packageJSON?.version);
 
     const telemetry = typeof telemetryProvider !== 'undefined' ? telemetryProvider() : createDummyTelemetry();
@@ -121,7 +122,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<HlasmE
     context.subscriptions.push(extFiles);
 
     const hlasmpluginClient = await startLanguageServerWithFallback({
-        version, serverVariant, clientOptions, context, telemetry, clientErrorHandler, middleware, extConfProvider, extFiles,
+        version, serverVariant, pseudoCharset, clientOptions, context, telemetry, clientErrorHandler, middleware, extConfProvider, extFiles,
     });
 
     // register all commands and objects to context
@@ -150,6 +151,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<HlasmE
 type LangStartOptions = {
     version: string | undefined,
     serverVariant: ServerVariant;
+    pseudoCharset?: SupportedPseudoCharset;
     clientOptions: vscodelc.LanguageClientOptions;
     context: vscode.ExtensionContext;
     telemetry: Telemetry,
@@ -192,7 +194,7 @@ async function startLanguageServer(opts: LangStartOptions): Promise<vscodelc.Bas
     const disposables: vscode.Disposable[] = [];
 
     //client init
-    const hlasmpluginClient = await createLanguageServer(opts.serverVariant, opts.clientOptions, opts.context.extensionUri);
+    const hlasmpluginClient = await createLanguageServer(opts, opts.clientOptions, opts.context.extensionUri);
 
     disposables.push(hlasmpluginClient.onDidChangeState(e => e.newState === vscodelc.State.Starting && opts.middleware.resetFirstOpen()));
 

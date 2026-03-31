@@ -14,6 +14,19 @@
 
 export type ServerVariant = "tcp" | "native" | "wasm";
 
+export type SupportedPseudoCharset = 'IBM1148' | 'IBM1143' | 'IBM278';
+
+export type ServerArgs = {
+    serverVariant: ServerVariant;
+    pseudoCharset?: SupportedPseudoCharset;
+}
+
+export function appendServerArgs(args: string[], serverArgs: ServerArgs) {
+    if (serverArgs.pseudoCharset)
+        args.push(`--pseudo-charset=${serverArgs.pseudoCharset}`);
+    return args;
+}
+
 export function decorateArgs(args: Array<string>): Array<string> {
     return [
         '--hlasm-start',

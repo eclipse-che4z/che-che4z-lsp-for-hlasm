@@ -205,3 +205,27 @@ TEST(replace_non_utf8_chars, middle_char)
     EXPECT_EQ(res.substr(0, begin.size()), begin);
     EXPECT_EQ(res.substr(begin.size() + 3), end);
 }
+
+TEST(extract_utf32_from_utf8, one)
+{
+    const char8_t input[] = u8"\U00000041";
+    EXPECT_EQ(extract_utf32_from_utf8(reinterpret_cast<const char*>(input)), U'\U00000041');
+}
+
+TEST(extract_utf32_from_utf8, two)
+{
+    const char8_t input[] = u8"\U00000141";
+    EXPECT_EQ(extract_utf32_from_utf8(reinterpret_cast<const char*>(input)), U'\U00000141');
+}
+
+TEST(extract_utf32_from_utf8, three)
+{
+    const char8_t input[] = u8"\U00001041";
+    EXPECT_EQ(extract_utf32_from_utf8(reinterpret_cast<const char*>(input)), U'\U00001041');
+}
+
+TEST(extract_utf32_from_utf8, four)
+{
+    const char8_t input[] = u8"\U00010041";
+    EXPECT_EQ(extract_utf32_from_utf8(reinterpret_cast<const char*>(input)), U'\U00010041');
+}

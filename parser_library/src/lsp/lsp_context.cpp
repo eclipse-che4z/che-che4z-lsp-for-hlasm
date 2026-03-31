@@ -366,7 +366,8 @@ std::vector<location> lsp_context::references(
     return result;
 }
 
-std::string lsp_context::hover(const utils::resource::resource_location& document_loc, position pos) const
+std::string lsp_context::hover(
+    const utils::resource::resource_location& document_loc, position pos, const utils::text_convertor* tc) const
 {
     auto [occ, macro_scope] = find_occurrence_with_scope(document_loc, pos);
 
@@ -376,7 +377,8 @@ std::string lsp_context::hover(const utils::resource::resource_location& documen
     return find_hover(*occ,
         macro_scope,
         find_line_details(document_loc, occ->occurrence_range.start.line),
-        find_definition_location(*occ, macro_scope, document_loc, pos));
+        find_definition_location(*occ, macro_scope, document_loc, pos),
+        tc);
 }
 
 bool lsp_context::should_complete_instr(const text_data_view& text, position pos) const
@@ -479,7 +481,7 @@ std::vector<std::pair<const context::symbol*, context::id_index>> compute_reacha
 
 completion_list_source lsp_context::completion(const utils::resource::resource_location& document_uri,
     position pos,
-    const char trigger_char,
+    const char32_t trigger_char,
     completion_trigger_kind trigger_kind) const
 {
     const auto* file_info = get_file_info(document_uri);
@@ -487,12 +489,12 @@ completion_list_source lsp_context::completion(const utils::resource::resource_l
         return {};
     const text_data_view& text = file_info->data;
 
-    char last_char =
+    char32_t last_char =
         (trigger_kind == completion_trigger_kind::trigger_character) ? trigger_char : text.get_character_before(pos);
 
-    if (last_char == '&')
+    if (last_char == U'&')
         return complete_var(*file_info, pos);
-    else if (last_char == '.')
+    else if (last_char == U'.')
         return complete_seq(*file_info, pos);
     else if (should_complete_instr(text, pos))
         return complete_instr(*file_info, pos);
@@ -678,14 +680,14 @@ std::optional<location> lsp_context::find_definition_location(const symbol_occur
     return std::nullopt;
 }
 
-std::string lsp_context::hover_for_macro(const macro_info& macro) const
+std::string lsp_context::hover_for_macro(const macro_info& macro, const utils::text_convertor* tc) const
 {
     // Get file, where the macro is defined
     auto mit = m_files.find(macro.definition_location.resource_loc);
     if (mit == m_files.end())
         return "";
 
-    return get_macro_documentation(mit->second.data, macro.definition_location.pos.line);
+    return get_macro_documentation(mit->second.data, macro.definition_location.pos.line, tc);
 }
 std::string lsp_context::hover_for_instruction(context::id_index name) const
 {
@@ -714,10 +716,11 @@ bool lsp_context::have_suggestions_for_instr_like(context::id_index name) const
 std::string lsp_context::find_hover(const symbol_occurrence& occ,
     const macro_info* macro_scope_i,
     const line_occurence_details* ld,
-    std::optional<location> definition) const
+    std::optional<location> definition,
+    const utils::text_convertor* tc) const
 {
-    const auto prefix_using = [this, ld](std::string s) {
-        auto u = ld ? hover_text(m_hlasm_ctx->usings().describe(ld->active_using)) : "";
+    const auto prefix_using = [this, ld, tc](std::string s) {
+        auto u = ld ? hover_text(m_hlasm_ctx->usings().describe(ld->active_using), tc) : "";
 
         if (u.empty())
             return s;
@@ -734,11 +737,11 @@ std::string lsp_context::find_hover(const symbol_occurrence& occ,
             auto sym = m_hlasm_ctx->ord_ctx.get_symbol(occ.name);
             if (sym)
             {
-                result = hover_text(*sym);
+                result = hover_text(*sym, tc);
             }
             if (const file_info * fi; definition && (fi = get_file_info(definition->resource_loc)) != nullptr)
             {
-                if (auto text = get_logical_line(fi->data, definition->pos.line); !text.empty())
+                if (auto text = get_logical_line(fi->data, definition->pos.line, tc); !text.empty())
                 {
                     if (!result.empty())
                         result.push_back('\n');
@@ -765,7 +768,7 @@ std::string lsp_context::find_hover(const symbol_occurrence& occ,
                 auto it = m_macros.find(occ.opcode);
                 assert(it != m_macros.end());
 
-                return prefix_using(hover_for_macro(*it->second));
+                return prefix_using(hover_for_macro(*it->second, tc));
             }
             else
             {
@@ -774,11 +777,11 @@ std::string lsp_context::find_hover(const symbol_occurrence& occ,
         }
         case lsp::occurrence_kind::INSTR_LIKE: {
             if (auto it = m_macros.find(occ.opcode); it != m_macros.end())
-                return hover_for_macro(*it->second);
+                return hover_for_macro(*it->second, tc);
             if (auto op = m_hlasm_ctx->find_any_valid_opcode(occ.name))
             {
                 if (op->is_macro())
-                    return prefix_using(hover_for_macro(*m_macros.at(op->get_macro_details())));
+                    return prefix_using(hover_for_macro(*m_macros.at(op->get_macro_details()), tc));
                 else
                     return prefix_using(hover_for_instruction(op->opcode));
             }

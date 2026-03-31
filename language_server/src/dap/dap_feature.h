@@ -21,6 +21,10 @@
 #include "debugger.h"
 #include "workspace_manager.h"
 
+namespace hlasm_plugin::utils {
+struct text_convertor;
+} // namespace hlasm_plugin::utils
+
 namespace hlasm_plugin::language_server::dap {
 
 enum class path_format
@@ -47,7 +51,8 @@ public:
 
     dap_feature(parser_library::debugger_configuration_provider& dc_provider,
         response_provider& response_provider,
-        dap_disconnect_listener* disconnect_listener);
+        dap_disconnect_listener* disconnect_listener,
+        const utils::text_convertor* tc);
 
     void on_initialize(const request_id& request_seq, const nlohmann::json& args);
     void on_disconnect(const request_id& request_seq, const nlohmann::json& args);
@@ -88,6 +93,7 @@ private:
     path_format client_path_format_ = path_format::PATH;
 
     dap_disconnect_listener* disconnect_listener_;
+    const utils::text_convertor* m_text_convertor;
 };
 
 } // namespace hlasm_plugin::language_server::dap

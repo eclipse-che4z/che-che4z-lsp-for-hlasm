@@ -63,14 +63,13 @@ variable generate_ordinary_symbol_variable(const context::symbol& symbol)
 
             const auto& attr = symbol.attributes();
             if (attr.is_defined(I))
-                vars.emplace_back(generate_attribute_variable("I", std::to_string(attr.get_attribute_value(I))));
+                vars.emplace_back("I", std::to_string(attr.get_attribute_value(I)));
             if (attr.is_defined(L))
-                vars.emplace_back(generate_attribute_variable("L", std::to_string(attr.get_attribute_value(L))));
+                vars.emplace_back("L", std::to_string(attr.get_attribute_value(L)));
             if (attr.is_defined(S))
-                vars.emplace_back(generate_attribute_variable("S", std::to_string(attr.get_attribute_value(S))));
+                vars.emplace_back("S", std::to_string(attr.get_attribute_value(S)));
             if (attr.is_defined(T))
-                vars.emplace_back(generate_attribute_variable(
-                    "T", ebcdic_encoding::to_ascii((unsigned char)attr.get_attribute_value(T))));
+                vars.emplace_back("T", ebcdic_encoding::to_ascii((unsigned char)attr.get_attribute_value(T)));
 
             return vars;
         };

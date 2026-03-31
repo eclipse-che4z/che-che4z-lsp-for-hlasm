@@ -304,8 +304,8 @@ TEST(instruction_tagging, instr_like)
     a.analyze();
     EXPECT_TRUE(a.diags().empty());
 
-    const auto sam31_asm = a.context().lsp_ctx->hover(opencode, position(7, 5));
-    const auto sam31_mac = a.context().lsp_ctx->hover(opencode, position(8, 5));
+    const auto sam31_asm = a.context().lsp_ctx->hover(opencode, position(7, 5), nullptr);
+    const auto sam31_mac = a.context().lsp_ctx->hover(opencode, position(8, 5), nullptr);
 
     EXPECT_NE(sam31_asm, sam31_mac);
     EXPECT_NE(sam31_asm.find("Machine instruction"), std::string::npos);

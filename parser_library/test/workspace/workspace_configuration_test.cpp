@@ -462,6 +462,12 @@ public:
             return value_task<std::optional<std::string>>::from_value(std::nullopt);
     }
 
+    hlasm_plugin::utils::value_task<std::optional<std::string>> get_converted_file_content(
+        const hlasm_plugin::utils::resource::resource_location& loc) override
+    {
+        return get_file_content(loc);
+    }
+
     // Inherited via file_manager
     file_content_state did_open_file(const resource_location&, version_t, std::string) override
     {
@@ -672,6 +678,12 @@ public:
             return value_task<std::optional<std::string>>::from_value(m_file_pgm_conf_content);
         else
             return value_task<std::optional<std::string>>::from_value(std::nullopt);
+    }
+
+    hlasm_plugin::utils::value_task<std::optional<std::string>> get_converted_file_content(
+        const hlasm_plugin::utils::resource::resource_location& loc) override
+    {
+        return get_file_content(loc);
     }
 
 private:

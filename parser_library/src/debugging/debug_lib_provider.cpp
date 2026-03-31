@@ -39,7 +39,7 @@ utils::value_task<bool> debug_lib_provider::parse_library(
         if (!lib->has_file(library, &url))
             continue;
 
-        auto content_o = co_await m_file_manager.get_file_content(url);
+        auto content_o = co_await m_file_manager.get_converted_file_content(url);
         if (!content_o.has_value())
             break;
 
@@ -78,7 +78,7 @@ debug_lib_provider::get_library(std::string library)
         if (!lib->has_file(library, &url))
             continue;
 
-        auto content_o = co_await m_file_manager.get_file_content(url);
+        auto content_o = co_await m_file_manager.get_converted_file_content(url);
         if (!content_o.has_value())
             break;
 

@@ -2,6 +2,9 @@
 
 ## ****Unreleased****
 
+#### Added
+- Support source code re-encoding
+
 #### Fixed
 - Data set members with name containing `#` are not processed correctly
 

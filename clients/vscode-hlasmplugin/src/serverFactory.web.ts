@@ -15,16 +15,17 @@
 import * as vscode from 'vscode';
 import * as vscodelc from 'vscode-languageclient/browser';
 import { getConfig } from './eventsHandler';
-import { ServerVariant, decorateArgs } from './serverFactory.common';
+import { ServerArgs, appendServerArgs, decorateArgs } from './serverFactory.common';
 import { EXTENSION_ID } from './constants';
 
-export async function createLanguageServer(_serverVariant: ServerVariant, clientOptions: vscodelc.LanguageClientOptions, extUri: vscode.Uri): Promise<vscodelc.BaseLanguageClient> {
+export async function createLanguageServer(serverArgs: ServerArgs, clientOptions: vscodelc.LanguageClientOptions, extUri: vscode.Uri): Promise<vscodelc.BaseLanguageClient> {
     let extensionUri = extUri.toString();
     if (!extensionUri.endsWith('/'))
         extensionUri += '/';
 
     const worker = new Worker(extensionUri + 'bin/wasm/hlasm_language_server.js');
-    worker.postMessage({ INIT: "INIT", extensionUri, arguments: decorateArgs(getConfig<string[]>('arguments', [])) });
+    const args = decorateArgs(appendServerArgs(getConfig<string[]>('arguments', []), serverArgs));
+    worker.postMessage({ INIT: "INIT", extensionUri, arguments: args });
 
     return new vscodelc.LanguageClient(EXTENSION_ID, 'HLASM extension Language Server', clientOptions, worker);
 }

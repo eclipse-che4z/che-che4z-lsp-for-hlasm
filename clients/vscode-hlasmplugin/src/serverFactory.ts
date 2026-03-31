@@ -18,7 +18,7 @@ import * as net from 'net';
 import * as cp from 'child_process';
 import * as path from 'path';
 import { getConfig } from './eventsHandler';
-import { decorateArgs, ServerVariant } from './serverFactory.common';
+import { appendServerArgs, decorateArgs, ServerArgs } from './serverFactory.common';
 
 const supportedNativePlatforms: Readonly<{ [key: string]: string }> = Object.freeze({
     'win32.x64': 'win32_x64',
@@ -30,26 +30,29 @@ const supportedNativePlatforms: Readonly<{ [key: string]: string }> = Object.fre
     'darwin.arm64': 'darwin_arm64',
 });
 
-export async function createLanguageServer(serverVariant: ServerVariant, clientOptions: vscodelc.LanguageClientOptions, extUri: vscode.Uri): Promise<vscodelc.BaseLanguageClient> {
-    const serverOptions = await generateServerOption(serverVariant);
+export async function createLanguageServer(serverArgs: ServerArgs, clientOptions: vscodelc.LanguageClientOptions, extUri: vscode.Uri): Promise<vscodelc.BaseLanguageClient> {
+    const serverOptions = await generateServerOption(serverArgs);
 
     return new vscodelc.LanguageClient('HLASM extension Language Server', serverOptions, clientOptions);
 }
 
-async function generateServerOption(method: ServerVariant): Promise<vscodelc.ServerOptions> {
+async function generateServerOption(serverArgs: ServerArgs): Promise<vscodelc.ServerOptions> {
     const langServerFolder = supportedNativePlatforms[process.platform + '.' + process.arch];
+    let method = serverArgs.serverVariant;
     if (!langServerFolder) {
         if (method !== 'wasm')
             console.log('Unsupported platform detected, switching to wasm');
         method = 'wasm';
     }
+
+    const args = decorateArgs(appendServerArgs(getConfig<string[]>('arguments', []), serverArgs));
+
     if (method === 'tcp') {
         const lspPort = await getPort();
 
+        args.push(`--lsp-port=${lspPort.toString()}`);
         //spawn the server
-        cp.execFile(
-            path.join(__dirname, '..', 'bin', langServerFolder, 'hlasm_language_server'),
-            decorateArgs([`--lsp-port=${lspPort.toString()}`]));
+        cp.execFile(path.join(__dirname, '..', 'bin', langServerFolder, 'hlasm_language_server'), args);
 
         return () => {
             let socket = net.connect(lspPort, 'localhost');
@@ -63,14 +66,14 @@ async function generateServerOption(method: ServerVariant): Promise<vscodelc.Ser
     else if (method === 'native') {
         const server: vscodelc.Executable = {
             command: path.join(__dirname, '..', 'bin', langServerFolder, 'hlasm_language_server'),
-            args: decorateArgs(getConfig<string[]>('arguments', []))
+            args,
         };
         return server;
     }
     else if (method === 'wasm') {
         const server: vscodelc.NodeModule = {
             module: path.join(__dirname, '..', 'bin', 'wasm', 'hlasm_language_server'),
-            args: decorateArgs(getConfig<string[]>('arguments', [])),
+            args,
             options: { execArgv: getWasmRuntimeArgs() }
         };
         return server;

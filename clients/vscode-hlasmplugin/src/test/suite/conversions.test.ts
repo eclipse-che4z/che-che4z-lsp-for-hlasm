@@ -13,11 +13,13 @@
  */
 
 import * as assert from 'assert';
-import { convertBuffer, uriFriendlyBase16Decode, uriFriendlyBase16Encode } from '../../conversions';
+import { convertBuffer, convertTable, uriFriendlyBase16Decode, uriFriendlyBase16Encode } from '../../conversions';
+
+const ibm1148 = convertTable('IBM1148');
 
 suite('Conversions', () => {
     test('Buffer conversion', () => {
-        assert.deepStrictEqual(convertBuffer(Uint8Array.from([0x40, 0xC1, 0x40]), 80), new TextEncoder().encode(' A '));
+        assert.deepStrictEqual(convertBuffer(Uint8Array.from([0x40, 0xC1, 0x40]), 80, ibm1148), new TextEncoder().encode(' A '));
     });
 
     test('URI friendly Base16 encode', () => {

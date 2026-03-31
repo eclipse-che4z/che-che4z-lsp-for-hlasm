@@ -82,6 +82,8 @@ public:
 
     [[nodiscard]] virtual utils::value_task<std::optional<std::string>> get_file_content(
         const utils::resource::resource_location&) = 0;
+    [[nodiscard]] virtual utils::value_task<std::optional<std::string>> get_converted_file_content(
+        const utils::resource::resource_location&) = 0;
 
 protected:
     ~file_manager() = default;

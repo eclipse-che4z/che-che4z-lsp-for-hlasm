@@ -34,18 +34,20 @@
 #include "utils/error_codes.h"
 #include "utils/general_hashers.h"
 #include "utils/scope_exit.h"
+#include "utils/text_convertor.h"
 #include "watchers.h"
 
 namespace hlasm_plugin::language_server::lsp {
 
-server::server(parser_library::workspace_manager& ws_mngr)
+server::server(parser_library::workspace_manager& ws_mngr, const utils::text_convertor* tc)
     : language_server::server(this)
     , ws_mngr(ws_mngr)
     , progress(*this)
+    , m_text_convertor(tc)
 {
     features_.push_back(std::make_unique<feature_workspace_folders>(ws_mngr, *this));
     features_.push_back(std::make_unique<feature_text_synchronization>(ws_mngr, *this));
-    features_.push_back(std::make_unique<feature_language_features>(ws_mngr, *this));
+    features_.push_back(std::make_unique<feature_language_features>(ws_mngr, *this, tc));
     register_feature_methods();
     register_methods();
 
@@ -430,10 +432,17 @@ void server::consume_diagnostics(std::span<const parser_library::diagnostic> dia
 {
     std::unordered_map<std::string, nlohmann::json::array_t, utils::hashers::string_hasher, std::equal_to<>> diag_jsons;
 
+    const utils::conversion_helper tc(m_text_convertor);
+
     for (const auto& d : diagnostics)
     {
-        diag_jsons[d.file_uri].emplace_back(create_diag_json(
-            d.diag_range, d.code, d.source, d.message, diagnostic_related_info_to_json(d), d.severity, d.tag));
+        diag_jsons[d.file_uri].emplace_back(create_diag_json(d.diag_range,
+            d.code,
+            d.source,
+            tc.convert_to(d.message),
+            diagnostic_related_info_to_json(d),
+            d.severity,
+            d.tag));
     }
 
     for (const auto& fm : fade_messages)
@@ -441,7 +450,7 @@ void server::consume_diagnostics(std::span<const parser_library::diagnostic> dia
         diag_jsons[fm.uri].emplace_back(create_diag_json(fm.r,
             fm.code,
             fm.source,
-            fm.message,
+            tc.convert_to(fm.message),
             std::nullopt,
             parser_library::diagnostic_severity::hint,
             parser_library::diagnostic_tag::unnecessary));

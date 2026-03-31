@@ -58,7 +58,8 @@ struct lsp_context_instr : public ::testing::Test
         a.analyze();
 
         return generate_completion(a.context().lsp_ctx->completion(
-            opencode_file_loc, { 2, 3 }, 'R', completion_trigger_kind::trigger_character));
+                                       opencode_file_loc, { 2, 3 }, U'R', completion_trigger_kind::trigger_character),
+            nullptr);
     }
 };
 

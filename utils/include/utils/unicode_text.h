@@ -349,6 +349,8 @@ void utf8_prev(It& it, size_t n, const Sentinel& begin)
     }
 }
 
+char32_t extract_utf32_from_utf8(std::string_view s);
+
 } // namespace hlasm_plugin::utils
 
 namespace std {

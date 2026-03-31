@@ -41,6 +41,9 @@
 #include "utils/resource_location.h"
 #include "utils/task.h"
 
+namespace hlasm_plugin::utils {
+struct text_convertor;
+} // namespace hlasm_plugin::utils
 namespace hlasm_plugin::parser_library {
 struct completion_item;
 enum class completion_trigger_kind;
@@ -99,9 +102,12 @@ public:
 
     location definition(const resource_location& document_loc, position pos) const;
     std::vector<location> references(const resource_location& document_loc, position pos) const;
-    std::string hover(const resource_location& document_loc, position pos) const;
-    std::vector<completion_item> completion(
-        const resource_location& document_loc, position pos, char trigger_char, completion_trigger_kind trigger_kind);
+    std::string hover(const resource_location& document_loc, position pos, const utils::text_convertor* tc) const;
+    std::vector<completion_item> completion(const resource_location& document_loc,
+        position pos,
+        char32_t trigger_char,
+        completion_trigger_kind trigger_kind,
+        const utils::text_convertor* tc);
     std::vector<document_symbol_item> document_symbol(const resource_location& document_loc) const;
 
     std::vector<token_info> semantic_tokens(const resource_location& document_loc) const;

@@ -7,15 +7,23 @@
 </div>
 
 # HLASM Language Support
+
 HLASM Language Support is an IDE extension that supports the High Level Assembler language. It provides code completion, highlighting and navigation features, shows mistakes in the source, retrieves  dependencies from mainframe data sets and from Endevor, and enables you to trace how the conditional assembly is evaluated with a modern debugging experience.
 
-HLASM Language Support is part of the Che4z open-source project. Feel free to contribute at our [GitHub repository](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/). For project documentation, see the [wiki](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/wiki/). 
+> 
+> HLASM Language Support is part of the **Che4z** open-source project. Contributions and feedback are always welcome. To contribute, see our [GitHub repository](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/). If you have a question about how to accomplish something with the extension, or come across a problem, file an issue on [GitHub](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm). For project documentation, see the [wiki](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/wiki/).
+> 
 
 ## Address Software Requirements
 
-There are no client or server-side software requirements for HLASM Language Support.
+HLASM Language Support has no client or server-side software requirements.
 
-## Integration with Explorer for Endevor and Zowe Explorer
+### Compatibility
+HLASM Language Support is supported on Visual Studio Code, GitHub Codespaces, and Visual Studio Code for the Web. The language server component can be also integrated with other LSP compatible editors (e.g. Neovim).
+
+Bulk and on-demand downloading of dependencies via FTP is not available in the Web extension environment.
+
+## Integrate with Explorer for Endevor and Zowe Explorer
 
 Integrate HLASM Language Support with [Explorer for Endevor](https://marketplace.visualstudio.com/items?itemName=broadcomMFD.explorer-for-endevor) to retrieve your HLASM source code from Endevor locations and edit it in VS Code. HLASM Language Support automatically retrieve dependencies associated with Endevor elements written in HLASM. We also recommend that you use HLASM Language Support with [Zowe Explorer](https://marketplace.visualstudio.com/items?itemName=Zowe.vscode-extension-for-zowe) to open your High Level Assembler programs stored on mainframe data sets.
 
@@ -27,26 +35,19 @@ HLASM Language Support, Explorer for Endevor and Zowe Explorer are all available
 <a href="https://www.openmainframeproject.org/all-projects/zowe/conformance"><img alt="This extension is Zowe v3 conformant" src="https://artwork.openmainframeproject.org/other/zowe-conformant/zowev3/explorer-vs-code/color/zowe-conformant-zowev3-explorer-vs-code-color.png" width=208 height=156 /></a>
 </div>
 
-## Compatibility
-
-HLASM Language Support is supported on Visual Studio Code, GitHub Codespaces and Visual Studio Code for the Web. The language server component can be also integrated with other LSP compatible editors (e.g. Neovim).
-
-#### Restriction
-
-Bulk and on-demand downloading of dependencies via FTP is not available in the Web extension environment.
-
 ## Getting Started
 
-### Enabling the Extension
+### Enable the Extension
 
 Follow these steps to open a HLASM project:
 
-1. In **File** -> **Open Folder...** select the folder with the HLASM sources. You can download and open an <nobr>`example workspace`</nobr> from our [GitHub repository](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/tree/master/example_workspace).
-2. Open any HLASM source file (note that HLASM does not have a standard filename extension) or create a new file.
-3. If the auto-detection of HLASM language does not recognize the file, set it manually in the bottom-right corner of the VS Code window.  
-4. The extension is now enabled on the open file. If you have macro definitions in separate files or use the COPY instruction, you must set up a workspace.
+1. In **File** -> **Open Folder...** select the folder with the HLASM sources.   
+You can download and open an <nobr>`example workspace`</nobr> from our [GitHub repository](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/tree/master/example_workspace).
+1. Open any HLASM source file (note that HLASM does not have a standard filename extension) or create a new file.
+2. If the auto-detection of HLASM language does not recognize the file, set it manually using the Select Language Mode option in the bottom-right corner of the VS Code window.  
+3. The extension is now enabled on the open file. If you have macro definitions in separate files or use the COPY instruction, you must set up a workspace.
 
-### Setting Up a Multi-File Project Environment
+### Set Up a Multi-File Project Environment
 
 External files are usually accessed during HLASM evaluation (e.g. when the HLASM COPY instruction is used, or when macros are defined in external libraries). The source code interpreter in the HLASM Language Support extension must be set up correctly to be able to find the same files as the HLASM assembler program. 
 
@@ -57,62 +58,14 @@ To do this, set up two configuration files — `proc_grps.json` and `pgm_conf.js
 2. Navigate to the `proc_grps.json` file. This is the entry point where you can specify paths to macro definitions and COPY files. 
 3. Fill the `libs` array with the corresponding paths. For example, if you have your macro files in the `ASMMAC/` folder, add the string `"ASMMAC"` into the libs array.
 
-Follow the section [External Macro Libraries and COPY Members](#External-Macro-Libraries-and-COPY-Members) below for more detailed instructions on configuring the environment.
+See the section **Configure External Macro Libraries and COPY Members** for more detailed instructions on configuring the environment.
 
-The `pgm_conf.json` file can be provided implicitly by another product that supports integration with HLASM Language Support (e.g. Endevor Bridge for Git).
+The `pgm_conf.json` file can be provided implicitly by another product that supports integration with HLASM Language Support (for example, Endevor Bridge for Git).
 
 You can also specify your processor group configuration in the Visual Studio Code extension settings in the `hlasm.proc_grps` and `hlasm.pgm_conf` keys. When `proc_grps.json` or `pgm_conf.json` files are present in the workspace, they take precedence over any configuration that is specified in the extension settings.
 
-## Language Features
+### Configure External Macro Libraries and COPY Members
 
-The HLASM Language Support extension parses and analyzes all parts of a HLASM program including the listing. It resolves all ordinary symbols, variable symbols and checks the validity of most instructions. The extension supports conditional and unconditional branching and can define global and local variable symbols. It can also expand macros and COPY instructions.
-
-## LSP Features
-### Highlighting
-The HLASM Language Support extension highlights statements with different colors for labels, instructions, operands, remarks and variables. Statements containing instructions that can have operands are highlighted differently to statements that do not expect operands. Code that is skipped by branching `AIF`, `AGO` or conditional assembly is not colored.
-
-![](/clients/vscode-hlasmplugin/readme_res/highlighting.png)
-
-### Autocomplete
-Autocomplete is enabled for the instruction field. While typing, a list of instructions starting with the typed characters displays. Selecting an instruction from the list completes it and inserts the default operands. Variables and sequence symbols are also filled with a value from their scope.
-
-![](/clients/vscode-hlasmplugin/readme_res/autocomplete.gif)
-
-### Go To Definition and Find All References
-The extension adds the 'go to definition' and 'find all references' functionalities. Use the 'go to definition' functionality to show definitions of variable symbols, ordinary symbols and macros, or open COPY files directly. Use the 'find all references' functionality to show all places where a symbol is used.
-
-![](/clients/vscode-hlasmplugin/readme_res/go_to_def.gif)
-
-### Branch Indicators
-In the HLASM Language Support extension settings, enable the **Hlasm: Show Branch Indicators** option to add branch indicators to the source code view. Branch indicators display as arrows to the left of instructions and indicate whether the instructions branch up or down. If the branching direction cannot be determined, a right arrow displays.
-
-## Macro Tracer
-
-The macro tracer functionality allows you to track the process of assembling HLASM code. It lets you see step-by-step how macros are expanded and displays values of variable symbols at different points during the assembly process. You can also set breakpoints in problematic sections of your conditional assembly code. 
-
-The macro tracer is not a debugger. It cannot debug running executables, it only tracks the compilation process.
-
-### Configuring the Macro Tracer
-
-1. Open your workspace.
-2. In the left sidebar, click the bug icon to open the debugging panel (`Ctrl + Shift + D`).
-3. Select `create a launch.json file`.  
-   The file `launch.json` opens with a pre-filled configuration.  
-   Your workspace is now configured for macro tracing.   
-
-### Using the Macro Tracer
-
-To run the macro tracer, open the file that you want to trace. Then press **`F5`** to open the debugging panel and start the debugging session.
-
-When the tracer stops at a macro or COPY instruction, you can select **step into** to open the macro or COPY file, or **step over** to skip to the next line.
-
-Breakpoints can be set before or during the debugging session.
-
-![](/clients/vscode-hlasmplugin/readme_res/tracer.gif)
-
-## Configuration
-
-### External Macro Libraries and COPY Members
 The HLASM Language Support extension looks for locally stored members when a macro call or COPY instruction is evaluated. The paths of these members are specified in two configuration files in the `.hlasmplugin` folder of the currently open workspace:
 
 - `proc_grps.json` defines _processor groups_ by assigning a group name to a list of directories. Hence, the group name serves as a unique identifier of a set of HLASM libraries that are defined by a list of directories (some of which can be optional). Additionally, some assembler options can be specified in `asm_options` sections (`SYSPARM`, `SYSTEM_ID` and others).
@@ -132,7 +85,7 @@ The structure of the configuration is based on Endevor®. Ensure that you config
 
 Visual Studio Code workspace variables can be referenced in both configuration files using the standard syntax `${config:variable_name}`.
 
-### Example `proc_grps.json`:
+#### Example `proc_grps.json`
 
 The following example defines two processor groups, GROUP1 and GROUP2, and a list of directories to search for macros and COPY files, it also defines the _SYSPARM_ assembler parameter and values for two external functions for GROUP1. Additionally, if the library `MACLIB/` does not exist in the workspace, the plugin does not report it as an error.
 
@@ -183,7 +136,7 @@ The order of libraries that are selected by a path mask is arbitrary. We therefo
 }
 ```
 
-### Example `pgm_conf.json`:
+#### Example `pgm_conf.json`
 
 The following example specifies that GROUP1 is used when working with `source_code` and GROUP2 is used when working with `second_file`.
 
@@ -235,9 +188,8 @@ Assembler options defined by the processor group can be overridden in the `pgm_c
 }
 ```
 
-### Other Configuration Files
+### Configure Endevor Bridge for Git Mappings
 
-#### `.bridge.json` Configuration File
 If you use Endevor Bridge for Git, your workspace might already have `.bridge.json` configuration files which contain program to processor group mappings. In this case, you do not need to create a separate `pgm_conf.json` file. However, `proc_grps.json` is still required to enable successful mapping between programs specified in `.bridge.json` and processor groups defined in `proc_grps.json`.
 
 #### Example of `.bridge.json`:
@@ -264,9 +216,7 @@ If you use multiple program to processor group mapping files (such as `pgm_conf.
 3. Processor group bound to a specific program name specified in `.bridge.json`
 4. Default processor group specified in `.bridge.json`
 
-### File Extensions
-
-The `alwaysRecognize` option in `pgm_conf.json` has been deprecated in favor of the standard VSCode user and workspace level setting `file.associations`.
+### Configure Macro Extensions
 
 `proc_grps.json` can include an optional parameter `macro_extensions` which contains a list of extensions that are used to identify files with macro definitions.
 The options can be specified both at the top level of the file, which provides the default list for all libraries in all process groups, and at the level of individual library definitions, which override the default from the top level.
@@ -299,24 +249,7 @@ The following example of `proc_grps.json` specifies that files with the extensio
 }
 ```
 
-### Suppression of Diagnostics
-
-For files that use macros extensively but do not have the definitions available, diagnostics reported by HLASM Language Support might not be helpful. For those cases, there is the setting `diagnosticsSuppressLimit`, which can be set either in the editor settings, or in `pgm_conf.json`. For files that do not have processor group configuration in `pgm_conf.json`, all diagnostics are suppressed if they exceed the configured limit.
-
-```
-{
-  "pgms": [
-    {
-      "program": "source_code",
-      "pgroup": "GROUP1"
-    }
-  ],
-  "diagnosticsSuppressLimit" : 15
-}
-```
-In the `pgm_conf.json` example above, the `source_code` file has a configuration, so all discovered diagnostics are always shown. However, if you open another file and do not assign a processor group to it, its diagnostics are not shown if there are more than 15 of them.
-
-### Preprocessors
+### Configure Preprocessors
 
 Processor groups can be configured so that the HLASM source is processed with a preprocessor. Currently, the following preprocessor options are supported:
 - `DB2`
@@ -374,7 +307,36 @@ You can also chain the preprocessors in the following way:
 }
 ```
 
-## Download Dependencies
+### Suppress Diagnostic Information
+
+For files that use macros extensively but do not have the definitions available, diagnostics reported by HLASM Language Support might not be helpful. For those cases, there is the setting `diagnosticsSuppressLimit`, which can be set either in the editor settings, or in `pgm_conf.json`. For files that do not have processor group configuration in `pgm_conf.json`, all diagnostics are suppressed if they exceed the configured limit.
+
+```
+{
+  "pgms": [
+    {
+      "program": "source_code",
+      "pgroup": "GROUP1"
+    }
+  ],
+  "diagnosticsSuppressLimit" : 15
+}
+```
+In the `pgm_conf.json` example above, the `source_code` file has a configuration, so all discovered diagnostics are always shown. However, if you open another file and do not assign a processor group to it, its diagnostics are not shown if there are more than 15 of them.
+
+### Configure Character Re-encoding
+
+If you experience encoding errors when you load your source code from the mainframe, you can configure HLASM Language Support to re-encode the source in your native charset. To do this, open the HLASM Language Support extension settings and edit the setting **Hlasm > Pseudo Charset**. The following options are supported:
+
+* **IBM1148** (default)
+* **IBM1143**
+* **IBM278**
+
+After you change this setting, restart the extension to apply the change.
+
+**Note**: This feature does not re-encode filenames of macros and other dependencies when you retrieve them from the mainframe.
+
+## Download Mainframe Dependencies
 
 You can use the HLASM Language Support extension to download dependencies from mainframe data sets specified in `proc_grps.json` to your workspace. To connect to the mainframe, we recommend setting up a `zowe zosmf` or `zowe zftp` profile to store your credentials and connection information.
 
@@ -398,7 +360,55 @@ All dependencies are downloaded from the specified data sets to your workspace.
 
 If you open HLASM source files using Explorer for Endevor, HLASM Language Support retrieves dependencies dynamically from the processor group that is defined in the Endevor element. For more information about Explorer for Endevor, see the [Explorer for Endevor documentation](https://marketplace.visualstudio.com/items?itemName=broadcomMFD.explorer-for-endevor).
 
-## Questions, issues, feature requests, and contributions
-- If you have a question about how to accomplish something with the extension, or come across a problem, file an issue on [GitHub](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm)
-- Contributions are always welcome! Please see our [GitHub](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm) repository for more information.
-- Any and all feedback is appreciated and welcome!
+## Language and LSP Features
+
+The HLASM Language Support extension parses and analyzes all parts of a HLASM program including the listing. It resolves all ordinary symbols, variable symbols and checks the validity of most instructions. The extension supports conditional and unconditional branching and can define global and local variable symbols. It can also expand macros and COPY instructions.
+
+### Highlighting
+
+The HLASM Language Support extension highlights statements with different colors for labels, instructions, operands, remarks and variables. Statements containing instructions that can have operands are highlighted differently to statements that do not expect operands. Code that is skipped by branching `AIF`, `AGO` or conditional assembly is not colored.
+
+![](/clients/vscode-hlasmplugin/readme_res/highlighting.png)
+
+### Autocomplete
+
+Autocomplete is enabled for the instruction field. While typing, a list of instructions starting with the typed characters displays. Selecting an instruction from the list completes it and inserts the default operands. Variables and sequence symbols are also filled with a value from their scope.
+
+![](/clients/vscode-hlasmplugin/readme_res/autocomplete.gif)
+
+### Go To Definition and Find All References
+
+The extension supports the 'go to definition' and 'find all references' functionalities. Use the 'go to definition' functionality to show definitions of variable symbols, ordinary symbols and macros, or open COPY files directly. Use the 'find all references' functionality to show all places where a symbol is used.
+
+![](/clients/vscode-hlasmplugin/readme_res/go_to_def.gif)
+
+### Branch Indicators
+
+In the HLASM Language Support extension settings, enable the **Hlasm: Show Branch Indicators** option to add branch indicators to the source code view. Branch indicators display as arrows to the left of instructions and indicate whether the instructions branch up or down. If the branching direction cannot be determined, a right arrow displays.
+
+## Use the Macro Tracer
+
+The macro tracer functionality allows you to track the process of assembling HLASM code. It lets you see step-by-step how macros are expanded and displays values of variable symbols at different points during the assembly process. You can also set breakpoints in problematic sections of your conditional assembly code. 
+
+The macro tracer is not a debugger. It cannot debug running executables, it only tracks the compilation process.
+
+### Configure the Macro Tracer
+
+1. Open your workspace.
+2. In the left sidebar, click the bug icon to open the debugging panel.
+3. Select **create a launch.json file**.  
+   The file `launch.json` opens with a pre-filled configuration.  
+   
+Your workspace is now configured for macro tracing.   
+
+### Run the Macro Tracer
+
+1. Open the file that you want to trace. 
+2. Press **F5** to start the debugging session.
+3. When the tracer stops at a macro or COPY instruction, you can select the following options:
+   - **Step into** to open the macro or COPY file
+   - **Step over** to skip to the next line
+
+Breakpoints can be set before or during the debugging session.
+
+![](/clients/vscode-hlasmplugin/readme_res/tracer.gif)

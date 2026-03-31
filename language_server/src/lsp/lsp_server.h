@@ -42,7 +42,7 @@ class server final : public hlasm_plugin::language_server::server,
 {
 public:
     // Creates the server with workspace_manager as entry point to parser library.
-    explicit server(parser_library::workspace_manager& ws_mngr);
+    explicit server(parser_library::workspace_manager& ws_mngr, const utils::text_convertor* tc);
 
     // Parses LSP (JSON RPC) message and calls corresponding method.
     void message_received(const nlohmann::json& message) override;
@@ -84,6 +84,8 @@ private:
 
     parser_library::watcher_registration_id m_next_watcher_id = parser_library::watcher_registration_id::INVALID;
     std::vector<watcher_registration> m_watcher_registrations;
+
+    const utils::text_convertor* m_text_convertor;
 
     bool m_supports_dynamic_file_change_notification : 1 = false;
     bool m_supports_file_change_notification_relative_pattern : 1 = false;

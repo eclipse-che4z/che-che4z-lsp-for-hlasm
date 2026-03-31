@@ -36,7 +36,7 @@ TEST(item_convertors, macro_sequence_symbol)
     const macro_sequence_symbol seq { location(), zero_stmt_id };
     const completion_item expected(".INMAC", "Sequence symbol", ".INMAC", "", completion_item_kind::seq_sym);
 
-    EXPECT_EQ(generate_completion_item(id_index("INMAC"), seq), expected);
+    EXPECT_EQ(generate_completion_item(id_index("INMAC"), seq, nullptr), expected);
 }
 
 TEST(item_convertors, opencode_sequence_symbol)
@@ -44,7 +44,7 @@ TEST(item_convertors, opencode_sequence_symbol)
     const opencode_sequence_symbol seq { location(), source_position(), source_snapshot() };
     const completion_item expected(".OUTMAC", "Sequence symbol", ".OUTMAC", "", completion_item_kind::seq_sym);
 
-    EXPECT_EQ(generate_completion_item(id_index("OUTMAC"), seq), expected);
+    EXPECT_EQ(generate_completion_item(id_index("OUTMAC"), seq, nullptr), expected);
 }
 
 TEST(item_convertors, macro_param)
@@ -53,7 +53,7 @@ TEST(item_convertors, macro_param)
     const completion_item expected("&LABEL", "MACRO parameter", "&LABEL", "", completion_item_kind::var_sym);
 
 
-    EXPECT_EQ(generate_completion_item(var), expected);
+    EXPECT_EQ(generate_completion_item(var, nullptr), expected);
 }
 
 TEST(item_convertors, set_symbol_a)
@@ -62,7 +62,7 @@ TEST(item_convertors, set_symbol_a)
     const completion_item expected("&KEY_PAR", "SETA variable", "&KEY_PAR", "", completion_item_kind::var_sym);
 
 
-    EXPECT_EQ(generate_completion_item(var), expected);
+    EXPECT_EQ(generate_completion_item(var, nullptr), expected);
 }
 
 TEST(item_convertors, set_symbol_b)
@@ -71,7 +71,7 @@ TEST(item_convertors, set_symbol_b)
     const completion_item expected("&KEY_PAR", "SETB variable", "&KEY_PAR", "", completion_item_kind::var_sym);
 
 
-    EXPECT_EQ(generate_completion_item(var), expected);
+    EXPECT_EQ(generate_completion_item(var, nullptr), expected);
 }
 
 TEST(item_convertors, set_symbol_c)
@@ -80,7 +80,7 @@ TEST(item_convertors, set_symbol_c)
     const completion_item expected("&KEY_PAR", "SETC variable", "&KEY_PAR", "", completion_item_kind::var_sym);
 
 
-    EXPECT_EQ(generate_completion_item(var), expected);
+    EXPECT_EQ(generate_completion_item(var, nullptr), expected);
 }
 
 namespace {
@@ -116,7 +116,7 @@ const std::string macro_def_expected = R"(```hlasm
 TEST(item_convertors, macro_doc)
 {
     text_data_view text(macro_def_input);
-    EXPECT_EQ(get_macro_documentation(text, 4), macro_def_expected);
+    EXPECT_EQ(get_macro_documentation(text, 4, nullptr), macro_def_expected);
 }
 
 TEST(item_convertors, macro_signature_with_label)
@@ -126,7 +126,7 @@ TEST(item_convertors, macro_signature_with_label)
     params.emplace_back(macro_arg(std::make_unique<macro_param_data_single>("1"), id_index("SECOND_PARAM")));
     macro_definition def(id_index("MAC"), id_index("LABEL"), std::move(params), {}, {}, {}, {}, {});
 
-    EXPECT_EQ(get_macro_signature(def), "&LABEL MAC &FIRST_PARAM,&SECOND_PARAM=1");
+    EXPECT_EQ(get_macro_signature(def, nullptr), "&LABEL MAC &FIRST_PARAM,&SECOND_PARAM=1");
 }
 
 TEST(item_convertors, macro_signature_without_label)
@@ -136,7 +136,7 @@ TEST(item_convertors, macro_signature_without_label)
     params.emplace_back(macro_arg(std::make_unique<macro_param_data_single>("1"), id_index("SECOND_PARAM")));
     macro_definition def(id_index("MAC"), id_index(), std::move(params), {}, {}, {}, {}, {});
 
-    EXPECT_EQ(get_macro_signature(def), "MAC &FIRST_PARAM,&SECOND_PARAM=1");
+    EXPECT_EQ(get_macro_signature(def, nullptr), "MAC &FIRST_PARAM,&SECOND_PARAM=1");
 }
 
 TEST(item_convertors, macro)
@@ -156,8 +156,8 @@ TEST(item_convertors, macro)
         false, location(position(4, 0), hlasm_plugin::utils::resource::resource_location()), mac_def, {}, {}, {});
     file_info fi(mac_def, text_data_view(macro_def_input));
 
-    auto result_with_doc = generate_completion_item(mi, &fi);
-    auto result_without_doc = generate_completion_item(mi, nullptr);
+    auto result_with_doc = generate_completion_item(mi, &fi, nullptr);
+    auto result_without_doc = generate_completion_item(mi, nullptr, nullptr);
 
     completion_item expected_with_doc(
         "MAC", "MAC &FIRST_PARAM,&SECOND_PARAM=1", "MAC", macro_def_expected, completion_item_kind::macro);
@@ -183,10 +183,10 @@ TEST(item_convertors, using_hover_text)
     for (const auto& [in, expected] : input)
     {
         std::string out;
-        lsp::append_hover_text(out, in);
+        lsp::append_hover_text(out, in, nullptr);
         EXPECT_EQ(out, expected);
     }
 
-    EXPECT_EQ(lsp::hover_text(std::span<const context::using_context_description>()), "");
-    EXPECT_EQ(lsp::hover_text(std::span(&input.front().first, 1)), "Active USINGs: **A**+X'5'(X'3'),R1,R2\n");
+    EXPECT_EQ(lsp::hover_text(std::span<const context::using_context_description>(), nullptr), "");
+    EXPECT_EQ(lsp::hover_text(std::span(&input.front().first, 1), nullptr), "Active USINGs: **A**+X'5'(X'3'),R1,R2\n");
 }

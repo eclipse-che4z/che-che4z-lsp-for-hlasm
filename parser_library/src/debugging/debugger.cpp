@@ -129,7 +129,7 @@ class debugger::impl final : public processing::statement_analyzer, output_handl
             resp.provide(false);
             co_return;
         }
-        auto open_code_text = co_await dc.fm->get_file_content(open_code_location);
+        auto open_code_text = co_await dc.fm->get_converted_file_content(open_code_location);
         if (!open_code_text.has_value())
         {
             resp.provide(false);

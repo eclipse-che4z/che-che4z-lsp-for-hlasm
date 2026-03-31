@@ -16,6 +16,7 @@
 #include <span>
 #include <thread>
 
+#include "pseudo_convertors.h"
 #include "server_options.h"
 #ifdef WIN32
 #    include <locale.h>
@@ -75,20 +76,24 @@ class main_program final : public json_sink,
     }
 
 public:
-    main_program(json_sink& json_output, int& ret, bool use_vscode_extensions)
+    main_program(json_sink& json_output, int& ret, bool use_vscode_extensions, pseudo_charsets pc)
         : external_files(json_output)
-        , ws_mngr(hlasm_plugin::parser_library::create_workspace_manager(&external_files, use_vscode_extensions))
+        , ws_mngr(hlasm_plugin::parser_library::create_workspace_manager({
+              .external_requests = &external_files,
+              .text_conversion = get_text_convertor(pc),
+              .vscode_extensions = use_vscode_extensions,
+          }))
         , dc_provider(ws_mngr->get_debugger_configuration_provider())
         , json_output(json_output)
         , router(&lsp_queue)
-        , dap_sessions(*this, json_output, &dap_telemetry_broker)
+        , dap_sessions(*this, json_output, &dap_telemetry_broker, nullptr, get_text_convertor(pc))
         , virtual_files(*ws_mngr, json_output)
     {
         router.register_route(dap_sessions.get_filtering_predicate(), dap_sessions);
         router.register_route(virtual_files.get_filtering_predicate(), virtual_files);
         router.register_route(external_files.get_filtering_predicate(), external_files);
 
-        lsp_thread = std::thread([&ret, this]() {
+        lsp_thread = std::thread([&ret, this, pc]() {
             try
             {
                 auto ext_reg = external_files.register_thread([this]() noexcept {
@@ -96,7 +101,7 @@ public:
                     lsp_queue.write(nlohmann::json::value_t::discarded);
                 });
 
-                lsp::server server(*ws_mngr);
+                lsp::server server(*ws_mngr, get_text_convertor(pc));
                 server.set_send_message_provider(this);
 
                 hlasm_plugin::utils::scope_exit disconnect_telemetry(
@@ -182,7 +187,9 @@ void log_options(server_options opts)
         ", log-level=",
         std::to_string(opts.log_level),
         ", lsp-port=",
-        std::to_string(opts.port));
+        std::to_string(opts.port),
+        ", pseudo-charset=",
+        to_string(opts.pseudo_charset));
 }
 
 } // namespace
@@ -213,7 +220,7 @@ int main(int argc, char** argv)
     {
         int ret = 0;
 
-        main_program pgm(io_setup->get_response_stream(), ret, opts->enable_vscode_extension);
+        main_program pgm(io_setup->get_response_stream(), ret, opts->enable_vscode_extension, opts->pseudo_charset);
 
         for (auto& source = io_setup->get_request_stream();;)
         {

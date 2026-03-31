@@ -47,7 +47,7 @@ void session::thread_routine()
 
         utils::scope_exit indicate_end([this]() noexcept { running = false; });
 
-        dap::server server(*this, telemetry_reporter);
+        dap::server server(*this, telemetry_reporter, tc);
         server.set_send_message_provider(&smp);
 
         while (!server.is_exit_notification_received())
@@ -106,13 +106,15 @@ session::session(size_t s_id,
     parser_library::debugger_configuration_provider& dc_provider,
     json_sink& out,
     telemetry_sink* telem_reporter,
-    external_file_reader* ext_files)
+    external_file_reader* ext_files,
+    const utils::text_convertor* tc)
     : session_id(message_wrapper::generate_method_name(s_id))
     , dc_provider(&dc_provider)
     , msg_wrapper(out, s_id)
     , msg_unwrapper(queue)
     , telemetry_reporter(telem_reporter)
     , ext_files(ext_files)
+    , tc(tc)
 {
     worker = std::thread([this]() { this->thread_routine(); });
 }

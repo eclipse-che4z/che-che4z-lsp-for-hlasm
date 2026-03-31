@@ -33,6 +33,9 @@
 #include "range.h"
 #include "utils/resource_location.h"
 
+namespace hlasm_plugin::utils {
+struct text_convertor;
+} // namespace hlasm_plugin::utils
 namespace hlasm_plugin::parser_library {
 enum class completion_trigger_kind;
 class parse_lib_provider;
@@ -89,10 +92,11 @@ public:
 
     location definition(const utils::resource::resource_location& document_loc, position pos) const;
     std::vector<location> references(const utils::resource::resource_location& document_loc, position pos) const;
-    std::string hover(const utils::resource::resource_location& document_loc, position pos) const;
+    std::string hover(
+        const utils::resource::resource_location& document_loc, position pos, const utils::text_convertor* tc) const;
     completion_list_source completion(const utils::resource::resource_location& document_uri,
         position pos,
-        char trigger_char,
+        char32_t trigger_char,
         completion_trigger_kind trigger_kind) const;
     std::vector<document_symbol_item> document_symbol(const utils::resource::resource_location& document_loc) const;
 
@@ -119,7 +123,8 @@ private:
     std::string find_hover(const symbol_occurrence& occ,
         const macro_info* macro_i,
         const line_occurence_details* ld,
-        std::optional<location> definition) const;
+        std::optional<location> definition,
+        const utils::text_convertor* tc) const;
 
     completion_list_source complete_var(const file_info& file, position pos) const;
     completion_list_source complete_seq(const file_info& file, position pos) const;
@@ -127,7 +132,7 @@ private:
 
     bool should_complete_instr(const text_data_view& text, position pos) const;
 
-    std::string hover_for_macro(const macro_info& macro) const;
+    std::string hover_for_macro(const macro_info& macro, const utils::text_convertor* tc) const;
     std::string hover_for_instruction(context::id_index name) const;
 
     bool have_suggestions_for_instr_like(context::id_index name) const;

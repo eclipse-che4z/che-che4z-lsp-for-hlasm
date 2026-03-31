@@ -21,6 +21,7 @@
 #include "utils/path.h"
 #include "utils/path_conversions.h"
 #include "utils/platform.h"
+#include "utils/text_convertor.h"
 #include "workspace_manager_response.h"
 
 namespace {
@@ -72,10 +73,12 @@ void dap_feature::initialize_feature(const nlohmann::json&) { /* nothing to do *
 
 dap_feature::dap_feature(parser_library::debugger_configuration_provider& dc_provider,
     response_provider& response_provider,
-    dap_disconnect_listener* disconnect_listener)
+    dap_disconnect_listener* disconnect_listener,
+    const utils::text_convertor* tc)
     : feature(response_provider)
     , dc_provider(dc_provider)
     , disconnect_listener_(disconnect_listener)
+    , m_text_convertor(tc)
 {}
 
 
@@ -131,19 +134,21 @@ void dap_feature::exited(int exit_code)
 
 void dap_feature::mnote(unsigned char level, std::string_view text)
 {
+    const utils::conversion_helper tc(m_text_convertor);
     response_->notify("output",
         nlohmann::json {
             { "category", "stderr" },
-            { "output", std::format("{}:{}\n", level, text) },
+            { "output", std::format("{}:{}\n", level, tc.convert_to(text)) },
         });
 }
 
 void dap_feature::punch(std::string_view text)
 {
+    const utils::conversion_helper tc(m_text_convertor);
     response_->notify("output",
         nlohmann::json {
             { "category", "stdout" },
-            { "output", std::format("{}\n", text) },
+            { "output", std::format("{}\n", tc.convert_to(text)) },
         });
 }
 
@@ -246,14 +251,23 @@ void dap_feature::on_set_function_breakpoints(const request_id& request_seq, con
     if (!debugger)
         return;
 
+    const utils::conversion_helper tc(m_text_convertor);
     nlohmann::json breakpoints_verified = nlohmann::json::array();
     std::vector<parser_library::debugging::function_breakpoint> breakpoints;
+    std::vector<std::string> func_bp_holder;
 
     if (auto bpoints_found = args.find("breakpoints"); bpoints_found != args.end())
     {
-        for (auto& bp_json : bpoints_found.value())
+        const auto& bps = bpoints_found.value();
+        if (m_text_convertor)
+            func_bp_holder.reserve(bpoints_found->size());
+        for (auto& bp_json : bps)
         {
-            breakpoints.emplace_back(bp_json.at("name").get<std::string_view>());
+            const auto name = bp_json.at("name").get<std::string_view>();
+            if (m_text_convertor)
+                breakpoints.emplace_back(func_bp_holder.emplace_back(tc.convert_from(name)));
+            else
+                breakpoints.emplace_back(name);
             breakpoints_verified.push_back(nlohmann::json { { "verified", true } });
         }
     }
@@ -294,13 +308,15 @@ void dap_feature::on_stack_trace(const request_id& request_seq, const nlohmann::
     if (!debugger)
         return;
 
+    const utils::conversion_helper tc(m_text_convertor);
+
     nlohmann::json frames_json = nlohmann::json::array();
 
     for (const auto& frame : debugger->stack_frames())
     {
         frames_json.push_back(nlohmann::json {
             { "id", frame.id },
-            { "name", frame.name },
+            { "name", tc.convert_to(frame.name) },
             { "source", source_to_json(frame.frame_source, client_path_format_) },
             { "line", frame.begin_line + line_1_based_ },
             { "column", column_1_based_ },
@@ -323,12 +339,14 @@ void dap_feature::on_scopes(const request_id& request_seq, const nlohmann::json&
     if (!debugger)
         return;
 
+    const utils::conversion_helper tc(m_text_convertor);
+
     nlohmann::json scopes_json = nlohmann::json::array();
 
     for (const auto& scope : debugger->scopes(args.at("frameId").get<nlohmann::json::number_unsigned_t>()))
     {
         auto scope_json = nlohmann::json {
-            { "name", scope.name },
+            { "name", tc.convert_to(scope.name) },
             { "variablesReference", scope.var_reference },
             { "expensive", false },
             { "source", source_to_json(scope.scope_source, client_path_format_) },
@@ -373,6 +391,8 @@ void dap_feature::on_variables(const request_id& request_seq, const nlohmann::js
     if (!debugger)
         return;
 
+    const utils::conversion_helper tc(m_text_convertor);
+
     nlohmann::json variables_json = nlohmann::json::array();
 
     for (const auto& var :
@@ -399,15 +419,17 @@ void dap_feature::on_variables(const request_id& request_seq, const nlohmann::js
         nlohmann::json var_json;
         if (type == "")
             var_json = nlohmann::json {
-                { "name", var.name },
-                { "value", var.value },
+                { "name", tc.convert_to(var.name) },
+                { "value", tc.convert_to(var.value) },
                 { "variablesReference", var.var_reference },
             };
         else
-            var_json = nlohmann::json { { "name", var.name },
-                { "value", var.value },
+            var_json = nlohmann::json {
+                { "name", tc.convert_to(var.name) },
+                { "value", tc.convert_to(var.value) },
                 { "variablesReference", var.var_reference },
-                { "type", type } };
+                { "type", type },
+            };
 
         variables_json.push_back(std::move(var_json));
     }
@@ -439,7 +461,9 @@ void dap_feature::on_evaluate(const request_id& request_seq, const nlohmann::jso
 {
     if (!debugger)
         return;
-    const std::string_view expression = args.at("expression").get<std::string_view>();
+    const utils::conversion_helper tc(m_text_convertor);
+
+    const std::string expression = tc.convert_from(args.at("expression").get<std::string_view>());
     const auto frame_id = args.value("frameId", parser_library::debugging::frame_id_t(-1));
 
     auto result = debugger->evaluate(expression, frame_id);

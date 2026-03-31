@@ -122,7 +122,7 @@ struct parsing_results
     } outputs;
 
     auto fms = std::make_shared<std::vector<fade_message>>();
-    analyzer a(file->get_text(),
+    analyzer a(file->get_converted_text(),
         analyzer_options {
             file->get_location(),
             &lib_provider,
@@ -264,7 +264,7 @@ struct workspace_parse_lib_provider final : public parse_lib_provider
 
         const bool collect_hl = file->get_lsp_editing() || macro_pfc.m_last_opencode_analyzer_with_lsp
             || macro_pfc.m_last_macro_analyzer_with_lsp || ctx.hlasm_ctx->processing_stack().parent().empty();
-        analyzer a(file->get_text(),
+        analyzer a(file->get_converted_text(),
             analyzer_options {
                 std::move(url),
                 this,
@@ -307,7 +307,7 @@ struct workspace_parse_lib_provider final : public parse_lib_provider
         if (auto url = get_url(library); url.empty())
             co_return std::nullopt;
         else
-            co_return std::make_pair((co_await get_file(url))->get_text(), std::move(url));
+            co_return std::make_pair((co_await get_file(url))->get_converted_text(), std::move(url));
     }
 
     [[nodiscard]] utils::task prefetch_libraries() const
@@ -848,20 +848,23 @@ std::vector<location> workspace::references(const resource_location& document_lo
         return {};
 }
 
-std::string workspace::hover(const resource_location& document_loc, position pos) const
+std::string workspace::hover(const resource_location& document_loc, position pos, const utils::text_convertor* tc) const
 {
     auto opencodes = find_related_opencodes(document_loc);
     if (opencodes.empty())
         return {};
     // for now take last opencode
     if (const auto* lsp_context = opencodes.back()->m_last_results->lsp_context.get())
-        return lsp_context->hover(document_loc, pos);
+        return lsp_context->hover(document_loc, pos, tc);
     else
         return {};
 }
 
-std::vector<completion_item> workspace::completion(
-    const resource_location& document_loc, position pos, const char trigger_char, completion_trigger_kind trigger_kind)
+std::vector<completion_item> workspace::completion(const resource_location& document_loc,
+    position pos,
+    const char32_t trigger_char,
+    completion_trigger_kind trigger_kind,
+    const utils::text_convertor* tc)
 {
     auto opencodes = find_related_opencodes(document_loc);
     if (opencodes.empty())
@@ -879,7 +882,7 @@ std::vector<completion_item> workspace::completion(
         for (auto&& [suggestion, rank] : raw_suggestions)
             cli->additional_instructions.emplace_back(std::move(suggestion));
     }
-    return lsp::generate_completion(comp);
+    return lsp::generate_completion(comp, tc);
 }
 
 std::vector<document_symbol_item> workspace::document_symbol(const resource_location& document_loc) const
@@ -921,7 +924,7 @@ std::vector<folding_range> workspace::folding(const resource_location& document_
     if (!comp)
         return {};
 
-    auto lines = lsp::generate_indentation_map(comp->m_file->get_text());
+    auto lines = lsp::generate_indentation_map(comp->m_file->get_converted_text());
 
     lsp::mark_suspicious(lines);
 

@@ -40,8 +40,9 @@ TEST(lsp_completion, completion_list_instr)
     std::unordered_map<const context::macro_definition*, lsp::macro_info_ptr> m;
     m.try_emplace(aaaa->macro_definition.get(), aaaa);
 
-    auto result = lsp::generate_completion(lsp::completion_list_source(
-        lsp::completion_list_instructions { "AAAAA", 1, &m, a.context().lsp_ctx.get(), { "AAAA", "ADATA" } }));
+    auto result = lsp::generate_completion(lsp::completion_list_source(lsp::completion_list_instructions {
+                                               "AAAAA", 1, &m, a.context().lsp_ctx.get(), { "AAAA", "ADATA" } }),
+        nullptr);
 
     EXPECT_TRUE(
         std::ranges::any_of(result, [](const auto& e) { return e.label == "ADATA" && e.suggestion_for == "AAAAA"; }));
@@ -64,8 +65,9 @@ TEST(lsp_completion, completion_list_instr_exact)
     std::unordered_map<const context::macro_definition*, lsp::macro_info_ptr> m;
     m.try_emplace(aaaa->macro_definition.get(), aaaa);
 
-    auto result = lsp::generate_completion(lsp::completion_list_source(
-        lsp::completion_list_instructions { "AAA", 1, &m, a.context().lsp_ctx.get(), { "AAAA", "ADATA" } }));
+    auto result = lsp::generate_completion(lsp::completion_list_source(lsp::completion_list_instructions {
+                                               "AAA", 1, &m, a.context().lsp_ctx.get(), { "AAAA", "ADATA" } }),
+        nullptr);
 
     EXPECT_TRUE(
         std::ranges::any_of(result, [](const auto& e) { return e.label == "AAAA" && e.suggestion_for.empty(); }));
@@ -75,7 +77,7 @@ TEST(lsp_completion, completion_list_vars)
 {
     lsp::vardef_storage vars(1, lsp::variable_symbol_definition(context::id_index("VARNAME"), zero_stmt_id, {}));
 
-    auto result = lsp::generate_completion(&vars);
+    auto result = lsp::generate_completion(&vars, nullptr);
 
     EXPECT_EQ(result.size(), 1);
     EXPECT_EQ(std::ranges::count(result, "&VARNAME", &completion_item::label), 1);
@@ -86,7 +88,7 @@ TEST(lsp_completion, completion_list_labels)
     context::macro_label_storage labels;
     labels.try_emplace(context::id_index("LABEL"), location(), zero_stmt_id);
 
-    auto result = lsp::generate_completion(&labels);
+    auto result = lsp::generate_completion(&labels, nullptr);
 
     EXPECT_EQ(result.size(), 1);
     EXPECT_EQ(std::ranges::count(result, ".LABEL", &completion_item::label), 1);
@@ -94,7 +96,7 @@ TEST(lsp_completion, completion_list_labels)
 
 TEST(lsp_completion, completion_list_empty)
 {
-    auto result = lsp::generate_completion(std::monostate());
+    auto result = lsp::generate_completion(std::monostate(), nullptr);
 
     EXPECT_TRUE(result.empty());
 }
@@ -114,8 +116,9 @@ TEST(lsp_completion, macro_operands)
     auto mac = a.context().lsp_ctx->get_macro_info(context::id_index("MAC"));
     ASSERT_TRUE(mac);
 
-    auto result = lsp::generate_completion(lsp::completion_list_source(
-        std::pair(mac->macro_definition.get(), std::vector<std::pair<const context::symbol*, context::id_index>>())));
+    auto result = lsp::generate_completion(lsp::completion_list_source(std::pair(mac->macro_definition.get(),
+                                               std::vector<std::pair<const context::symbol*, context::id_index>>())),
+        nullptr);
 
     EXPECT_EQ(result.size(), 2);
 
@@ -141,7 +144,7 @@ C   CSECT
     ASSERT_TRUE(da);
 
     auto result = lsp::generate_completion(
-        lsp::completion_list_source(std::pair(nullptr, std::vector { std::pair(da, context::id_index()) })));
+        lsp::completion_list_source(std::pair(nullptr, std::vector { std::pair(da, context::id_index()) })), nullptr);
 
     ASSERT_EQ(result.size(), 1);
     const auto& item = result.front();
@@ -170,8 +173,8 @@ C   CSECT
     const auto* da = get_symbol(a.hlasm_ctx(), "DA");
     ASSERT_TRUE(da);
 
-    auto result =
-        lsp::generate_completion(lsp::completion_list_source(std::pair(nullptr, std::vector { std::pair(da, L) })));
+    auto result = lsp::generate_completion(
+        lsp::completion_list_source(std::pair(nullptr, std::vector { std::pair(da, L) })), nullptr);
 
     ASSERT_EQ(result.size(), 1);
     const auto& item = result.front();
@@ -199,7 +202,7 @@ C   CSECT
     ASSERT_TRUE(dl);
 
     auto result = lsp::generate_completion(
-        lsp::completion_list_source(std::pair(nullptr, std::vector { std::pair(dl, context::id_index()) })));
+        lsp::completion_list_source(std::pair(nullptr, std::vector { std::pair(dl, context::id_index()) })), nullptr);
 
     ASSERT_EQ(result.size(), 1);
     const auto& item = result.front();

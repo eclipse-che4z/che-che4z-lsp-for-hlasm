@@ -15,6 +15,7 @@
 #include "utils/unicode_text.h"
 
 #include <algorithm>
+#include <bit>
 
 namespace hlasm_plugin::utils {
 constinit const std::array<char_size, 256> utf8_prefix_sizes = []() {
@@ -277,6 +278,25 @@ size_t length_utf32_no_validation(std::string_view text) noexcept
     auto [char_count, _] = substr_step<false>(text, len);
 
     return char_count;
+}
+
+char32_t extract_utf32_from_utf8(std::string_view s)
+{
+    if (s.empty())
+        return U'\0';
+
+    char32_t result = 0;
+
+    for (unsigned char c : utf8_substr(s, 0, 1).str)
+    {
+        const auto ones = std::countl_one(c);
+        const auto mask = 0b0111'1111 >> ones;
+
+        result <<= 6;
+        result |= c & mask;
+    }
+
+    return result;
 }
 
 } // namespace hlasm_plugin::utils

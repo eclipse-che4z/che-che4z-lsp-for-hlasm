@@ -269,7 +269,7 @@ class file_manager_extended : public file_manager_impl, public external_file_rea
 
 public:
     file_manager_extended()
-        : file_manager_impl(static_cast<external_file_reader&>(*this))
+        : file_manager_impl(static_cast<external_file_reader&>(*this), nullptr)
     {
         for (const auto& [loc, content] : file_contents)
             did_open_file(loc, 1, content);
@@ -647,7 +647,7 @@ TEST_F(workspace_test, use_external_library)
 {
     NiceMock<external_configuration_requests_mock> external_conf_mock;
     NiceMock<external_file_reader_mock> external_files;
-    file_manager_impl fm(external_files);
+    file_manager_impl fm(external_files, nullptr);
 
     const auto source_match = [](auto seq) { return seq == source1_loc.get_uri(); };
     const auto provide_pg = [](auto, auto channel) {
@@ -677,7 +677,7 @@ TEST_F(workspace_test, use_external_library)
 TEST_F(workspace_test, use_external_library_with_workspace_uri)
 {
     NiceMock<external_file_reader_mock> external_files;
-    file_manager_impl fm(external_files);
+    file_manager_impl fm(external_files, nullptr);
 
     fm.did_open_file(pgm_conf_loc, 1, R"({
   "pgms": [

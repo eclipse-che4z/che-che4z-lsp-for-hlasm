@@ -20,7 +20,7 @@ import { FBStreamingConvertor } from "../../FBStreamingConvertor";
 suite('FB Utilities', () => {
 
     test('Convertor', async () => {
-        const convertor = new FBWritable(10);
+        const convertor = new FBWritable(10, 'IBM1148');
         const input = Buffer.from([0xc1, 0xc1, 0xc1, 0xc1, 0xc1, 0xc1, 0xc1, 0xc1, 0xc1, 0xc1, 0xc2, 0xc2, 0xc2, 0xc2, 0xc2, 0xc2, 0xc2, 0xc2, 0xc2, 0xc2]);
 
         await Stream.promises.pipeline(Readable.from(input), convertor);
@@ -29,7 +29,7 @@ suite('FB Utilities', () => {
     });
 
     test('Streaming Convertor', async () => {
-        const convertor = new FBStreamingConvertor(10);
+        const convertor = new FBStreamingConvertor(10, 'IBM1148');
 
         convertor.write(Uint8Array.from([0xc1, 0xc1, 0xc1, 0xc1, 0xc1,]));
         convertor.write(Uint8Array.from([0xc1, 0xc1, 0xc1, 0xc1, 0xc1, 0xc2, 0xc2, 0xc2, 0xc2,]));

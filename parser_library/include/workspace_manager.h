@@ -33,6 +33,9 @@
 #include "protocol.h"
 #include "workspace_manager_requests.h"
 
+namespace hlasm_plugin::utils {
+struct text_convertor;
+} // namespace hlasm_plugin::utils
 namespace hlasm_plugin::parser_library {
 struct completion_item;
 struct diagnostic;
@@ -134,7 +137,7 @@ public:
         std::string_view document_uri, position pos, workspace_manager_response<std::string_view> resp) = 0;
     virtual void completion(std::string_view document_uri,
         position pos,
-        char trigger_char,
+        char32_t trigger_char,
         completion_trigger_kind trigger_kind,
         workspace_manager_response<std::span<const completion_item>> resp) = 0;
 
@@ -182,12 +185,17 @@ public:
     virtual void change_implicit_group_base(std::string_view uri) = 0;
 };
 
-workspace_manager* create_workspace_manager_impl(
-    workspace_manager_external_file_requests* external_requests, bool vscode_extensions);
-inline std::unique_ptr<workspace_manager> create_workspace_manager(
-    workspace_manager_external_file_requests* external_requests = nullptr, bool vscode_extensions = false)
+struct workspace_manager_args
 {
-    return std::unique_ptr<workspace_manager>(create_workspace_manager_impl(external_requests, vscode_extensions));
+    workspace_manager_external_file_requests* external_requests = nullptr;
+    const utils::text_convertor* text_conversion = nullptr;
+    bool vscode_extensions = false;
+};
+
+workspace_manager* create_workspace_manager_impl(const workspace_manager_args& args);
+inline std::unique_ptr<workspace_manager> create_workspace_manager(const workspace_manager_args& args = {})
+{
+    return std::unique_ptr<workspace_manager>(create_workspace_manager_impl(args));
 }
 
 } // namespace hlasm_plugin::parser_library

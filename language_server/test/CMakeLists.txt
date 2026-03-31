@@ -21,6 +21,7 @@ target_sources(server_test PRIVATE
     external_file_reader_test.cpp
     json_channel_mock.h
     message_router_test.cpp
+    pseudo_convertors_test.cpp
     regress_test.cpp
     response_provider_mock.h
     send_message_provider_mock.h

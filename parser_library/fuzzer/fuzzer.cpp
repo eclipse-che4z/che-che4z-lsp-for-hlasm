@@ -208,7 +208,8 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size)
     {
         case 0:
             lsp::generate_completion(a.context().lsp_ctx->completion(
-                empty_location, position(num1, num2), 0, completion_trigger_kind::invoked));
+                                         empty_location, position(num1, num2), 0, completion_trigger_kind::invoked),
+                nullptr);
             break;
 
         case 1:
@@ -220,7 +221,7 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size)
             break;
 
         case 3:
-            a.context().lsp_ctx->hover(empty_location, position(num1, num2));
+            a.context().lsp_ctx->hover(empty_location, position(num1, num2), nullptr);
             break;
 
         case 4:

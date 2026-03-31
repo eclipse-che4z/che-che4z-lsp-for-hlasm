@@ -53,7 +53,7 @@ TEST_F(lsp_context_var_symbol_SET, references)
 
 TEST_F(lsp_context_var_symbol_SET, hover)
 {
-    auto res = a.context().lsp_ctx->hover(opencode_loc, { 2, 7 });
+    auto res = a.context().lsp_ctx->hover(opencode_loc, { 2, 7 }, nullptr);
 
 
     EXPECT_EQ(res, "SETA variable");
@@ -62,7 +62,7 @@ TEST_F(lsp_context_var_symbol_SET, hover)
 TEST_F(lsp_context_var_symbol_SET, completion)
 {
     auto res_v =
-        a.context().lsp_ctx->completion(opencode_loc, { 3, 2 }, '&', completion_trigger_kind::trigger_character);
+        a.context().lsp_ctx->completion(opencode_loc, { 3, 2 }, U'&', completion_trigger_kind::trigger_character);
 
     ASSERT_TRUE(std::holds_alternative<const lsp::vardef_storage*>(res_v));
 
@@ -105,7 +105,7 @@ TEST_F(lsp_context_var_symbol_GBL, references)
 
 TEST_F(lsp_context_var_symbol_GBL, hover)
 {
-    auto res = a.context().lsp_ctx->hover(opencode_loc, { 2, 7 });
+    auto res = a.context().lsp_ctx->hover(opencode_loc, { 2, 7 }, nullptr);
 
     EXPECT_EQ(res, "SETC variable");
 }
@@ -113,7 +113,7 @@ TEST_F(lsp_context_var_symbol_GBL, hover)
 TEST_F(lsp_context_var_symbol_GBL, completion)
 {
     auto res_v =
-        a.context().lsp_ctx->completion(opencode_loc, { 3, 2 }, '&', completion_trigger_kind::trigger_character);
+        a.context().lsp_ctx->completion(opencode_loc, { 3, 2 }, U'&', completion_trigger_kind::trigger_character);
 
     ASSERT_TRUE(std::holds_alternative<const vardef_storage*>(res_v));
 
@@ -155,7 +155,7 @@ TEST_F(lsp_context_var_symbol_LCL, references)
 
 TEST_F(lsp_context_var_symbol_LCL, hover)
 {
-    auto res = a.context().lsp_ctx->hover(opencode_loc, { 2, 7 });
+    auto res = a.context().lsp_ctx->hover(opencode_loc, { 2, 7 }, nullptr);
 
     EXPECT_EQ(res, "SETB variable");
 }
@@ -163,7 +163,7 @@ TEST_F(lsp_context_var_symbol_LCL, hover)
 TEST_F(lsp_context_var_symbol_LCL, completion)
 {
     auto res_v =
-        a.context().lsp_ctx->completion(opencode_loc, { 3, 2 }, '&', completion_trigger_kind::trigger_character);
+        a.context().lsp_ctx->completion(opencode_loc, { 3, 2 }, U'&', completion_trigger_kind::trigger_character);
 
     ASSERT_TRUE(std::holds_alternative<const vardef_storage*>(res_v));
 
@@ -198,7 +198,7 @@ TEST_F(lsp_context_var_symbol_no_definition, references)
 
 TEST_F(lsp_context_var_symbol_no_definition, hover)
 {
-    auto res = a.context().lsp_ctx->hover(opencode_loc, { 0, 6 });
+    auto res = a.context().lsp_ctx->hover(opencode_loc, { 0, 6 }, nullptr);
 
     EXPECT_EQ(res, "");
 }
@@ -217,7 +217,7 @@ TEST_F(lsp_context_var_symbol_no_definition, references_no_occurrence)
 
 TEST_F(lsp_context_var_symbol_no_definition, hover_no_occurrence)
 {
-    auto res = a.context().lsp_ctx->hover(opencode_loc, { 0, 9 });
+    auto res = a.context().lsp_ctx->hover(opencode_loc, { 0, 9 }, nullptr);
 
     EXPECT_EQ(res, "");
 }

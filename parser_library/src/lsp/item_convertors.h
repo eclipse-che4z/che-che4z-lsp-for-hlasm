@@ -22,6 +22,9 @@
 
 #include "completion_list_source.h"
 
+namespace hlasm_plugin::utils {
+struct text_convertor;
+} // namespace hlasm_plugin::utils
 namespace hlasm_plugin::parser_library {
 struct completion_item;
 
@@ -42,30 +45,37 @@ struct macro_info;
 class text_data_view;
 struct variable_symbol_definition;
 
-std::string hover_text(const context::symbol& sym);
+std::string hover_text(const context::symbol& sym, const utils::text_convertor* tc);
 std::string hover_text(const variable_symbol_definition& sym);
-std::string hover_text(std::span<const context::using_context_description> usings);
-void append_hover_text(std::string& buffer, const context::using_context_description& u);
-std::string get_macro_documentation(const text_data_view& macro_text, size_t definition_line);
-std::string get_logical_line(const text_data_view& text, size_t definition_line);
-std::string get_macro_signature(const context::macro_definition& m);
+std::string hover_text(std::span<const context::using_context_description> usings, const utils::text_convertor* tc);
+void append_hover_text(
+    std::string& buffer, const context::using_context_description& u, const utils::text_convertor* tc);
+std::string get_macro_documentation(
+    const text_data_view& macro_text, size_t definition_line, const utils::text_convertor* tc);
+std::string get_logical_line(const text_data_view& text, size_t definition_line, const utils::text_convertor* tc);
+std::string get_macro_signature(const context::macro_definition& m, const utils::text_convertor* tc);
 bool is_continued_line(std::string_view line);
 
-completion_item generate_completion_item(context::id_index name, const context::opencode_sequence_symbol&);
-completion_item generate_completion_item(context::id_index name, const context::macro_sequence_symbol&);
-completion_item generate_completion_item(const variable_symbol_definition& sym);
-completion_item generate_completion_item(const macro_info& sym, const file_info* info);
+completion_item generate_completion_item(
+    context::id_index name, const context::opencode_sequence_symbol&, const utils::text_convertor*);
+completion_item generate_completion_item(
+    context::id_index name, const context::macro_sequence_symbol&, const utils::text_convertor*);
+completion_item generate_completion_item(const variable_symbol_definition& sym, const utils::text_convertor*);
+completion_item generate_completion_item(const macro_info& sym, const file_info* info, const utils::text_convertor*);
 
-std::vector<completion_item> generate_completion(const completion_list_source& cls);
-std::vector<completion_item> generate_completion(std::monostate);
-std::vector<completion_item> generate_completion(const std::vector<variable_symbol_definition>*);
+std::vector<completion_item> generate_completion(const completion_list_source& cls, const utils::text_convertor*);
+std::vector<completion_item> generate_completion(std::monostate, const utils::text_convertor*);
 std::vector<completion_item> generate_completion(
-    const std::unordered_map<context::id_index, context::opencode_sequence_symbol>*);
+    const std::vector<variable_symbol_definition>*, const utils::text_convertor*);
 std::vector<completion_item> generate_completion(
-    const std::unordered_map<context::id_index, context::macro_sequence_symbol>*);
-std::vector<completion_item> generate_completion(const completion_list_instructions&);
-std::vector<completion_item> generate_completion(const std::pair<const context::macro_definition*,
-    std::vector<std::pair<const context::symbol*, context::id_index>>>&);
+    const std::unordered_map<context::id_index, context::opencode_sequence_symbol>*, const utils::text_convertor*);
+std::vector<completion_item> generate_completion(
+    const std::unordered_map<context::id_index, context::macro_sequence_symbol>*, const utils::text_convertor*);
+std::vector<completion_item> generate_completion(const completion_list_instructions&, const utils::text_convertor*);
+std::vector<completion_item> generate_completion(
+    const std::pair<const context::macro_definition*,
+        std::vector<std::pair<const context::symbol*, context::id_index>>>&,
+    const utils::text_convertor*);
 
 } // namespace hlasm_plugin::parser_library::lsp
 

@@ -1052,6 +1052,12 @@ class file_manager_impl_test : public file_manager_impl
         return value_task<std::optional<std::string>>::from_value(std::nullopt);
     }
 
+    hlasm_plugin::utils::value_task<std::optional<std::string>> get_converted_file_content(
+        const hlasm_plugin::utils::resource::resource_location& loc) override
+    {
+        return get_file_content(loc);
+    }
+
     value_task<list_directory_result> list_directory_files(const resource_location& directory) const override
     {
         list_directory_result result;

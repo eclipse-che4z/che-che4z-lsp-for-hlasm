@@ -34,6 +34,7 @@ target_sources(hlasm_utils PUBLIC
     utils/similar.h
     utils/string_operations.h
     utils/task.h
+    utils/text_convertor.h
     utils/text_matchers.h
     utils/time.h
     utils/transform_inserter.h

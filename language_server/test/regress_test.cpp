@@ -64,7 +64,7 @@ nlohmann::json make_notification(std::string method_name, nlohmann::json paramet
 TEST(regress_test, behaviour_error)
 {
     auto ws_mngr = parser_library::create_workspace_manager();
-    lsp::server s(*ws_mngr);
+    lsp::server s(*ws_mngr, nullptr);
     message_provider_mock mess_p(s);
     s.set_send_message_provider(&mess_p);
 
@@ -600,7 +600,7 @@ const static std::vector<nlohmann::json> messages = {
 TEST(regress_test, stability_async)
 {
     auto ws_mngr = parser_library::create_workspace_manager();
-    lsp::server s(*ws_mngr);
+    lsp::server s(*ws_mngr, nullptr);
     message_provider_mock mess_p(s);
     s.set_send_message_provider(&mess_p);
 
@@ -615,7 +615,7 @@ TEST(regress_test, stability_async)
 TEST(regress_test, stability_sync)
 {
     auto ws_mngr = parser_library::create_workspace_manager();
-    lsp::server s(*ws_mngr);
+    lsp::server s(*ws_mngr, nullptr);
     message_provider_mock mess_p(s);
     s.set_send_message_provider(&mess_p);
 
@@ -630,7 +630,7 @@ TEST(regress_test, stability_sync)
 TEST(regress_test, check_diagnostic_tags)
 {
     auto ws_mngr = parser_library::create_workspace_manager();
-    lsp::server s(*ws_mngr);
+    lsp::server s(*ws_mngr, nullptr);
     message_provider_mock mess_p(s);
     s.set_send_message_provider(&mess_p);
 

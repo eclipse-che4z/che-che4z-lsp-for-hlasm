@@ -65,7 +65,7 @@ TEST_F(lsp_context_macro_in_opencode, references_macro)
 
 TEST_F(lsp_context_macro_in_opencode, hover_macro)
 {
-    auto res = a.context().lsp_ctx->hover(opencode_loc, { 7, 8 });
+    auto res = a.context().lsp_ctx->hover(opencode_loc, { 7, 8 }, nullptr);
 
     EXPECT_EQ(res, R"(```hlasm
 &LABEL MAC &POS_PAR,&KEY_PAR=1
@@ -91,7 +91,7 @@ TEST_F(lsp_context_macro_in_opencode, references_macro_param_positional)
 
 TEST_F(lsp_context_macro_in_opencode, hover_macro_param)
 {
-    auto res = a.context().lsp_ctx->hover(opencode_loc, { 3, 11 });
+    auto res = a.context().lsp_ctx->hover(opencode_loc, { 3, 11 }, nullptr);
 
     EXPECT_EQ(res, "MACRO parameter");
 }
@@ -144,7 +144,7 @@ TEST_F(lsp_context_macro_in_opencode, references_local_var_same_name)
 
 TEST_F(lsp_context_macro_in_opencode, completion_var_in_macro)
 {
-    auto res_v = a.context().lsp_ctx->completion(opencode_loc, { 4, 1 }, '\0', completion_trigger_kind::invoked);
+    auto res_v = a.context().lsp_ctx->completion(opencode_loc, { 4, 1 }, U'\0', completion_trigger_kind::invoked);
 
     ASSERT_TRUE(std::holds_alternative<const vardef_storage*>(res_v));
 
@@ -160,7 +160,7 @@ TEST_F(lsp_context_macro_in_opencode, completion_var_in_macro)
 
 TEST_F(lsp_context_macro_in_opencode, completion_var_outside_macro)
 {
-    auto res_v = a.context().lsp_ctx->completion(opencode_loc, { 11, 1 }, '\0', completion_trigger_kind::invoked);
+    auto res_v = a.context().lsp_ctx->completion(opencode_loc, { 11, 1 }, U'\0', completion_trigger_kind::invoked);
 
     ASSERT_TRUE(std::holds_alternative<const vardef_storage*>(res_v));
 
@@ -176,7 +176,7 @@ TEST_F(lsp_context_macro_in_opencode, completion_var_outside_macro)
 
 TEST_F(lsp_context_macro_in_opencode, hover_unknown_macro)
 {
-    auto res = a.context().lsp_ctx->hover(opencode_loc, { 12, 10 });
+    auto res = a.context().lsp_ctx->hover(opencode_loc, { 12, 10 }, nullptr);
 
     EXPECT_EQ(res, "");
 }

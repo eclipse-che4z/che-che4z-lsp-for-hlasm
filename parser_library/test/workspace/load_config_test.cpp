@@ -442,16 +442,16 @@ TEST(workspace, lsp_file_not_processed_yet)
 
     EXPECT_EQ(ws.definition(file_loc, { 0, 5 }), location({ 0, 5 }, file_loc));
     EXPECT_EQ(ws.references(file_loc, { 0, 5 }), std::vector<location>());
-    EXPECT_EQ(ws.hover(file_loc, { 0, 5 }), "");
-    EXPECT_EQ(ws.completion(file_loc, { 0, 5 }, '\0', completion_trigger_kind::invoked), empty_list);
+    EXPECT_EQ(ws.hover(file_loc, { 0, 5 }, nullptr), "");
+    EXPECT_EQ(ws.completion(file_loc, { 0, 5 }, '\0', completion_trigger_kind::invoked, nullptr), empty_list);
 
     run_if_valid(ws.did_open_file(file_loc));
     // parsing not done yet
 
     EXPECT_EQ(ws.definition(file_loc, { 0, 5 }), location({ 0, 5 }, file_loc));
     EXPECT_EQ(ws.references(file_loc, { 0, 5 }), std::vector<location>());
-    EXPECT_EQ(ws.hover(file_loc, { 0, 5 }), "");
-    EXPECT_EQ(ws.completion(file_loc, { 0, 5 }, '\0', completion_trigger_kind::invoked), empty_list);
+    EXPECT_EQ(ws.hover(file_loc, { 0, 5 }, nullptr), "");
+    EXPECT_EQ(ws.completion(file_loc, { 0, 5 }, '\0', completion_trigger_kind::invoked, nullptr), empty_list);
 
     // Prior to parsing, it should return default values
     EXPECT_EQ(ws.semantic_tokens(file_loc), semantics::lines_info());

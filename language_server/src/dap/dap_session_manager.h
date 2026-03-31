@@ -23,6 +23,10 @@
 #include "../message_router.h"
 #include "workspace_manager.h"
 
+namespace hlasm_plugin::utils {
+struct text_convertor;
+} // namespace hlasm_plugin::utils
+
 namespace hlasm_plugin::language_server {
 class external_file_reader;
 class telemetry_sink;
@@ -36,6 +40,7 @@ class session_manager final : public json_sink
     std::map<std::string, std::unique_ptr<dap::session>, std::less<>> sessions;
     telemetry_sink* telemetry_reporter;
     external_file_reader* ext_files;
+    const utils::text_convertor* tc;
 
     void cleanup_sessions();
     void handle_registration_request(size_t new_id);
@@ -43,8 +48,9 @@ class session_manager final : public json_sink
 public:
     session_manager(parser_library::debugger_configuration_provider& dc_provider,
         json_sink& out,
-        telemetry_sink* telemetry_reporter = nullptr,
-        external_file_reader* ext_files = nullptr);
+        telemetry_sink* telemetry_reporter,
+        external_file_reader* ext_files,
+        const utils::text_convertor* tc);
     session_manager(const session_manager&) = delete;
     session_manager(session_manager&&) noexcept;
     session_manager& operator=(const session_manager&) = delete;

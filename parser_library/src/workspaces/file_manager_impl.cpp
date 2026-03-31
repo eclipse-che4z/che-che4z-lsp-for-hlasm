@@ -24,6 +24,7 @@
 #include "utils/content_loader.h"
 #include "utils/path_conversions.h"
 #include "utils/platform.h"
+#include "utils/text_convertor.h"
 
 namespace {
 auto next_global_version()
@@ -43,6 +44,7 @@ struct file_manager_impl::mapped_file final : file
 
     utils::resource::resource_location m_location;
     std::string m_text;
+    std::string m_text_converted;
     struct file_error
     {};
     std::optional<file_error> m_error;
@@ -58,12 +60,17 @@ struct file_manager_impl::mapped_file final : file
     std::shared_ptr<mapped_file> m_editing_self_reference;
     decltype(file_manager_impl::m_files)::const_iterator m_it = m_fm.m_files.end();
 
-    mapped_file(const utils::resource::resource_location& file_name, file_manager_impl& fm, std::string text)
+    mapped_file(const utils::resource::resource_location& file_name,
+        file_manager_impl& fm,
+        std::string text,
+        const utils::text_convertor* tc)
         : m_location(file_name)
         , m_text(std::move(text))
         , m_lines(create_line_indices(m_text))
         , m_fm(fm)
-    {}
+    {
+        apply_conversion(tc);
+    }
 
     mapped_file(const utils::resource::resource_location& file_name, file_manager_impl& fm, file_error error)
         : m_location(file_name)
@@ -74,6 +81,7 @@ struct file_manager_impl::mapped_file final : file
     mapped_file(const mapped_file& that)
         : m_location(that.m_location)
         , m_text(that.m_text)
+        // m_text_converted is set later via explicit apply_conversion call
         , m_error(that.m_error)
         , m_lines(that.m_lines)
         , m_fm(that.m_fm)
@@ -90,6 +98,13 @@ struct file_manager_impl::mapped_file final : file
     // Inherited via file
     const utils::resource::resource_location& get_location() const override { return m_location; }
     const std::string& get_text() const override { return m_text; }
+    const std::string& get_converted_text() const override
+    {
+        if (m_text_converted.empty())
+            return m_text;
+        else
+            return m_text_converted;
+    }
     bool get_lsp_editing() const override { return m_editing_self_reference != nullptr; }
     version_t get_version() const override { return m_version; }
     version_t get_lsp_version() const override { return m_lsp_version; }
@@ -107,6 +122,15 @@ struct file_manager_impl::mapped_file final : file
             return std::nullopt;
         else
             return m_text;
+    }
+
+    void apply_conversion(const utils::text_convertor* tc)
+    {
+        if (!tc)
+            return;
+        m_text_converted.clear();
+        m_text_converted.reserve(m_text.size() + m_text.size() / 1024);
+        tc->from(m_text_converted, m_text);
     }
 };
 
@@ -145,11 +169,12 @@ class : public external_file_reader
 } constexpr default_reader;
 
 file_manager_impl::file_manager_impl()
-    : file_manager_impl(default_reader)
+    : file_manager_impl(default_reader, nullptr)
 {}
 
-file_manager_impl::file_manager_impl(const external_file_reader& file_reader)
+file_manager_impl::file_manager_impl(const external_file_reader& file_reader, const utils::text_convertor* tc)
     : m_file_reader(&file_reader)
+    , m_text_convertor(tc)
 {}
 
 file_manager_impl::~file_manager_impl()
@@ -200,8 +225,9 @@ utils::value_task<std::shared_ptr<file>> file_manager_impl::add_file(
         if (auto result = try_obtaining_file_unsafe(file_name, &loaded_text))
             return result;
 
-        auto result = loaded_text.has_value() ? make_mapped_file(file_name, *this, loaded_text.value())
-                                              : make_mapped_file(file_name, *this, mapped_file::file_error());
+        auto result = loaded_text.has_value()
+            ? make_mapped_file(file_name, *this, loaded_text.value(), m_text_convertor)
+            : make_mapped_file(file_name, *this, mapped_file::file_error());
 
         result->m_it = m_files.try_emplace(file_name, result.get()).first;
 
@@ -255,6 +281,17 @@ utils::value_task<std::optional<std::string>> file_manager_impl::get_file_conten
     });
 }
 
+utils::value_task<std::optional<std::string>> file_manager_impl::get_converted_file_content(
+    const utils::resource::resource_location& file_name)
+{
+    return add_file(file_name).then([](auto f) -> std::optional<std::string> {
+        if (f->error())
+            return std::nullopt;
+        else
+            return f->get_converted_text();
+    });
+}
+
 std::shared_ptr<file> file_manager_impl::find(const utils::resource::resource_location& key) const
 {
     std::lock_guard guard(files_mutex);
@@ -304,7 +341,7 @@ file_content_state file_manager_impl::did_open_file(
             m_files.erase(it);
         }
 
-        auto file = make_mapped_file(document_loc, *this, std::move(new_text));
+        auto file = make_mapped_file(document_loc, *this, std::move(new_text), m_text_convertor);
 
         file->m_lsp_version = version;
         file->m_it = m_files.try_emplace(document_loc, file.get()).first;
@@ -380,6 +417,8 @@ void file_manager_impl::did_change_file(const utils::resource::resource_location
 
     file->m_lsp_version = lsp_version;
     file->m_version = next_global_version();
+
+    file->apply_conversion(m_text_convertor);
 }
 
 void file_manager_impl::did_close_file(const utils::resource::resource_location& document_loc)

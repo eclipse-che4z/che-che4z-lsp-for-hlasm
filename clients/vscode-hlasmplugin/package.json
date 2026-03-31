@@ -495,6 +495,16 @@
             "wasm"
           ]
         },
+        "hlasm.pseudoCharset": {
+          "type": "string",
+          "default": "IBM1148",
+          "description": "Specify a charset for HLASM Language Support to use to re-encode your source. Change this setting if you experience encoding errors when loading your source from the mainframe. Restart the extension after you change this setting.",
+          "enum": [
+            "IBM1148",
+            "IBM1143",
+            "IBM278"
+          ]
+        },
         "hlasm.useAutodetection": {
           "type": "boolean",
           "default": false,

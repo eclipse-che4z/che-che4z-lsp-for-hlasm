@@ -14,6 +14,7 @@
 
 #include "text_data_view.h"
 
+#include "utils/unicode_text.h"
 #include "workspaces/file.h"
 
 namespace hlasm_plugin::parser_library::lsp {
@@ -41,14 +42,15 @@ std::string_view text_data_view::get_line_beginning_at(position pos) const
     return std::string_view(text).substr(line_indices[pos.line], line_len);
 }
 
-char text_data_view::get_character_before(position pos) const
+char32_t text_data_view::get_character_before(position pos) const
 {
     if (pos.column == 0)
-        return '\0';
+        return U'\0';
     size_t index = workspaces::index_from_position(text, line_indices, { pos.line, pos.column - 1 });
     if (index >= text.size())
-        return '\0';
-    return text.at(index);
+        return U'\0';
+
+    return utils::extract_utf32_from_utf8(text.substr(index));
 }
 
 std::string_view text_data_view::get_range_content(range r) const

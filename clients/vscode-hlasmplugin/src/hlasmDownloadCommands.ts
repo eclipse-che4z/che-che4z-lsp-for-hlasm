@@ -26,6 +26,8 @@ import { isCancellationError } from './helpers';
 import { unterseFile } from "terse.js";
 import { FBStreamingConvertor } from './FBStreamingConvertor';
 import { stripJsonComments } from './tools.common';
+import { SupportedPseudoCharset } from './serverFactory.common';
+import { getConfig } from './eventsHandler';
 
 export type JobId = string;
 export type JobDescription = {
@@ -303,7 +305,7 @@ function fixPath(p: string): string {
     return p;
 }
 
-export async function unterse(outDir: string): Promise<{ process: Promise<void>, input: Writable }> {
+export async function unterse(outDir: string, pseudoCharset: SupportedPseudoCharset): Promise<{ process: Promise<void>, input: Writable }> {
     await fsp.mkdir(outDir, { recursive: true });
 
     class DownloadStream extends Writable {
@@ -411,7 +413,7 @@ export async function unterse(outDir: string): Promise<{ process: Promise<void>,
             start_member: (name: string) => {
                 writeCurrentMember();
 
-                fb = new FBStreamingConvertor(80);
+                fb = new FBStreamingConvertor(80, pseudoCharset);
                 currentMember = name;
             },
             alias_member: (name: string, target: string) => {
@@ -730,13 +732,15 @@ export async function downloadDependencies(context: vscode.ExtensionContext, tel
 
         const startTime = Date.now();
 
+        const pseudoCharset = getConfig<SupportedPseudoCharset>('pseudoCharset', 'IBM1148');
+
         const result = await vscode.window.withProgress({ title: "Downloading dependencies", location: vscode.ProgressLocation.Notification, cancellable: true }, async (p, t) => {
             return downloadDependenciesWithClient(
                 zowe ? await zoweJobClient('PRINTIT.SYSUT2', connectionInfo) : await basicFtpJobClient(connectionInfo),
                 thingsToDownload,
                 jobcardPattern,
                 new ProgressReporter(p, thingsToDownload.reduce((prev, cur) => { return prev + cur.dirs.length + 2 }, 0)),
-                { unterse, copyDirectory },
+                { unterse: (d) => unterse(d, pseudoCharset), copyDirectory },
                 () => t.isCancellationRequested);
         });
 

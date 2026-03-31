@@ -21,6 +21,10 @@
 #include "dap_feature.h"
 #include "nlohmann/json_fwd.hpp"
 
+namespace hlasm_plugin::utils {
+struct text_convertor;
+} // namespace hlasm_plugin::utils
+
 namespace hlasm_plugin::language_server::dap {
 
 // Implements DAP server (session-controlling methods like initialize and disconnect).
@@ -28,8 +32,9 @@ namespace hlasm_plugin::language_server::dap {
 class server final : public hlasm_plugin::language_server::server, public dap_disconnect_listener
 {
 public:
-    explicit server(
-        parser_library::debugger_configuration_provider& dc_provider, telemetry_sink* telemetry_reporter = nullptr);
+    explicit server(parser_library::debugger_configuration_provider& dc_provider,
+        telemetry_sink* telemetry_reporter,
+        const utils::text_convertor* tc);
 
     void respond(const request_id& id, std::string_view requested_method, nlohmann::json&& args) override;
     void respond_error(const request_id& id,

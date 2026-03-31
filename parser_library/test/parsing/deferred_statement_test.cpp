@@ -35,8 +35,8 @@ TEST(deferred_statement, split_var)
 
     EXPECT_TRUE(a.diags().empty());
 
-    auto aa1 = a.context().lsp_ctx->hover(resource_location(""), { 3, 71 });
-    auto aa2 = a.context().lsp_ctx->hover(resource_location(""), { 4, 16 });
+    auto aa1 = a.context().lsp_ctx->hover(resource_location(""), { 3, 71 }, nullptr);
+    auto aa2 = a.context().lsp_ctx->hover(resource_location(""), { 4, 16 }, nullptr);
     EXPECT_EQ(aa1, "MACRO parameter");
     EXPECT_EQ(aa2, "MACRO parameter");
 }
@@ -135,9 +135,10 @@ TEST(deferred_statement, navigation_for_nonexecuted)
     EXPECT_TRUE(a.diags().empty());
 
     EXPECT_EQ(a.context().lsp_ctx->definition(opencode, position(4, 10)).resource_loc.get_uri(), "INNER");
-    EXPECT_EQ(a.context().lsp_ctx->hover(opencode, position(4, 10)),
+    EXPECT_EQ(a.context().lsp_ctx->hover(opencode, position(4, 10), nullptr),
         "Statement not executed, macro with matching name available");
-    EXPECT_NE(a.context().lsp_ctx->hover(opencode, position(5, 10)).find("Set Addressing Mode"), std::string::npos);
+    EXPECT_NE(
+        a.context().lsp_ctx->hover(opencode, position(5, 10), nullptr).find("Set Addressing Mode"), std::string::npos);
 }
 
 TEST(deferred_statement, share_references_for_nonexecuted)

@@ -13,15 +13,20 @@
  */
 
 import { Writable } from "stream";
-import { convertBuffer } from "./conversions";
+import { convertBuffer, convertTable } from "./conversions";
 import { concat } from "./helpers";
 import { textDecode } from "./tools.common";
+import { SupportedPseudoCharset } from "./serverFactory.common";
 
 export class FBWritable extends Writable {
     private chunks: Uint8Array[] = [];
     private result?: string;
+    private readonly conversionTable: Uint8Array[];
 
-    constructor(private lrecl: number = 80) { super(); }
+    constructor(private readonly lrecl: number, convert: SupportedPseudoCharset) {
+        super();
+        this.conversionTable = convertTable(convert);
+    }
 
     _write(chunk: Buffer, encoding: BufferEncoding, callback: (error?: Error | null) => void) {
         this.chunks.push(chunk);
@@ -30,7 +35,7 @@ export class FBWritable extends Writable {
     }
 
     _final(callback: (error?: Error | null) => void) {
-        this.result = textDecode(convertBuffer(concat(...this.chunks), this.lrecl));
+        this.result = textDecode(convertBuffer(concat(...this.chunks), this.lrecl, this.conversionTable));
 
         callback();
     };

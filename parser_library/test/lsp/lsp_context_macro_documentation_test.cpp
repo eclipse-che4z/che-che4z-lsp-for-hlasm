@@ -76,14 +76,14 @@ TEST_F(lsp_context_macro_documentation, references)
 
 TEST_F(lsp_context_macro_documentation, hover)
 {
-    auto res = a.context().lsp_ctx->hover(opencode_loc, { 10, 8 });
+    auto res = a.context().lsp_ctx->hover(opencode_loc, { 10, 8 }, nullptr);
 
     EXPECT_EQ(res, macro_documentation);
 }
 
 TEST_F(lsp_context_macro_documentation, completion)
 {
-    auto res_v = a.context().lsp_ctx->completion(opencode_loc, { 11, 1 }, '\0', completion_trigger_kind::invoked);
+    auto res_v = a.context().lsp_ctx->completion(opencode_loc, { 11, 1 }, U'\0', completion_trigger_kind::invoked);
 
     ASSERT_TRUE(std::holds_alternative<completion_list_instructions>(res_v));
 
@@ -102,7 +102,7 @@ TEST(lsp_context_macro_documentation_incomplete, incomplete_macro)
  )";
     analyzer a(input, analyzer_options { file_loc });
     a.analyze();
-    auto res_v = a.context().lsp_ctx->completion(file_loc, { 0, 1 }, '\0', completion_trigger_kind::invoked);
+    auto res_v = a.context().lsp_ctx->completion(file_loc, { 0, 1 }, U'\0', completion_trigger_kind::invoked);
 
     EXPECT_TRUE(std::holds_alternative<completion_list_instructions>(res_v));
 }

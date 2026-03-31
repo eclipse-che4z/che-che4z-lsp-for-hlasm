@@ -21,10 +21,12 @@
 
 namespace hlasm_plugin::language_server::dap {
 
-server::server(parser_library::debugger_configuration_provider& dc_provider, telemetry_sink* telemetry_reporter)
+server::server(parser_library::debugger_configuration_provider& dc_provider,
+    telemetry_sink* telemetry_reporter,
+    const utils::text_convertor* tc)
     : language_server::server(telemetry_reporter)
 {
-    auto dap_f = std::make_unique<dap_feature>(dc_provider, *this, this);
+    auto dap_f = std::make_unique<dap_feature>(dc_provider, *this, this, tc);
     m_dap_feature = dap_f.get();
     features_.push_back(std::move(dap_f));
     register_feature_methods();

@@ -17,6 +17,17 @@ import * as vscodelc from 'vscode-languageclient';
 import { asError, isCancellationError } from "./helpers";
 import { deflate, inflate, sha256 } from './tools';
 import { textDecode } from './tools.common';
+import { getConfig } from './eventsHandler';
+import { SupportedPseudoCharset } from './serverFactory.common';
+
+function getEncodingExtras() {
+    const ibm1148 = 'IBM1148';
+    const pseudoCharset = getConfig<SupportedPseudoCharset>('pseudoCharset', ibm1148);
+    if (pseudoCharset === ibm1148)
+        return [];
+    else
+        return [pseudoCharset];
+}
 
 export const enum ExternalRequestType {
     read_file = 'read_file',
@@ -436,7 +447,8 @@ export class HLASMExternalFiles {
     private async deriveCacheEntryName(serverId: string, service: string, normalizedPath: string) {
         return cacheVersion + '.' + service + '.' + await sha256(JSON.stringify([
             serverId,
-            normalizedPath
+            normalizedPath,
+            ...getEncodingExtras(),
         ]));
     }
 

@@ -41,7 +41,7 @@ TEST(lsp_server, initialize)
         R"({"jsonrpc":"2.0","id":47,"method":"initialize","params":{"processId":5236,"rootPath":null,"rootUri":null,"capabilities":{"workspace":{"applyEdit":true,"workspaceEdit":{"documentChanges":true},"didChangeConfiguration":{"dynamicRegistration":true},"didChangeWatchedFiles":{"dynamicRegistration":true},"symbol":{"dynamicRegistration":true,"symbolKind":{"valueSet":[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26]}},"executeCommand":{"dynamicRegistration":true},"configuration":true,"workspaceFolders":true},"textDocument":{"publishDiagnostics":{"relatedInformation":true},"synchronization":{"dynamicRegistration":true,"willSave":true,"willSaveWaitUntil":true,"didSave":true},"completion":{"dynamicRegistration":true,"contextSupport":true,"completionItem":{"snippetSupport":true,"commitCharactersSupport":true,"documentationFormat":["markdown","plaintext"],"deprecatedSupport":true,"preselectSupport":true},"completionItemKind":{"valueSet":[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25]}},"hover":{"dynamicRegistration":true,"contentFormat":["markdown","plaintext"]},"signatureHelp":{"dynamicRegistration":true,"signatureInformation":{"documentationFormat":["markdown","plaintext"]}},"definition":{"dynamicRegistration":true},"references":{"dynamicRegistration":true},"documentHighlight":{"dynamicRegistration":true},"documentSymbol":{"dynamicRegistration":true,"symbolKind":{"valueSet":[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26]}},"codeAction":{"dynamicRegistration":true,"codeActionLiteralSupport":{"codeActionKind":{"valueSet":["","quickfix","refactor","refactor.extract","refactor.inline","refactor.rewrite","source","source.organizeImports"]}}},"codeLens":{"dynamicRegistration":true},"formatting":{"dynamicRegistration":true},"rangeFormatting":{"dynamicRegistration":true},"onTypeFormatting":{"dynamicRegistration":true},"rename":{"dynamicRegistration":true},"documentLink":{"dynamicRegistration":true},"typeDefinition":{"dynamicRegistration":true},"implementation":{"dynamicRegistration":true},"colorProvider":{"dynamicRegistration":true}}},"trace":"off","workspaceFolders":null}})"_json;
     NiceMock<test::ws_mngr_mock> ws_mngr;
     send_message_provider_mock smpm;
-    lsp::server s(ws_mngr);
+    lsp::server s(ws_mngr, nullptr);
     s.set_send_message_provider(&smpm);
 
 
@@ -95,7 +95,7 @@ TEST(lsp_server, not_implemented_method)
     auto j = R"({"jsonrpc":"2.0","id":47,"method":"unknown_method","params":"A parameter"})"_json;
     NiceMock<test::ws_mngr_mock> ws_mngr;
     send_message_provider_mock smpm;
-    lsp::server s(ws_mngr);
+    lsp::server s(ws_mngr, nullptr);
     s.set_send_message_provider(&smpm);
 
     auto expected_telemetry =
@@ -134,7 +134,7 @@ TEST(lsp_server, request_correct)
 {
     auto ws_mngr = parser_library::create_workspace_manager();
     send_message_provider_mock message_provider;
-    lsp::server s(*ws_mngr);
+    lsp::server s(*ws_mngr, nullptr);
     s.set_send_message_provider(&message_provider);
     response_provider& rp = s;
     request_handler handler;
@@ -158,7 +158,7 @@ TEST(lsp_server, request_no_handler)
 {
     auto ws_mngr = parser_library::create_workspace_manager();
     send_message_provider_mock message_provider;
-    lsp::server s(*ws_mngr);
+    lsp::server s(*ws_mngr, nullptr);
     s.set_send_message_provider(&message_provider);
 
     auto request_response = R"({"id":"a_request","jsonrpc":"2.0","result":"response_result"})"_json;
@@ -180,7 +180,7 @@ TEST(lsp_server, request_no_id)
 {
     auto ws_mngr = parser_library::create_workspace_manager();
     send_message_provider_mock message_provider;
-    lsp::server s(*ws_mngr);
+    lsp::server s(*ws_mngr, nullptr);
     s.set_send_message_provider(&message_provider);
 
     auto request_response = R"({"jsonrpc":"2.0","result":"response_result"})"_json;
@@ -202,7 +202,7 @@ TEST(lsp_server, request_error_unknown)
 {
     auto ws_mngr = parser_library::create_workspace_manager();
     send_message_provider_mock message_provider;
-    lsp::server s(*ws_mngr);
+    lsp::server s(*ws_mngr, nullptr);
     s.set_send_message_provider(&message_provider);
 
     auto request_response = R"({"id":"a_request","jsonrpc":"2.0","error":{"message":"the_error_message"}})"_json;
@@ -225,7 +225,7 @@ TEST(lsp_server, request_error)
     auto ws_mngr = parser_library::create_workspace_manager();
     NiceMock<send_message_provider_mock> message_provider;
     MockFunction<void(int, const char*)> error_handler;
-    lsp::server s(*ws_mngr);
+    lsp::server s(*ws_mngr, nullptr);
     response_provider& rp = s;
     s.set_send_message_provider(&message_provider);
 
@@ -243,7 +243,7 @@ TEST(lsp_server, request_error_no_message)
 {
     auto ws_mngr = parser_library::create_workspace_manager();
     send_message_provider_mock message_provider;
-    lsp::server s(*ws_mngr);
+    lsp::server s(*ws_mngr, nullptr);
     s.set_send_message_provider(&message_provider);
 
     auto request_response = R"({"id":"a_request","jsonrpc":"2.0","error":null})"_json;
@@ -266,7 +266,7 @@ TEST(lsp_server_test, non_compliant_uri)
 {
     NiceMock<test::ws_mngr_mock> ws_mngr;
     NiceMock<send_message_provider_mock> smpm;
-    lsp::server s(ws_mngr);
+    lsp::server s(ws_mngr, nullptr);
     s.set_send_message_provider(&smpm);
 
     EXPECT_CALL(ws_mngr, did_open_file(StrEq("user_storage:/user/storage/layout"), 4, StrEq("sad")));
@@ -279,7 +279,7 @@ TEST(lsp_server_test, external_configuration_invalidation)
 {
     NiceMock<test::ws_mngr_mock> ws_mngr;
     NiceMock<send_message_provider_mock> smpm;
-    lsp::server s(ws_mngr);
+    lsp::server s(ws_mngr, nullptr);
     s.set_send_message_provider(&smpm);
 
     EXPECT_CALL(ws_mngr, invalidate_external_configuration(StrEq("scheme:path")));
@@ -295,7 +295,7 @@ TEST(lsp_server_test, external_configuration_request)
     EXPECT_CALL(ws_mngr, set_request_interface(_)).WillOnce(SaveArg<0>(&wmr));
 
     NiceMock<send_message_provider_mock> smpm;
-    lsp::server s(ws_mngr);
+    lsp::server s(ws_mngr, nullptr);
 
     ASSERT_TRUE(wmr);
 
@@ -329,7 +329,7 @@ TEST(lsp_server_test, external_configuration_request_error)
     EXPECT_CALL(ws_mngr, set_request_interface(_)).WillOnce(SaveArg<0>(&wmr));
 
     NiceMock<send_message_provider_mock> smpm;
-    lsp::server s(ws_mngr);
+    lsp::server s(ws_mngr, nullptr);
 
     ASSERT_TRUE(wmr);
 
@@ -360,7 +360,7 @@ TEST(lsp_server_test, external_configuration_request_error)
 TEST(lsp_server_test, toggle_advisory_configuration_diagnostics)
 {
     NiceMock<test::ws_mngr_mock> ws_mngr;
-    lsp::server s(ws_mngr);
+    lsp::server s(ws_mngr, nullptr);
 
     EXPECT_CALL(ws_mngr, toggle_advisory_configuration_diagnostics());
 
@@ -372,7 +372,7 @@ TEST(lsp_server_test, output_notification)
 {
     auto ws_mngr = parser_library::create_workspace_manager();
     NiceMock<send_message_provider_mock> smpm;
-    lsp::server s(*ws_mngr);
+    lsp::server s(*ws_mngr, nullptr);
     s.set_send_message_provider(&smpm);
 
     s.message_received(
@@ -398,7 +398,7 @@ TEST(lsp_server_test, watcher_registration)
     EXPECT_CALL(ws_mngr, set_watcher_registration_provider(_)).WillOnce(SaveArg<0>(&provider));
 
     NiceMock<send_message_provider_mock> smpm;
-    lsp::server s(ws_mngr);
+    lsp::server s(ws_mngr, nullptr);
 
     s.testing_enable_capabilities();
     s.set_send_message_provider(&smpm);

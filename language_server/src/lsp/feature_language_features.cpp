@@ -26,6 +26,8 @@
 #include "nlohmann/json.hpp"
 #include "utils/error_codes.h"
 #include "utils/resource_location.h"
+#include "utils/text_convertor.h"
+#include "utils/unicode_text.h"
 #include "workspace_manager_response.h"
 
 namespace hlasm_plugin::parser_library {
@@ -78,9 +80,9 @@ position extract_position(const nlohmann::json& j)
     return position(line->get<int>(), character->get<int>());
 }
 
-auto extract_trigger(const nlohmann::json& j)
+auto extract_trigger(const nlohmann::json& j, const utils::text_convertor* tc)
 {
-    std::pair<completion_trigger_kind, char> result(completion_trigger_kind::invoked, '\0');
+    std::pair<completion_trigger_kind, char32_t> result(completion_trigger_kind::invoked, U'\0');
 
     auto context = j.find("context");
     if (context == j.end() || !context->is_object())
@@ -95,12 +97,10 @@ auto extract_trigger(const nlohmann::json& j)
 
     if (result.first == completion_trigger_kind::trigger_character)
     {
-        auto triggerCharacter = context->find("triggerCharacter");
-        if (triggerCharacter != context->end() && triggerCharacter->is_string())
+        if (const auto t = context->find("triggerCharacter"); t != context->end() && t->is_string())
         {
-            auto sv = triggerCharacter->get<std::string_view>();
-            if (!sv.empty())
-                result.second = sv.front();
+            const auto char_str = t->get<std::string_view>();
+            result.second = utils::extract_utf32_from_utf8(utils::conversion_helper(tc).convert_from(char_str));
         }
     }
 
@@ -160,7 +160,7 @@ std::string decorate_suggestion(std::string_view s)
 {
     std::string result;
 
-    for (char c : s)
+    for (unsigned char c : s)
     {
         if (c < 0x80)
             result.append(2, '#');
@@ -224,9 +224,10 @@ auto make_response(const request_id& id, response_provider* response, U handler)
 } // namespace
 
 feature_language_features::feature_language_features(
-    parser_library::workspace_manager& ws_mngr, response_provider& response_provider)
+    parser_library::workspace_manager& ws_mngr, response_provider& response_provider, const utils::text_convertor* tc)
     : feature(response_provider)
     , ws_mngr_(ws_mngr)
+    , m_text_convertor(tc)
 {}
 
 void feature_language_features::register_methods(std::map<std::string, method>& methods)
@@ -253,6 +254,7 @@ void feature_language_features::register_methods(std::map<std::string, method>& 
 
 nlohmann::json feature_language_features::register_capabilities()
 {
+    const utils::conversion_helper tc(m_text_convertor);
     // in case any changes are done to tokenTypes, the hl_scopes field in protocol.h
     // needs to be adjusted accordingly, as they are implicitly but directly mapped to each other
     return nlohmann::json {
@@ -263,7 +265,16 @@ nlohmann::json feature_language_features::register_capabilities()
             "completionProvider",
             {
                 { "resolveProvider", true },
-                { "triggerCharacters", { "&", ".", "_", "$", "#", "@", "*" } },
+                { "triggerCharacters",
+                    {
+                        tc.convert_to(std::string_view("&")),
+                        tc.convert_to(std::string_view(".")),
+                        tc.convert_to(std::string_view("_")),
+                        tc.convert_to(std::string_view("$")),
+                        tc.convert_to(std::string_view("#")),
+                        tc.convert_to(std::string_view("@")),
+                        tc.convert_to(std::string_view("*")),
+                    } },
             },
         },
         { "foldingRangeProvider", true },
@@ -344,13 +355,13 @@ void feature_language_features::references(const request_id& id, const nlohmann:
 
     response_->register_cancellable_request(id, std::move(resp));
 }
+
 void feature_language_features::hover(const request_id& id, const nlohmann::json& params)
 {
     auto document_uri = extract_document_uri(params);
     auto pos = extract_position(params);
 
-    auto resp = make_response(id, response_, [](std::string_view hover_list_result) {
-        std::string_view hover_list(hover_list_result);
+    auto resp = make_response(id, response_, [](std::string_view hover_list) {
         return nlohmann::json {
             { "contents", hover_list.empty() ? "" : get_markup_content(hover_list) },
         };
@@ -365,7 +376,7 @@ void feature_language_features::completion(const request_id& id, const nlohmann:
     auto document_uri = extract_document_uri(params);
     auto pos = extract_position(params);
 
-    auto [trigger_kind, trigger_char] = extract_trigger(params);
+    auto [trigger_kind, trigger_char] = extract_trigger(params, m_text_convertor);
 
     auto resp = make_response(id, response_, [this](std::span<const completion_item> cl) {
         return translate_completion_list_and_save_doc(std::move(cl));
@@ -393,7 +404,7 @@ nlohmann::json feature_language_features::translate_completion_list_and_save_doc
         if (const auto& suggestion = item.suggestion_for; !suggestion.empty())
         {
             json_item["filterText"] = std::string("~~~") + decorate_suggestion(suggestion);
-            json_item["sortText"] = std::string("~~~") + std::string(item.label);
+            json_item["sortText"] = std::string("~~~") + item.label;
         }
     }
     // needs to be incomplete, otherwise we are unable to include new suggestions
@@ -589,8 +600,9 @@ const std::unordered_map<parser_library::document_symbol_kind, lsp_document_symb
 nlohmann::json feature_language_features::document_symbol_item_json(
     const hlasm_plugin::parser_library::document_symbol_item& symbol)
 {
+    const utils::conversion_helper tc(m_text_convertor);
     return {
-        { "name", symbol.name },
+        { "name", tc.convert_to(symbol.name) },
         { "kind", document_symbol_item_kind_mapping.at(symbol.kind) },
         { "range", range_to_json(symbol.symbol_range) },
         { "selectionRange", range_to_json(symbol.symbol_selection_range) },
@@ -700,12 +712,13 @@ void feature_language_features::opcode_suggestion(const request_id& id, const nl
 
         using subrequest_t =
             workspace_manager_response<std::span<const hlasm_plugin::parser_library::opcode_suggestion>>;
-        subrequest_t start_request(std::string opcode)
+        subrequest_t start_request(std::string opcode, const utils::text_convertor* tc)
         {
             struct subrequest_t
             {
                 std::shared_ptr<composite_response_t> m_self;
                 std::string m_opcode;
+                utils::conversion_helper m_convert;
 
                 void error(int ec, const char* error) const noexcept { m_self->error(ec, error); }
 
@@ -720,15 +733,16 @@ void feature_language_features::opcode_suggestion(const request_id& id, const nl
                     for (const auto& s : opcode_suggestions)
                     {
                         result.push_back(nlohmann::json {
-                            { "opcode", s.opcode },
+                            { "opcode", m_convert.convert_to(s.opcode) },
                             { "distance", s.distance },
                         });
                     }
-                    m_self->provide(std::make_pair(std::move(m_opcode), std::move(result)));
+                    m_self->provide(std::make_pair(m_convert.convert_to(m_opcode), std::move(result)));
                 }
             };
 
-            auto [result, _] = make_workspace_manager_response(subrequest_t { shared_from_this(), std::move(opcode) });
+            auto [result, _] = make_workspace_manager_response(
+                subrequest_t { shared_from_this(), std::move(opcode), utils::conversion_helper(tc) });
 
             ++m_pending_responses;
 
@@ -762,10 +776,11 @@ void feature_language_features::opcode_suggestion(const request_id& id, const nl
         {
             if (!opcode.is_string())
                 continue;
-            auto op = opcode.get<std::string>();
+
+            const auto op = utils::conversion_helper(m_text_convertor).convert_from(opcode.get<std::string_view>());
 
             ws_mngr_.make_opcode_suggestion(
-                document_uri, op, extended, subrequests.emplace_back(composite->start_request(op)));
+                document_uri, op, extended, subrequests.emplace_back(composite->start_request(op, m_text_convertor)));
         }
 
         response_->register_cancellable_request(id, composite->get_invalidator(std::move(subrequests)));
@@ -821,11 +836,20 @@ void feature_language_features::retrieve_outputs(const request_id& id, const nlo
 {
     auto document_uri = extract_document_uri(params);
 
-    auto resp =
-        make_response(id, response_, [](std::span<const output_line> outputs) { return nlohmann::json(outputs); });
+    auto resp = make_response(id, response_, [this](std::span<const output_line> outputs) {
+        if (!m_text_convertor)
+            return nlohmann::json(outputs);
+        std::vector<output_line> lines;
+        lines.reserve(outputs.size());
+        std::ranges::transform(outputs, std::back_inserter(lines), [this](const output_line& l) {
+            return output_line { l.level, utils::conversion_helper(m_text_convertor).convert_to(l.text) };
+        });
+        return nlohmann::json(std::move(lines));
+    });
 
     ws_mngr_.retrieve_output(document_uri, resp);
 
     response_->register_cancellable_request(id, std::move(resp));
 }
+
 } // namespace hlasm_plugin::language_server::lsp

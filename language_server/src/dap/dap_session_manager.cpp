@@ -56,17 +56,20 @@ void session_manager::handle_registration_request(size_t new_id)
     cleanup_sessions();
 
     // currently only one debug session is supported
-    auto new_session = std::make_unique<dap::session>(new_id, *dc_provider, *out_stream, telemetry_reporter, ext_files);
+    auto new_session =
+        std::make_unique<dap::session>(new_id, *dc_provider, *out_stream, telemetry_reporter, ext_files, tc);
     sessions.try_emplace(new_session->get_session_id(), std::move(new_session));
 }
 session_manager::session_manager(parser_library::debugger_configuration_provider& dc_provider,
     json_sink& out,
     telemetry_sink* telem_reporter,
-    external_file_reader* ext_files)
+    external_file_reader* ext_files,
+    const utils::text_convertor* tc)
     : dc_provider(&dc_provider)
     , out_stream(&out)
     , telemetry_reporter(telem_reporter)
     , ext_files(ext_files)
+    , tc(tc)
 {}
 session_manager::session_manager(session_manager&&) noexcept = default;
 session_manager& session_manager::operator=(session_manager&&) noexcept = default;

@@ -47,7 +47,7 @@ TEST(dap_server, dap_server)
     ws_mngr->idle_handler();
 
     send_message_provider_mock smp;
-    dap::server serv(ws_mngr->get_debugger_configuration_provider());
+    dap::server serv(ws_mngr->get_debugger_configuration_provider(), nullptr, nullptr);
     serv.set_send_message_provider(&smp);
 
     // actual message sent by VS Code
@@ -82,7 +82,7 @@ TEST(dap_server, malformed_message)
 {
     auto ws_mngr = parser_library::create_workspace_manager();
     auto malf = R"({"commnd":"disconnect"})"_json;
-    dap::server serv(ws_mngr->get_debugger_configuration_provider());
+    dap::server serv(ws_mngr->get_debugger_configuration_provider(), nullptr, nullptr);
 
 
     serv.message_received(malf);
