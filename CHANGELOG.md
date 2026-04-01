@@ -1,3 +1,12 @@
+## [1.22.0](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/compare/1.21.0...1.22.0) (2026-04-01)
+
+### Features
+
+* Support source code re-encoding ([d2a4951](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/d2a49518398b94d5cb92b88ace465766d98e5b8f))
+
+### Fixes
+
+* Data set members with name containing  are not processed correctly ([835282b](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/835282b7de00bede91642fd0931cc71b9a6d3024))
 ## [1.21.0](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/compare/1.20.0...1.21.0) (2026-01-23)
 
 ### Features
