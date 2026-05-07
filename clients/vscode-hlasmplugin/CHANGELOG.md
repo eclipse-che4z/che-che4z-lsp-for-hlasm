@@ -1,6 +1,6 @@
 # Changelog
 
-## ****Unreleased****
+## [1.22.1](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/compare/1.22.0...1.22.1) (2026-05-07)
 
 #### Fixed
 - Dependency retrieval via Explorer for Endevor does not work

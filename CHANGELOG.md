@@ -1,3 +1,14 @@
+## [1.22.1](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/compare/1.22.0...1.22.1) (2026-05-07)
+
+### Fixes
+
+* Dependency retrieval via Explorer for Endevor does not work ([5db4e11](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/5db4e1168974581c796f7b5fb75a93546b9e4536))
+* Rename hlasm listing grammar ID ([f121536](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/f12153670be51cb91b9a2bb6fe3f733c05ee8e8b))
+
+### Other changes
+
+* Fix debug tests on VSCode Insiders ([3587287](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/35872872ce96e7e992d0f7da60e777bd3b8d3fd1))
+* Packaging changes ([93ab1d0](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/93ab1d071eaca2ea5e1d1e7d64ca3852e69b9e1d))
 ## [1.22.0](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/compare/1.21.0...1.22.0) (2026-04-01)
 
 ### Features
