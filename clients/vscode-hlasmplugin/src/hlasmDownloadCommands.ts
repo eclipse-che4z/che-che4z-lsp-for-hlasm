@@ -366,7 +366,7 @@ export async function unterse(outDir: string, pseudoCharset: SupportedPseudoChar
         const _currentMember = currentMember;
         const _fb = fb;
 
-        scheduleAction(() => fsp.writeFile(path.join(outDir, _currentMember), _fb.getResult()));
+        scheduleAction(() => fsp.writeFile(path.join(outDir, _currentMember), _fb.getResult(), { flag: "wx" }));
 
         fb = undefined;
         currentMember = '';
@@ -407,7 +407,7 @@ export async function unterse(outDir: string, pseudoCharset: SupportedPseudoChar
                 fb!.write(data)
             },
             check_next_member: (name: string) => {
-                if (!/[A-Z$#@][A-Z$#@0-9]*/.test(name))
+                if (!/^[A-Z$#@][A-Z$#@0-9]*$/.test(name))
                     throw Error("Invalid member name");
             },
             start_member: (name: string) => {
