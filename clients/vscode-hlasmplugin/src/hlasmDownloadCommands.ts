@@ -407,7 +407,7 @@ export async function unterse(outDir: string, pseudoCharset: SupportedPseudoChar
                 fb!.write(data)
             },
             check_next_member: (name: string) => {
-                if (!/[A-Z$#@][A-Z$#@0-9]*/.test(name))
+                if (!/^[A-Z$#@][A-Z$#@0-9]*$/.test(name))
                     throw Error("Invalid member name");
             },
             start_member: (name: string) => {
