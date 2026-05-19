@@ -345,7 +345,7 @@ const auto users_dir =
     is_windows() ? resource_location("file:///c%3A/Users/") : resource_location("file:///home/user/");
 const auto ws_loc = resource_location::join(users_dir, "ws/");
 const auto pgm_override_loc = resource_location::join(ws_loc, "pgm_override");
-const auto pgm_anything_loc = resource_location::join(ws_loc, "pgms/anything");
+const auto pgm_anything_loc = resource_location::join(ws_loc, "pgms/anything.hlasm");
 const auto pgm_outside_ws = resource_location::join(users_dir, "outside/anything");
 const auto pgm1_loc = resource_location::join(ws_loc, "pgm1");
 const std::string file_proc_grps_content = is_windows() ?
@@ -562,12 +562,12 @@ TEST(workspace_configuration, load_config_synthetic)
     // test sysin options in workspace
     auto asm_options_ws = ws_cfg.get_analyzer_configuration(pgm_anything_loc).run().value().first.opts;
     EXPECT_EQ(asm_options_ws.sysin_dsn, "pgms");
-    EXPECT_EQ(asm_options_ws.sysin_member, "anything");
+    EXPECT_EQ(asm_options_ws.sysin_member, "ANYTHING");
 
     // test sysin options out of workspace
     auto asm_options_ows = ws_cfg.get_analyzer_configuration(pgm_outside_ws).run().value().first.opts;
     EXPECT_EQ(asm_options_ows.sysin_dsn, is_windows() ? "c:\\Users\\outside" : "/home/user/outside");
-    EXPECT_EQ(asm_options_ows.sysin_member, "anything");
+    EXPECT_EQ(asm_options_ows.sysin_member, "ANYTHING");
 }
 
 class file_manager_asm_test : public file_manager_proc_grps_test

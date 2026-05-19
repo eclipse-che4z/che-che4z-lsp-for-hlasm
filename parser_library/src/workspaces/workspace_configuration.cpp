@@ -1219,6 +1219,9 @@ workspace_configuration::get_analyzer_configuration(utils::resource::resource_lo
         ? url
         : relative_to_location;
     opts.sysin_member = sysin_path.filename();
+    if (const auto dot = opts.sysin_member.find('.', !opts.sysin_member.empty()); dot != std::string::npos)
+        opts.sysin_member.erase(dot, opts.sysin_member.size());
+    utils::to_upper(opts.sysin_member);
     opts.sysin_dsn = sysin_path.parent().get_local_path_or_uri();
 
     co_return {
