@@ -609,8 +609,6 @@ struct parser2
 
     result_t<expressions::ca_expr_ptr> lex_expr();
 
-    result_t<std::vector<expressions::ca_expr_ptr>> lex_subscript();
-
     result_t<void> lex_macro_operand_amp(concat_chain_builder& ccb);
 
     result_t<void> lex_macro_operand_string(concat_chain_builder& ccb);
@@ -621,7 +619,7 @@ struct parser2
 
     void process_optional_line_remark();
 
-    result_t<void> process_macro_list(std::vector<semantics::concat_chain>& cc);
+    result_t<std::vector<semantics::concat_chain>> process_macro_list();
 
     result_t<void> handle_initial_space(bool reparse);
 
@@ -1223,10 +1221,10 @@ result_t<semantics::seq_sym> parser2::lex_seq_symbol()
 
 result_t<expressions::ca_expr_ptr> parser2::lex_expr_general()
 {
-    const auto start = cur_pos_adjusted();
     if (!follows_NOT())
         return lex_expr();
 
+    const auto start = cur_pos_adjusted();
     std::vector<expressions::ca_expr_ptr> ca_exprs;
     do
     {
@@ -1412,18 +1410,14 @@ result_t<std::vector<expressions::ca_expr_ptr>> parser2::lex_subscript_ne()
     if (!match<u8','>(hl_scopes::operator_symbol, diagnostic_op::error_S0002))
         return failure;
 
-    if (auto [error, e] = lex_expr(); error)
-        return failure;
-    else
-        result.push_back(std::move(e));
-
-    while (try_consume<u8','>(hl_scopes::operator_symbol))
+    do
     {
         if (auto [error, e] = lex_expr(); error)
             return failure;
         else
             result.push_back(std::move(e));
-    }
+    } while (try_consume<u8','>(hl_scopes::operator_symbol));
+
     if (!match<u8')'>(hl_scopes::operator_symbol, diagnostic_op::error_S0011))
         return failure;
 
@@ -2314,18 +2308,13 @@ result_t<std::vector<expressions::address_nominal>> parser2::lex_literal_nominal
 
     std::vector<expressions::address_nominal> result;
 
-    auto [error, e] = lex_expr_or_addr();
-    if (error)
-        return failure;
-    result.push_back(std::move(e));
-
-    while (try_consume<u8','>(hl_scopes::operator_symbol))
+    do
     {
-        auto [error2, e_next] = lex_expr_or_addr();
-        if (error2)
+        auto [error, e] = lex_expr_or_addr();
+        if (error)
             return failure;
-        result.push_back(std::move(e_next));
-    }
+        result.push_back(std::move(e));
+    } while (try_consume<u8','>(hl_scopes::operator_symbol));
 
     if (!match<u8')'>(hl_scopes::operator_symbol, diagnostic_op::error_S0011))
         return failure;
@@ -2504,33 +2493,6 @@ result_t<expressions::ca_expr_ptr> parser2::lex_expr()
     return result;
 }
 
-result_t<std::vector<expressions::ca_expr_ptr>> parser2::lex_subscript()
-{
-    assert(follows<u8'('>());
-
-    consume(hl_scopes::operator_symbol);
-
-    std::vector<expressions::ca_expr_ptr> result;
-
-    auto [error, expr] = lex_expr();
-    if (error)
-        return failure;
-    result.push_back(std::move(expr));
-
-    while (try_consume<u8','>(hl_scopes::operator_symbol))
-    {
-        auto [error2, expr_next] = lex_expr();
-        if (error2)
-            return failure;
-        result.push_back(std::move(expr_next));
-    }
-
-    if (!match<u8')'>(hl_scopes::operator_symbol, diagnostic_op::error_S0011))
-        return failure;
-
-    return result;
-}
-
 result_t<void> parser2::lex_macro_operand_amp(concat_chain_builder& ccb)
 {
     assert(follows<u8'&'>());
@@ -2666,14 +2628,13 @@ result_t<void> parser2::lex_macro_operand(semantics::concat_chain& cc, bool next
                 ccb.push_dot<true>();
                 break;
 
-            case u8'(': {
-                std::vector<semantics::concat_chain> nested;
+            case u8'(':
                 ccb.push_last_text();
-                if (auto [error] = process_macro_list(nested); error)
+                if (auto [error, nested] = process_macro_list(); error)
                     return failure;
-                ccb.emplace_back(std::in_place_type<semantics::sublist_conc>, std::move(nested));
+                else
+                    ccb.emplace_back(std::in_place_type<semantics::sublist_conc>, std::move(nested));
                 break;
-            }
 
             case u8'\'':
                 if (auto [error] = lex_macro_operand_string(ccb); error)
@@ -2733,28 +2694,31 @@ void parser2::process_optional_line_remark()
     }
 }
 
-result_t<void> parser2::process_macro_list(std::vector<semantics::concat_chain>& cc)
+result_t<std::vector<semantics::concat_chain>> parser2::process_macro_list()
 {
     assert(follows<u8'('>());
 
+    std::vector<semantics::concat_chain> result;
+
     consume(hl_scopes::operator_symbol);
     if (try_consume<u8')'>(hl_scopes::operator_symbol))
-        return {};
+        return result;
 
-    if (auto [error] = lex_macro_operand(cc.emplace_back(), true, false); error)
-        return failure;
-
-    while (try_consume<u8','>(hl_scopes::operator_symbol))
+    while (true)
     {
-        process_optional_line_remark();
-        if (auto [error] = lex_macro_operand(cc.emplace_back(), true, false); error)
+        if (auto [error] = lex_macro_operand(result.emplace_back(), true, false); error)
             return failure;
+
+        if (!try_consume<u8','>(hl_scopes::operator_symbol))
+            break;
+
+        process_optional_line_remark();
     }
 
     if (!match<u8')'>(hl_scopes::operator_symbol, diagnostic_op::error_S0011))
         return failure;
 
-    return {};
+    return result;
 }
 
 result_t<void> parser2::handle_initial_space(bool reparse)
@@ -2808,10 +2772,14 @@ std::pair<semantics::operand_list, range> parser2::macro_ops(bool reparse)
     };
 
     // process operands
-    while (!eof())
+    while (true)
     {
-        switch (*input.next)
+        const auto next_char = *input.next;
+        switch (next_char)
         {
+            case EOF_SYMBOL:
+                goto end;
+
             case u8' ':
                 push_operand(true);
                 pending = false;
@@ -2823,131 +2791,54 @@ std::pair<semantics::operand_list, range> parser2::macro_ops(bool reparse)
                 consume(hl_scopes::operator_symbol);
                 process_optional_line_remark();
                 start = cur_pos_adjusted();
-                break;
-
-            case u8'O':
-            case u8'S':
-            case u8'I':
-            case u8'L':
-            case u8'T':
-            case u8'o':
-            case u8's':
-            case u8'i':
-            case u8'l':
-            case u8't':
-                if (input.next[1] == u8'\'')
-                {
-                    if (auto [error] = lex_macro_operand(cc, true, false); error)
-                    {
-                        consume_rest();
-                        goto end;
-                    }
-                    break;
-                }
-                [[fallthrough]];
-
-            case u8'$':
-            case u8'_':
-            case u8'#':
-            case u8'@':
-            case u8'a':
-            case u8'b':
-            case u8'c':
-            case u8'd':
-            case u8'e':
-            case u8'f':
-            case u8'g':
-            case u8'h':
-            case u8'j':
-            case u8'k':
-            case u8'm':
-            case u8'n':
-            case u8'p':
-            case u8'q':
-            case u8'r':
-            case u8'u':
-            case u8'v':
-            case u8'w':
-            case u8'x':
-            case u8'y':
-            case u8'z':
-            case u8'A':
-            case u8'B':
-            case u8'C':
-            case u8'D':
-            case u8'E':
-            case u8'F':
-            case u8'G':
-            case u8'H':
-            case u8'J':
-            case u8'K':
-            case u8'M':
-            case u8'N':
-            case u8'P':
-            case u8'Q':
-            case u8'R':
-            case u8'U':
-            case u8'V':
-            case u8'W':
-            case u8'X':
-            case u8'Y':
-            case u8'Z': {
-                bool next_char_special = false;
-                concat_chain_builder ccb(*this, cc);
-                auto& l = ccb.last_text_value();
-                do
-                {
-                    l.push_back(static_cast<char>(*input.next));
-                    consume();
-                } while (is_ord());
-                ccb.push_last_text();
-                if (follows<u8'='>())
-                {
-                    ccb.push_equals(); // TODO: no highlighting???
-                    next_char_special = true;
-                }
-                if (const auto n = *input.next; n == EOF_SYMBOL || n == u8' ' || n == u8',')
-                    continue;
-                if (auto [error] = lex_macro_operand(cc, next_char_special, false); error)
-                {
-                    consume_rest();
-                    goto end;
-                }
-                break;
-            }
-
-            case u8'&':
-                if (auto [error] = lex_macro_operand(cc, true, true); error)
-                {
-                    consume_rest();
-                    goto end;
-                }
-                break;
-
-            case u8'\'':
-            default:
-                if (auto [error] = lex_macro_operand(cc, true, false); error)
-                {
-                    consume_rest();
-                    goto end;
-                }
-                break;
+                continue;
 
             case u8')':
                 add_diagnostic(diagnostic_op::error_S0012);
                 consume_rest();
                 goto end;
 
-            case u8'(': {
-                std::vector<semantics::concat_chain> nested;
-                if (auto [error] = process_macro_list(nested); error)
+            case u8'(':
+                if (auto [error, nested] = process_macro_list(); !error)
                 {
-                    consume_rest();
-                    goto end;
+                    cc.emplace_back(std::in_place_type<semantics::sublist_conc>, std::move(nested));
+                    continue;
                 }
-                cc.emplace_back(std::in_place_type<semantics::sublist_conc>, std::move(nested));
+                consume_rest();
+                goto end;
+
+            default:
                 break;
+        }
+
+        const bool op_name = next_char == u8'&';
+        bool next_char_special = true;
+
+        // Ordinary symbol except for machine attributes
+        if (char_is_ord_first(next_char) && !(input.next[1] == u8'\'' && mach_attrs.matches(next_char)))
+        {
+            next_char_special = false;
+            concat_chain_builder ccb(*this, cc);
+            auto& l = ccb.last_text_value();
+            do
+            {
+                l.push_back(static_cast<char>(*input.next));
+                consume();
+            } while (is_ord());
+            ccb.push_last_text();
+            if (follows<u8'='>())
+            {
+                ccb.push_equals(); // TODO: no highlighting???
+                next_char_special = true;
             }
+            if (const auto n = *input.next; n == EOF_SYMBOL || n == u8' ' || n == u8',')
+                continue;
+        }
+
+        if (auto [error] = lex_macro_operand(cc, next_char_special, op_name); error)
+        {
+            consume_rest();
+            break;
         }
     }
 end:;
@@ -2995,24 +2886,30 @@ result_t<semantics::vs_ptr> parser2::lex_variable()
     if (error)
         return failure;
 
-    std::vector<expressions::ca_expr_ptr> sub;
-    if (follows<u8'('>())
+    std::vector<expressions::ca_expr_ptr> subscript;
+    if (try_consume<u8'('>(hl_scopes::operator_symbol))
     {
-        if (auto [error_sub, sub_] = lex_subscript(); error_sub)
+        do
+        {
+            if (auto [sub_error, expr] = lex_expr(); sub_error)
+                return failure;
+            else
+                subscript.push_back(std::move(expr));
+        } while (try_consume<u8','>(hl_scopes::operator_symbol));
+
+        if (!match<u8')'>(hl_scopes::operator_symbol, diagnostic_op::error_S0011))
             return failure;
-        else
-            sub = std::move(sub_);
     }
 
     const auto r = range_from(start);
 
     if (std::holds_alternative<context::id_index>(var_name))
         return std::make_unique<semantics::basic_variable_symbol>(
-            std::get<context::id_index>(var_name), std::move(sub), r);
+            std::get<context::id_index>(var_name), std::move(subscript), r);
     else
     {
         auto& cc = std::get<semantics::concat_chain>(var_name);
-        return std::make_unique<semantics::created_variable_symbol>(std::move(cc), std::move(sub), r);
+        return std::make_unique<semantics::created_variable_symbol>(std::move(cc), std::move(subscript), r);
     }
 }
 
@@ -4476,18 +4373,14 @@ result_t<std::vector<std::unique_ptr<semantics::complex_assembler_operand::compo
 parser2::asm_op_comma_c()
 {
     std::vector<std::unique_ptr<semantics::complex_assembler_operand::component_value_t>> result;
-    if (auto [error, op] = asm_op_inner(); error)
-        return failure;
-    else
-        result.push_back(std::move(op));
 
-    while (try_consume<u8','>(hl_scopes::operator_symbol))
+    do
     {
         if (auto [error, op] = asm_op_inner(); error)
             return failure;
         else
             result.push_back(std::move(op));
-    }
+    } while (try_consume<u8','>(hl_scopes::operator_symbol));
 
     return result;
 }
