@@ -19,6 +19,7 @@
 #include <limits>
 #include <span>
 
+#include "checking/using_label_checker.h"
 #include "context/ordinary_assembly/ordinary_assembly_context.h"
 #include "context/ordinary_assembly/section.h"
 #include "diagnosable_ctx.h"
@@ -197,11 +198,6 @@ using_collection::resolved_entry using_collection::using_drop_definition::resolv
         diag.add_diagnostic(diagnostic_op::error_M113(USING, b_rng));
         return failed_entry_resolved { m_parent };
     }
-    if (!b->qualifier.empty())
-    {
-        // diagnose and ignore
-        diag.add_diagnostic(diagnostic_op::error_U002_label_not_allowed(b_rng));
-    }
     auto [e, e_rng] = abs_or_reloc(coll, m_end, false);
 
     std::array<std::pair<std::optional<qualified_address>, range>, reg_set_size> bases_;
@@ -211,11 +207,6 @@ using_collection::resolved_entry using_collection::using_drop_definition::resolv
     std::optional<offset_t> len;
     if (e.has_value())
     {
-        if (!e->qualifier.empty())
-        {
-            // diagnose and ignore
-            diag.add_diagnostic(diagnostic_op::error_U002_label_not_allowed(e_rng));
-        }
         if (b->sect != e->sect || b->offset >= e->offset)
         {
             constexpr auto section_name = [](const section* s) {
@@ -363,6 +354,17 @@ void using_collection::resolve_all(
     }
 
     m_resolved = true;
+
+    for (const auto& [expr, expr_context_id, _value, _label] : m_expr_values)
+    {
+        const auto& expr_context = get(expr_context_id);
+        ordinary_assembly_dependency_solver solver(ord_context, expr_context.evaluation_ctx, li);
+        diagnostic_consumer_transform diag_collector([&diag, &expr_context](diagnostic_op d) {
+            diag.add_diagnostic(add_stack_details(std::move(d), expr_context.stack));
+        });
+        checking::using_label_checker lc(solver, diag_collector);
+        expr->apply(lc);
+    }
 }
 
 index_t<using_collection::instruction_context> using_collection::add(

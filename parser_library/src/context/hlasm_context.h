@@ -327,6 +327,7 @@ public:
     index_t<using_collection> using_current() const;
 
     const using_collection& usings() const { return *m_usings; }
+    using_collection& internal_usings() { return *m_usings; }
 
     using name_result = std::pair<bool, context::id_index>;
     name_result try_get_symbol_name(std::string_view symbol);
