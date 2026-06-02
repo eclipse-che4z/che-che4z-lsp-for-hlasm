@@ -41,7 +41,7 @@ class mach_expr_visitor;
 
 // Represents data definition operand as it was written into source code.
 // Uses machine expressions to represent all modifiers and nominal value.
-struct data_definition final : public context::dependable
+struct data_definition final
 {
     enum class length_type : unsigned char
     {
@@ -66,7 +66,7 @@ struct data_definition final : public context::dependable
     range extension_range;
 
     // Returns conjunction of all dependencies of all expression in data_definition.
-    context::dependency_collector get_dependencies(context::dependency_solver& solver) const override;
+    context::dependency_collector get_dependencies(context::dependency_solver& solver) const;
     // Returns conjunction of dependencies of length modifier and duplication factor, which are the only ones
     // that matter when determining how much space DC needs.
     context::dependency_collector get_length_dependencies(context::dependency_solver& solver) const;

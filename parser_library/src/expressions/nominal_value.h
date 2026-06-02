@@ -24,7 +24,7 @@ struct nominal_value_exprs;
 // Class representing nominal value of data definition as it was written int the source
 // code. Can be list of expressions and addresses(address has the form of D(B), where
 // D and B are expressions) or string.
-struct nominal_value_t : public context::dependable
+struct nominal_value_t
 {
     explicit nominal_value_t(range rng) noexcept
         : value_range(rng)
@@ -37,6 +37,7 @@ struct nominal_value_t : public context::dependable
     const nominal_value_string* access_string() const;
     const nominal_value_exprs* access_exprs() const;
 
+    virtual context::dependency_collector get_dependencies(context::dependency_solver& solver) const = 0;
     virtual ~nominal_value_t() = default;
 
     virtual size_t hash() const = 0;
@@ -59,9 +60,9 @@ struct nominal_value_string final : public nominal_value_t
 };
 
 // Represents address in the form D(B)
-struct address_nominal final : public context::dependable
+struct address_nominal final
 {
-    context::dependency_collector get_dependencies(context::dependency_solver& solver) const override;
+    context::dependency_collector get_dependencies(context::dependency_solver& solver) const;
     address_nominal() = default;
     address_nominal(mach_expr_ptr displacement, mach_expr_ptr base, range r);
     mach_expr_ptr displacement;

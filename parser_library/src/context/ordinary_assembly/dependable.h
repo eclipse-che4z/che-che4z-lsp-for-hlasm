@@ -56,20 +56,11 @@ protected:
     ~dependency_solver() = default;
 };
 
-// interface of an object that depends on another objects (addresses or symbols)
-class dependable
+// interface for obtaining symbol value from the object
+class resolvable
 {
 public:
     virtual dependency_collector get_dependencies(dependency_solver& solver) const = 0;
-
-protected:
-    ~dependable() = default;
-};
-
-// interface for obtaining symbol value from the object
-class resolvable : public dependable
-{
-public:
     virtual symbol_value resolve(dependency_solver& solver) const = 0;
 
 protected:
