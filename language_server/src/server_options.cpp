@@ -50,7 +50,7 @@ std::optional<server_options> parse_options(std::span<const char* const> args)
                 return std::nullopt;
         }
         else if (static constexpr std::string_view pseudo_charset = "--pseudo-charset=";
-                 arg.starts_with(pseudo_charset))
+            arg.starts_with(pseudo_charset))
         {
             arg.remove_prefix(pseudo_charset.size());
 

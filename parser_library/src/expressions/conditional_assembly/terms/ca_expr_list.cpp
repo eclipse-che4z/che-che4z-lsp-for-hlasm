@@ -268,8 +268,8 @@ void ca_expr_list::resolve(ca_expression_ctx expr_ctx, diagnostic_op_consumer& d
                 // fallback to term
             }
             else if (const auto& op_type = std::get<ca_expr_op>(op_type_var);
-                     !(prefer_next_term && op_type.binary)) // ... AND AND is interpreted as AND term,
-                                                            // ... AND NOT ... is apparently not
+                !(prefer_next_term && op_type.binary)) // ... AND AND is interpreted as AND term,
+                                                       // ... AND NOT ... is apparently not
             {
                 if (op_type.binary && !stacks.reduce_stack(diags, op_type.priority, op_type.right_assoc))
                 {

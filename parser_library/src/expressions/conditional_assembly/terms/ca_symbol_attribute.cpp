@@ -180,7 +180,7 @@ std::string_view ca_symbol_attribute::try_extract_leading_symbol(std::string_vie
 
     // remove leading using prefixes
     for (auto p = expr.find_first_of('.'); p != std::string_view::npos && lexing::is_ord_symbol(expr.substr(0, p));
-         p = expr.find_first_of('.'))
+        p = expr.find_first_of('.'))
         expr.remove_prefix(p + 1);
 
     // try to isolate one ordinary symbol

@@ -357,7 +357,7 @@ class db2_preprocessor final : public preprocessor // TODO Take DBCS into accoun
             m_result.emplace_back(replaced_line { "SQLVERSP DC    CL4'VER.' VERS-ID PREFIX\n" });
 
             for (auto [version, i] = std::pair(std::string_view(m_version), 1); !version.empty();
-                 version.remove_prefix(std::min(version.size(), version_chunk)), ++i)
+                version.remove_prefix(std::min(version.size(), version_chunk)), ++i)
             {
                 auto i_str = std::to_string(i);
                 m_result.emplace_back(replaced_line { concat("SQLVERD",
@@ -520,8 +520,8 @@ class db2_preprocessor final : public preprocessor // TODO Take DBCS into accoun
         static const auto member_pattern = std::regex("(.*?)(?:[ ]|--)*$");
 
         for (auto reg_it = std::regex_iterator<It>(it, it_e, member_pattern), reg_it_e = std::regex_iterator<It>();
-             reg_it != reg_it_e;
-             ++reg_it)
+            reg_it != reg_it_e;
+            ++reg_it)
         {
             if (const auto& sub_match = (*reg_it)[1]; sub_match.length())
             {
@@ -1164,8 +1164,8 @@ class db2_preprocessor final : public preprocessor // TODO Take DBCS into accoun
         preprocessor::do_highlighting(stmt, ll, src_proc, continue_column);
 
         for (size_t i = 0, lineno = stmt.m_details.stmt_r.start.line, line_start_column = 0;
-             i < m_ll_helper.m_db2_ll.segments.size();
-             ++i, ++lineno, std::exchange(line_start_column, continue_column))
+            i < m_ll_helper.m_db2_ll.segments.size();
+            ++i, ++lineno, std::exchange(line_start_column, continue_column))
         {
             const auto& segment = m_ll_helper.m_db2_ll.segments[i];
             auto comment_start_column = line_start_column + std::ranges::distance(segment.code, segment.continuation);

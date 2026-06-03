@@ -67,7 +67,7 @@ std::filesystem::path join(const std::filesystem::path& left, const std::filesys
             return right;
         return std::filesystem::path(make_windows_preferred((std::filesystem::path(make_linux_preferred(left.string()))
             / std::filesystem::path(make_linux_preferred(right.string())))
-                                                                .string()));
+                .string()));
     }
     else
         return left / right;
@@ -93,8 +93,8 @@ std::filesystem::path lexically_relative(const std::filesystem::path& p, std::st
     // emscripten implementation seems to be broken on windows
     if (is_windows())
         return std::filesystem::path(make_windows_preferred(std::filesystem::path(make_linux_preferred(p.string()))
-                                                                .lexically_relative(make_linux_preferred(std::move(q)))
-                                                                .string()));
+                .lexically_relative(make_linux_preferred(std::move(q)))
+                .string()));
     else
         return p.lexically_relative(q);
 }

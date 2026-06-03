@@ -229,10 +229,15 @@ void validate_or_reset(std::optional<dissected_uri_view>& dis_uri)
             dis_uri.reset();
             return;
         }
-        if (const auto host = dis_uri->auth->host; host.starts_with("[") && host.ends_with("]")) { /* IPv6+ */ }
+        if (const auto host = dis_uri->auth->host; host.starts_with("[") && host.ends_with("]"))
+        { /* IPv6+ */
+        }
         else if (host.size() >= 2 && is_valid(host.front(), char_type::num) && is_valid(host.back(), char_type::num))
-        { /*IPv4*/ }
-        else if (is_valid(host, host_type, pct::yes)) { /*hostname*/ }
+        { /*IPv4*/
+        }
+        else if (is_valid(host, host_type, pct::yes))
+        { /*hostname*/
+        }
         else
         {
             dis_uri.reset();

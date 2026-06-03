@@ -55,5 +55,5 @@ TEST(ca_symbol, is_char)
     EXPECT_FALSE(
         ca_symbol(context::id_index(), range()).is_character_expression(character_expression_purpose::assignment));
     EXPECT_FALSE(ca_symbol(context::id_index(), range())
-                     .is_character_expression(character_expression_purpose::left_side_of_comparison));
+            .is_character_expression(character_expression_purpose::left_side_of_comparison));
 }

@@ -739,7 +739,7 @@ std::string lsp_context::find_hover(const symbol_occurrence& occ,
             {
                 result = hover_text(*sym, tc);
             }
-            if (const file_info * fi; definition && (fi = get_file_info(definition->resource_loc)) != nullptr)
+            if (const file_info* fi; definition && (fi = get_file_info(definition->resource_loc)) != nullptr)
             {
                 if (auto text = get_logical_line(fi->data, definition->pos.line, tc); !text.empty())
                 {

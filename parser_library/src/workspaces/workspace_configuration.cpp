@@ -945,7 +945,7 @@ void workspace_configuration::add_missing_diags(std::vector<diagnostic>& target,
 
     for (const auto& categorized_missing_pgroups =
              m_pgm_conf_store->get_categorized_missing_pgroups(config_file_rl, opened_files);
-         const auto& [missing_pgroup_name, used] : categorized_missing_pgroups)
+        const auto& [missing_pgroup_name, used] : categorized_missing_pgroups)
     {
         if (!include_advisory_cfg_diags && !used)
             continue;

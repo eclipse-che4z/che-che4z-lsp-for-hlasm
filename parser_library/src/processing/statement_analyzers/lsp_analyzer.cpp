@@ -94,8 +94,8 @@ bool lsp_analyzer::analyze(const context::hlasm_statement& statement,
                 if (!resolved_stmt)
                     kind = kind | INSTR;
                 else if (const auto& instr = resolved_stmt->instruction_ref();
-                         instr.type == semantics::instruction_si_type::ORD
-                         && !context::instruction_resolved_during_macro_parsing(resolved_stmt->opcode_ref().value))
+                    instr.type == semantics::instruction_si_type::ORD
+                    && !context::instruction_resolved_during_macro_parsing(resolved_stmt->opcode_ref().value))
                     kind = kind | INSTR;
             }
             else

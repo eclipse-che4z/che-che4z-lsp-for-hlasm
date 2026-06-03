@@ -169,7 +169,7 @@ library_local::files_collection_t library_local::load_files(
                 file.erase(off);
         }
         else if (auto ext = std::ranges::find_if(m_extensions, [&f = file](const auto& e) { return f.ends_with(e); });
-                 ext != m_extensions.end())
+            ext != m_extensions.end())
 
             file.erase(file.size() - ext->size());
         else

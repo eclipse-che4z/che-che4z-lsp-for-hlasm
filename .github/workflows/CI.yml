@@ -37,10 +37,14 @@ jobs:
   formal-checks:
     name: Checks
     runs-on: ubuntu-24.04
+    container:
+      image: ubuntu:26.04
     steps:
       - uses: actions/checkout@v4
+      - name: Install dependencies
+        run: apt-get update && apt-get install -y clang-format-22
       - name: Run clang-format
-        run: clang-format-18 -style=file -n $(find . -name \*.h -print -o -name \*.cpp -print) 2>&1 | tee clang-format-output.txt
+        run: clang-format-22 -style=file -n $(find . -name \*.h -print -o -name \*.cpp -print) 2>&1 | tee clang-format-output.txt
       - name: Check format
         run: |
           if [ -s clang-format-output.txt ]

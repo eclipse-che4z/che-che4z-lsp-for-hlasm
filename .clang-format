@@ -1,7 +1,7 @@
 BasedOnStyle: WebKit
 
-AllowShortBlocksOnASingleLine: true
-AllowShortFunctionsOnASingleLine: true
+AllowShortBlocksOnASingleLine: Empty
+AllowShortFunctionsOnASingleLine: All
 
 BreakBeforeBraces: Custom
 BraceWrapping:
@@ -51,3 +51,5 @@ BinPackParameters: false
 SpaceInEmptyBlock: false
 AlwaysBreakTemplateDeclarations: Yes
 RequiresClausePosition: SingleLine
+
+SpaceInEmptyBraces: Never

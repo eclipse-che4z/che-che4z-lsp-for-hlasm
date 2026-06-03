@@ -73,7 +73,7 @@ void feature_workspace_folders::initialize_feature(const nlohmann::json& initial
         m_root_uri = root_uri->get<std::string>();
     }
     else if (auto root_path = initialize_params.find("rootPath");
-             root_path != initialize_params.end() && root_path->is_string())
+        root_path != initialize_params.end() && root_path->is_string())
     {
         m_root_uri = utils::path::path_to_uri(utils::path::lexically_normal(root_path->get<std::string>()).string());
     }

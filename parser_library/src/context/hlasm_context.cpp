@@ -1123,7 +1123,7 @@ void hlasm_context::validate_psect_registrations(diagnostic_consumer& diags)
     {
         const auto& [psect, stack] = details;
         const auto* section = ord_ctx.get_section(psect);
-        if (const symbol * s; !section && (s = ord_ctx.get_symbol(psect)) != nullptr
+        if (const symbol* s; !section && (s = ord_ctx.get_symbol(psect)) != nullptr
             && (!psect_compatible_symbol(s) || (section = extract_symbol_base(s)) == nullptr))
         {
             diags.add_diagnostic(

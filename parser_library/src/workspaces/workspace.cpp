@@ -196,8 +196,8 @@ struct workspace_parse_lib_provider final : public parse_lib_provider
         {
             return it->second;
         }
-        else if (resource_location url; std::ranges::none_of(
-                     libraries, [&url, &library](const auto& lib) { return lib->has_file(library, &url); }))
+        else if (resource_location url;
+            std::ranges::none_of(libraries, [&url, &library](const auto& lib) { return lib->has_file(library, &url); }))
         {
             next_member_map.emplace(library, resource_location());
             return resource_location();
