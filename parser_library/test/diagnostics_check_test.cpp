@@ -245,6 +245,7 @@ Y CATTR       ALIGN(1),DEFLOAD,EXECUTABLE,FILL(5),RENT,NOTREUS,PART(P),X
 S CSECT 
  EXITCTL LISTING,256,*+128,,-2
  EXITCTL SOURCE,,,
+ EXITCTL LISTING,+++256,*--2147483647,*+++++++,*
  EXTRN A,PART(B),PART(C,D),E
  ICTL 1,71,16 
  ICTL 9,80
@@ -274,8 +275,6 @@ A XATTR ATTR(lab),REFERENCE(DIRECT,DATA),LINK(XPLINK),SCOPE(SECTION)
 
     analyzer a(input, analyzer_options(asm_option { .sysopt_xobject = true }));
     a.analyze();
-
-
 
     EXPECT_TRUE(matches_message_codes(a.diags(), { "MNOTE" }));
 }

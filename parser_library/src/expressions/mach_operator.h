@@ -36,11 +36,9 @@ class mach_expr_binary final : public mach_expression
 public:
     mach_expr_binary(mach_expr_ptr left, mach_expr_ptr right, range rng)
         : mach_expression(rng)
-        , left_(assign_expr(std::move(left), rng))
-        , right_(assign_expr(std::move(right), rng))
-    {
-        // text = left_->move_text() + T::sign_char() + right_->move_text();
-    }
+        , left_(std::move(left))
+        , right_(std::move(right))
+    {}
 
     context::dependency_collector get_dependencies(context::dependency_solver& info) const override;
 
@@ -85,10 +83,8 @@ class mach_expr_unary final : public mach_expression
 public:
     mach_expr_unary(mach_expr_ptr child, range rng)
         : mach_expression(rng)
-        , child_(assign_expr(std::move(child), rng))
-    {
-        // text = T::sign_char_begin() + child_->move_text() + T::sign_char_end();
-    }
+        , child_(std::move(child))
+    {}
 
     context::dependency_collector get_dependencies(context::dependency_solver& info) const override;
 

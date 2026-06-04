@@ -52,7 +52,6 @@ void using_label_checker::visit(const expressions::mach_expr_symbol& expr)
             expr.qualifier.to_string_view(), section->name.to_string_view(), expr.get_range()));
 }
 void using_label_checker::visit(const expressions::mach_expr_location_counter&) {}
-void using_label_checker::visit(const expressions::mach_expr_default&) {}
 void using_label_checker::visit(const expressions::mach_expr_literal& l) { l.get_data_definition().apply(*this); }
 
 } // namespace hlasm_plugin::parser_library::checking

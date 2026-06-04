@@ -291,7 +291,7 @@ bool operands_relevant_in_lookahead(bool has_label, const processing_status& sta
     const auto form = status.first.form;
     const auto& instr = status.second.value;
 
-    return form == ASM_GENERIC && instr == COPY || form == ASM_GENERIC && instr == EQU && has_label
+    return form == ASM_GENERIC_TEXT && instr == COPY || form == ASM_GENERIC_ORD && instr == EQU && has_label
         || form == DAT && has_label;
 }
 } // namespace
@@ -318,8 +318,11 @@ std::shared_ptr<const context::hlasm_statement> opencode_provider::process_looka
 
         switch (proc_status.first.form)
         {
-            case processing_form::ASM_GENERIC: // other ASM forms are excluded
-                h.lookahead_operands_and_remarks_asm();
+            case processing_form::ASM_GENERIC_ORD: // other ASM forms are excluded
+                h.lookahead_operands_and_remarks_asm_ord();
+                break;
+            case processing_form::ASM_GENERIC_TEXT: // other ASM forms are excluded
+                h.lookahead_operands_and_remarks_asm_text();
                 break;
             case processing_form::DAT:
                 h.lookahead_operands_and_remarks_dat();
@@ -405,7 +408,8 @@ std::shared_ptr<const context::hlasm_statement> opencode_provider::process_ordin
                     h.op_rem_body_ca_branch();
                     (void)h.collector.take_literals(); // drop literals
                     break;
-                case processing_form::ASM_GENERIC:
+                case processing_form::ASM_GENERIC_ORD:
+                case processing_form::ASM_GENERIC_TEXT:
                 case processing_form::ASM_ALIAS:
                 case processing_form::ASM_END:
                 case processing_form::ASM_USING:

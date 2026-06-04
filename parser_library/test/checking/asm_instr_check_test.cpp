@@ -961,7 +961,6 @@ TEST_F(instruction_test, entry)
     EXPECT_FALSE(check_asm_ops("ENTRY", test_no_operand_true, range(), collector));
     EXPECT_TRUE(check_asm_ops("ENTRY", test_data_true_one, range(), collector));
     EXPECT_TRUE(check_asm_ops("ENTRY", test_ainsert_true_one, range(), collector));
-    EXPECT_FALSE(check_asm_ops("ENTRY", test_end_true_one, range(), collector));
     EXPECT_FALSE(check_asm_ops("ENTRY", test_entry_false, range(), collector));
 }
 TEST_F(instruction_test, exitctl)
@@ -1012,7 +1011,6 @@ TEST_F(instruction_test, opsyn)
     EXPECT_TRUE(check_asm_ops("OPSYN", test_no_operand_true, range(), collector));
     EXPECT_TRUE(check_asm_ops("OPSYN", test_opsyn_true, range(), collector));
     EXPECT_FALSE(check_asm_ops("OPSYN", test_mnote_true_one, range(), collector));
-    EXPECT_FALSE(check_asm_ops("OPSYN", test_extrn_true_two, range(), collector));
 }
 
 TEST_F(instruction_test, org)

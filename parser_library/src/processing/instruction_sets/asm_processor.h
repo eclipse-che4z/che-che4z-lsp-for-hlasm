@@ -108,6 +108,8 @@ private:
     void process_TITLE(rebuilt_statement&& stmt);
     void process_PUNCH(rebuilt_statement&& stmt);
     void process_CATTR(rebuilt_statement&& stmt);
+    void process_ENTRY(rebuilt_statement&& stmt);
+    void process_ADATA(rebuilt_statement&& stmt);
     struct cattr_ops_result
     {
         size_t op_count;

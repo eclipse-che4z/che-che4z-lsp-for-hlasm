@@ -31,7 +31,8 @@ enum class processing_form : uint8_t
 {
     UNKNOWN,
     MACH,
-    ASM_GENERIC,
+    ASM_GENERIC_ORD,
+    ASM_GENERIC_TEXT,
     ASM_ALIAS,
     ASM_END,
     ASM_USING,

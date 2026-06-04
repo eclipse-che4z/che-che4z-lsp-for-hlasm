@@ -91,6 +91,24 @@ std::optional<int> try_get_number(std::string_view s)
     return std::nullopt;
 }
 
+const semantics::text_assembler_operand* extract_single_text_op(const semantics::operands_si& ops) noexcept
+{
+    if (ops.value.size() != 1)
+        return nullptr;
+    const auto* asm_op = ops.value.front()->access_asm();
+    if (!asm_op)
+        return nullptr;
+    return asm_op->access_text();
+}
+
+bool has_single_comma(std::span<const semantics::operand_ptr> ops)
+{
+    if (ops.size() != 2)
+        return false;
+
+    return std::ranges::all_of(ops, [](const auto& op) { return op->type == semantics::operand_type::EMPTY; });
+}
+
 template<auto ptr, auto... others>
 constexpr auto fn = +[](asm_processor* self, rebuilt_statement&& stmt) { (self->*ptr)(std::move(stmt), others...); };
 } // namespace
@@ -115,6 +133,7 @@ struct asm_processor::handler_table
         { id_index("WXTRN"), fn<&asm_processor::process_WXTRN> },
         { id_index("ORG"), fn<&asm_processor::process_ORG> },
         { id_index("OPSYN"), fn<&asm_processor::process_OPSYN> },
+        { id_index("ENTRY"), fn<&asm_processor::process_ENTRY> },
         { id_index("AINSERT"), fn<&asm_processor::process_AINSERT> },
         { id_index("CCW"), fn<&asm_processor::process_CCW> },
         { id_index("CCW0"), fn<&asm_processor::process_CCW> },
@@ -134,6 +153,7 @@ struct asm_processor::handler_table
         { id_index("PUNCH"), fn<&asm_processor::process_PUNCH> },
         { id_index("CATTR"), fn<&asm_processor::process_CATTR> },
         { id_index("XATTR"), fn<&asm_processor::process_XATTR> },
+        { id_index("ADATA"), fn<&asm_processor::process_ADATA> },
     });
 
     static constexpr auto find(id_index id) noexcept { return value.find(id); }
@@ -251,17 +271,9 @@ void asm_processor::process_EQU(rebuilt_statement&& stmt)
     const auto [value, length, type, prog_type, asm_type] = extract_asm_operands<5>(ops);
 
     // assembler type attribute
-    symbol_attributes::assembler_type a_attr = symbol_attributes::assembler_type::NONE;
-    if (asm_type)
-    {
-        std::string_view a_value;
-        if (const auto* expr = asm_type->access_expr())
-            a_value = expr->get_value();
-        // relies on to_upper_case in the parser
-        a_attr = context::assembler_type_from_string(a_value);
-        if (a_attr == symbol_attributes::assembler_type::NONE)
-            add_diagnostic(diagnostic_op::error_A135_EQU_asm_type_val_format(asm_type->operand_range));
-    }
+    const symbol_attributes::assembler_type a_attr = assembler_type_from_op(asm_type);
+    if (asm_type && a_attr == symbol_attributes::assembler_type::NONE)
+        add_diagnostic(diagnostic_op::error_A135_EQU_asm_type_val_format(asm_type->operand_range));
 
     // program type attribute
     symbol_attributes::program_type p_attr {};
@@ -514,20 +526,15 @@ void asm_processor::process_COPY(rebuilt_statement&& stmt)
 {
     find_sequence_symbol(stmt);
 
-    if (stmt.operands_ref().value.size() == 1 && stmt.operands_ref().value.front()->type == semantics::operand_type::ASM
-        && stmt.operands_ref().value.front()->access_asm()->access_expr())
+    if (const auto extract = extract_copy_id(stmt, &diag_ctx); extract.has_value())
     {
-        if (auto extract = extract_copy_id(stmt, &diag_ctx); extract.has_value())
+        if (ctx.hlasm_ctx->copy_members().contains(extract->name))
+            common_copy_postprocess(true, *extract, *ctx.hlasm_ctx, &diag_ctx);
+        else
         {
-            if (ctx.hlasm_ctx->copy_members().contains(extract->name))
-                common_copy_postprocess(true, *extract, *ctx.hlasm_ctx, &diag_ctx);
-            else
-            {
-                branch_provider.request_external_processing(
-                    extract->name, processing_kind::COPY, [extract, this](bool result) {
-                        common_copy_postprocess(result, *extract, *ctx.hlasm_ctx, &diag_ctx);
-                    });
-            }
+            branch_provider.request_external_processing(extract->name,
+                processing_kind::COPY,
+                [extract, this](bool result) { common_copy_postprocess(result, *extract, *ctx.hlasm_ctx, &diag_ctx); });
         }
     }
     else
@@ -587,12 +594,12 @@ void asm_processor::process_external(rebuilt_statement&& stmt, external_type t)
         if (!op_asm)
             continue;
 
-        if (auto expr = op_asm->access_expr())
+        if (const auto text = op_asm->access_text())
         {
-            if (auto sym = dynamic_cast<const expressions::mach_expr_symbol*>(expr->expression.get()))
-                add_external(sym->value, expr->operand_range);
+            if (!text->get_ord_like().empty())
+                add_external(text->get_ord_like(), text->operand_range);
         }
-        else if (auto complex = op_asm->access_complex())
+        else if (const auto complex = op_asm->access_complex())
         {
             if (utils::to_upper_copy(complex->value.identifier) != "PART")
                 continue;
@@ -628,9 +635,7 @@ void asm_processor::process_ORG(rebuilt_statement&& stmt)
 
     const auto& ops = stmt.operands_ref().value;
 
-    if (ops.empty()
-        || (ops.size() == 2 && ops[0]->type == semantics::operand_type::EMPTY
-            && ops[1]->type == semantics::operand_type::EMPTY))
+    if (ops.empty() || has_single_comma(ops))
     {
         hlasm_ctx.ord_ctx.set_available_location_counter_value();
         return;
@@ -745,7 +750,8 @@ void asm_processor::process_ORG(rebuilt_statement&& stmt)
 
 void asm_processor::process_OPSYN(rebuilt_statement&& stmt)
 {
-    const auto& operands = stmt.operands_ref().value;
+    const auto& operands = stmt.operands_ref();
+    const auto& ops = operands.value;
 
     auto label = find_label_symbol(stmt);
     if (label.empty())
@@ -755,30 +761,22 @@ void asm_processor::process_OPSYN(rebuilt_statement&& stmt)
         return;
     }
 
-    context::id_index operand;
-    if (operands.size() == 1) // covers also the " , " case
-    {
-        auto asm_op = operands.front()->access_asm();
-        if (asm_op)
-        {
-            auto expr_op = asm_op->access_expr();
-            if (expr_op)
-            {
-                if (auto expr = dynamic_cast<const expressions::mach_expr_symbol*>(expr_op->expression.get()))
-                    operand = expr->value;
-            }
-        }
-    }
-
-    if (operand.empty())
+    if (const auto op_count = ops.size(); op_count == 0 || has_single_comma(ops))
     {
         if (!hlasm_ctx.remove_mnemonic(label))
             add_diagnostic(diagnostic_op::error_E049(label.to_string_view(), stmt.label_ref().field_range));
     }
-    else
+    else if (op_count == 1)
     {
-        if (!hlasm_ctx.add_mnemonic(label, operand))
-            add_diagnostic(diagnostic_op::error_A246_OPSYN(operands.front()->operand_range));
+        const semantics::text_assembler_operand* text_op = nullptr;
+        if (auto asm_op = ops.front()->access_asm())
+            text_op = asm_op->access_text();
+        if (!text_op)
+            add_diagnostic(diagnostic_op::error_A246_OPSYN(ops.front()->operand_range));
+        else if (const auto& operand = text_op->get_ord_like(); operand.empty())
+            add_diagnostic(diagnostic_op::error_A246_OPSYN(ops.front()->operand_range));
+        else if (!hlasm_ctx.add_mnemonic(label, operand))
+            add_diagnostic(diagnostic_op::error_A246_OPSYN(ops.front()->operand_range));
     }
 
     context::ordinary_assembly_dependency_solver dep_solver(hlasm_ctx.ord_ctx, lib_info);
@@ -822,27 +820,26 @@ void asm_processor::process(std::shared_ptr<const processing::resolved_statement
 std::optional<asm_processor::extract_copy_id_result> asm_processor::extract_copy_id(
     const processing::resolved_statement& stmt, diagnosable_ctx* diagnoser)
 {
-    if (stmt.operands_ref().value.size() != 1 || !stmt.operands_ref().value.front()->access_asm()
-        || !stmt.operands_ref().value.front()->access_asm()->access_expr())
+    const auto& ops = stmt.operands_ref();
+    const auto* text_op = extract_single_text_op(ops);
+    if (!text_op)
     {
         if (diagnoser)
-            diagnoser->add_diagnostic(diagnostic_op::error_E058(stmt.operands_ref().field_range));
+            diagnoser->add_diagnostic(diagnostic_op::error_E058(ops.field_range));
         return {};
     }
 
-    auto& expr = stmt.operands_ref().value.front()->access_asm()->access_expr()->expression;
-    auto sym_expr = dynamic_cast<const expressions::mach_expr_symbol*>(expr.get());
-
-    if (!sym_expr)
+    const auto& val = text_op->get_ord_like();
+    if (val.empty())
     {
         if (diagnoser)
-            diagnoser->add_diagnostic(diagnostic_op::error_E058(stmt.operands_ref().value.front()->operand_range));
+            diagnoser->add_diagnostic(diagnostic_op::error_E058(text_op->operand_range));
         return {};
     }
 
     return asm_processor::extract_copy_id_result {
-        sym_expr->value,
-        stmt.operands_ref().value.front()->operand_range,
+        val,
+        ops.value.front()->operand_range,
         stmt.stmt_range_ref(),
     };
 }
@@ -884,23 +881,6 @@ context::id_index asm_processor::find_sequence_symbol(const rebuilt_statement& s
     }
 }
 
-namespace {
-class AINSERT_operand_visitor final : public expressions::mach_expr_visitor
-{
-public:
-    // Inherited via mach_expr_visitor
-    void visit(const expressions::mach_expr_constant&) override {}
-    void visit(const expressions::mach_expr_data_attr&) override {}
-    void visit(const expressions::mach_expr_data_attr_literal&) override {}
-    void visit(const expressions::mach_expr_symbol& expr) override { value = expr.value; }
-    void visit(const expressions::mach_expr_location_counter&) override {}
-    void visit(const expressions::mach_expr_default&) override {}
-    void visit(const expressions::mach_expr_literal&) override {}
-
-    context::id_index value;
-};
-} // namespace
-
 void asm_processor::process_AINSERT(rebuilt_statement&& stmt)
 {
     static constexpr std::string_view AINSERT = "AINSERT";
@@ -912,21 +892,17 @@ void asm_processor::process_AINSERT(rebuilt_statement&& stmt)
         return;
     }
 
-    auto second_op = dynamic_cast<const semantics::expr_assembler_operand*>(ops.value[1].get());
+    const auto second_op = dynamic_cast<const semantics::text_assembler_operand*>(ops.value[1].get());
     if (!second_op)
     {
         add_diagnostic(diagnostic_op::error_A156_AINSERT_second_op_format(ops.value[1]->operand_range));
         return;
     }
 
-    AINSERT_operand_visitor visitor;
-    second_op->expression->apply(visitor);
-    const auto& [value] = visitor;
-
-    if (value.empty())
-        return;
     processing::ainsert_destination dest;
-    if (value.to_string_view() == "FRONT")
+    if (const auto& value = second_op->get_ord_like(); value.empty())
+        return;
+    else if (value.to_string_view() == "FRONT")
         dest = processing::ainsert_destination::front;
     else if (value.to_string_view() == "BACK")
         dest = processing::ainsert_destination::back;
@@ -1077,18 +1053,16 @@ void asm_processor::process_END(rebuilt_statement&& stmt)
     {
         add_diagnostic(diagnostic_op::warning_A249_sequence_symbol_expected(stmt.label_ref().field_range));
     }
-    if (!stmt.operands_ref().value.empty() && !(stmt.operands_ref().value[0]->type == semantics::operand_type::EMPTY))
+    const auto& ops = stmt.operands_ref();
+    if (!ops.value.empty() && !(ops.value[0]->type == semantics::operand_type::EMPTY))
     {
-        if (stmt.operands_ref().value[0]->access_asm() != nullptr
-            && stmt.operands_ref().value[0]->access_asm()->kind == semantics::asm_kind::EXPR)
+        if (const auto* asm_op = ops.value[0]->access_asm(); asm_op && asm_op->kind == semantics::asm_kind::EXPR)
         {
-            auto symbol = stmt.operands_ref().value[0]->access_asm()->access_expr()->expression.get()->evaluate(
-                dep_solver, drop_diagnostic_op);
+            auto symbol = asm_op->access_expr()->expression.get()->evaluate(dep_solver, drop_diagnostic_op);
 
             if (symbol.value_kind() == context::symbol_value_kind::ABS)
             {
-                add_diagnostic(
-                    diagnostic_op::error_E032(std::to_string(symbol.get_abs()), stmt.operands_ref().field_range));
+                add_diagnostic(diagnostic_op::error_E032(std::to_string(symbol.get_abs()), ops.field_range));
             }
         }
     }
@@ -1243,9 +1217,7 @@ void asm_processor::process_DROP(rebuilt_statement&& stmt)
     const auto& ops = stmt.operands_ref().value;
 
     std::vector<mach_expr_ptr> bases;
-    if (!ops.empty()
-        && !(ops.size() == 2 && ops[0]->type == semantics::operand_type::EMPTY
-            && ops[1]->type == semantics::operand_type::EMPTY))
+    if (!ops.empty() && !has_single_comma(ops))
     {
         bases.reserve(ops.size());
         for (const auto& op : ops)
@@ -1265,19 +1237,19 @@ void asm_processor::process_DROP(rebuilt_statement&& stmt)
 }
 
 namespace {
-bool asm_expr_quals(const semantics::operand_ptr& op, std::string_view value)
+bool asm_text_quals(const semantics::operand_ptr& op, std::string_view value)
 {
     auto asm_op = op->access_asm();
     if (!asm_op)
         return false;
-    auto expr = asm_op->access_expr();
-    return expr && expr->get_value() == value;
+    const auto* text = asm_op->access_text();
+    return text && text->get_ord_like().to_string_view() == value;
 }
 } // namespace
 
 void asm_processor::process_PUSH(rebuilt_statement&& stmt)
 {
-    if (std::ranges::any_of(stmt.operands_ref().value, [](const auto& op) { return asm_expr_quals(op, "USING"); }))
+    if (std::ranges::any_of(stmt.operands_ref().value, [](const auto& op) { return asm_text_quals(op, "USING"); }))
         hlasm_ctx.using_push();
 
     context::ordinary_assembly_dependency_solver dep_solver(hlasm_ctx.ord_ctx, lib_info);
@@ -1288,7 +1260,7 @@ void asm_processor::process_PUSH(rebuilt_statement&& stmt)
 
 void asm_processor::process_POP(rebuilt_statement&& stmt)
 {
-    if (std::ranges::any_of(stmt.operands_ref().value, [](const auto& op) { return asm_expr_quals(op, "USING"); })
+    if (std::ranges::any_of(stmt.operands_ref().value, [](const auto& op) { return asm_text_quals(op, "USING"); })
         && !hlasm_ctx.using_pop())
         add_diagnostic(diagnostic_op::error_A165_POP_USING(stmt.stmt_range_ref()));
 
@@ -1314,31 +1286,25 @@ void asm_processor::process_MNOTE(rebuilt_statement&& stmt)
             level = 0;
             break;
         case 2:
-            switch (ops[0]->type)
+            if (const auto& op = ops.front(); op->type == semantics::operand_type::EMPTY)
             {
-                case semantics::operand_type::EMPTY:
-                    level = 1;
-                    break;
-                case semantics::operand_type::ASM:
-                    if (auto expr = ops[0]->access_asm()->access_expr(); !expr)
-                    {
-                        // fail
-                    }
-                    else if (dynamic_cast<const expressions::mach_expr_location_counter*>(expr->expression.get()))
+                level = 1;
+            }
+            else if (const auto* asm_op = op->access_asm())
+            {
+                if (const auto* text_op = asm_op->access_text())
+                {
+                    if (const auto& t = text_op->get_text(); t == "*")
                     {
                         level = 0;
                         first_op_len = 1;
                     }
                     else
                     {
-                        const auto& val = expr->get_value();
-                        first_op_len = val.size();
-                        level = try_get_number(val);
+                        level = try_get_number(t);
+                        first_op_len = t.size();
                     }
-                    break;
-
-                default:
-                    break;
+                }
             }
             break;
         default:
@@ -1367,11 +1333,8 @@ void asm_processor::process_MNOTE(rebuilt_statement&& stmt)
         }
         else
         {
-            if (string_op->kind == semantics::asm_kind::EXPR)
-            {
-                text = string_op->access_expr()->get_value();
-            }
             add_diagnostic(diagnostic_op::warning_A300_op_apostrophes_missing(MNOTE, r));
+            return;
         }
     }
 
@@ -1656,6 +1619,37 @@ void asm_processor::process_XATTR(rebuilt_statement&& stmt)
         }
     }
 
+    context::ordinary_assembly_dependency_solver dep_solver(hlasm_ctx.ord_ctx, lib_info);
+    hlasm_ctx.ord_ctx.symbol_dependencies().add_postponed_statement(
+        std::make_unique<postponed_statement_impl>(std::move(stmt), hlasm_ctx.processing_stack()),
+        std::move(dep_solver).derive_current_dependency_evaluation_context());
+}
+
+void asm_processor::process_ENTRY(rebuilt_statement&& stmt)
+{
+    for (const auto& op : stmt.operands_ref().value)
+    {
+        if (const auto* asm_op = op->access_asm())
+            if (const auto* expr = asm_op->access_expr())
+                if (dynamic_cast<const expressions::mach_expr_symbol*>(expr->expression.get()))
+                    continue;
+
+        add_diagnostic(diagnostic_op::error_A136_ENTRY_op_format(op->operand_range));
+    }
+
+    context::ordinary_assembly_dependency_solver dep_solver(hlasm_ctx.ord_ctx, lib_info);
+    hlasm_ctx.ord_ctx.symbol_dependencies().add_postponed_statement(
+        std::make_unique<postponed_statement_impl>(std::move(stmt), hlasm_ctx.processing_stack()),
+        std::move(dep_solver).derive_current_dependency_evaluation_context());
+}
+
+void asm_processor::process_ADATA(rebuilt_statement&& stmt)
+{
+    if (const auto& ops = stmt.operands_ref().value; ops.size() >= 5)
+    {
+        if (const auto* asm_op = ops[4]->access_asm(); asm_op && !asm_op->access_string())
+            add_diagnostic(diagnostic_op::error_A239_ADATA_char_string_format(asm_op->operand_range));
+    }
     context::ordinary_assembly_dependency_solver dep_solver(hlasm_ctx.ord_ctx, lib_info);
     hlasm_ctx.ord_ctx.symbol_dependencies().add_postponed_statement(
         std::make_unique<postponed_statement_impl>(std::move(stmt), hlasm_ctx.processing_stack()),

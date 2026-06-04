@@ -65,7 +65,8 @@ statement_fields_parser::parse_result statement_fields_parser::parse_operand_fie
                 literals = h.collector.take_literals();
                 break;
             }
-            case processing::processing_form::ASM_GENERIC:
+            case processing::processing_form::ASM_GENERIC_ORD:
+            case processing::processing_form::ASM_GENERIC_TEXT:
             case processing::processing_form::ASM_ALIAS:
             case processing::processing_form::ASM_END:
             case processing::processing_form::ASM_USING:

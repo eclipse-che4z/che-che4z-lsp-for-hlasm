@@ -484,6 +484,7 @@ struct AREAD_operand_visitor final : public semantics::operand_visitor
     void visit(const semantics::using_instr_assembler_operand&) override {}
     void visit(const semantics::complex_assembler_operand&) override {}
     void visit(const semantics::string_assembler_operand&) override {}
+    void visit(const semantics::text_assembler_operand&) override {}
     void visit(const semantics::data_def_operand&) override {}
     void visit(const semantics::var_ca_operand&) override {}
     void visit(const semantics::expr_ca_operand& op) override

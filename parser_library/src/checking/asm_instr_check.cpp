@@ -445,21 +445,7 @@ bool opsyn::check(std::span<const asm_operand* const> to_check,
     const range& stmt_range,
     const diagnostic_collector& add_diagnostic) const
 {
-    if (!operands_size_corresponding(to_check, stmt_range, add_diagnostic))
-        return false;
-    if (has_one_comma(to_check))
-        return true;
-    if (to_check.size() == 1)
-    {
-        if (is_operand_complex(to_check[0]))
-        {
-            add_diagnostic(diagnostic_op::error_A246_OPSYN(to_check[0]->operand_range));
-            return false;
-        }
-        // TO DO - check operation code parameter
-        return true;
-    }
-    return true;
+    return operands_size_corresponding(to_check, stmt_range, add_diagnostic);
 }
 
 mnote::mnote(const std::vector<label_types>& allowed_types, std::string_view name_of_instruction)
@@ -682,6 +668,20 @@ bool external::check(std::span<const asm_operand* const> to_check,
 exitctl::exitctl(const std::vector<label_types>& allowed_types, std::string_view name_of_instruction)
     : assembler_instruction(allowed_types, name_of_instruction, 2, 5) {};
 
+std::string_view strip_exitctl_loctr_prefix(std::string_view s)
+{
+    if (s.starts_with("*"))
+        s.remove_prefix(1);
+
+    auto not_sign = s.find_first_not_of("+-");
+    if (not_sign == std::string_view::npos)
+        not_sign = s.size();
+    const auto last_double_minus = s.substr(0, not_sign).ends_with("--");
+    s.remove_prefix(not_sign - last_double_minus);
+
+    return s;
+}
+
 bool exitctl::check(std::span<const asm_operand* const> to_check,
     const range& stmt_range,
     const diagnostic_collector& add_diagnostic) const
@@ -710,11 +710,15 @@ bool exitctl::check(std::span<const asm_operand* const> to_check,
                 name_of_instruction, to_check[i]->operand_range));
             return false;
         }
-        if (operand->is_default)
-        {
-            add_diagnostic(diagnostic_op::error_A131_EXITCTL_control_value_format(to_check[i]->operand_range));
-            return false;
-        }
+        if (!operand->is_default)
+            continue;
+
+        const auto op = strip_exitctl_loctr_prefix(operand->operand_identifier);
+        if (op.empty() || as_int(op).has_value())
+            continue;
+
+        add_diagnostic(diagnostic_op::error_A131_EXITCTL_control_value_format(to_check[i]->operand_range));
+        return false;
     }
     return true;
 }
@@ -737,15 +741,6 @@ bool entry::check(std::span<const asm_operand* const> to_check,
     {
         add_diagnostic(diagnostic_op::error_A014_lower_than(name_of_instruction, ENTRY_max_operands, stmt_range));
         return false;
-    }
-    for (const auto& operand : to_check)
-    {
-        auto simple = get_simple_operand(operand);
-        if (simple == nullptr || simple->operand_identifier == "")
-        {
-            add_diagnostic(diagnostic_op::error_A136_ENTRY_op_format(operand->operand_range));
-            return false;
-        }
     }
     return true;
 }
@@ -1253,10 +1248,8 @@ bool adata::check(std::span<const asm_operand* const> to_check,
         return true;
     auto last_op = get_simple_operand(to_check.back());
     if (last_op == nullptr)
-    {
-        add_diagnostic(diagnostic_op::error_A239_ADATA_char_string_format(to_check.back()->operand_range));
         return false;
-    }
+
     if (last_op->operand_identifier.size() == 1
         || (last_op->operand_identifier.size() > 1
             && (last_op->operand_identifier.front() != '\'' || last_op->operand_identifier.back() != '\'')))

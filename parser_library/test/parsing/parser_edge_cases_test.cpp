@@ -46,22 +46,33 @@ TEST(parser_edge_cases, ca_args_empty)
     EXPECT_TRUE(h.collector.current_operands().value.empty());
 }
 
-TEST(parser_edge_cases, ca_args_generic)
+TEST(parser_edge_cases, ca_args_generic_ord)
 {
     auto [_, h] = prepare_edge_case("(");
 
-    auto res = h.op_rem_body_asm(processing::processing_form::ASM_GENERIC, true, false);
+    auto res = h.op_rem_body_asm(processing::processing_form::ASM_GENERIC_ORD, true, false);
 
     ASSERT_TRUE(res);
 
     EXPECT_TRUE(res->operands.empty());
 }
 
-TEST(parser_edge_cases, ca_args_generic_pseudo_empty)
+TEST(parser_edge_cases, ca_args_generic_pseudo_empty_ord)
 {
     auto [_, h] = prepare_edge_case(",");
 
-    auto res = h.op_rem_body_asm(processing::processing_form::ASM_GENERIC, true, false);
+    auto res = h.op_rem_body_asm(processing::processing_form::ASM_GENERIC_ORD, true, false);
+
+    ASSERT_TRUE(res);
+
+    EXPECT_EQ(res->operands.size(), 2);
+}
+
+TEST(parser_edge_cases, ca_args_generic_pseudo_empty_text)
+{
+    auto [_, h] = prepare_edge_case(",");
+
+    auto res = h.op_rem_body_asm(processing::processing_form::ASM_GENERIC_TEXT, true, false);
 
     ASSERT_TRUE(res);
 
@@ -79,11 +90,11 @@ TEST(parser_edge_cases, ca_args_alias)
     EXPECT_TRUE(res->operands.empty());
 }
 
-TEST(parser_edge_cases, lookahead_invalid_arg)
+TEST(parser_edge_cases, lookahead_invalid_arg_ord)
 {
     auto [_, h] = prepare_edge_case(" (");
 
-    h.lookahead_operands_and_remarks_asm();
+    h.lookahead_operands_and_remarks_asm_ord();
 
     EXPECT_TRUE(h.collector.current_operands().value.empty());
 }

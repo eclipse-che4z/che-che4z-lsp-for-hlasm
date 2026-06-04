@@ -24,6 +24,10 @@
 
 // the file contains structures representing operands in the operand field of statement
 
+namespace hlasm_plugin::parser_library::context {
+enum class assembler_type : unsigned char;
+} // namespace hlasm_plugin::parser_library::context
+
 namespace hlasm_plugin::parser_library::processing {
 struct op_code;
 }
@@ -160,6 +164,8 @@ public:
 };
 
 void transform_reloc_imm_operands(semantics::operand_list& op_list, const processing::op_code& op);
+
+context::assembler_type assembler_type_from_op(const semantics::operand* op);
 
 } // namespace hlasm_plugin::parser_library::semantics
 

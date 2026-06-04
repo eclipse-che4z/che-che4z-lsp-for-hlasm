@@ -26,12 +26,6 @@ mach_expression::mach_expression(range rng)
     : expr_range_(rng)
 {}
 
-mach_expr_ptr hlasm_plugin::parser_library::expressions::mach_expression::assign_expr(
-    mach_expr_ptr expr, range expr_range)
-{
-    return expr ? std::move(expr) : std::make_unique<mach_expr_default>(expr_range);
-}
-
 bool mach_expression::is_similar(const mach_expression& expr) const
 {
     return typeid(*this) == typeid(expr) && do_is_similar(expr);

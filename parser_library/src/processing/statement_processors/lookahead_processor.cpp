@@ -215,12 +215,7 @@ void lookahead_processor::assign_EQU_attributes(context::id_index symbol_name, c
     const auto [value, length, type, program, assembler] = extract_asm_operands<5>(statement.operands_ref().value);
 
     // assembler type attribute
-    symbol_attributes::assembler_type a_attr = symbol_attributes::assembler_type::NONE;
-    if (assembler)
-    {
-        if (const auto* expr = assembler->access_expr())
-            a_attr = context::assembler_type_from_string(expr->get_value()); // relies on to_upper_case in the parser
-    }
+    const symbol_attributes::assembler_type a_attr = assembler_type_from_op(assembler);
 
     // program type attribute
     symbol_attributes::program_type p_attr {};

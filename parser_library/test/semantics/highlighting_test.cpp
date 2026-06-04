@@ -168,8 +168,10 @@ TEST(highlighting, asm_simple_operand)
     analyzer a(contents, analyzer_options { source_file_loc, collect_highlighting_info::yes });
     a.analyze();
     const auto& tokens = a.take_semantic_tokens();
-    semantics::lines_info expected = { token_info({ { 0, 1 }, { 0, 6 } }, hl_scopes::instruction),
-        token_info({ { 0, 7 }, { 0, 12 } }, hl_scopes::ordinary_symbol) };
+    semantics::lines_info expected = {
+        token_info({ { 0, 1 }, { 0, 6 } }, hl_scopes::instruction),
+        token_info({ { 0, 7 }, { 0, 12 } }, hl_scopes::operand),
+    };
 
     EXPECT_EQ(tokens, expected);
 }

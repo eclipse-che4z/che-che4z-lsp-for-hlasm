@@ -211,32 +211,6 @@ mach_expr_ptr mach_expr_location_counter::clone() const
     return std::make_unique<mach_expr_location_counter>(get_range());
 }
 
-bool mach_expr_default::do_is_similar(const mach_expression&) const { return true; }
-
-mach_expr_default::mach_expr_default(range rng)
-    : mach_expression(rng)
-{}
-
-context::dependency_collector mach_expr_default::get_dependencies(context::dependency_solver&) const
-{
-    return context::dependency_collector();
-}
-
-mach_expression::value_t mach_expr_default::evaluate(context::dependency_solver&, diagnostic_op_consumer&) const
-{
-    return value_t();
-}
-
-mach_expression::value_t mach_expr_default::equ_evaluate(context::dependency_solver&) const { return value_t(); }
-
-const mach_expression* mach_expr_default::leftmost_term() const { return this; }
-
-void mach_expr_default::apply(mach_expr_visitor& visitor) const { visitor.visit(*this); }
-
-size_t mach_expr_default::hash() const { return (size_t)0xd11a22d1aa4016e0; }
-
-mach_expr_ptr mach_expr_default::clone() const { return std::make_unique<mach_expr_default>(get_range()); }
-
 bool mach_expr_data_attr::do_is_similar(const mach_expression& expr) const
 {
     const auto& e = static_cast<const mach_expr_data_attr&>(expr);
@@ -554,5 +528,4 @@ std::int32_t mach_expr_location_counter::derive_length(std::int32_t mi_length, c
 {
     return mi_length;
 }
-std::int32_t mach_expr_default::derive_length(std::int32_t, context::dependency_solver&) const { return 1; }
 } // namespace hlasm_plugin::parser_library::expressions

@@ -673,16 +673,24 @@ struct parser2
     result_t<semantics::operand_ptr> end_op();
     result_t<semantics::operand_ptr> using_op1();
     result_t<semantics::operand_ptr> asm_mach_expr();
-    result_t<semantics::operand_ptr> asm_op();
+    result_t<semantics::operand_ptr> asm_op_ord();
+    result_t<semantics::operand_ptr> asm_op_text();
     result_t<std::unique_ptr<semantics::complex_assembler_operand::component_value_t>> asm_op_inner();
     result_t<std::vector<std::unique_ptr<semantics::complex_assembler_operand::component_value_t>>> asm_op_comma_c();
 
-    [[nodiscard]] constexpr bool ord_followed_by_parenthesis() const noexcept;
+    enum class complex_asm_op
+    {
+        ord_like,
+        text,
+        complex,
+    };
+    [[nodiscard]] constexpr complex_asm_op ord_followed_by_parenthesis() const noexcept;
 
     result_t<void> lex_rest_of_model_string(concat_chain_builder& ccb);
     result_t<std::optional<semantics::op_rem>> try_model_ops(parser_position line_start);
 
     void lookahead_operands_and_remarks_dat();
+    template<result_t<semantics::operand_ptr> (parser2::*op_parser)()>
     void lookahead_operands_and_remarks_asm();
 
     explicit parser2(parser_holder* h)
@@ -2368,7 +2376,6 @@ result_t<expressions::data_definition> parser2::lex_data_definition(bool require
         void visit(const expressions::mach_expr_data_attr_literal&) override {}
         void visit(const expressions::mach_expr_symbol&) override {}
         void visit(const expressions::mach_expr_location_counter&) override { found_loctr_reference = true; }
-        void visit(const expressions::mach_expr_default&) override {}
         void visit(const expressions::mach_expr_literal& expr) override { expr.get_data_definition().apply(*this); }
     } v;
     d.apply(v);
@@ -4206,8 +4213,7 @@ result_t<semantics::operand_ptr> parser2::alias_op()
     const auto r = range_from(start);
     add_hl_symbol(r, hl_scopes::self_def_type);
 
-    return std::make_unique<semantics::expr_assembler_operand>(
-        std::make_unique<expressions::mach_expr_default>(r), capture_text(initial), r);
+    return std::make_unique<semantics::text_assembler_operand>(capture_text(initial), context::id_index(), r);
 }
 
 result_t<semantics::operand_ptr> parser2::end_op()
@@ -4275,8 +4281,7 @@ result_t<semantics::operand_ptr> parser2::using_op1()
             return failure;
 
         const auto r = range_from(start);
-        return std::make_unique<semantics::expr_assembler_operand>(
-            std::move(e1), utils::to_upper_copy(capture_text(initial1, end1)), r);
+        return std::make_unique<semantics::expr_assembler_operand>(std::move(e1), r);
     }
 
     const auto initial2 = input.next;
@@ -4296,28 +4301,38 @@ result_t<semantics::operand_ptr> parser2::using_op1()
 result_t<semantics::operand_ptr> parser2::asm_mach_expr()
 {
     const auto start = cur_pos_adjusted();
-    const auto initial = input.next;
 
     auto [error, expr] = lex_mach_expr();
     if (error)
         return failure;
 
     const auto r = range_from(start);
-    return std::make_unique<semantics::expr_assembler_operand>(
-        std::move(expr), utils::to_upper_copy(capture_text(initial)), r);
+    return std::make_unique<semantics::expr_assembler_operand>(std::move(expr), r);
 }
 
-constexpr bool parser2::ord_followed_by_parenthesis() const noexcept
+constexpr parser2::complex_asm_op parser2::ord_followed_by_parenthesis() const noexcept
 {
     if (!is_ord_first())
-        return false;
+        return complex_asm_op::text;
 
     const auto* p = input.next;
 
     while (char_is_ord(*p))
         ++p;
 
-    return *p == u8'(';
+    switch (*p)
+    {
+        case u8'(':
+            return complex_asm_op::complex;
+
+        case EOF_SYMBOL:
+        case u8' ':
+        case u8',':
+            return complex_asm_op::ord_like;
+
+        default:
+            return complex_asm_op::text;
+    }
 }
 
 result_t<std::unique_ptr<semantics::complex_assembler_operand::component_value_t>> parser2::asm_op_inner()
@@ -4385,10 +4400,24 @@ parser2::asm_op_comma_c()
     return result;
 }
 
+result_t<semantics::operand_ptr> parser2::asm_op_ord()
+{
+    if (follows<u8'\''>())
+    {
+        const auto start = cur_pos_adjusted();
+        auto [error, s] = lex_simple_string();
+        if (error)
+            return failure;
+        return std::make_unique<semantics::string_assembler_operand>(std::move(s), range_from(start));
+    }
 
-result_t<semantics::operand_ptr> parser2::asm_op()
+    return asm_mach_expr();
+}
+
+result_t<semantics::operand_ptr> parser2::asm_op_text()
 {
     const auto start = cur_pos_adjusted();
+    const auto initial = input.next;
     if (follows<u8'\''>())
     {
         auto [error, s] = lex_simple_string();
@@ -4397,8 +4426,24 @@ result_t<semantics::operand_ptr> parser2::asm_op()
         return std::make_unique<semantics::string_assembler_operand>(std::move(s), range_from(start));
     }
 
-    if (!ord_followed_by_parenthesis())
-        return asm_mach_expr();
+    switch (ord_followed_by_parenthesis())
+    {
+        case complex_asm_op::ord_like: {
+            auto id = lex_ord();
+            auto r = range_from(start);
+            add_hl_symbol(r, hl_scopes::operand);
+            return std::make_unique<semantics::text_assembler_operand>(capture_text(initial), add_id(id), r);
+        }
+        case complex_asm_op::text: {
+            while (except<u8' ', u8','>())
+                consume();
+            auto r = range_from(start);
+            add_hl_symbol(r, hl_scopes::operand);
+            return std::make_unique<semantics::text_assembler_operand>(capture_text(initial), context::id_index(), r);
+        }
+        case complex_asm_op::complex:
+            break;
+    }
 
     auto id = lex_ord_upper();
     add_hl_symbol(range_from(start), hl_scopes::operand);
@@ -4427,12 +4472,14 @@ std::optional<semantics::op_rem> parser_holder::op_rem_body_asm(
 
     switch (form)
     {
-        case ASM_GENERIC:
-            return p.with_model<empty_operand, &parser2::asm_op>(reparse, model_allowed);
+        case ASM_GENERIC_ORD:
+            return p.with_model<empty_operand, &parser2::asm_op_ord>(reparse, model_allowed);
+        case ASM_GENERIC_TEXT:
+            return p.with_model<empty_operand, &parser2::asm_op_text>(reparse, model_allowed);
         case ASM_ALIAS:
             return p.with_model<empty_operand, &parser2::alias_op, nullptr>(reparse, model_allowed);
         case ASM_END:
-            return p.with_model<empty_operand, &parser2::asm_op, &parser2::end_op>(reparse, model_allowed);
+            return p.with_model<empty_operand, &parser2::asm_mach_expr, &parser2::end_op>(reparse, model_allowed);
         case ASM_USING:
             return p.with_model<empty_operand, &parser2::using_op1, &parser2::asm_mach_expr>(reparse, model_allowed);
         default:
@@ -4478,6 +4525,7 @@ void parser_holder::lookahead_operands_and_remarks_dat()
     p.lookahead_operands_and_remarks_dat();
 }
 
+template<result_t<semantics::operand_ptr> (parser2::*op_parser)()>
 void parser2::lookahead_operands_and_remarks_asm()
 {
     auto start = cur_pos_adjusted();
@@ -4491,7 +4539,7 @@ void parser2::lookahead_operands_and_remarks_asm()
     bool errors = false;
     auto op_start = cur_pos_adjusted();
 
-    if (auto [error, op] = asm_op(); error)
+    if (auto [error, op] = (this->*op_parser)(); error)
     {
         errors = true;
         while (except<u8',', u8' '>())
@@ -4511,7 +4559,7 @@ void parser2::lookahead_operands_and_remarks_asm()
             operands.push_back(std::make_unique<semantics::empty_operand>(empty_range(op_start)));
             continue;
         }
-        auto [error, op] = asm_op();
+        auto [error, op] = (this->*op_parser)();
         if (error || errors)
         {
             errors = true;
@@ -4526,11 +4574,18 @@ void parser2::lookahead_operands_and_remarks_asm()
     holder->collector.set_operand_remark_field(std::move(operands), std::vector<range>(), r);
 }
 
-void parser_holder::lookahead_operands_and_remarks_asm()
+void parser_holder::lookahead_operands_and_remarks_asm_ord()
 {
     parser2 p(this);
 
-    p.lookahead_operands_and_remarks_asm();
+    p.lookahead_operands_and_remarks_asm<&parser2::asm_op_ord>();
+}
+
+void parser_holder::lookahead_operands_and_remarks_asm_text()
+{
+    parser2 p(this);
+
+    p.lookahead_operands_and_remarks_asm<&parser2::asm_op_text>();
 }
 
 semantics::literal_si parser_holder::literal_reparse()

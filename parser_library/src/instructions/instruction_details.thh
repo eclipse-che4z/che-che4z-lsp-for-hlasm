@@ -2901,7 +2901,7 @@ DEFINE_MNEMONIC(XLHR, RXSBG, UNI_SINCE_Z11, { { 2, 32 }, { 63 }, { 32 } })
 
 DEFINE_ASM_INSTRUCTION("*PROCESS", 1, -1, false, "") // TO DO
 DEFINE_ASM_INSTRUCTION("ACONTROL", 1, -1, false, "<selection>+")
-DEFINE_ASM_INSTRUCTION("ADATA", 5, 5, false, "value1,value2,value3,value4,character_string")
+DEFINE_ASM_INSTRUCTION("ADATA", 5, 5, true, "value1,value2,value3,value4,character_string")
 DEFINE_ASM_INSTRUCTION("AINSERT", 2, 2, false, "'record',BACK|FRONT")
 DEFINE_ASM_INSTRUCTION("ALIAS", 1, 1, false, "alias_string")
 DEFINE_ASM_INSTRUCTION("AMODE", 1, 1, false, "amode_option")
@@ -2927,7 +2927,7 @@ DEFINE_ASM_INSTRUCTION("EQU", 1, 5, true, "value,?<length_attribute_value>,?<typ
 DEFINE_ASM_INSTRUCTION("EXITCTL", 2, 5, false, "exit_type,control_value+")
 DEFINE_ASM_INSTRUCTION("EXTRN", 1, -1, false, "<external_symbol>+|PART(<external_symbol>+")
 DEFINE_ASM_INSTRUCTION("ICTL", 1, 3, false, "begin,?<end>,?<continue>")
-DEFINE_ASM_INSTRUCTION("ISEQ", 0, 2, false, "?<left,right>")
+DEFINE_ASM_INSTRUCTION("ISEQ", 0, 2, true, "?<left,right>")
 DEFINE_ASM_INSTRUCTION("LOCTR", 0, 0, false, "")
 DEFINE_ASM_INSTRUCTION("LTORG", 0, 0, false, "")
 DEFINE_ASM_INSTRUCTION("MNOTE", 1, 2, false, "?<<severity|*|>,>message")

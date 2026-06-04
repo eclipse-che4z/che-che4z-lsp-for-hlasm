@@ -226,10 +226,11 @@ struct processing_status_visitor
             { context::id_index("ALIAS"), ASM_ALIAS },
             { context::id_index("DXD"), DAT },
             { context::id_index("END"), ASM_END },
-            { context::id_index(), ASM_GENERIC },
         };
-        const auto it = std::ranges::find(forms, forms + std::size(forms) - 1, id, utils::first_element);
-        return return_value(it->second, i->max_operands() == 0, i);
+        if (const auto it = std::ranges::find(forms, id, utils::first_element); it != std::ranges::end(forms))
+            return return_value(it->second, i->max_operands() == 0, i);
+        else
+            return return_value(i->has_ord_symbols() ? ASM_GENERIC_ORD : ASM_GENERIC_TEXT, i->max_operands() == 0, i);
     }
     std::optional<processing_status> operator()(const instructions::machine_instruction* i) const noexcept
     {
@@ -290,21 +291,10 @@ checking::check_op_ptr get_check_op(const semantics::operand* op,
         return nullptr;
     }
 
-    checking::check_op_ptr uniq;
-
     checking::using_label_checker lc(dep_solver, diags);
     ev_op.apply_mach_visitor(lc);
 
-    if (auto expr_op = dynamic_cast<const semantics::expr_assembler_operand*>(&ev_op))
-    {
-        uniq = expr_op->get_operand_value(dep_solver, can_have_ord_syms, diags);
-    }
-    else
-    {
-        uniq = ev_op.get_operand_value(dep_solver, diags);
-    }
-
-    return uniq;
+    return ev_op.get_operand_value(dep_solver, diags);
 }
 
 bool transform_asm(std::vector<checking::check_op_ptr>& result,

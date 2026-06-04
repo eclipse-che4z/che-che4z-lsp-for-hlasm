@@ -218,7 +218,7 @@ SAM31:MAC OPSYN
 
     analyzer a(input, analyzer_options { &lib_provider });
     a.analyze();
-    EXPECT_TRUE(matches_message_codes(a.diags(), { "S0002", "S0002", "E057", "E057" }));
+    EXPECT_TRUE(matches_message_codes(a.diags(), { "A246", "A246", "E057", "E057" }));
 }
 
 TEST(instruction_tagging, valid_opsyn)

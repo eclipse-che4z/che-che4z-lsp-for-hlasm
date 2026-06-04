@@ -97,12 +97,12 @@ TEST(operand, access_operand)
     EXPECT_TRUE(access_op(operand_type::MODEL, &mo));
 
     // machine operand
-    machine_operand emo(std::make_unique<mach_expr_default>(range()), nullptr, nullptr, range());
+    machine_operand emo(std::make_unique<mach_expr_constant>(0, range()), nullptr, nullptr, range());
     EXPECT_TRUE(access_op(operand_type::MACH, &emo));
 
     // assembler operand
     // expr
-    expr_assembler_operand eao(nullptr, "", range());
+    expr_assembler_operand eao(nullptr, range());
     EXPECT_TRUE(access_asm_op(asm_kind::EXPR, &eao));
     // base end
     using_instr_assembler_operand uao(nullptr, nullptr, "", "", range());

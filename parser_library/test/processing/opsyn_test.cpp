@@ -291,6 +291,24 @@ LR OPSYN ,
     EXPECT_TRUE(a.diags().empty());
 }
 
+TEST(OPSYN, make_sure_comma_argument_works)
+{
+    std::string input(R"(
+LR OPSYN ,
+   LR
+)");
+
+    std::string LIB =
+        R"( MACRO
+ LR
+ MEND)";
+    mock_parse_lib_provider mock { { "LR", LIB } };
+    analyzer a(input, analyzer_options { &mock });
+    a.analyze();
+
+    EXPECT_TRUE(a.diags().empty());
+}
+
 TEST(OPSYN, full_circle)
 {
     std::string input(R"(

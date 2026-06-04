@@ -49,6 +49,7 @@ public:
     void visit(const semantics::using_instr_assembler_operand& op) override;
     void visit(const semantics::complex_assembler_operand& op) override;
     void visit(const semantics::string_assembler_operand& op) override;
+    void visit(const semantics::text_assembler_operand& op) override;
     void visit(const semantics::data_def_operand& op) override;
     void visit(const semantics::var_ca_operand& op) override;
     void visit(const semantics::expr_ca_operand& op) override;
@@ -68,7 +69,6 @@ private:
     void visit(const expressions::mach_expr_data_attr_literal& expr) override;
     void visit(const expressions::mach_expr_symbol& expr) override;
     void visit(const expressions::mach_expr_location_counter& expr) override;
-    void visit(const expressions::mach_expr_default& expr) override;
     void visit(const expressions::mach_expr_literal& expr) override;
 
     void visit(const expressions::ca_constant& expr) override;

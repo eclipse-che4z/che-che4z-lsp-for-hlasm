@@ -1350,7 +1350,7 @@ I   EQU  X(Y)
 
     EXPECT_EQ(get_var_value<A_t>(a.hlasm_ctx(), "A"), 1);
 
-    EXPECT_TRUE(matches_message_codes(a.diags(), { "A132" }));
+    EXPECT_TRUE(matches_message_codes(a.diags(), { "S0002", "E010", "W013" }));
 }
 
 TEST(lookahead, invalid_equ_parameter_string)

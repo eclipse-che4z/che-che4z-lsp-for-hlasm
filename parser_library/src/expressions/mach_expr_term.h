@@ -46,6 +46,8 @@ public:
     mach_expr_ptr clone() const override;
 
     std::int32_t derive_length(std::int32_t mi_length, context::dependency_solver& solver) const override;
+
+    [[nodiscard]] auto get_value() const noexcept { return value_; }
 };
 
 // Represents a literal expression (e.g. =C'text')
@@ -180,32 +182,6 @@ class mach_expr_location_counter final : public mach_expression
 
 public:
     mach_expr_location_counter(range rng);
-
-    context::dependency_collector get_dependencies(context::dependency_solver& solver) const override;
-
-    value_t evaluate(context::dependency_solver& info, diagnostic_op_consumer& diags) const override;
-
-    value_t equ_evaluate(context::dependency_solver& info) const override;
-
-    const mach_expression* leftmost_term() const override;
-
-    void apply(mach_expr_visitor& visitor) const override;
-
-    size_t hash() const override;
-
-    mach_expr_ptr clone() const override;
-
-    std::int32_t derive_length(std::int32_t mi_length, context::dependency_solver& solver) const override;
-};
-
-// Represents an "empty" term that is used when parsing of a machine expression fails
-//(the user writes invalid expression)
-class mach_expr_default final : public mach_expression
-{
-    bool do_is_similar(const mach_expression& expr) const override;
-
-public:
-    mach_expr_default(range rng);
 
     context::dependency_collector get_dependencies(context::dependency_solver& solver) const override;
 

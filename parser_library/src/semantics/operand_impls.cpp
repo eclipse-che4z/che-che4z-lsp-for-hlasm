@@ -14,6 +14,7 @@
 
 #include "operand_impls.h"
 
+#include <charconv>
 #include <limits>
 
 #include "context/using.h"
@@ -102,82 +103,75 @@ assembler_operand::assembler_operand(const asm_kind kind, const range& r)
     , kind(kind)
 {}
 
-expr_assembler_operand* assembler_operand::access_expr()
+expr_assembler_operand* assembler_operand::access_expr() noexcept
 {
     return kind == asm_kind::EXPR ? static_cast<expr_assembler_operand*>(this) : nullptr;
 }
 
-using_instr_assembler_operand* assembler_operand::access_base_end()
+using_instr_assembler_operand* assembler_operand::access_base_end() noexcept
 {
     return kind == asm_kind::BASE_END ? static_cast<using_instr_assembler_operand*>(this) : nullptr;
 }
 
-complex_assembler_operand* assembler_operand::access_complex()
+complex_assembler_operand* assembler_operand::access_complex() noexcept
 {
     return kind == asm_kind::COMPLEX ? static_cast<complex_assembler_operand*>(this) : nullptr;
 }
 
-string_assembler_operand* assembler_operand::access_string()
+string_assembler_operand* assembler_operand::access_string() noexcept
 {
     return kind == asm_kind::STRING ? static_cast<string_assembler_operand*>(this) : nullptr;
 }
 
-const expr_assembler_operand* assembler_operand::access_expr() const
+text_assembler_operand* assembler_operand::access_text() noexcept
+{
+    return kind == asm_kind::TEXT ? static_cast<text_assembler_operand*>(this) : nullptr;
+}
+
+const expr_assembler_operand* assembler_operand::access_expr() const noexcept
 {
     return kind == asm_kind::EXPR ? static_cast<const expr_assembler_operand*>(this) : nullptr;
 }
 
-const using_instr_assembler_operand* assembler_operand::access_base_end() const
+const using_instr_assembler_operand* assembler_operand::access_base_end() const noexcept
 {
     return kind == asm_kind::BASE_END ? static_cast<const using_instr_assembler_operand*>(this) : nullptr;
 }
 
-const complex_assembler_operand* assembler_operand::access_complex() const
+const complex_assembler_operand* assembler_operand::access_complex() const noexcept
 {
     return kind == asm_kind::COMPLEX ? static_cast<const complex_assembler_operand*>(this) : nullptr;
 }
 
-const string_assembler_operand* assembler_operand::access_string() const
+const string_assembler_operand* assembler_operand::access_string() const noexcept
 {
     return kind == asm_kind::STRING ? static_cast<const string_assembler_operand*>(this) : nullptr;
 }
 
+const text_assembler_operand* assembler_operand::access_text() const noexcept
+{
+    return kind == asm_kind::TEXT ? static_cast<const text_assembler_operand*>(this) : nullptr;
+}
+
 //***************** expr_assembler_operand *********************
 
-expr_assembler_operand::expr_assembler_operand(
-    expressions::mach_expr_ptr expression, std::string string_value, const range& operand_range)
+expr_assembler_operand::expr_assembler_operand(expressions::mach_expr_ptr expression, const range& operand_range)
     : assembler_operand(asm_kind::EXPR, operand_range)
     , expression(std::move(expression))
-    , value_(std::move(string_value))
 {}
 
 std::unique_ptr<checking::operand> expr_assembler_operand::get_operand_value(
     context::dependency_solver& info, diagnostic_op_consumer& diags) const
 {
-    return get_operand_value_inner(info, true, diags);
-}
-
-std::unique_ptr<checking::operand> expr_assembler_operand::get_operand_value(
-    context::dependency_solver& info, bool can_have_ordsym, diagnostic_op_consumer& diags) const
-{
-    return get_operand_value_inner(info, can_have_ordsym, diags);
-}
-
-std::unique_ptr<checking::operand> expr_assembler_operand::get_operand_value_inner(
-    context::dependency_solver& info, bool can_have_ordsym, diagnostic_op_consumer& diags) const
-{
-    if (!can_have_ordsym && dynamic_cast<expressions::mach_expr_symbol*>(expression.get()))
-        return std::make_unique<checking::one_operand>(value_);
-
     auto res = expression->evaluate(info, diags);
     switch (res.value_kind())
     {
         case context::symbol_value_kind::UNDEF:
-            return std::make_unique<checking::one_operand>(value_);
+            return std::make_unique<checking::one_operand>("");
         case context::symbol_value_kind::ABS:
-            return std::make_unique<checking::one_operand>(value_, res.get_abs());
+            return std::make_unique<checking::one_operand>("", res.get_abs());
         case context::symbol_value_kind::RELOC:
-            return std::make_unique<checking::one_operand>("0", 0);
+            return std::make_unique<checking::one_operand>("", 0);
         default:
             assert(false);
             return std::make_unique<checking::empty_operand>();
@@ -456,6 +450,38 @@ std::unique_ptr<checking::operand> string_assembler_operand::get_operand_value(
 void string_assembler_operand::apply(operand_visitor& visitor) const { visitor.visit(*this); }
 void string_assembler_operand::apply_mach_visitor(expressions::mach_expr_visitor&) const {}
 
+text_assembler_operand::text_assembler_operand(
+    std::string string_value, context::id_index ord_like, const range& operand_range)
+    : assembler_operand(asm_kind::TEXT, operand_range)
+    , value_(std::move(string_value))
+    , ord_like_(ord_like)
+{}
+
+std::unique_ptr<checking::operand> text_assembler_operand::get_operand_value(
+    context::dependency_solver&, diagnostic_op_consumer&) const
+{
+    std::int32_t v = 0;
+    const char* const b = std::to_address(value_.begin());
+    const char* const e = std::to_address(value_.end());
+    if (auto ec = std::from_chars(b, e, v); ec.ec == std::errc {} && ec.ptr == e)
+        return std::make_unique<checking::one_operand>(value_, v);
+    else if (!ord_like_.empty())
+        return std::make_unique<checking::one_operand>(ord_like_.to_string());
+    else
+        return std::make_unique<checking::one_operand>(value_);
+}
+
+bool text_assembler_operand::has_dependencies(context::dependency_solver&, std::vector<context::id_index>*) const
+{
+    return false;
+}
+
+bool text_assembler_operand::has_error(context::dependency_solver&) const { return false; }
+
+void text_assembler_operand::apply(operand_visitor& visitor) const { visitor.visit(*this); }
+
+void text_assembler_operand::apply_mach_visitor(expressions::mach_expr_visitor&) const {}
+
 struct request_halfword_alignment final : public expressions::mach_expr_visitor
 {
     // Inherited via mach_expr_visitor
@@ -464,7 +490,6 @@ struct request_halfword_alignment final : public expressions::mach_expr_visitor
     void visit(const expressions::mach_expr_data_attr_literal&) override {}
     void visit(const expressions::mach_expr_symbol&) override {}
     void visit(const expressions::mach_expr_location_counter&) override {}
-    void visit(const expressions::mach_expr_default&) override {}
     void visit(const expressions::mach_expr_literal& expr) override { expr.referenced_by_reladdr(); }
 };
 
@@ -507,4 +532,21 @@ void transform_reloc_imm_operands(semantics::operand_list& op_list, const proces
         }
     }
 }
+
+context::assembler_type assembler_type_from_op(const semantics::operand* op)
+{
+    if (!op)
+        return {};
+    const auto* asm_op = op->access_asm();
+    if (!asm_op)
+        return {};
+    const auto* expr = asm_op->access_expr();
+    if (!expr)
+        return {};
+    const auto* sym = dynamic_cast<const expressions::mach_expr_symbol*>(expr->expression.get());
+    if (!sym)
+        return {};
+    return context::assembler_type_from_string(sym->value.to_string_view());
+}
+
 } // namespace hlasm_plugin::parser_library::semantics

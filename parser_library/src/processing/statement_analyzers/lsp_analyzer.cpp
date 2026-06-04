@@ -140,17 +140,19 @@ bool lsp_analyzer::analyze(const context::hlasm_statement& statement,
 }
 
 namespace {
-const expressions::mach_expr_symbol* get_single_mach_symbol(const semantics::operand_list& operands)
+const semantics::text_assembler_operand* get_copybook_name(const semantics::operand_list& operands)
 {
     if (operands.size() != 1)
         return nullptr;
-    auto* asm_op = operands.front()->access_asm();
+    const auto* asm_op = operands.front()->access_asm();
     if (!asm_op)
         return nullptr;
-    auto* expr = asm_op->access_expr();
-    if (!expr)
+    const auto* text = asm_op->access_text();
+    if (!text)
         return nullptr;
-    return dynamic_cast<const expressions::mach_expr_symbol*>(expr->expression.get());
+    if (text->get_ord_like().empty())
+        return nullptr;
+    return text;
 }
 } // namespace
 
@@ -418,8 +420,8 @@ void lsp_analyzer::collect_copy_operands(
 {
     if (statement.opcode_ref().value != context::well_known::COPY)
         return;
-    if (auto sym_expr = get_single_mach_symbol(statement.operands_ref().value))
-        add_copy_operand(sym_expr->value, sym_expr->get_range(), collection_info);
+    if (const auto copybook_name = get_copybook_name(statement.operands_ref().value))
+        add_copy_operand(copybook_name->get_ord_like(), copybook_name->operand_range, collection_info);
 }
 
 void lsp_analyzer::collect_SET_defs(const processing::resolved_statement& statement, context::SET_t_enum type)

@@ -61,8 +61,6 @@ public:
     const range& get_range() const { return expr_range_; }
     virtual ~mach_expression() = default;
 
-    static mach_expr_ptr assign_expr(mach_expr_ptr expr, range expr_range);
-
     bool is_similar(const mach_expression& expr) const;
 
     bool has_dependencies(context::dependency_solver& info, std::vector<context::id_index>*) const;

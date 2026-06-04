@@ -96,12 +96,14 @@ enum class asm_kind
     EXPR,
     BASE_END,
     COMPLEX,
-    STRING
+    STRING,
+    TEXT,
 };
 struct expr_assembler_operand;
 struct using_instr_assembler_operand;
 struct complex_assembler_operand;
 struct string_assembler_operand;
+struct text_assembler_operand;
 
 // assembler instruction operand
 struct assembler_operand : evaluable_operand
@@ -109,15 +111,17 @@ struct assembler_operand : evaluable_operand
     static constexpr operand_type type_id = operand_type::ASM;
     assembler_operand(const asm_kind kind, const range& r);
 
-    expr_assembler_operand* access_expr();
-    using_instr_assembler_operand* access_base_end();
-    complex_assembler_operand* access_complex();
-    string_assembler_operand* access_string();
+    expr_assembler_operand* access_expr() noexcept;
+    using_instr_assembler_operand* access_base_end() noexcept;
+    complex_assembler_operand* access_complex() noexcept;
+    string_assembler_operand* access_string() noexcept;
+    text_assembler_operand* access_text() noexcept;
 
-    const expr_assembler_operand* access_expr() const;
-    const using_instr_assembler_operand* access_base_end() const;
-    const complex_assembler_operand* access_complex() const;
-    const string_assembler_operand* access_string() const;
+    const expr_assembler_operand* access_expr() const noexcept;
+    const using_instr_assembler_operand* access_base_end() const noexcept;
+    const complex_assembler_operand* access_complex() const noexcept;
+    const string_assembler_operand* access_string() const noexcept;
+    const text_assembler_operand* access_text() const noexcept;
 
     const asm_kind kind;
 };
@@ -128,17 +132,11 @@ struct expr_assembler_operand final : assembler_operand
 {
     expressions::mach_expr_ptr expression;
 
-private:
-    std::string value_;
-
 public:
-    expr_assembler_operand(expressions::mach_expr_ptr expression, std::string string_value, const range& operand_range);
+    expr_assembler_operand(expressions::mach_expr_ptr expression, const range& operand_range);
 
     std::unique_ptr<checking::operand> get_operand_value(
         context::dependency_solver& info, diagnostic_op_consumer& diags) const override;
-
-    std::unique_ptr<checking::operand> get_operand_value(
-        context::dependency_solver& info, bool can_have_ordsym, diagnostic_op_consumer& diags) const;
 
     bool has_dependencies(
         context::dependency_solver& info, std::vector<context::id_index>* missing_symbols) const override;
@@ -147,8 +145,6 @@ public:
     void apply(operand_visitor& visitor) const override;
 
     void apply_mach_visitor(expressions::mach_expr_visitor&) const override;
-
-    const std::string& get_value() const { return value_; }
 
 private:
     std::unique_ptr<checking::operand> get_operand_value_inner(
@@ -286,6 +282,31 @@ struct string_assembler_operand final : assembler_operand
     void apply(operand_visitor& visitor) const override;
 
     void apply_mach_visitor(expressions::mach_expr_visitor&) const override;
+};
+
+// assembler text operand
+struct text_assembler_operand final : assembler_operand
+{
+private:
+    std::string value_;
+    context::id_index ord_like_;
+
+public:
+    text_assembler_operand(std::string string_value, context::id_index ord_like, const range& operand_range);
+
+    std::unique_ptr<checking::operand> get_operand_value(
+        context::dependency_solver& info, diagnostic_op_consumer& diags) const override;
+
+    bool has_dependencies(
+        context::dependency_solver& info, std::vector<context::id_index>* missing_symbols) const override;
+    bool has_error(context::dependency_solver& info) const override;
+
+    void apply(operand_visitor& visitor) const override;
+
+    void apply_mach_visitor(expressions::mach_expr_visitor&) const override;
+
+    [[nodiscard]] const auto& get_text() const noexcept { return value_; }
+    [[nodiscard]] const auto& get_ord_like() const noexcept { return ord_like_; }
 };
 
 // data definition operand

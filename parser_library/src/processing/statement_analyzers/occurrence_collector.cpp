@@ -69,6 +69,12 @@ void occurrence_collector::visit(const semantics::complex_assembler_operand&) {}
 
 void occurrence_collector::visit(const semantics::string_assembler_operand&) {}
 
+void occurrence_collector::visit(const semantics::text_assembler_operand& op)
+{
+    if (any(collector_kind & lsp::occurrence_kind::ORD) && !op.get_ord_like().empty())
+        occurrences.emplace_back(lsp::occurrence_kind::ORD, op.get_ord_like(), op.operand_range, evaluated_model);
+}
+
 void occurrence_collector::visit(const semantics::data_def_operand& op) { op.value->apply(*this); }
 
 void occurrence_collector::visit(const semantics::var_ca_operand& op) { get_occurrence(*op.variable_symbol); }
@@ -161,8 +167,6 @@ void occurrence_collector::visit(const expressions::mach_expr_symbol& expr)
 }
 
 void occurrence_collector::visit(const expressions::mach_expr_location_counter&) {}
-
-void occurrence_collector::visit(const expressions::mach_expr_default&) {}
 
 void occurrence_collector::visit(const expressions::mach_expr_literal& lit) { lit.get_data_definition().apply(*this); }
 

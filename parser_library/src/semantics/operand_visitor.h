@@ -24,6 +24,7 @@ struct expr_assembler_operand;
 struct using_instr_assembler_operand;
 struct complex_assembler_operand;
 struct string_assembler_operand;
+struct text_assembler_operand;
 struct data_def_operand;
 struct var_ca_operand;
 struct expr_ca_operand;
@@ -45,6 +46,7 @@ public:
     virtual void visit(const using_instr_assembler_operand& op) = 0;
     virtual void visit(const complex_assembler_operand& op) = 0;
     virtual void visit(const string_assembler_operand& op) = 0;
+    virtual void visit(const text_assembler_operand& op) = 0;
     virtual void visit(const data_def_operand& op) = 0;
     virtual void visit(const var_ca_operand& op) = 0;
     virtual void visit(const expr_ca_operand& op) = 0;
