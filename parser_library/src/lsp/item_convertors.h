@@ -52,6 +52,7 @@ void append_hover_text(
     std::string& buffer, const context::using_context_description& u, const utils::text_convertor* tc);
 std::string get_macro_documentation(
     const text_data_view& macro_text, size_t definition_line, const utils::text_convertor* tc);
+std::string get_copy_preview(const text_data_view& copy_text, const utils::text_convertor* tc);
 std::string get_logical_line(const text_data_view& text, size_t definition_line, const utils::text_convertor* tc);
 std::string get_macro_signature(const context::macro_definition& m, const utils::text_convertor* tc);
 bool is_continued_line(std::string_view line);

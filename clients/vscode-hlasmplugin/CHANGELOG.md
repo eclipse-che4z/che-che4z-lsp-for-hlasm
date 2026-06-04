@@ -2,6 +2,9 @@
 
 ## ****Unreleased****
 
+#### Added
+- Show copybook preview in hover text
+
 #### Fixed
 - Remove file extensions and capitalize `SYSIN_MEMBER` system variable
 - Validation of USING operands is inaccurate

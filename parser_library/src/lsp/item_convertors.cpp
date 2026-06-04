@@ -329,6 +329,23 @@ std::string get_macro_documentation(const text_data_view& text, size_t definitio
     return result;
 }
 
+std::string get_copy_preview(const text_data_view& copy_text, const utils::text_convertor* tc)
+{
+    constexpr size_t doc_limit = 1024;
+    const size_t max_line = std::min(doc_limit, copy_text.get_number_of_lines());
+
+    std::string result;
+    /* prolog + epilog + line count * (72 columns, newline, reserve 1 byte per line for weird chars) */
+    result.reserve(prolog.size() + epilog.size() + (72 + 1 + 1) * max_line);
+
+    result.append(prolog);
+    for (size_t i = 0; i < max_line; ++i)
+        add_line(result, copy_text.get_line(i), tc);
+    result.append(epilog);
+
+    return result;
+}
+
 std::string get_logical_line(const text_data_view& text, size_t definition_line, const utils::text_convertor* tc)
 {
     size_t end_line = definition_line;

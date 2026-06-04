@@ -790,7 +790,12 @@ std::string lsp_context::find_hover(const symbol_occurrence& occ,
             break;
         }
         case lsp::occurrence_kind::COPY_OP:
-            return "";
+            if (const auto c = m_hlasm_ctx->get_copy_member(occ.name); !c)
+                return "";
+            else if (const auto f = m_files.find(c->definition_location.resource_loc); f == m_files.end())
+                return "";
+            else
+                return prefix_using(get_copy_preview(f->second.data, tc));
 
         default:
             break;

@@ -16,6 +16,7 @@
 #include "gtest/gtest.h"
 
 #include "../common_testing.h"
+#include "../mock_parse_lib_provider.h"
 #include "analyzer_fixture.h"
 #include "document_symbol_item.h"
 #include "lsp/lsp_context.h"
@@ -239,4 +240,22 @@ TEST(hover, using)
 
 
     EXPECT_THAT(a.context().lsp_ctx->hover(empty_loc, { 2, 5 }, nullptr), StartsWith("Active USINGs: **(PC)"));
+}
+
+TEST(hover, copybook)
+{
+    mock_parse_lib_provider libs {
+        { "COPYBOOK", "* comment" },
+    };
+
+    analyzer a(" COPY COPYBOOK", analyzer_options { &libs });
+    a.analyze();
+
+    const auto hover_text = a.context().lsp_ctx->hover(empty_loc, { 0, 8 }, nullptr);
+    const auto expected = R"(```hlasm
+* comment
+```
+)";
+
+    EXPECT_EQ(hover_text, expected);
 }
