@@ -19,14 +19,14 @@
 #include <type_traits>
 
 #include "context/hlasm_context.h"
+#include "context/ordinary_assembly/ordinary_assembly_dependency_solver.h"
 #include "context/ordinary_assembly/symbol_dependency_tables.h"
+#include "postponed_statement_impl.h"
 #include "processing/processing_manager.h"
 #include "processing/statement_processors/ordinary_processor.h"
 #include "semantics/operand_impls.h"
 
-using namespace hlasm_plugin::parser_library;
-using namespace processing;
-using namespace workspaces;
+namespace hlasm_plugin::parser_library::processing {
 
 low_language_processor::low_language_processor(const analyzing_context& ctx,
     branching_provider& branch_provider,
@@ -151,7 +151,7 @@ low_language_processor::preprocessed_part low_language_processor::preprocess_inn
     return result;
 }
 
-check_org_result hlasm_plugin::parser_library::processing::check_address_for_ORG(
+check_org_result check_address_for_ORG(
     const context::address& addr_to_check, const context::address& curr_addr, size_t boundary, int offset)
 {
     int addr_to_check_offset = addr_to_check.offset();
@@ -167,3 +167,13 @@ check_org_result hlasm_plugin::parser_library::processing::check_address_for_ORG
 
     return check_org_result::valid;
 }
+
+void low_language_processor::add_postponed(
+    rebuilt_statement&& stmt, context::ordinary_assembly_dependency_solver&& solver) const
+{
+    hlasm_ctx.ord_ctx.symbol_dependencies().add_postponed_statement(
+        std::make_unique<postponed_statement_impl>(std::move(stmt), hlasm_ctx.processing_stack()),
+        std::move(solver).derive_current_dependency_evaluation_context());
+}
+
+} // namespace hlasm_plugin::parser_library::processing

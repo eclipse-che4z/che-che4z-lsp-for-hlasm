@@ -18,6 +18,7 @@
 #include "instruction_processor.h"
 
 namespace hlasm_plugin::parser_library::context {
+class ordinary_assembly_dependency_solver;
 class symbol;
 } // namespace hlasm_plugin::parser_library::context
 
@@ -50,6 +51,8 @@ protected:
     // helper method to create symbol
     context::symbol& create_symbol(
         context::id_index symbol_name, context::symbol_value value, context::symbol_attributes attributes);
+
+    void add_postponed(rebuilt_statement&& stmt, context::ordinary_assembly_dependency_solver&& solver) const;
 
 private:
     struct preprocessed_part

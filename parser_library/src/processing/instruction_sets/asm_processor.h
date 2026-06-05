@@ -17,7 +17,6 @@
 
 #include <memory>
 #include <optional>
-#include <unordered_map>
 
 #include "checking/data_definition/data_def_type_base.h"
 #include "low_language_processor.h"
@@ -134,6 +133,8 @@ private:
     };
 
     void process_external(rebuilt_statement&& stmt, external_type t);
+
+    void add_postponed(rebuilt_statement&& stmt) const;
 };
 
 } // namespace hlasm_plugin::parser_library::processing
