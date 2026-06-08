@@ -32,12 +32,12 @@ jobs:
 
     steps:
       - name: Checkout base code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           path: base
           persist-credentials: false
       - name: Checkout wiki code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           repository: ${{github.repository}}.wiki
           path: wiki          

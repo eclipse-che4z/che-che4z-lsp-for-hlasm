@@ -34,7 +34,7 @@ jobs:
     runs-on: ubuntu-24.04
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: Configure
         run: cmake --preset ci-sonar
       - name: Build
@@ -69,7 +69,7 @@ jobs:
           echo ${{ github.event.ref }} > pr-info/ref.txt
           echo -Dsonar.branch.name=${{ github.ref_name }} > pr-info/head-branch-arg.txt
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: bw-output
           path: |

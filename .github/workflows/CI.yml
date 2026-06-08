@@ -40,7 +40,7 @@ jobs:
     container:
       image: ubuntu:26.04
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: Install dependencies
         run: apt-get update && apt-get install -y clang-format-22
       - name: Run clang-format
@@ -66,7 +66,7 @@ jobs:
       pull-requests: write
     needs: [formal-checks]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: NPM CI
         run: npm ci
         working-directory: ${{ env.CLIENT_DIR }}
@@ -91,7 +91,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           HLASM_ALPHA_BUILD: ${{ (github.ref == 'refs/heads/master' || github.ref == 'refs/heads/release-next') && '0' || '1' }}
       - name: Upload Release Info
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: release-info
           path: |
@@ -109,7 +109,7 @@ jobs:
           - type: tsan
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: Requirements install
         run: |
           sudo apt-get update
@@ -146,10 +146,10 @@ jobs:
     runs-on: ubuntu-24.04
     container: alpine:3.22
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: Install TAR
         run: apk add tar
-      - uses: actions/cache@v4
+      - uses: actions/cache@v5
         id: cache
         with:
           path: toolchain.tar.gz
@@ -186,27 +186,27 @@ jobs:
             toolchain: true
           - os: ubuntu-24.04
             native: wasm
-            container: emscripten/emsdk:4.0.10
+            container: emscripten/emsdk:5.0.7
             artifacts-ext: .*
-          - os: windows-2025
+          - os: windows-2022
             native: win32_x64
             artifacts-ext: .exe
-          - os: windows-2025
+          - os: windows-2022
             native: win32_arm64
             artifacts-ext: .exe
             skip-test: true
-          - os: macos-15-intel
+          - os: macos-26-intel
             native: darwin_x64
-          - os: macos-15
+          - os: macos-26
             native: darwin_arm64
     container: ${{ matrix.container }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: Requirements install
         run: if [ -f ./scripts/prereq.${{ matrix.native }}.sh ]; then ./scripts/prereq.${{ matrix.native }}.sh; fi
       - name: Download toolchain
         if: ${{ matrix.toolchain }}
-        uses: actions/cache/restore@v4
+        uses: actions/cache/restore@v5
         with:
           path: toolchain.tar.gz
           key: ${{ matrix.native }}-${{ hashFiles('scripts/toolchain.sh') }}
@@ -240,13 +240,13 @@ jobs:
         run: ${{ matrix.dbg-strip }}
         working-directory: build/bin
       - name: Actions artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: hlasm_language_server_${{ matrix.native }}
           path: build/bin/hlasm_language_server${{ matrix.artifacts-ext }}
       - name: Actions artifact
         if: ${{ matrix.dbg-pattern }}
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: hlasm_language_server_${{ matrix.native }}_dbg
           path: ${{ matrix.dbg-pattern }}
@@ -277,6 +277,9 @@ jobs:
           - os: windows-2025
             native: win32_x64
             chmod: false
+          - os: windows-11-arm
+            native: win32_arm64
+            chmod: false
           - os: macos-14
             native: darwin_arm64
             chmod: true
@@ -286,6 +289,12 @@ jobs:
           - os: macos-15-intel
             native: darwin_x64
             chmod: true
+          - os: macos-26
+            native: darwin_arm64
+            chmod: true
+          - os: macos-26-intel
+            native: darwin_x64
+            chmod: true
 
     env:
       XVFB: ${{ startsWith(matrix.native, 'linux') && 'xvfb-run -a' || '' }}
@@ -293,14 +302,14 @@ jobs:
       run:
         working-directory: ${{ env.CLIENT_DIR }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: Download native language server
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: hlasm_language_server_${{ matrix.native }}
           path: ${{ env.CLIENT_DIR }}/bin/${{ matrix.native }}/
       - name: Download wasm language server
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: hlasm_language_server_wasm
           path: ${{ env.CLIENT_DIR }}/bin/wasm/
@@ -324,14 +333,14 @@ jobs:
     runs-on: ubuntu-24.04
     needs: [build-matrix, release-info]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: Download wasm language server
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: hlasm_language_server_wasm
           path: ${{ env.CLIENT_DIR }}/bin/wasm/
       - name: Download Release Info
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: release-info
       - name: NPM CI
@@ -350,58 +359,59 @@ jobs:
         run: npm exec vsce -- package ${{ github.ref == 'refs/heads/master' && ' ' || '--pre-release' }}  --no-dependencies --target web -o hlasm-language-support-web.vsix --baseContentUrl "https://raw.githubusercontent.com/${{ github.repository }}/${{ github.sha }}/"
         working-directory: ${{ env.CLIENT_DIR }}
       - name: Upload VSIX
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: hlasm-language-support-web.vsix
           path: ${{ env.CLIENT_DIR }}/hlasm-language-support-web.vsix
+          archive: false
 
   VSIX:
     runs-on: ubuntu-24.04
     needs: [build-matrix, release-info]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: Download windows language server (x64)
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: hlasm_language_server_win32_x64
           path: ${{ env.CLIENT_DIR }}/bin/win32_x64/
       - name: Download windows language server (arm64)
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: hlasm_language_server_win32_arm64
           path: ${{ env.CLIENT_DIR }}/bin/win32_arm64/
       - name: Download linux language server (x64)
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: hlasm_language_server_linux_x64
           path: ${{ env.CLIENT_DIR }}/bin/linux_x64/
       - name: Download linux language server (arm64)
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: hlasm_language_server_linux_arm64
           path: ${{ env.CLIENT_DIR }}/bin/linux_arm64/
       - name: Download linux language server (s390x)
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: hlasm_language_server_linux_s390x
           path: ${{ env.CLIENT_DIR }}/bin/linux_s390x/
       - name: Download MacOS language server (x64)
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: hlasm_language_server_darwin_x64
           path: ${{ env.CLIENT_DIR }}/bin/darwin_x64/
       - name: Download MacOS language server (arm64)
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: hlasm_language_server_darwin_arm64
           path: ${{ env.CLIENT_DIR }}/bin/darwin_arm64/
       - name: Download wasm language server
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: hlasm_language_server_wasm
           path: ${{ env.CLIENT_DIR }}/bin/wasm/
       - name: Download Release Info
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: release-info
       - name: Set executable flag
@@ -424,10 +434,11 @@ jobs:
         run: npm exec vsce -- package ${{ github.ref == 'refs/heads/master' && ' ' || '--pre-release' }} --no-dependencies -o hlasm-language-support.vsix --baseContentUrl "https://raw.githubusercontent.com/${{ github.repository }}/${{ github.sha }}/"
         working-directory: ${{ env.CLIENT_DIR }}
       - name: Upload VSIX
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: hlasm-language-support.vsix
           path: ${{ env.CLIENT_DIR }}/hlasm-language-support.vsix
+          archive: false
 
   release:
     name: Release VSIXs
@@ -440,59 +451,59 @@ jobs:
     needs: [VSIX, VSIX-web, test-matrix, sanitizer-builds, theia-test]
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: Download VSIX
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: hlasm-language-support.vsix
           path: ${{ env.CLIENT_DIR }}
       - name: Download Web VSIX
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: hlasm-language-support-web.vsix
           path: ${{ env.CLIENT_DIR }}
       - name: Download windows language server (x64)
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: hlasm_language_server_win32_x64
           path: ${{ env.CLIENT_DIR }}/bin/win32_x64/
       - name: Download windows language server (arm64)
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: hlasm_language_server_win32_arm64
           path: ${{ env.CLIENT_DIR }}/bin/win32_arm64/
       - name: Download linux language server (x64)
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: hlasm_language_server_linux_x64
           path: ${{ env.CLIENT_DIR }}/bin/linux_x64/
       - name: Download linux language server (arm64)
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: hlasm_language_server_linux_arm64
           path: ${{ env.CLIENT_DIR }}/bin/linux_arm64/
       - name: Download linux language server (s390x)
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: hlasm_language_server_linux_s390x
           path: ${{ env.CLIENT_DIR }}/bin/linux_s390x/
       - name: Download MacOS language server (x64)
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: hlasm_language_server_darwin_x64
           path: ${{ env.CLIENT_DIR }}/bin/darwin_x64/
       - name: Download MacOS language server (arm64)
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: hlasm_language_server_darwin_arm64
           path: ${{ env.CLIENT_DIR }}/bin/darwin_arm64/
       - name: Download wasm language server
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: hlasm_language_server_wasm
           path: ${{ env.CLIENT_DIR }}/bin/wasm/
       - name: Download Release Info
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: release-info
       - name: Commit changes
@@ -543,13 +554,13 @@ jobs:
       options: --user root
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           persist-credentials: false
       - name: Install Chromium
         run: apt-get update && apt-get install -y chromium unzip
       - name: Download VSIX
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: hlasm-language-support.vsix
           path: /tmp
