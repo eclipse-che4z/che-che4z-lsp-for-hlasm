@@ -169,14 +169,14 @@ struct concat_point_stringifier
     void operator()(const var_sym_conc& v) const
     {
         result.push_back('&');
-        if (v.symbol->created)
+        if (const auto* created = v.symbol->created())
         {
             result.push_back('(');
-            operator()(v.symbol->access_created()->created_name);
+            operator()(*created);
             result.push_back(')');
         }
         else
-            result.append(v.symbol->access_basic()->name.to_string_view());
+            result.append(v.symbol->named()->to_string_view());
     }
 
     void operator()(const dot_conc&) const { result.push_back('.'); }

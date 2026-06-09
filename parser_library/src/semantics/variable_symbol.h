@@ -17,9 +17,9 @@
 
 #include <memory>
 #include <utility>
+#include <variant>
 #include <vector>
 
-#include "concatenation.h"
 #include "context/id_index.h"
 #include "expressions/conditional_assembly/ca_expression.h"
 #include "range.h"
@@ -30,60 +30,26 @@
 namespace hlasm_plugin::parser_library::semantics {
 struct concatenation_point;
 using concat_chain = std::vector<concatenation_point>;
-struct variable_symbol;
-struct basic_variable_symbol;
-struct created_variable_symbol;
-
-using vs_ptr = std::unique_ptr<variable_symbol>;
 using vs_eval = std::pair<context::id_index, std::vector<context::A_t>>;
 
 struct variable_symbol
 {
-    const bool created;
-
+    std::variant<context::id_index, concat_chain> value;
     std::vector<expressions::ca_expr_ptr> subscript;
+    range symbol_range;
 
-    const range symbol_range;
-
-    basic_variable_symbol* access_basic();
-    const basic_variable_symbol* access_basic() const;
-    created_variable_symbol* access_created();
-    const created_variable_symbol* access_created() const;
+    const auto* named() const noexcept { return std::get_if<context::id_index>(&value); }
+    const auto* created() const noexcept { return std::get_if<concat_chain>(&value); }
 
     vs_eval evaluate_symbol(const expressions::evaluation_context& eval_ctx) const;
     std::vector<context::A_t> evaluate_subscript(const expressions::evaluation_context& eval_ctx) const;
     context::SET_t evaluate(const expressions::evaluation_context& eval_ctx) const;
 
-    virtual context::id_index evaluate_name(const expressions::evaluation_context& eval_ctx) const = 0;
-    virtual void resolve(context::SET_t_enum parent_expr_kind, diagnostic_op_consumer& diag);
-
-    virtual ~variable_symbol() = default;
-
-protected:
-    variable_symbol(const bool created, std::vector<expressions::ca_expr_ptr> subscript, range symbol_range);
+    context::id_index evaluate_name(const expressions::evaluation_context& eval_ctx) const;
+    void resolve(context::SET_t_enum parent_expr_kind, diagnostic_op_consumer& diag);
 };
 
-struct basic_variable_symbol final : variable_symbol
-{
-    basic_variable_symbol(context::id_index name, std::vector<expressions::ca_expr_ptr> subscript, range symbol_range);
-    ~basic_variable_symbol();
-
-    const context::id_index name;
-
-    context::id_index evaluate_name(const expressions::evaluation_context& eval_ctx) const override;
-};
-
-struct created_variable_symbol final : variable_symbol
-{
-    created_variable_symbol(
-        concat_chain created_name, std::vector<expressions::ca_expr_ptr> subscript, range symbol_range);
-    ~created_variable_symbol();
-
-    const concat_chain created_name;
-
-    context::id_index evaluate_name(const expressions::evaluation_context& eval_ctx) const override;
-    void resolve(context::SET_t_enum parent_expr_kind, diagnostic_op_consumer& diag) override;
-};
+using vs_ptr = std::unique_ptr<variable_symbol>;
 
 } // namespace hlasm_plugin::parser_library::semantics
 

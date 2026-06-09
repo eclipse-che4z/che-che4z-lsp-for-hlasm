@@ -24,6 +24,7 @@
 #include "expressions/conditional_assembly/ca_expr_visitor.h"
 #include "expressions/evaluation_context.h"
 #include "lexing/tools.h"
+#include "semantics/variable_symbol.h"
 
 #define RET_ERRPARM                                                                                                    \
     do                                                                                                                 \

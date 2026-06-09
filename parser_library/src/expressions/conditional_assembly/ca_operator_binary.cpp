@@ -101,13 +101,13 @@ std::optional<bool> t_attr_special_case(std::vector<context::id_index>& symbols,
     else
         return std::nullopt;
 
-    auto basic = std::get<semantics::vs_ptr>(t_attr->symbol)->access_basic();
-    if (!basic)
+    const auto& var = *std::get<semantics::vs_ptr>(t_attr->symbol);
+    if (!var.named())
         return std::nullopt;
 
     bool result = false;
     result |= o_string->get_undefined_attributed_symbols(symbols, eval_ctx);
-    for (const auto& expr : basic->subscript)
+    for (const auto& expr : var.subscript)
         result |= expr->get_undefined_attributed_symbols(symbols, eval_ctx);
 
     if (result)

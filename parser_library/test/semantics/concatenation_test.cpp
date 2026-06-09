@@ -19,17 +19,16 @@
 #include "semantics/variable_symbol.h"
 
 using namespace hlasm_plugin::parser_library::semantics;
-using namespace hlasm_plugin::parser_library::expressions;
 using namespace hlasm_plugin::parser_library;
 
 concat_chain create_chain()
 {
-    auto vs = std::make_unique<basic_variable_symbol>(id_index("N"), std::vector<ca_expr_ptr>(), range());
+    auto vs = std::make_unique<variable_symbol>(id_index("N"), std::vector<ca_expr_ptr>(), range());
 
     concat_chain created_name;
     created_name.emplace_back(char_str_conc("n", range()));
 
-    auto vsc = std::make_unique<created_variable_symbol>(std::move(created_name), std::vector<ca_expr_ptr>(), range());
+    auto vsc = std::make_unique<variable_symbol>(std::move(created_name), std::vector<ca_expr_ptr>(), range());
 
     concat_chain chain;
 

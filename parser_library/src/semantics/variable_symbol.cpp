@@ -14,33 +14,18 @@
 
 #include "variable_symbol.h"
 
+#include "concatenation.h"
 #include "context/hlasm_context.h"
-#include "expressions/conditional_assembly/terms/ca_constant.h"
 #include "expressions/evaluation_context.h"
 
 namespace hlasm_plugin::parser_library::semantics {
 
-basic_variable_symbol::basic_variable_symbol(
-    context::id_index name, std::vector<expressions::ca_expr_ptr> subscript, range symbol_range)
-    : variable_symbol(false, std::move(subscript), std::move(symbol_range))
-    , name(name)
-{}
-
-basic_variable_symbol::~basic_variable_symbol() = default;
-
-context::id_index basic_variable_symbol::evaluate_name(const expressions::evaluation_context&) const { return name; }
-
-created_variable_symbol::created_variable_symbol(
-    concat_chain created_name, std::vector<expressions::ca_expr_ptr> subscript, range symbol_range)
-    : variable_symbol(true, std::move(subscript), std::move(symbol_range))
-    , created_name(std::move(created_name))
-{}
-
-created_variable_symbol::~created_variable_symbol() = default;
-
-context::id_index created_variable_symbol::evaluate_name(const expressions::evaluation_context& eval_ctx) const
+context::id_index variable_symbol::evaluate_name(const expressions::evaluation_context& eval_ctx) const
 {
-    auto str_name = concatenation_point::evaluate(created_name, eval_ctx);
+    if (const auto* name = named())
+        return *name;
+
+    auto str_name = concatenation_point::evaluate(*created(), eval_ctx);
 
     auto [valid, id] = eval_ctx.hlasm_ctx.try_get_symbol_name(str_name);
     if (!valid)
@@ -49,31 +34,22 @@ context::id_index created_variable_symbol::evaluate_name(const expressions::eval
     return id;
 }
 
-void created_variable_symbol::resolve(context::SET_t_enum parent_expr_kind, diagnostic_op_consumer& diag)
+void variable_symbol::resolve(context::SET_t_enum parent_expr_kind, diagnostic_op_consumer& diag)
 {
-    for (const auto& c : created_name)
-        c.resolve(diag);
-    variable_symbol::resolve(parent_expr_kind, diag);
-}
+    if (const auto* created_name = created())
+    {
+        for (const auto& c : *created_name)
+            c.resolve(diag);
+    }
 
-basic_variable_symbol* variable_symbol::access_basic()
-{
-    return created ? nullptr : static_cast<basic_variable_symbol*>(this);
-}
+    const expressions::ca_expression_ctx expr_ctx = {
+        context::SET_t_enum::A_TYPE,
+        parent_expr_kind == context::SET_t_enum::B_TYPE ? parent_expr_kind : context::SET_t_enum::A_TYPE,
+        true,
+    };
 
-const basic_variable_symbol* variable_symbol::access_basic() const
-{
-    return created ? nullptr : static_cast<const basic_variable_symbol*>(this);
-}
-
-created_variable_symbol* variable_symbol::access_created()
-{
-    return created ? static_cast<created_variable_symbol*>(this) : nullptr;
-}
-
-const created_variable_symbol* variable_symbol::access_created() const
-{
-    return created ? static_cast<const created_variable_symbol*>(this) : nullptr;
+    for (const auto& v : subscript)
+        v->resolve_expression_tree(expr_ctx, diag);
 }
 
 vs_eval variable_symbol::evaluate_symbol(const expressions::evaluation_context& eval_ctx) const
@@ -101,22 +77,5 @@ context::SET_t variable_symbol::evaluate(const expressions::evaluation_context& 
 
     return val;
 }
-
-void variable_symbol::resolve(context::SET_t_enum parent_expr_kind, diagnostic_op_consumer& diag)
-{
-    expressions::ca_expression_ctx expr_ctx = { context::SET_t_enum::A_TYPE,
-        parent_expr_kind == context::SET_t_enum::B_TYPE ? parent_expr_kind : context::SET_t_enum::A_TYPE,
-        true };
-
-    for (const auto& v : subscript)
-        v->resolve_expression_tree(expr_ctx, diag);
-}
-
-variable_symbol::variable_symbol(
-    const bool created, std::vector<expressions::ca_expr_ptr> subscript, range symbol_range)
-    : created(created)
-    , subscript(std::move(subscript))
-    , symbol_range(std::move(symbol_range))
-{}
 
 } // namespace hlasm_plugin::parser_library::semantics

@@ -276,14 +276,13 @@ void macrodef_processor::process_prototype_label(
     if (statement.label_ref().type == semantics::label_si_type::VAR)
     {
         auto var = std::get<semantics::vs_ptr>(statement.label_ref().value).get();
-        if (var->created || var->subscript.size())
+        if (const auto* name = var->named(); !name || var->subscript.size())
             add_diagnostic(diagnostic_op::error_E043(var->symbol_range));
         else
         {
-            result_.prototype.name_param = var->access_basic()->name;
-            result_.variable_symbols.emplace_back(var->access_basic()->name,
-                context::statement_id { result_.definition.size() },
-                var->symbol_range.start);
+            result_.prototype.name_param = *name;
+            result_.variable_symbols.emplace_back(
+                *name, context::statement_id { result_.definition.size() }, var->symbol_range.start);
             param_names.push_back(result_.prototype.name_param);
         }
     }
@@ -339,14 +338,12 @@ void macrodef_processor::process_prototype_operand(
         {
             auto var = std::get<var_sym_conc>(tmp_chain[0].value).symbol.get();
 
-            if (test_varsym_validity(var, param_names, tmp->operand_range, true))
+            if (const auto* var_id = test_varsym_validity(var, param_names, tmp->operand_range, true))
             {
-                auto var_id = var->access_basic()->name;
-                param_names.push_back(var_id);
-                result_.prototype.symbolic_params.emplace_back(nullptr, var_id);
-                result_.variable_symbols.emplace_back(var->access_basic()->name,
-                    context::statement_id { result_.definition.size() },
-                    var->symbol_range.start);
+                param_names.push_back(*var_id);
+                result_.prototype.symbolic_params.emplace_back(nullptr, *var_id);
+                result_.variable_symbols.emplace_back(
+                    *var_id, context::statement_id { result_.definition.size() }, var->symbol_range.start);
             }
         }
         else if (tmp_chain.size() > 1)
@@ -355,19 +352,16 @@ void macrodef_processor::process_prototype_operand(
             {
                 auto var = std::get<var_sym_conc>(tmp_chain[0].value).symbol.get();
 
-                if (test_varsym_validity(var, param_names, tmp->operand_range, false))
+                if (const auto* var_id = test_varsym_validity(var, param_names, tmp->operand_range, false))
                 {
-                    auto var_id = var->access_basic()->name;
-
-                    param_names.push_back(var_id);
+                    param_names.push_back(*var_id);
 
                     diagnostic_adder add_diags(diag_ctx, op->operand_range);
 
                     result_.prototype.symbolic_params.emplace_back(
-                        macro_processor::create_macro_data(tmp_chain.begin() + 2, tmp_chain.end(), add_diags), var_id);
-                    result_.variable_symbols.emplace_back(var->access_basic()->name,
-                        context::statement_id { result_.definition.size() },
-                        var->symbol_range.start);
+                        macro_processor::create_macro_data(tmp_chain.begin() + 2, tmp_chain.end(), add_diags), *var_id);
+                    result_.variable_symbols.emplace_back(
+                        *var_id, context::statement_id { result_.definition.size() }, var->symbol_range.start);
                 }
             }
             else
@@ -378,26 +372,27 @@ void macrodef_processor::process_prototype_operand(
     }
 }
 
-bool macrodef_processor::test_varsym_validity(const semantics::variable_symbol* var,
+const context::id_index* macrodef_processor::test_varsym_validity(const semantics::variable_symbol* var,
     const std::vector<context::id_index>& param_names,
     range op_range,
     bool add_empty)
 {
-    if (var->created || !var->subscript.empty())
+    const auto* name = var->named();
+    if (!name || !var->subscript.empty())
     {
         add_diagnostic(diagnostic_op::error_E043(var->symbol_range));
         result_.prototype.symbolic_params.emplace_back(nullptr);
-        return false;
+        return nullptr;
     }
 
-    if (std::ranges::find(param_names, var->access_basic()->name) != param_names.end())
+    if (std::ranges::find(param_names, *name) != param_names.end())
     {
         add_diagnostic(diagnostic_op::error_E011("Symbolic parameter", op_range));
         if (add_empty)
             result_.prototype.symbolic_params.emplace_back(nullptr);
-        return false;
+        return nullptr;
     }
-    return true;
+    return name;
 }
 
 bool macrodef_processor::process_MACRO()
@@ -514,17 +509,17 @@ void macrodef_processor::add_SET_sym_to_res(
 {
     if (copy_nest_limit.size() > 1)
         return;
-    if (var->created)
+
+    const auto* name = var->named();
+    if (!name)
         return;
 
-    const auto& name = var->access_basic()->name;
-
-    if (std::ranges::find(result_.variable_symbols, name, &lsp::variable_symbol_definition::name)
+    if (std::ranges::find(result_.variable_symbols, *name, &lsp::variable_symbol_definition::name)
         != result_.variable_symbols.end())
         return;
 
     result_.variable_symbols.emplace_back(
-        name, set_type, global, context::statement_id { result_.definition.size() }, var->symbol_range.start);
+        *name, set_type, global, context::statement_id { result_.definition.size() }, var->symbol_range.start);
 }
 
 void macrodef_processor::process_sequence_symbol(const semantics::label_si& label)

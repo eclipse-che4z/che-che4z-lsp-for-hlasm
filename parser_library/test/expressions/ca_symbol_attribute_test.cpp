@@ -22,6 +22,7 @@
 #include "expressions/conditional_assembly/terms/ca_symbol_attribute.h"
 #include "expressions/evaluation_context.h"
 #include "library_info_transitional.h"
+#include "semantics/variable_symbol.h"
 
 using namespace hlasm_plugin::parser_library::expressions;
 using namespace hlasm_plugin::parser_library::semantics;
@@ -37,7 +38,7 @@ TEST(ca_symbol_attr, undefined_attributes)
 
     subscript.push_back(std::make_unique<ca_constant>(1, range()));
 
-    auto vs = std::make_unique<basic_variable_symbol>(context::id_index("N"), std::move(subscript), range());
+    auto vs = std::make_unique<semantics::variable_symbol>(context::id_index("N"), std::move(subscript), range());
 
     ca_symbol_attribute attr(std::move(vs), context::data_attr_kind::D, range(), range());
 
@@ -49,7 +50,7 @@ TEST(ca_symbol_attr, undefined_attributes)
 
 ca_symbol_attribute create_var_sym_attr(context::data_attr_kind kind, context::id_index name)
 {
-    auto vs = std::make_unique<basic_variable_symbol>(name, std::vector<ca_expr_ptr> {}, range());
+    auto vs = std::make_unique<semantics::variable_symbol>(name, std::vector<ca_expr_ptr> {}, range());
 
     return ca_symbol_attribute(std::move(vs), kind, range(), range());
 }

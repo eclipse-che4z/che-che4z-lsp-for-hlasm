@@ -23,6 +23,7 @@
 #include "instructions/instruction.h"
 #include "library_info_transitional.h"
 #include "semantics/operand_impls.h"
+#include "semantics/variable_symbol.h"
 
 using namespace hlasm_plugin::parser_library;
 

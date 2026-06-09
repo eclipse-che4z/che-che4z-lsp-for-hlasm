@@ -34,10 +34,9 @@ bool ca_var_sym::get_undefined_attributed_symbols_vs(
     for (auto&& expr : symbol->subscript)
         result |= expr->get_undefined_attributed_symbols(symbols, eval_ctx);
 
-    if (symbol->created)
+    if (const auto created = symbol->created())
     {
-        auto created = symbol->access_created();
-        for (auto&& point : created->created_name)
+        for (auto&& point : *created)
             if (const auto* var = std::get_if<semantics::var_sym_conc>(&point.value))
                 result |= get_undefined_attributed_symbols_vs(symbols, var->symbol, eval_ctx);
     }

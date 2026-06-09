@@ -18,6 +18,7 @@
 #include <string>
 #include <variant>
 
+#include "concatenation.h"
 #include "context/id_index.h"
 #include "expressions/data_definition.h"
 #include "lexing/string_with_newlines.h"

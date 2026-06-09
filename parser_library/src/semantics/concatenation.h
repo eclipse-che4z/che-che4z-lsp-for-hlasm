@@ -24,7 +24,6 @@
 #include "context/id_index.h"
 #include "diagnostic_consumer.h"
 #include "range.h"
-#include "variable_symbol.h"
 
 // this file is a composition of structures that create concat_chain
 // concat_chain is used to represent model statement fields

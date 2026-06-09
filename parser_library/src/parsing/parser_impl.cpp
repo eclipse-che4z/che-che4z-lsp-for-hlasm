@@ -2910,14 +2910,7 @@ result_t<semantics::vs_ptr> parser2::lex_variable()
 
     const auto r = range_from(start);
 
-    if (std::holds_alternative<context::id_index>(var_name))
-        return std::make_unique<semantics::basic_variable_symbol>(
-            std::get<context::id_index>(var_name), std::move(subscript), r);
-    else
-    {
-        auto& cc = std::get<semantics::concat_chain>(var_name);
-        return std::make_unique<semantics::created_variable_symbol>(std::move(cc), std::move(subscript), r);
-    }
+    return std::make_unique<semantics::variable_symbol>(std::move(var_name), std::move(subscript), r);
 }
 
 template<std::pair<bool, semantics::operand_ptr> (parser2::*arg)(parser_position, size_t)>
@@ -3031,19 +3024,13 @@ std::pair<bool, semantics::operand_ptr> parser2::ca_var_def_ops(parser_position 
         if (!match<u8')'>(hl_scopes::operator_symbol, diagnostic_op::error_S0011))
             return {};
     }
+
+    if (const auto* created = std::get_if<semantics::concat_chain>(&var_name))
+        resolve_concat_chain(*created);
+
     const auto r = range_from(start);
-    semantics::vs_ptr var;
-    if (std::holds_alternative<context::id_index>(var_name))
-    {
-        var = std::make_unique<semantics::basic_variable_symbol>(
-            std::get<context::id_index>(var_name), std::move(num), r);
-    }
-    else
-    {
-        auto& cc = std::get<semantics::concat_chain>(var_name);
-        resolve_concat_chain(cc);
-        var = std::make_unique<semantics::created_variable_symbol>(std::move(cc), std::move(num), r);
-    }
+    auto var = std::make_unique<semantics::variable_symbol>(std::move(var_name), std::move(num), r);
+
     return { true, std::make_unique<semantics::var_ca_operand>(std::move(var), r) };
 }
 

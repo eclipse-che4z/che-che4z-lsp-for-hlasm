@@ -456,15 +456,14 @@ void lsp_analyzer::collect_LCL_GBL_defs(
 
 void lsp_analyzer::add_var_def(const semantics::variable_symbol* var, context::SET_t_enum type, bool global)
 {
-    if (var->created)
+    const auto* n = var->named();
+    if (!n)
         return;
 
-    const auto& name = var->access_basic()->name;
-
-    if (std::ranges::find(opencode_var_defs_, name, &lsp::variable_symbol_definition::name) != opencode_var_defs_.end())
+    if (std::ranges::find(opencode_var_defs_, *n, &lsp::variable_symbol_definition::name) != opencode_var_defs_.end())
         return;
 
-    opencode_var_defs_.emplace_back(name, type, global, hlasm_ctx_.current_statement_source(), var->symbol_range.start);
+    opencode_var_defs_.emplace_back(*n, type, global, hlasm_ctx_.current_statement_source(), var->symbol_range.start);
 }
 
 void lsp_analyzer::add_copy_operand(context::id_index name, const range& operand_range, const collection_info_t& ci)

@@ -97,11 +97,10 @@ void occurrence_collector::visit(const semantics::macro_operand& op) { get_occur
 
 void occurrence_collector::get_occurrence(const semantics::variable_symbol& var)
 {
-    if (var.created)
-        get_occurrence(var.access_created()->created_name);
+    if (const auto* created = var.created())
+        get_occurrence(*created);
     else if (any(collector_kind & lsp::occurrence_kind::VAR))
-        occurrences.emplace_back(
-            lsp::occurrence_kind::VAR, var.access_basic()->name, var.symbol_range, evaluated_model);
+        occurrences.emplace_back(lsp::occurrence_kind::VAR, *var.named(), var.symbol_range, evaluated_model);
 }
 
 void occurrence_collector::get_occurrence(const semantics::seq_sym& seq)
