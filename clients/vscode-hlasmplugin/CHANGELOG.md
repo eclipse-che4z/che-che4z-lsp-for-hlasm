@@ -1,6 +1,6 @@
 # Changelog
 
-## ****Unreleased****
+## [1.23.0](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/compare/1.22.1...1.23.0) (2026-06-23)
 
 #### Added
 - Show copybook preview in hover text

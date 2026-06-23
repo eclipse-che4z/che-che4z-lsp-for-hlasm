@@ -1,3 +1,23 @@
+## [1.23.0](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/compare/1.22.1...1.23.0) (2026-06-23)
+
+### Features
+
+* Show copybook preview in hover text ([08b3439](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/08b3439667d095898c68095cc24ea330e8cb10ea))
+
+### Fixes
+
+* Improve member name validation in the download command ([68e5eec](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/68e5eec6cc2922b8992d54a1c8614f5df39a638e))
+* Remove file extensions and capitalize  system variable ([7484c8e](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/7484c8ea75633a62a29639f4b03b087a72128a7a))
+* Validation of USING operands is inaccurate ([36a119f](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/36a119f5c155f8f8b62e1bdb804516cce32bbfcd))
+
+### Other changes
+
+* Reduce postponed statement code duplication ([8c5ce89](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/8c5ce89d69e27efaa878ce1e8613b1d31f70af1b))
+* Remove dependable ([b5cfcdc](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/b5cfcdce34a3e8d82cf4b5c7b575957632a2d81b))
+* Simplify grammar code ([8e4da6d](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/8e4da6dde4cdeaa611056c6fc8a254bd1e68a657))
+* Simplify variable symbol representation ([432e72a](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/432e72a500c16cd6fded8e6477552c8519b67f5e))
+* Split assembler expressions and text operands ([fe04353](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/fe043537e957d39a35b4c4aa10262aae8a618a80))
+* Upgrade build pipeline ([da93e09](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/da93e09923cd5e83804d556ec0c6d9c254ab8e0f))
 ## [1.22.1](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/compare/1.22.0...1.22.1) (2026-05-07)
 
 ### Fixes
