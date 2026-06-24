@@ -170,7 +170,7 @@ symbol_value symbol_value::ignore_qualification() const
         if (result.bases().empty() && !result.has_unresolved_space())
             return result.offset();
         else
-            return std::move(result);
+            return symbol_value(std::move(result));
     }
 
     auto bases = std::make_shared<std::vector<address::base_entry>>(result.bases().begin(), result.bases().end());

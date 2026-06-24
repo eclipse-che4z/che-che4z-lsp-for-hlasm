@@ -266,7 +266,7 @@ void lsp_context::add_macro(macro_info_ptr macro_i, text_data_view text_data)
     if (macro_i->external)
         m_files.try_emplace(macro_i->definition_location.resource_loc, macro_i->macro_definition, std::move(text_data));
 
-    auto [_, inserted] = m_macros.try_emplace(macro_i->macro_definition.get(), std::move(macro_i));
+    [[maybe_unused]] auto [_, inserted] = m_macros.try_emplace(macro_i->macro_definition.get(), std::move(macro_i));
     assert(inserted);
 }
 

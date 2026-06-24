@@ -30,6 +30,7 @@
 #include "lsp/lsp_context.h"
 #include "lsp/macro_info.h"
 #include "text_data_view.h"
+#include "utils/intconv.h"
 #include "utils/projectors.h"
 #include "utils/string_operations.h"
 #include "utils/text_convertor.h"
@@ -175,14 +176,14 @@ std::string hover_text(const context::symbol& sym, const utils::text_convertor* 
         {
             markdown.push_back(' ');
             uint32_t bin = 0;
-            for (unsigned char c : val)
-                bin = c | bin << 8;
+            for (char c : val)
+                bin = static_cast<unsigned char>(c) | bin << 8;
             append_hex_and_dec(markdown, bin);
         }
 
         markdown.append("  \n");
     }
-    if (const auto a = attrs.asm_type(); a != context::symbol_attributes::assembler_type::NONE)
+    if (const auto a = attrs.asm_type(); a != context::assembler_type::NONE)
     {
         markdown.append("A: ");
         md_appender.append(context::assembler_type_to_string(a));
@@ -219,7 +220,7 @@ bool is_continued_line(std::string_view line)
     if (line.size() <= continuation_column)
         return false;
     auto c = utils::utf8_substr(line, continuation_column).str;
-    return !c.empty() && !utils::isblank32(c.front());
+    return !c.empty() && !utils::isblank32(static_cast<unsigned char>(c.front()));
 }
 
 namespace {
@@ -484,8 +485,8 @@ std::vector<completion_item> generate_completion(
         auto& i = result.emplace_back(instr);
         if (auto space = i.insert_text.find(' '); space != std::string::npos)
         {
-            if (auto col_pos = cli.completed_text_start_column + space; col_pos < 15)
-                i.insert_text.insert(i.insert_text.begin() + space, 15 - col_pos, ' ');
+            if (auto col_pos = cli.completed_text_start_column + space; col_pos < 15u)
+                i.insert_text.insert(space, 15u - col_pos, ' ');
         }
         if (auto* suggestion = locate_suggestion(i.label);
             suggestion && !suggestion->first.starts_with(cli.completed_text))
@@ -638,7 +639,7 @@ void append_hover_text(std::string& text, const context::using_context_descripti
         else if (named)
             text.append("+");
 
-        text.append("X'").append(to_hex(std::abs((long long)u.offset))).append("'");
+        text.append("X'").append(to_hex((unsigned long)std::abs((long long)u.offset))).append("'");
     }
 
     if (u.length != u.regs.size() * 0x1000)
@@ -650,7 +651,7 @@ void append_hover_text(std::string& text, const context::using_context_descripti
         if (ro)
             text.append(ro > 0 ? "+" : "-")
                 .append("X'")
-                .append(to_hex(std::abs((long long)std::exchange(ro, 0))))
+                .append(to_hex((unsigned long)std::abs((long long)std::exchange(ro, 0))))
                 .append("'");
     }
 }

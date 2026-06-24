@@ -622,15 +622,15 @@ class db2_preprocessor final : public preprocessor // TODO Take DBCS into accoun
                                             const consuming_regex_details& crd,
                                             std::string_view line_id) {
             auto it = line_preview.begin();
-            if (auto consumed_words_end = consume_words_advance_to_next(it, line_preview.end(), crd);
-                consumed_words_end)
-                return std::make_pair(line,
-                    semantics::preproc_details::name_range { std::string(line_id),
-                        range {
-                            position(lineno, column),
-                            position(lineno, column + std::ranges::distance(line_preview.begin(), *consumed_words_end)),
-                        } });
-            return ignore;
+            const auto consumed_words_end = consume_words_advance_to_next(it, line_preview.end(), crd);
+            if (!consumed_words_end)
+                return ignore;
+            const auto col_end = utils::to_unsigned(std::ranges::distance(line_preview.begin(), *consumed_words_end));
+            return std::make_pair(line,
+                semantics::preproc_details::name_range {
+                    std::string(line_id),
+                    range(position(lineno, column), position(lineno, column + col_end)),
+                });
         };
 
         static const consuming_regex_details exec_sql_crd({ "EXEC", "SQL" }, true, false);
@@ -704,7 +704,7 @@ class db2_preprocessor final : public preprocessor // TODO Take DBCS into accoun
         return result;
     }
 
-    bool handle_lob(std::string_view label, char type_start, char type_end, char scale, long long size)
+    bool handle_lob(std::string_view label, char type_start, char type_end, char scale, unsigned long long size)
     {
         switch (type_end)
         {
@@ -833,9 +833,9 @@ class db2_preprocessor final : public preprocessor // TODO Take DBCS into accoun
                 char type_start = *type.value().first;
                 char type_end = *std::prev(type.value().second);
                 char scale = blob_unit.has_value() ? *blob_unit->first : 0;
-                long long size = 0;
+                unsigned long long size = 0;
                 if (blob_size.has_value())
-                    size = std::stoll(std::string(blob_size->first, blob_size->second));
+                    size = std::stoull(std::string(blob_size->first, blob_size->second));
                 return handle_lob(label, type_start, type_end, scale, size);
             }
             default:
@@ -858,7 +858,7 @@ class db2_preprocessor final : public preprocessor // TODO Take DBCS into accoun
 
             if (std::exchange(first_line, false))
             {
-                const auto appended_line_size = std::ranges::distance(segment.begin, segment.end);
+                const auto appended_line_size = utils::to_unsigned(std::ranges::distance(segment.begin, segment.end));
                 if (!label.empty())
                     this_line.replace(this_line.size() - appended_line_size,
                         label.size(),
@@ -1121,7 +1121,10 @@ class db2_preprocessor final : public preprocessor // TODO Take DBCS into accoun
                     semantics::preproc_details {
                         semantics::text_range(ll.m_orig_ll.begin(), ll.m_orig_ll.end(), ll.m_lineno),
                         std::move(label_nr),
-                        std::move(instruction_nr) },
+                        { std::move(instruction_nr) },
+                        {},
+                        {},
+                    },
                     instruction_type == line_type::include);
 
                 do_highlighting(*stmt, ll.m_orig_ll, m_src_proc);
@@ -1168,7 +1171,8 @@ class db2_preprocessor final : public preprocessor // TODO Take DBCS into accoun
             ++i, ++lineno, std::exchange(line_start_column, continue_column))
         {
             const auto& segment = m_ll_helper.m_db2_ll.segments[i];
-            auto comment_start_column = line_start_column + std::ranges::distance(segment.code, segment.continuation);
+            auto comment_start_column =
+                line_start_column + utils::to_unsigned(std::ranges::distance(segment.code, segment.continuation));
 
             if (const auto& comment = m_ll_helper.m_comments[i]; comment.has_value())
             {

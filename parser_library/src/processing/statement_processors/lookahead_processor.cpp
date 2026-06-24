@@ -215,14 +215,14 @@ void lookahead_processor::assign_EQU_attributes(context::id_index symbol_name, c
     const auto [value, length, type, program, assembler] = extract_asm_operands<5>(statement.operands_ref().value);
 
     // assembler type attribute
-    const symbol_attributes::assembler_type a_attr = assembler_type_from_op(assembler);
+    const auto a_attr = assembler_type_from_op(assembler);
 
     // program type attribute
-    symbol_attributes::program_type p_attr {};
+    context::program_type p_attr {};
     if (program)
     {
         if (const auto p_value = try_get_abs_value(program, dep_solver); p_value)
-            p_attr = symbol_attributes::program_type((std::uint32_t)*p_value);
+            p_attr = context::program_type((std::uint32_t)*p_value);
     }
 
     // type attribute operand
@@ -281,7 +281,7 @@ void lookahead_processor::assign_data_def_attributes(context::id_index symbol_na
     symbol_attributes::len_attr len = symbol_attributes::undef_length;
     symbol_attributes::scale_attr scale = symbol_attributes::undef_scale;
     const auto integer = data_op->value->get_integer_attribute();
-    symbol_attributes::program_type prog {};
+    context::program_type prog {};
 
     library_info_transitional li(lib_provider_);
     context::ordinary_assembly_dependency_solver dep_solver(hlasm_ctx.ord_ctx, li);

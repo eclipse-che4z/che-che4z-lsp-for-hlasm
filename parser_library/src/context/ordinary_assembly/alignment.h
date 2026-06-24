@@ -28,6 +28,8 @@ struct alignment
     size_t boundary;
 
     bool operator==(const alignment& oth) const { return boundary == oth.boundary && byte == oth.byte; }
+
+    [[nodiscard]] constexpr size_t align(size_t o) const noexcept { return (byte - o) & (boundary - 1U); }
 };
 
 // enumeration of common alignments

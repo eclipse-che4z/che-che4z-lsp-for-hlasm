@@ -98,7 +98,7 @@ TEST(debugger, stopped_on_entry)
     file_manager_impl file_manager;
     NiceMock<debugger_configuration_provider_mock> dc_provider;
     EXPECT_CALL(dc_provider, provide_debugger_configuration).WillRepeatedly(Invoke([&file_manager](auto, auto r) {
-        r.provide({ .fm = &file_manager });
+        r.provide({ .fm = &file_manager, .libraries = {}, .opts = {}, .pp_opts = {} });
     }));
 
     debugger d;
@@ -140,7 +140,7 @@ TEST(debugger, disconnect)
     file_manager_impl file_manager;
     NiceMock<debugger_configuration_provider_mock> dc_provider;
     EXPECT_CALL(dc_provider, provide_debugger_configuration).WillRepeatedly(Invoke([&file_manager](auto, auto r) {
-        r.provide({ .fm = &file_manager });
+        r.provide({ .fm = &file_manager, .libraries = {}, .opts = {}, .pp_opts = {} });
     }));
 
     debugger d;
@@ -380,9 +380,8 @@ void step_into(debugger& d,
     m.wait_for_stopped();
 }
 
-void erase_frames_from_top(size_t number_of_frames,
-    std::vector<expected_stack_frame>& exp_stack_frames,
-    std::vector<frame_vars>& exp_frame_vars)
+void erase_frames_from_top(
+    int number_of_frames, std::vector<expected_stack_frame>& exp_stack_frames, std::vector<frame_vars>& exp_frame_vars)
 {
     exp_stack_frames.erase(exp_stack_frames.begin(), exp_stack_frames.begin() + number_of_frames);
     exp_frame_vars.erase(exp_frame_vars.begin(), exp_frame_vars.begin() + number_of_frames);
@@ -1089,8 +1088,6 @@ B EQU A
 
 TEST(debugger, ainsert)
 {
-    using list = std::unordered_map<std::string, std::shared_ptr<test_var_value>>;
-
     std::string open_code = R"(
     MACRO
     MAC
@@ -1250,7 +1247,7 @@ TEST(debugger, function_breakpoints)
     file_manager_impl file_manager;
     NiceMock<debugger_configuration_provider_mock> dc_provider;
     EXPECT_CALL(dc_provider, provide_debugger_configuration).WillRepeatedly(Invoke([&file_manager](auto, auto r) {
-        r.provide({ .fm = &file_manager });
+        r.provide({ .fm = &file_manager, .libraries = {}, .opts = {}, .pp_opts = {} });
     }));
     debugger d;
     debug_event_consumer_s_mock m(d);
@@ -1278,7 +1275,7 @@ TEST(debugger, invalid_file)
     file_manager_impl file_manager;
     NiceMock<debugger_configuration_provider_mock> dc_provider;
     EXPECT_CALL(dc_provider, provide_debugger_configuration).WillRepeatedly(Invoke([&file_manager](auto, auto r) {
-        r.provide({ .fm = &file_manager });
+        r.provide({ .fm = &file_manager, .libraries = {}, .opts = {}, .pp_opts = {} });
     }));
 
     debugger d;
@@ -1322,7 +1319,7 @@ L   DS    F
     file_manager_impl file_manager;
     NiceMock<debugger_configuration_provider_mock> dc_provider;
     EXPECT_CALL(dc_provider, provide_debugger_configuration).WillRepeatedly(Invoke([&file_manager](auto, auto r) {
-        r.provide({ .fm = &file_manager });
+        r.provide({ .fm = &file_manager, .libraries = {}, .opts = {}, .pp_opts = {} });
     }));
     debugger d;
     debug_event_consumer_s_mock m(d);
@@ -1379,7 +1376,9 @@ L   DS    F
         auto res = d.evaluate(expr, frame);
 
         if (!exp.empty())
+        {
             EXPECT_EQ(res.result, exp);
+        }
         EXPECT_EQ(res.error, error);
         EXPECT_EQ(!!res.var_ref, structured);
     }
@@ -1398,7 +1397,7 @@ TEST(debugger, outputs)
     file_manager_impl file_manager;
     NiceMock<debugger_configuration_provider_mock> dc_provider;
     EXPECT_CALL(dc_provider, provide_debugger_configuration).WillRepeatedly(Invoke([&file_manager](auto, auto r) {
-        r.provide({ .fm = &file_manager });
+        r.provide({ .fm = &file_manager, .libraries = {}, .opts = {}, .pp_opts = {} });
     }));
     debugger d;
     debug_event_consumer_s_mock m(d);
@@ -1431,7 +1430,7 @@ TEST(debugger, actr_limit_break)
     file_manager_impl file_manager;
     NiceMock<debugger_configuration_provider_mock> dc_provider;
     EXPECT_CALL(dc_provider, provide_debugger_configuration).WillRepeatedly(Invoke([&file_manager](auto, auto r) {
-        r.provide({ .fm = &file_manager });
+        r.provide({ .fm = &file_manager, .libraries = {}, .opts = {}, .pp_opts = {} });
     }));
     debugger d;
     debug_event_consumer_s_mock m(d);

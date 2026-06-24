@@ -181,7 +181,7 @@ std::vector<diagnostic> close_parse_and_recollect_diags(workspace& ws,
     const std::vector<hlasm_plugin::utils::resource::resource_location>& files,
     bool advisory)
 {
-    std::ranges::for_each(files, [&ws, &cfg](const auto& f) { run_if_valid(ws.did_close_file(f)); });
+    std::ranges::for_each(files, [&ws](const auto& f) { run_if_valid(ws.did_close_file(f)); });
     parse_all_files(ws);
 
     std::vector<diagnostic> result;

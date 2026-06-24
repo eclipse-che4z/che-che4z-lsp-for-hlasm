@@ -120,7 +120,7 @@ class bench_configuration
 public:
     std::string ws_folder = utils::path::current_path().string();
     std::string single_file = "";
-    size_t start_range = 0, end_range = 0;
+    unsigned long start_range = 0, end_range = 0;
     bool write_details = true;
     bool do_reparse = true;
     std::string message;
@@ -181,8 +181,8 @@ private:
 
                 try
                 {
-                    start_range = std::stoi(val.substr(0, pos));
-                    end_range = std::stoi(val.substr(pos + 1));
+                    start_range = std::stoul(val.substr(0, pos));
+                    end_range = std::stoul(val.substr(pos + 1));
                 }
                 catch (...)
                 {
@@ -285,9 +285,9 @@ public:
         all_file_stats s;
         if (!bc.single_file.empty())
         {
-            auto end_range = bc.end_range != 0 ? bc.end_range : std::numeric_limits<long long int>::max();
+            auto end_range = bc.end_range != 0 ? bc.end_range : std::numeric_limits<unsigned long>::max();
 
-            for (size_t i = 0; i < end_range; ++i)
+            for (unsigned long i = 0; i < end_range; ++i)
                 std::cout << parse_file(
                     parse_parameters {
                         bc.single_file,
@@ -317,7 +317,7 @@ public:
             std::cout << "{\n\"pgms\" : [" << std::flush;
 
             bool first = true;
-            for (size_t i = bc.start_range; i < bc.end_range && bc.start_range < bc.pgm_names.size(); ++i)
+            for (auto i = bc.start_range; i < bc.end_range && i < bc.pgm_names.size(); ++i)
             {
                 if (!std::exchange(first, false))
                     std::cout << ",\n";
@@ -350,8 +350,8 @@ public:
                                   { "Benchmark time(ms)", s.whole_time },
                                   { "Analyzer crashes", s.parsing_crashes },
                                   { "Failed program opens", s.failed_file_opens },
-                                  { "Average statement/ms", s.average_stmt_ms / bc.pgm_names.size() },
-                                  { "Average line/ms", s.average_line_ms / bc.pgm_names.size() } })
+                                  { "Average statement/ms", s.average_stmt_ms / (double)bc.pgm_names.size() },
+                                  { "Average line/ms", s.average_line_ms / (double)bc.pgm_names.size() } })
                              .dump(2);
             std::cout << "}\n";
             log_if("Parse finished\n\n");
@@ -383,7 +383,7 @@ private:
     {
         bool success;
         json response;
-        long long time;
+        long long time = 0;
     };
 
     struct parse_parameters
@@ -521,8 +521,8 @@ private:
         const auto& metrics = metadata.metrics;
         auto exec_statements = metrics.open_code_statements + metrics.copy_statements + metrics.macro_statements
             + metrics.lookahead_statements + metrics.reparsed_statements;
-        s.average_stmt_ms += (exec_statements / (double)time);
-        s.average_line_ms += metrics.lines / (double)time;
+        s.average_stmt_ms += ((double)exec_statements / (double)time);
+        s.average_line_ms += (double)metrics.lines / (double)time;
         s.all_files += files_processed;
         s.whole_time += time;
 
@@ -534,10 +534,10 @@ private:
                 { "Errors", diag_counter.error_count },
                 { "Warnings", diag_counter.warning_count },
                 { "Wall Time (ms)", time },
-                { "CPU Time (ms/n)", 1000.0 * clock_time / CLOCKS_PER_SEC },
+                { "CPU Time (ms/n)", 1000.0 * (double)clock_time / CLOCKS_PER_SEC },
                 { "Executed Statements", exec_statements },
-                { "ExecStatement/ms", exec_statements / (double)time },
-                { "Line/ms", metrics.lines / (double)time },
+                { "ExecStatement/ms", (double)exec_statements / (double)time },
+                { "Line/ms", (double)metrics.lines / (double)time },
                 { "Top messages", benchmark::get_top_messages(diag_counter.message_counts) },
                 { "Open Code Statements", metrics.open_code_statements },
                 { "Copy Statements", metrics.copy_statements },
@@ -581,7 +581,7 @@ private:
             true,
             json({
                 { "Reparse Wall Time (ms)", time },
-                { "Reparse CPU Time (ms/n)", 1000.0 * clock_time / CLOCKS_PER_SEC },
+                { "Reparse CPU Time (ms/n)", 1000.0 * (double)clock_time / CLOCKS_PER_SEC },
                 { "Reparse errors", diag_counter.error_count },
                 { "Reparse warnings", diag_counter.warning_count },
             }),
@@ -638,14 +638,17 @@ int main(int argc, char** argv)
 {
     bench_configuration bench_config;
     if (!bench_config.load(argc, argv))
-        return false;
+        return 1;
 
     if (bench_config.pgm_names.empty())
     {
         log_w("Didn't manage to load any programs to benchmark");
-        return false;
+        return 1;
     }
 
     bench benchmark;
-    return !benchmark.start(bench_config);
+    if (!benchmark.start(bench_config))
+        return 1;
+
+    return 0;
 }

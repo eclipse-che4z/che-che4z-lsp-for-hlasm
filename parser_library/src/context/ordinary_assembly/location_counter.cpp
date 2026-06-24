@@ -18,6 +18,7 @@
 #include <assert.h>
 
 #include "section.h"
+#include "utils/intconv.h"
 
 using namespace hlasm_plugin::parser_library::context;
 
@@ -185,17 +186,13 @@ void location_counter::check_available_value()
         return;
 
     assert(org_data_.size() > 1);
-    if (check_if_higher_value(org_data_.size() - 1))
+
+    if (const auto n_2 = org_data_.end() - 2; n_2->storage <= std::next(n_2)->storage)
     {
-        auto old_kind = (org_data_.end() - 2)->kind;
-        org_data_.erase(org_data_.end() - 2);
+        const auto old_kind = n_2->kind;
+        org_data_.erase(n_2);
         curr_data().kind = old_kind;
     }
-}
-
-bool location_counter::check_if_higher_value(size_t idx) const
-{
-    return org_data_[idx - 1].storage <= org_data_[idx].storage;
 }
 
 space_ptr location_counter::finish_layout(size_t offset)
@@ -254,7 +251,7 @@ std::variant<space_ptr, address> location_counter::restore_from_unresolved_value
     assert(switched_ == sp);
 
     std::variant<space_ptr, address> result = curr_data().fist_space();
-    size_t tmp_idx = org_data_.size() - 1;
+    const auto tmp_idx = std::ssize(org_data_) - 1;
 
     if (const auto& new_sp = std::get<space_ptr>(result); new_sp && new_sp->kind == space_kind::LOCTR_SET)
     {
@@ -274,7 +271,7 @@ std::variant<space_ptr, address> location_counter::restore_from_unresolved_value
         {
             if (switched_data.matches_first_space(sp.get()))
             {
-                auto& last = org_data_.emplace_back(org_data_[tmp_idx]);
+                auto& last = org_data_.emplace_back(org_data_[utils::to_unsigned(tmp_idx)]);
                 last.kind = switched_data.kind;
                 last.append_data(std::move(switched_data));
                 check_available_value();
@@ -287,8 +284,8 @@ std::variant<space_ptr, address> location_counter::restore_from_unresolved_value
     switched_ = nullptr;
     switched_org_data_.clear();
 
-    if (check_if_higher_value(tmp_idx + 1))
-        org_data_.erase(org_data_.begin() + tmp_idx);
+    if (const auto orig_end = org_data_.begin() + tmp_idx; orig_end->storage <= std::next(orig_end)->storage)
+        org_data_.erase(orig_end);
     return result;
 }
 

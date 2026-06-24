@@ -46,10 +46,10 @@ struct macrodef_start_data
 struct macrodef_prototype
 {
     context::id_index macro_name;
-    range macro_name_range;
+    range macro_name_range = {};
 
-    context::id_index name_param;
-    std::vector<context::macro_arg> symbolic_params;
+    context::id_index name_param = {};
+    std::vector<context::macro_arg> symbolic_params = {};
 };
 
 // result of macrodef_processor
@@ -57,13 +57,13 @@ struct macrodef_processing_result
 {
     macrodef_prototype prototype;
 
-    context::statement_block definition;
-    context::copy_nest_storage nests;
-    context::macro_label_storage sequence_symbols;
-    std::unordered_set<context::copy_member_ptr> used_copy_members;
+    context::statement_block definition = {};
+    context::copy_nest_storage nests = {};
+    context::macro_label_storage sequence_symbols = {};
+    std::unordered_set<context::copy_member_ptr> used_copy_members = {};
 
-    lsp::vardef_storage variable_symbols;
-    lsp::file_scopes_t file_scopes;
+    lsp::vardef_storage variable_symbols = {};
+    lsp::file_scopes_t file_scopes = {};
 
     location definition_location;
 

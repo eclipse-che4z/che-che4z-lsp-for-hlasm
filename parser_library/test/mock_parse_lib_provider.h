@@ -41,7 +41,7 @@ struct mock_file_t
     mutable mock_file_stats_t stats;
 };
 
-class mock_parse_lib_provider : public parse_lib_provider
+class mock_parse_lib_provider final : public parse_lib_provider
 {
     std::unordered_map<std::string, mock_file_t, utils::hashers::string_hasher, std::equal_to<>> m_files;
 

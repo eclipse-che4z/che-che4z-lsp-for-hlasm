@@ -75,7 +75,7 @@ public:
     std::span<const stack_frame> stack_frames() const;
     std::span<const scope> scopes(frame_id_t frame_id) const;
     std::span<const variable> variables(var_reference_t var_ref) const;
-    evaluated_expression evaluate(std::string_view expr, frame_id_t id = -1);
+    evaluated_expression evaluate(std::string_view expr, frame_id_t id = (frame_id_t)-1);
 
     void analysis_step(const std::atomic<unsigned char>* yield_indicator);
 };

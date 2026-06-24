@@ -15,7 +15,6 @@
 #include "gmock/gmock.h"
 
 #include "context/hlasm_context.h"
-#include "diagnostic_adder.h"
 #include "expressions/conditional_assembly/terms/ca_symbol.h"
 #include "expressions/evaluation_context.h"
 #include "library_info_transitional.h"
@@ -40,8 +39,6 @@ TEST(ca_symbol, undefined_attributes)
 
 TEST(ca_symbol, resolve_expr_tree)
 {
-    diagnostic_adder add_diags;
-
     diagnostic_op_consumer_container diags;
 
     ca_symbol(context::id_index(), range())

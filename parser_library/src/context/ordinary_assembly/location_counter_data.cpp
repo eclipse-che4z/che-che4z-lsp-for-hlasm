@@ -118,9 +118,7 @@ bool location_counter_data::align(alignment align)
     if (need_space_alignment(align))
         return false;
 
-    auto tmp = (int)(((align.boundary - (last_storage() % align.boundary)) + align.byte) % align.boundary);
-
-    append_storage(tmp);
+    append_storage(static_cast<int>(align.align(static_cast<size_t>(last_storage()))));
 
     return true;
 }

@@ -154,9 +154,9 @@ struct processor_group
 {
     std::string name;
     std::vector<std::variant<library, dataset, endevor, endevor_dataset>> libs;
-    assembler_options asm_options;
-    std::vector<preprocessor_options> preprocessors;
-    std::optional<std::vector<external_function>> external_functions;
+    assembler_options asm_options = {};
+    std::vector<preprocessor_options> preprocessors = {};
+    std::optional<std::vector<external_function>> external_functions = {};
 };
 void to_json(nlohmann::json& j, const processor_group& p);
 void from_json(const nlohmann::json& j, processor_group& p);
@@ -164,8 +164,8 @@ void from_json(const nlohmann::json& j, processor_group& p);
 struct proc_grps
 {
     std::vector<processor_group> pgroups;
-    std::vector<std::string> macro_extensions;
-    std::optional<std::vector<external_function>> external_functions;
+    std::vector<std::string> macro_extensions = {};
+    std::optional<std::vector<external_function>> external_functions = {};
 };
 void to_json(nlohmann::json& j, const proc_grps& p);
 void from_json(const nlohmann::json& j, proc_grps& p);

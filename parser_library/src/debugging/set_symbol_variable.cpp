@@ -90,6 +90,7 @@ variable generate_set_symbol_variable(const context::set_symbol_base& set_sym, i
         .name = std::to_string(index),
         .value = get_string_value(set_sym, index),
         .type = to_set_type(set_sym.type),
+        .values = {},
     };
 }
 
@@ -99,6 +100,7 @@ variable generate_set_symbol_variable(const context::set_symbol_base& set_sym)
         .name = "&" + set_sym.id.to_string(),
         .value = get_string_value(set_sym, std::nullopt),
         .type = to_set_type(set_sym.type),
+        .values = {},
     };
 
     if (!set_sym.is_scalar)

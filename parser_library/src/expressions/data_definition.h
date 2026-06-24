@@ -79,8 +79,7 @@ struct data_definition final
     int32_t get_scale_attribute(context::dependency_solver& info, diagnostic_op_consumer& diags) const;
     uint32_t get_length_attribute(context::dependency_solver& info, diagnostic_op_consumer& diags) const;
     context::integer_type get_integer_attribute() const noexcept;
-    context::symbol_attributes::program_type get_program_attribute(
-        context::dependency_solver& info, diagnostic_op_consumer& diags) const;
+    context::program_type get_program_attribute(context::dependency_solver& info, diagnostic_op_consumer& diags) const;
     context::symbol_attributes get_symbol_attributes(
         context::dependency_solver& info, diagnostic_op_consumer& diags) const;
 

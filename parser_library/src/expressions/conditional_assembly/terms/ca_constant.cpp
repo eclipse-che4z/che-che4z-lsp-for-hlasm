@@ -53,8 +53,8 @@ context::A_t CA_selfdef(std::string_view value, diagnostic_adder& add_diagnostic
     }
 
     unsigned long long result = 0;
-    for (unsigned char c : value)
-        result = (result << 8) | c;
+    for (char c : value)
+        result = (result << 8) | static_cast<unsigned char>(c);
 
     return (context::A_t)result;
 }

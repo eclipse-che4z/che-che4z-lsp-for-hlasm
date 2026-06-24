@@ -27,7 +27,7 @@ using text_iterator =
     hlasm_plugin::utils::utf8_iterator<std::string_view::const_iterator, hlasm_plugin::utils::utf8_utf32_counter>;
 using logical_line = hlasm_plugin::parser_library::lexing::logical_line<text_iterator>;
 
-signed char get_comment_offset(const logical_line& r)
+unsigned char get_comment_offset(const logical_line& r)
 {
     auto b = r.segments.front().code_begin();
     const auto e = r.segments.front().code_end();
@@ -207,12 +207,13 @@ void folding_between_comments(std::vector<fold_data>& data, std::span<const line
 
 void adjust_folding_data(std::span<fold_data> data)
 {
+    // fold_data.<something> are < data.size()
     std::vector<bool> structured(data.size());
     for (size_t l = 0; l < data.size(); ++l)
     {
         if (auto el = data[l].indentation)
         {
-            std::fill(structured.begin() + l, structured.begin() + el + 1, true);
+            std::fill(structured.begin() + utils::to_signed(l), structured.begin() + utils::to_signed(el + 1), true);
             l = el;
         }
         else if (data[l].small_structure)
@@ -225,8 +226,8 @@ void adjust_folding_data(std::span<fold_data> data)
         if (!d.notcomment)
             continue;
 
-        const auto reach = structured.begin() + d.notcomment + 1;
-        auto s = std::find(structured.begin() + l, reach, true);
+        const auto reach = structured.begin() + utils::to_signed(d.notcomment + 1);
+        const auto s = std::find(structured.begin() + utils::to_signed(l), reach, true);
         if (s == reach)
             continue;
 
@@ -235,12 +236,12 @@ void adjust_folding_data(std::span<fold_data> data)
         auto newlimit = s - structured.begin();
         auto oldend = d.notcomment;
 
-        d.notcomment = newlimit - 1;
+        d.notcomment = utils::to_unsigned(newlimit - 1);
 
         if (se == reach)
             continue;
 
-        auto& nextd = data[se - structured.begin()];
+        auto& nextd = data[utils::to_unsigned(se - structured.begin())];
         nextd.notcomment = std::max(nextd.notcomment, oldend);
     }
 }

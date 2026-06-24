@@ -29,7 +29,7 @@ bool remove_logical_line(logical_line<std::string_view::const_iterator>& out,
     const logical_line_extractor_args& opts)
 {
     auto [result, it] = extract_logical_line(out, input, opts);
-    input.remove_prefix(std::ranges::distance(input.begin(), it));
+    input = std::string_view(it, input.end());
     return result;
 }
 

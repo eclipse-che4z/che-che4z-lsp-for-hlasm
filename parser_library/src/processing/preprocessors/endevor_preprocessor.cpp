@@ -63,7 +63,7 @@ class endevor_preprocessor final : public preprocessor
 {
     library_fetcher m_libs;
     diagnostic_op_consumer* m_diags = nullptr;
-    endevor_preprocessor_options m_options;
+    [[maybe_unused]] endevor_preprocessor_options m_options;
     semantics::source_info_processor& m_src_proc;
 
     [[nodiscard]] utils::value_task<bool> process_member(std::string member, std::vector<stack_entry>& stack)

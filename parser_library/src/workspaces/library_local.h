@@ -37,12 +37,9 @@ namespace hlasm_plugin::parser_library::workspaces {
 
 class file_manager;
 
-#pragma warning(push)
-#pragma warning(disable : 4250)
-
 struct library_local_options
 {
-    std::vector<std::string> extensions;
+    std::vector<std::string> extensions = {};
     bool optional_library = false;
 
     auto operator<=>(const library_local_options&) const = default;
@@ -113,7 +110,6 @@ private:
     files_collection_t load_files(std::pair<std::vector<std::pair<std::string, utils::resource::resource_location>>,
         utils::path::list_directory_rc>);
 };
-#pragma warning(pop)
 
 } // namespace hlasm_plugin::parser_library::workspaces
 #endif

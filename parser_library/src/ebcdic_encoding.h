@@ -76,7 +76,7 @@ public:
     // Converts an UTF-8 character to EBCDIC character.
     static constexpr std::pair<unsigned char, const char*> to_ebcdic(const char* c, const char* const ce) noexcept
     {
-        if (const unsigned char first = *c; first < 0x80) [[likely]] // 0xxxxxxx
+        if (const auto first = static_cast<unsigned char>(*c); first < 0x80) [[likely]] // 0xxxxxxx
         {
             return { a2e[first], c + 1 };
         }
@@ -93,7 +93,7 @@ public:
             return std::string {
                 static_cast<char>(0b11100000 | ebcdic_encoding::unicode_private >> 4),
                 static_cast<char>(0x80 | (ebcdic_encoding::unicode_private & 0xf) << 2 | c >> 6),
-                static_cast<char>(0x80 | c & 0x3f),
+                static_cast<char>(0x80 | (c & 0x3f)),
             };
         auto val = e2a[c];
         if (val < 0x80)

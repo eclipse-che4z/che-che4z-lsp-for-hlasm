@@ -28,13 +28,13 @@ namespace hlasm_plugin::parser_library::config {
 
 struct assembler_options
 {
-    std::optional<std::string> sysparm;
-    std::optional<std::string> profile;
-    std::optional<std::string> optable;
-    std::optional<std::string> machine;
-    std::optional<std::string> system_id;
-    std::optional<bool> goff;
-    std::optional<bool> rent;
+    std::optional<std::string> sysparm = {};
+    std::optional<std::string> profile = {};
+    std::optional<std::string> optable = {};
+    std::optional<std::string> machine = {};
+    std::optional<std::string> system_id = {};
+    std::optional<bool> goff = {};
+    std::optional<bool> rent = {};
 
     bool operator==(const assembler_options&) const = default;
     bool valid() const noexcept;

@@ -115,7 +115,7 @@ using keep_table_t = decltype(unreserved);
 constexpr auto invert_hex = []() {
     std::array<signed char, std::numeric_limits<char8_t>::max() + 1> result {};
 
-    std::ranges::fill(result, -1);
+    std::ranges::fill(result, (signed char)-1);
 
     result[u8'0'] = 0x0;
     result[u8'1'] = 0x1;
@@ -142,11 +142,12 @@ constexpr auto invert_hex = []() {
 
     return result;
 }();
-void push_uri_char(std::string& uri, unsigned char c, const keep_table_t& keep)
+void push_uri_char(std::string& uri, char c_, const keep_table_t& keep)
 {
+    const auto c = static_cast<unsigned char>(c_);
     if (keep[c])
     {
-        uri.push_back(c);
+        uri.push_back(c_);
     }
     else
     {
@@ -162,7 +163,7 @@ std::string percent_encode_path(std::string_view s)
     std::string uri;
     uri.reserve(s.size());
 
-    for (unsigned char c : s)
+    for (char c : s)
     {
         if (c == (unsigned char)'\\')
             c = '/';
@@ -178,7 +179,7 @@ std::string percent_encode_component(std::string_view s)
     std::string uri;
     uri.reserve(s.size());
 
-    for (unsigned char c : s)
+    for (char c : s)
     {
         push_uri_char(uri, c, unreserved);
     }
@@ -209,7 +210,7 @@ std::string percent_decode(std::string_view s)
         s.remove_prefix(3);
         if (hi < 0 || lo < 0)
             return {};
-        result.push_back(hi << 4 | lo);
+        result.push_back(static_cast<char>(hi << 4 | lo));
     }
 
     return result;

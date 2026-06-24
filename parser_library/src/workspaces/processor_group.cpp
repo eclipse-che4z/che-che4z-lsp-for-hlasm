@@ -59,7 +59,7 @@ auto translate_ef(std::span<const config::external_function> ef)
                 if (auto* aarg = arg.arithmetic(); aarg)
                     aarg->result = v;
                 else
-                    arg.message().emplace(8, "SETAF call expected");
+                    arg.message().emplace((unsigned char)8, "SETAF call expected");
             };
         }
 
@@ -69,7 +69,7 @@ auto translate_ef(std::span<const config::external_function> ef)
                 if (auto* carg = arg.character(); carg)
                     carg->result = v;
                 else
-                    arg.message().emplace(8, "SETCF call expected");
+                    arg.message().emplace((unsigned char)8, "SETCF call expected");
             };
         }
     } static constexpr translator;

@@ -18,12 +18,12 @@ namespace hlasm_plugin::parser_library {
 
 std::pair<unsigned char, const char*> ebcdic_encoding::to_ebcdic_multibyte(const char* c, const char* const ce) noexcept
 {
-    const unsigned char first_byte = *(c + 0);
+    const auto first_byte = static_cast<unsigned char>(*(c + 0));
     if (c + 1 == ce)
     {
         return { EBCDIC_SUB, c + 1 };
     }
-    const unsigned char second_byte = *(c + 1);
+    const auto second_byte = static_cast<unsigned char>(*(c + 1));
 
     if ((first_byte & 0xE0) == 0xC0) // 110xxxxx 10xxxxxx
     {
@@ -35,13 +35,13 @@ std::pair<unsigned char, const char*> ebcdic_encoding::to_ebcdic_multibyte(const
     {
         return { EBCDIC_SUB, c + 2 };
     }
-    const unsigned char third_byte = *(c + 2);
+    const auto third_byte = static_cast<unsigned char>(*(c + 2));
 
     if (first_byte == (0b11100000 | ebcdic_encoding::unicode_private >> 4)
         && (second_byte & 0b11111100) == (0x80 | (ebcdic_encoding::unicode_private & 0xF) << 2)
         && (third_byte & 0xC0) == 0x80) // our private plane
     {
-        const unsigned char ebcdic_value = (second_byte & 3) << 6 | third_byte & 0x3f;
+        const unsigned char ebcdic_value = static_cast<unsigned char>((second_byte & 3) << 6 | (third_byte & 0x3f));
         return { ebcdic_value, c + 3 };
     }
 
@@ -67,8 +67,8 @@ std::string ebcdic_encoding::to_ascii(const std::string& s)
 {
     std::string a;
     a.reserve(s.length());
-    for (unsigned char c : s)
-        a.append(to_ascii(c));
+    for (char c : s)
+        a.append(to_ascii(static_cast<unsigned char>(c)));
     return a;
 }
 
@@ -80,7 +80,7 @@ std::string ebcdic_encoding::to_ebcdic(const std::string& s)
     for (const char* i = s.data(); i != end;)
     {
         const auto [ch, newi] = to_ebcdic(i, end);
-        a.push_back(ch);
+        a.push_back(static_cast<char>(ch));
         i = newi;
     }
     return a;

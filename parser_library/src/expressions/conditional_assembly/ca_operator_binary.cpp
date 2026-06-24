@@ -167,10 +167,10 @@ context::A_t shift_operands(context::A_t lhs, context::A_t rhs, ca_expr_ops shif
     if (shift_part == 0)
         return rhs;
 
-    std::uint32_t unsigned_lhs = lhs;
+    auto unsigned_lhs = utils::to_unsigned(lhs);
     auto sign_bit = unsigned_lhs & (1U << 31);
 
-    unsigned int result;
+    std::make_unsigned_t<context::A_t> result = 0;
 
     if (shift_part >= 32)
     {
@@ -186,7 +186,7 @@ context::A_t shift_operands(context::A_t lhs, context::A_t rhs, ca_expr_ops shif
                 result = 0;
                 break;
         }
-        return result;
+        return utils::to_signed(result);
     }
 
     switch (shift)
@@ -211,7 +211,7 @@ context::A_t shift_operands(context::A_t lhs, context::A_t rhs, ca_expr_ops shif
             break;
     }
 
-    return result;
+    return utils::to_signed(result);
 }
 
 context::SET_t ca_function_binary_operator::operation(

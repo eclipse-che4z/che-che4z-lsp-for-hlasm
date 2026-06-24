@@ -22,6 +22,8 @@
 #else
 #    include <fstream>
 #    include <iostream>
+
+#    include "utils/intconv.h"
 #endif
 
 namespace hlasm_plugin::utils::platform {
@@ -110,7 +112,7 @@ const std::string& home()
             result = std::move(home.value());
 
         if (!result.empty())
-            result.front() = std::tolower((unsigned char)result.front());
+            result.front() = (char)std::tolower((unsigned char)result.front());
 
         return result;
     }();
@@ -141,7 +143,7 @@ const std::string& home()
         // clang-format on
 
         if (!s.empty() && is_windows())
-            s.front() = std::tolower((unsigned char)s.front());
+            s.front() = (char)std::tolower((unsigned char)s.front());
 
         return s;
     }();
@@ -198,14 +200,15 @@ std::optional<std::string> read_file(const std::string& file)
         try
         {
             fin.seekg(0, std::ios::end);
-            auto file_size = fin.tellg();
+            const auto file_size = fin.tellg();
 
             if (file_size == -1)
                 return std::nullopt;
 
-            std::optional<std::string> text(std::in_place, (size_t)file_size, '\0');
+            const auto buf_len = utils::to_unsigned(static_cast<std::streamoff>(file_size));
+            std::optional<std::string> text(std::in_place, buf_len, '\0');
             fin.seekg(0, std::ios::beg);
-            fin.read(text->data(), text->size());
+            fin.read(text->data(), file_size);
             fin.close();
 
             return text;

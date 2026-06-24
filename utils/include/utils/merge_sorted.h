@@ -57,14 +57,14 @@ void merge_sorted(
     std::vector<T>& sorted_vec, It it, const S ite, KeyComparator&& cmp = KeyComparator(), Merger&& m = Merger())
 {
     constexpr auto trivial_inserter = !std::invocable<Merger, typename std::iterator_traits<It>::reference>;
-    auto&& p = [&m]() -> std::conditional_t<trivial_inserter, std::identity, Merger&> {
+    auto&& p = [&]() -> std::conditional_t<trivial_inserter, std::identity, Merger&> {
         if constexpr (trivial_inserter)
             return std::identity();
         else
             return m;
     }();
     const auto init_size = sorted_vec.size();
-    for (size_t i = 0; i < init_size && it != ite;)
+    for (std::size_t i = 0; i < init_size && it != ite;)
     {
         auto&& el = sorted_vec[i];
         if (auto c = std::invoke(cmp, el, *it); c == 0)
@@ -85,7 +85,7 @@ void merge_sorted(
         std::ranges::transform(it, ite, std::back_inserter(sorted_vec), std::ref(p));
 
     const auto less = [&cmp](const auto& l, const auto& r) { return std::invoke(cmp, l, r) < 0; };
-    std::inplace_merge(sorted_vec.begin(), sorted_vec.begin() + init_size, sorted_vec.end(), less);
+    std::inplace_merge(sorted_vec.begin(), sorted_vec.begin() + (std::ptrdiff_t)init_size, sorted_vec.end(), less);
 }
 
 template<typename T,
@@ -113,18 +113,19 @@ void merge_unsorted(
     std::vector<T>& sorted_vec, It it, const S ite, KeyComparator&& cmp = KeyComparator(), Merger&& m = Merger())
 {
     constexpr auto trivial_inserter = !std::invocable<Merger, typename std::iterator_traits<It>::reference>;
-    auto&& p = [&m]() -> std::conditional_t<trivial_inserter, std::identity, Merger&> {
+    auto&& p = [&]() -> std::conditional_t<trivial_inserter, std::identity, Merger&> {
         if constexpr (trivial_inserter)
             return std::identity();
         else
             return m;
     }();
     const auto less = [&cmp](const auto& l, const auto& r) { return std::invoke(cmp, l, r) < 0; };
-    const auto init_size = sorted_vec.size();
+    const auto init_size = std::distance(sorted_vec.begin(), sorted_vec.end());
     for (; it != ite; ++it)
     {
-        auto match = std::lower_bound(sorted_vec.begin(), sorted_vec.begin() + init_size, *it, less);
-        if (match != sorted_vec.begin() + init_size && std::invoke(cmp, *match, *it) == 0)
+        const auto mid = std::next(sorted_vec.begin(), init_size);
+        const auto match = std::lower_bound(sorted_vec.begin(), mid, *it, less);
+        if (match != mid && std::invoke(cmp, *match, *it) == 0)
             std::invoke(m, *match, *it);
         else
             sorted_vec.push_back(std::invoke(p, *it));
@@ -135,8 +136,9 @@ void merge_unsorted(
     else
         std::ranges::transform(it, ite, std::back_inserter(sorted_vec), std::ref(p));
 
-    std::stable_sort(sorted_vec.begin() + init_size, sorted_vec.end(), less);
-    std::inplace_merge(sorted_vec.begin(), sorted_vec.begin() + init_size, sorted_vec.end(), less);
+    const auto mid = std::next(sorted_vec.begin(), init_size);
+    std::stable_sort(mid, sorted_vec.end(), less);
+    std::inplace_merge(sorted_vec.begin(), mid, sorted_vec.end(), less);
 }
 
 template<typename T,

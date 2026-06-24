@@ -22,6 +22,7 @@
 #include <utility>
 
 #include "utils/insist.h"
+#include "utils/intconv.h"
 
 namespace hlasm_plugin::parser_library::instructions {
 
@@ -192,7 +193,8 @@ constexpr asm_name_t _asm_names[] = {
 
 consteval size_t _asm_find(std::string_view name) noexcept
 {
-    return std::ranges::find(_asm_names, name, [](const auto& x) { return std::string_view(x.data()); }) - _asm_names;
+    const auto instr = std::ranges::find(_asm_names, name, [](const auto& x) { return std::string_view(x.data()); });
+    return utils::to_unsigned(instr - _asm_names);
 }
 
 template<asm_name_t name>
@@ -338,7 +340,7 @@ constexpr auto _cc_offsets = []() consteval {
     std::array<unsigned short, std::size(_cc_lengths)> offsets {};
     unsigned long sum = 0;
     auto* out = offsets.data();
-    for (long l : _cc_lengths)
+    for (auto l : _cc_lengths)
     {
         *out++ = (unsigned short)sum;
         sum += l;
@@ -365,8 +367,8 @@ consteval condition_code_explanation::condition_code_explanation(
     , lengths {}
     , single_explanation(single)
 {
-    std::ranges::copy_n(t, text.size(), text.begin());
-    std::ranges::copy_n(l, lengths.size(), lengths.begin());
+    std::ranges::copy_n(t, std::ssize(text), text.begin());
+    std::ranges::copy_n(l, std::ssize(lengths), lengths.begin());
     if (single || _cc_identical(t, l))
     {
         std::ranges::fill_n(text.begin(), 4, t[0]);
@@ -418,21 +420,21 @@ constexpr machine_operand_format dxb_20_4x4_S(dis_20s, idx_reg, base_);
 constexpr machine_operand_format dxxb_20_4x4_S(dis_idx_20s, idx_reg, base_);
 constexpr machine_operand_format dvb_12_5x4_U(dis_12u, vec_reg, base_);
 constexpr machine_operand_format reg_4_U(reg, empty, empty);
-constexpr machine_operand_format reg_4_U_nz(reg_nz, empty, empty);
+[[maybe_unused]] constexpr machine_operand_format reg_4_U_nz(reg_nz, empty, empty);
 constexpr machine_operand_format reg_4_U_2(reg_2, empty, empty);
-constexpr machine_operand_format reg_4_U_odd(reg_odd, empty, empty);
+[[maybe_unused]] constexpr machine_operand_format reg_4_U_odd(reg_odd, empty, empty);
 constexpr machine_operand_format reg_4_U_even(reg_even, empty, empty);
 constexpr machine_operand_format reg_4_U_even_nz(reg_even_nz, empty, empty);
 constexpr machine_operand_format mask_4_U(mask, empty, empty);
 constexpr machine_operand_format imm_4_U(imm_4u, empty, empty);
 constexpr machine_operand_format imm_8_S(imm_8s, empty, empty);
 constexpr machine_operand_format imm_8_U(imm_8u, empty, empty);
-constexpr machine_operand_format imm_12_S(imm_12s, empty, empty);
+[[maybe_unused]] constexpr machine_operand_format imm_12_S(imm_12s, empty, empty);
 constexpr machine_operand_format imm_12_U(imm_12u, empty, empty);
 constexpr machine_operand_format imm_16_S(imm_16s, empty, empty);
 constexpr machine_operand_format imm_16_U(imm_16u, empty, empty);
 constexpr machine_operand_format imm_32_S(imm_32s, empty, empty);
-constexpr machine_operand_format imm_32_U(imm_32u, empty, empty);
+[[maybe_unused]] constexpr machine_operand_format imm_32_U(imm_32u, empty, empty);
 constexpr machine_operand_format vec_reg_5_U(vec_reg, empty, empty);
 constexpr machine_operand_format db_12_8x4L_U(dis_12u, length_8, base_);
 constexpr machine_operand_format db_12_4x4L_U(dis_12u, length_4, base_);
@@ -442,29 +444,29 @@ constexpr machine_operand_format rel_addr_imm_24_S(reladdr_imm_24s, empty, empty
 constexpr machine_operand_format rel_addr_imm_32_S(reladdr_imm_32s, empty, empty);
 
 // optional variants
-constexpr machine_operand_format db_12_4_U_opt(dis_12u, empty, base_, true);
-constexpr machine_operand_format db_20_4_S_opt(dis_20s, empty, base_, true);
-constexpr machine_operand_format drb_12_4x4_U_opt(dis_12u, idx_reg_r, base_, true);
-constexpr machine_operand_format dxb_12_4x4_U_opt(dis_12u, idx_reg, base_, true);
-constexpr machine_operand_format dxb_20_4x4_S_opt(dis_20s, idx_reg, base_, true);
-constexpr machine_operand_format dvb_12_5x4_U_opt(dis_12u, vec_reg, base_, true);
+[[maybe_unused]] constexpr machine_operand_format db_12_4_U_opt(dis_12u, empty, base_, true);
+[[maybe_unused]] constexpr machine_operand_format db_20_4_S_opt(dis_20s, empty, base_, true);
+[[maybe_unused]] constexpr machine_operand_format drb_12_4x4_U_opt(dis_12u, idx_reg_r, base_, true);
+[[maybe_unused]] constexpr machine_operand_format dxb_12_4x4_U_opt(dis_12u, idx_reg, base_, true);
+[[maybe_unused]] constexpr machine_operand_format dxb_20_4x4_S_opt(dis_20s, idx_reg, base_, true);
+[[maybe_unused]] constexpr machine_operand_format dvb_12_5x4_U_opt(dis_12u, vec_reg, base_, true);
 constexpr machine_operand_format reg_4_U_opt(reg, empty, empty, true);
 constexpr machine_operand_format mask_4_U_opt(mask, empty, empty, true);
-constexpr machine_operand_format imm_4_U_opt(imm_4u, empty, empty, true);
-constexpr machine_operand_format imm_8_S_opt(imm_8s, empty, empty, true);
+[[maybe_unused]] constexpr machine_operand_format imm_4_U_opt(imm_4u, empty, empty, true);
+[[maybe_unused]] constexpr machine_operand_format imm_8_S_opt(imm_8s, empty, empty, true);
 constexpr machine_operand_format imm_8_U_opt(imm_8u, empty, empty, true);
 constexpr machine_operand_format imm_16_U_opt(imm_16u, empty, empty, true);
-constexpr machine_operand_format imm_12_S_opt(imm_12s, empty, empty, true);
-constexpr machine_operand_format imm_16_S_opt(imm_16s, empty, empty, true);
-constexpr machine_operand_format imm_32_S_opt(imm_32s, empty, empty, true);
-constexpr machine_operand_format imm_32_U_opt(imm_32u, empty, empty, true);
-constexpr machine_operand_format vec_reg_5_U_opt(vec_reg, empty, empty, true);
-constexpr machine_operand_format db_12_8x4L_U_opt(dis_12u, length_8, base_, true);
-constexpr machine_operand_format db_12_4x4L_U_opt(dis_12u, length_4, base_, true);
-constexpr machine_operand_format rel_addr_imm_12_S_opt(reladdr_imm_12s, empty, empty, true);
-constexpr machine_operand_format rel_addr_imm_16_S_opt(reladdr_imm_16s, empty, empty, true);
-constexpr machine_operand_format rel_addr_imm_24_S_opt(reladdr_imm_24s, empty, empty, true);
-constexpr machine_operand_format rel_addr_imm_32_S_opt(reladdr_imm_32s, empty, empty, true);
+[[maybe_unused]] constexpr machine_operand_format imm_12_S_opt(imm_12s, empty, empty, true);
+[[maybe_unused]] constexpr machine_operand_format imm_16_S_opt(imm_16s, empty, empty, true);
+[[maybe_unused]] constexpr machine_operand_format imm_32_S_opt(imm_32s, empty, empty, true);
+[[maybe_unused]] constexpr machine_operand_format imm_32_U_opt(imm_32u, empty, empty, true);
+[[maybe_unused]] constexpr machine_operand_format vec_reg_5_U_opt(vec_reg, empty, empty, true);
+[[maybe_unused]] constexpr machine_operand_format db_12_8x4L_U_opt(dis_12u, length_8, base_, true);
+[[maybe_unused]] constexpr machine_operand_format db_12_4x4L_U_opt(dis_12u, length_4, base_, true);
+[[maybe_unused]] constexpr machine_operand_format rel_addr_imm_12_S_opt(reladdr_imm_12s, empty, empty, true);
+[[maybe_unused]] constexpr machine_operand_format rel_addr_imm_16_S_opt(reladdr_imm_16s, empty, empty, true);
+[[maybe_unused]] constexpr machine_operand_format rel_addr_imm_24_S_opt(reladdr_imm_24s, empty, empty, true);
+[[maybe_unused]] constexpr machine_operand_format rel_addr_imm_32_S_opt(reladdr_imm_32s, empty, empty, true);
 } // namespace
 
 constinit const machine_operand_format machine_operand_format::empty {
@@ -607,16 +609,16 @@ public:
 };
 } // namespace
 
-consteval char machine_instruction::get_length_by_format(mach_format instruction_format) noexcept
+consteval unsigned char machine_instruction::get_length_by_format(mach_format instruction_format) noexcept
 {
     auto interval = static_cast<int>(instruction_format);
     if (interval >= static_cast<int>(mach_format::length_48))
-        return static_cast<char>(size_identifier::LENGTH_48);
+        return static_cast<unsigned char>(size_identifier::LENGTH_48);
     if (interval >= static_cast<int>(mach_format::length_32))
-        return static_cast<char>(size_identifier::LENGTH_32);
+        return static_cast<unsigned char>(size_identifier::LENGTH_32);
     if (interval >= static_cast<int>(mach_format::length_16))
-        return static_cast<char>(size_identifier::LENGTH_16);
-    return static_cast<char>(size_identifier::LENGTH_0);
+        return static_cast<unsigned char>(size_identifier::LENGTH_16);
+    return static_cast<unsigned char>(size_identifier::LENGTH_0);
 }
 
 consteval machine_instruction::machine_instruction(std::string_view name,

@@ -24,6 +24,7 @@
 #include "context/id_index.h"
 #include "diagnostic_consumer.h"
 #include "range.h"
+#include "utils/intconv.h"
 
 // this file is a composition of structures that create concat_chain
 // concat_chain is used to represent model statement fields
@@ -169,14 +170,15 @@ struct concat_chain_matcher
 {
     bool operator()(concat_chain::const_iterator b, concat_chain::const_iterator e) const noexcept
     {
+        const auto len = utils::to_unsigned(std::ranges::distance(b, e));
         if constexpr (exact)
         {
-            if (std::ranges::distance(b, e) != sizeof...(Ts))
+            if (len != sizeof...(Ts))
                 return false;
         }
         else
         {
-            if (std::ranges::distance(b, e) < sizeof...(Ts))
+            if (len < sizeof...(Ts))
                 return false;
         }
         return ((std::holds_alternative<Ts>(b->value) && (++b, true)) && ...);

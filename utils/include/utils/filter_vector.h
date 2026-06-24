@@ -104,7 +104,7 @@ public:
         const auto [bucket, bit] = deconstruct_value(v);
         filters[bucket][idx] &= ~(one << bit);
         filters[0][idx] &= ~(static_cast<T>(!filters[bucket][idx]) << bucket);
-        filters[0][idx] &= -!!(filters[0][idx] & ~one);
+        filters[0][idx] &= static_cast<T>(-!!(filters[0][idx] & ~one));
     }
 
     void reset(size_t idx) noexcept
@@ -126,7 +126,7 @@ public:
                 continue;
             b &= keep_on_mask;
             sum &= ~(static_cast<T>(!b) << bucket);
-            sum &= -!!(sum & ~one);
+            sum &= static_cast<T>(-!!(sum & ~one));
         }
     }
 
@@ -146,7 +146,7 @@ public:
                     continue;
                 b &= keep_on_mask;
                 sum &= ~(static_cast<T>(!b) << bucket);
-                sum &= -!!(sum & ~one);
+                sum &= static_cast<T>(-!!(sum & ~one));
             }
         }
     }

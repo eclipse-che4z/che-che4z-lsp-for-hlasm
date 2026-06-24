@@ -86,7 +86,7 @@ class lsp_analyzer : public statement_analyzer
     struct collection_info_t
     {
         std::vector<lsp::symbol_occurrence>* stmt_occurrences;
-        size_t stmt_occurrences_last;
+        std::vector<lsp::symbol_occurrence>::difference_type stmt_occurrences_last;
         std::vector<lsp::line_occurence_details>* line_details;
         bool evaluated_model;
     };

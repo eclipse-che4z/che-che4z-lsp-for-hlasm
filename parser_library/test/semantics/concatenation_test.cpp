@@ -76,7 +76,7 @@ TEST(concatenation, find_var_sym)
         EXPECT_EQ(var, pos);
     }
 
-    chain.erase(chain.begin() + (chain.size() - 1));
+    chain.erase(chain.end() - 1);
 
     {
         auto var = concatenation_point::find_var_sym(chain.cbegin(), chain.cend());

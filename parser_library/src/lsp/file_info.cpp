@@ -62,7 +62,7 @@ occurrence_scope_t file_info::find_occurrence_with_scope(position pos) const
         const auto& occ = *it;
         if (is_in_range(pos, occ.occurrence_range))
         {
-            auto occ_priority = 1 * occ.evaluated_model + 2 * (occ.kind == occurrence_kind::INSTR_LIKE);
+            auto occ_priority = 1u * occ.evaluated_model + 2u * (occ.kind == occurrence_kind::INSTR_LIKE);
             if (!found || occ_priority < priority)
                 found_pair = { &occ, occ_priority };
             if (priority == 0)
@@ -141,9 +141,12 @@ std::vector<bool> file_info::macro_map() const
         return {};
     static constexpr auto line_end = [](const auto& s) { return s.file_lines.end; };
     std::vector<bool> result(std::ranges::max(slices | std::views::transform(line_end)));
+    using diff = decltype(result)::difference_type;
     for (const auto& scope : slices)
     {
-        std::fill(result.begin() + scope.file_lines.begin, result.begin() + scope.file_lines.end, true);
+        const auto b = result.begin() + static_cast<diff>(scope.file_lines.begin);
+        const auto e = result.begin() + static_cast<diff>(scope.file_lines.end);
+        std::fill(b, e, true);
     }
     return result;
 }

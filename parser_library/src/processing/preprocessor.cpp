@@ -108,9 +108,9 @@ void preprocessor::do_highlighting(const semantics::preprocessor_statement_si& s
                 token_info(range(position(lineno, continuation_column), position(lineno, ignore_column)),
                     hl_scopes::continuation));
 
-        if (const size_t ignore_len = std::ranges::distance(segment.ignore, segment.end); ignore_len)
+        if (const size_t len = utils::to_unsigned(std::ranges::distance(segment.ignore, segment.end)); len)
             src_proc.add_hl_symbol(token_info(
-                range(position(lineno, ignore_column), position(lineno, ignore_column + ignore_len - !continuation)),
+                range(position(lineno, ignore_column), position(lineno, ignore_column + len - !continuation)),
                 hl_scopes::ignored));
     }
 }

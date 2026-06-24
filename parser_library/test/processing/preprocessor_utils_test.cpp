@@ -41,10 +41,10 @@ std::string get_inline_string(std::string_view text, const lexing::logical_line_
 
     while (true)
     {
-        auto [next, it] = append_to_logical_line(out, text, opts);
+        const auto [next, it] = append_to_logical_line(out, text, opts);
         if (!next)
             break;
-        text.remove_prefix(std::ranges::distance(text.begin(), it));
+        text = std::string_view(it, text.end());
     }
 
     finish_logical_line(out, opts);

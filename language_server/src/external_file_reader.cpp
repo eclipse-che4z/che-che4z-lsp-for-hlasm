@@ -155,7 +155,7 @@ external_file_reader::thread_registration external_file_reader::register_thread(
 
     std::lock_guard g(m_mutex);
 
-    auto [it, inserted] = m_registrations.try_emplace(tid, std::move(wakeup_rtn));
+    [[maybe_unused]] auto [_, inserted] = m_registrations.try_emplace(tid, std::move(wakeup_rtn));
 
     assert(inserted);
 

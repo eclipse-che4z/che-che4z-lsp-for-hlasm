@@ -29,7 +29,7 @@ copy_statement_provider::copy_statement_provider(const analyzing_context& ctx,
 bool copy_statement_provider::finished() const
 {
     const auto& current_stack = m_ctx.hlasm_ctx->current_copy_stack();
-    return current_stack.empty() || m_ctx.hlasm_ctx->in_opencode() && current_stack.back().suspended();
+    return current_stack.empty() || (m_ctx.hlasm_ctx->in_opencode() && current_stack.back().suspended());
 }
 
 std::pair<context::statement_cache*, std::optional<std::optional<context::id_index>>>

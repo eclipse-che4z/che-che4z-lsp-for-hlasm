@@ -154,9 +154,10 @@ low_language_processor::preprocessed_part low_language_processor::preprocess_inn
 check_org_result check_address_for_ORG(
     const context::address& addr_to_check, const context::address& curr_addr, size_t boundary, int offset)
 {
+    boundary |= !boundary;
     int addr_to_check_offset = addr_to_check.offset();
 
-    int al = boundary ? (int)((boundary - (addr_to_check_offset % boundary)) % boundary) : 0;
+    int al = static_cast<int>(context::alignment { 0, boundary }.align(static_cast<size_t>(addr_to_check_offset)));
 
     bool underflow = !addr_to_check.has_dependant_space() && addr_to_check_offset + al + offset < 0;
     if (underflow || !curr_addr.in_same_loctr(addr_to_check))

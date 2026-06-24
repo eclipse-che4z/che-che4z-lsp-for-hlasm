@@ -202,8 +202,9 @@ void ordinary_assembly_context::create_external_section(id_index name, section_k
                 return symbol_attributes::make_wxtrn_attrs();
             case EXTERNAL_DSECT:
                 return symbol_attributes::make_section_attrs();
+            default:
+                assert(false);
         }
-        assert(false);
     }();
 
 
@@ -276,6 +277,7 @@ space_ptr ordinary_assembly_context::set_location_counter_value_space(
         return std::move(sp);
     }
 
+    // TODO: This looks like a genuine problem offset < 0 seems to be allowed
     return reserve_storage_area_space(offset, alignment { 0, boundary ? boundary : 1 }, dep_ctx).second;
 }
 

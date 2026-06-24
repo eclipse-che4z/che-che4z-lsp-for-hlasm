@@ -22,6 +22,7 @@
 
 #include "context/compressed_id.h"
 #include "utils/insist.h"
+#include "utils/intconv.h"
 #include "utils/projectors.h"
 
 namespace hlasm_plugin::parser_library::processing {
@@ -41,7 +42,7 @@ public:
         if (it == ids.end())
             return nullptr;
 
-        return handlers[it - ids.begin()];
+        return handlers[utils::to_unsigned(it - ids.begin())];
     }
 
     explicit constexpr handler_map(const std::pair<context::id_index, Callback*> (&ar)[n]) noexcept

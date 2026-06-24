@@ -24,7 +24,7 @@ id_index id_storage::small_id(std::string_view value)
 {
     char buf[id_index::buffer_size];
     const auto [_, end] = std::ranges::transform(value, buf, [](unsigned char c) { return utils::upper_cased[c]; });
-    return id_index(std::string_view(buf, end - buf));
+    return id_index(std::string_view(buf, end));
 }
 
 size_t id_storage::size() const { return lit_.size(); }

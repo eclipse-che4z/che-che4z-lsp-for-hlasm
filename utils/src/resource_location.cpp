@@ -296,7 +296,7 @@ resource_location resource_location::lexically_normal() const
     if (dis_uri_view->path.empty() && buffer.empty())
         return *this;
 
-    static constexpr auto to_lower = [](unsigned char c) { return (char)tolower(c); };
+    static constexpr auto to_lower = [](char c) { return (char)tolower((unsigned char)c); };
 
     std::string scheme;
     scheme.reserve(dis_uri_view->scheme.size());

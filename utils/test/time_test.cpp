@@ -18,14 +18,21 @@
 
 using namespace hlasm_plugin::utils;
 
-TEST(timestamp, compare) { EXPECT_LT(timestamp(2000, 1, 2), timestamp(2000, 1, 2, 3, 4, 5, 6)); }
-
-TEST(timestamp, now) { EXPECT_GT(timestamp::now(), timestamp(2000, 1, 1)); }
-
-TEST(timestamp, components)
+TEST(timestamp, compare)
 {
-    auto t = timestamp::now().value();
-    EXPECT_EQ(t, timestamp(t.year(), t.month(), t.day(), t.hour(), t.minute(), t.second(), t.microsecond()));
+    const timestamp t1 { 2000, 1, 2 };
+    const timestamp t2 { 2000, 1, 2, 3, 4, 5, 6 };
+    EXPECT_LT(t1, t2);
 }
 
-TEST(timestamp, to_string) { EXPECT_EQ(timestamp(1, 2, 3, 4, 5, 6, 7).to_string(), "0001-02-03 04:05:06.000007"); }
+TEST(timestamp, now)
+{
+    const timestamp year2000 { 2000, 1, 1 };
+    EXPECT_GT(timestamp::now(), year2000);
+}
+
+TEST(timestamp, to_string)
+{
+    const timestamp t { 1, 2, 3, 4, 5, 6, 7 };
+    EXPECT_EQ(t.to_string(), "0001-02-03 04:05:06.000007");
+}

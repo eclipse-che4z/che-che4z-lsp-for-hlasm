@@ -106,13 +106,14 @@ constinit const as_needed::impl_t CU_nominal_extras { get_CU_nominal_length, get
 uint64_t get_G_nominal_length(std::string_view op) noexcept
 {
     return utils::length_utf32_no_validation(op)
-        - std::ranges::count_if(op, [](char c) { return c == '<' || c == '>'; });
+        - utils::to_unsigned(std::ranges::count_if(op, [](char c) { return c == '<' || c == '>'; }));
 }
 
 uint32_t get_G_nominal_length_attribute(std::string_view op) noexcept
 {
-    return (uint32_t)(utils::length_utf32_no_validation(op)
-        - std::ranges::count_if(op, [](char c) { return c == '<' || c == '>'; }));
+    const auto nl = get_G_nominal_length(op);
+    assert(std::in_range<uint32_t>(nl)); // TODO: Technically not guaranteed?
+    return (uint32_t)nl;
 }
 
 constinit const as_needed::impl_t G_nominal_extras { get_G_nominal_length, get_G_nominal_length_attribute, 2 };

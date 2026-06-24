@@ -67,7 +67,7 @@ position range_provider::adjust_model_position(position pos, bool end) const noe
     }
     pos.line += r.start.line;
 
-    if (auto cmp = pos <=> r.end; cmp > 0 || end == false && cmp >= 0)
+    if (auto cmp = pos <=> r.end; cmp > 0 || (end == false && cmp >= 0))
         pos = r.end;
 
     return pos;

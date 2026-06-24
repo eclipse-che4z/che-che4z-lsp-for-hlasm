@@ -21,13 +21,13 @@ namespace hlasm_plugin::utils {
 constinit const std::array<char_size, 256> utf8_prefix_sizes = []() {
     std::array<char_size, 256> sizes = {};
     static_assert(std::numeric_limits<unsigned char>::max() < sizes.size());
-    for (int i = 0b0000'0000; i <= 0b0111'1111; ++i)
+    for (unsigned i = 0b0000'0000; i <= 0b0111'1111; ++i)
         sizes[i] = { 1, 1 };
-    for (int i = 0b1100'0000; i <= 0b1101'1111; ++i)
+    for (unsigned i = 0b1100'0000; i <= 0b1101'1111; ++i)
         sizes[i] = { 2, 1 };
-    for (int i = 0b1110'0000; i <= 0b1110'1111; ++i)
+    for (unsigned i = 0b1110'0000; i <= 0b1110'1111; ++i)
         sizes[i] = { 3, 1 };
-    for (int i = 0b1111'0000; i <= 0b1111'0111; ++i)
+    for (unsigned i = 0b1111'0000; i <= 0b1111'0111; ++i)
         sizes[i] = { 4, 2 };
     return sizes;
 }();
@@ -35,7 +35,7 @@ constinit const std::array<char_size, 256> utf8_prefix_sizes = []() {
 constinit const std::array<unsigned char, 128> utf8_valid_multibyte_prefix_table = []() {
     std::array<unsigned char, 128> result {};
     const auto update = [&result](unsigned char f, unsigned char s) {
-        int bitid = (f - 0xC0) << 4 | s >> 4;
+        unsigned bitid = (f - 0xC0u) << 4 | s >> 4;
         result[bitid / 8] |= (0x80 >> bitid % 8);
     };
     const auto update_range = [update](unsigned char fl, unsigned char fh, unsigned char sl, unsigned char sh) {
@@ -64,24 +64,25 @@ character_replaced append_utf8_sanitized(std::string& result, std::string_view s
     while (true)
     {
         // handle ascii printable characters
-        auto first_complex = std::find_if(it, end, [](unsigned char c) { return c < 0x20 || c >= 0x7f; });
+        auto first_complex = std::find_if(it, end, [](char c) { return c < 0x20 || c >= 0x7f; });
         result.append(it, first_complex);
         it = first_complex;
         if (it == end)
             break;
 
 
-        unsigned char c = *it;
+        const auto c = static_cast<unsigned char>(*it);
         auto cs = utf8_prefix_sizes[c];
-        if (cs.utf8 > 1 && (end - it) >= cs.utf8 && utf8_valid_multibyte_prefix(c, *std::next(it))
-            && std::all_of(it + 2, it + cs.utf8, [](unsigned char c) { return (c & 0xC0) == 0x80; }))
+        if (cs.utf8 > 1 && (end - it) >= cs.utf8
+            && utf8_valid_multibyte_prefix(c, static_cast<unsigned char>(*std::next(it)))
+            && std::all_of(it + 2, it + cs.utf8, [](char c) { return (c & 0xC0) == 0x80; }))
         {
             char32_t combined = c & ~(0xffu << (8 - cs.utf8));
             for (auto p = it + 1; p != it + cs.utf8; ++p)
-                combined = combined << 6 | *p & 0x3fu;
+                combined = combined << 6 | (static_cast<unsigned char>(*p) & 0x3fu);
 
             if (combined < 0x8d
-                || combined > 0x9f && (0xfffe & combined) != 0xfffe && (combined < 0xfdd0 || combined > 0xfdef))
+                || (combined > 0x9f && (0xfffe & combined) != 0xfffe && (combined < 0xfdd0 || combined > 0xfdef)))
             {
                 result.append(it, it + cs.utf8);
                 it += cs.utf8;
@@ -145,7 +146,8 @@ std::string replace_non_utf8_chars(std::string_view text)
         }
 
         const auto cs = utf8_prefix_sizes[(unsigned char)text.front()];
-        if (cs.utf8 != 0 && cs.utf8 <= text.size() && utf8_valid_multibyte_prefix(text[0], text[1])
+        if (cs.utf8 != 0 && cs.utf8 <= text.size()
+            && utf8_valid_multibyte_prefix(static_cast<unsigned char>(text[0]), static_cast<unsigned char>(text[1]))
             && std::all_of(text.begin() + 2, text.begin() + cs.utf8, utf8_continue_byte))
         {
             // copy the character to output
@@ -155,9 +157,9 @@ std::string replace_non_utf8_chars(std::string_view text)
         else
         {
             // UTF8 replacement for unknown character
-            ret.push_back((uint8_t)0xEF);
-            ret.push_back((uint8_t)0xBF);
-            ret.push_back((uint8_t)0xBD);
+            ret.push_back((char)0xEFU);
+            ret.push_back((char)0xBFU);
+            ret.push_back((char)0xBDU);
             text.remove_prefix(1);
         }
     }
@@ -177,7 +179,7 @@ std::pair<size_t, size_t> substr_step(std::string_view& s, size_t& chars) noexce
         --chars;
         ++result.first;
 
-        unsigned char c = s.front();
+        const auto c = static_cast<unsigned char>(s.front());
         if (c < 0x80)
         {
             ++result.second;
@@ -188,7 +190,8 @@ std::pair<size_t, size_t> substr_step(std::string_view& s, size_t& chars) noexce
         const auto cs = utf8_prefix_sizes[c];
         if constexpr (validate)
         {
-            if (cs.utf8 < 2 || s.size() < cs.utf8 || !utf8_valid_multibyte_prefix(s[0], s[1]))
+            if (cs.utf8 < 2 || s.size() < cs.utf8
+                || !utf8_valid_multibyte_prefix(static_cast<unsigned char>(s[0]), static_cast<unsigned char>(s[1])))
                 throw utf8_error();
             for (const auto* p = s.data() + 2; p != s.data() + cs.utf8; ++p)
                 if ((*p & 0xc0) != 0x80)
@@ -287,13 +290,13 @@ char32_t extract_utf32_from_utf8(std::string_view s)
 
     char32_t result = 0;
 
-    for (unsigned char c : utf8_substr(s, 0, 1).str)
+    for (char c : utf8_substr(s, 0, 1).str)
     {
-        const auto ones = std::countl_one(c);
-        const auto mask = 0b0111'1111 >> ones;
+        const auto ones = std::countl_one(static_cast<unsigned char>(c));
+        const auto mask = 0b0111'1111u >> ones;
 
         result <<= 6;
-        result |= c & mask;
+        result |= static_cast<unsigned char>(c) & mask;
     }
 
     return result;

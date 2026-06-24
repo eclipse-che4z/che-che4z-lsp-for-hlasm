@@ -159,12 +159,12 @@ void literal_pool::generate_pool(diagnosable_ctx& diags, index_t<using_collectio
         auto bit_length = lit->evaluate_total_length(solver, checking::data_instr_type::DC, diags);
         if (bit_length < 0)
             continue;
-        size = (bit_length + 7) / 8;
+        size = (utils::to_unsigned(bit_length) + 7u) / 8u;
         if (size == 0)
             continue;
 
-        auto top_alignment = size | 16; // 16B length alignment is the top
-        alignment = (~top_alignment & top_alignment - 1) + 1;
+        auto top_alignment = size | 16u; // 16B length alignment is the top
+        alignment = (~top_alignment & (top_alignment - 1)) + 1;
     }
 
     std::ranges::stable_sort(m_pending_literals, std::ranges::greater(), &pending_literal::alignment);

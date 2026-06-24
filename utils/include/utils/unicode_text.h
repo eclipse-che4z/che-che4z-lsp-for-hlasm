@@ -54,9 +54,10 @@ extern constinit const std::array<unsigned char, 128> utf8_valid_multibyte_prefi
 
 inline bool utf8_valid_multibyte_prefix(unsigned char first, unsigned char second)
 {
-    if (first < 0xc0)
+    static constexpr auto multibyte_min = 0xC0U;
+    if (first < multibyte_min)
         return false;
-    unsigned bitid = (first - 0xC0) << 4 | second >> 4;
+    unsigned bitid = (first - multibyte_min) << 4 | second >> 4;
     return utf8_valid_multibyte_prefix_table[bitid / 8] & (0x80 >> bitid % 8);
 }
 
@@ -265,7 +266,7 @@ public:
 
     utf8_iterator& operator++()
     {
-        Counter::add(*m_base);
+        Counter::add((unsigned char)*m_base);
         ++m_base;
         return *this;
     }
@@ -279,7 +280,7 @@ public:
     utf8_iterator& operator--()
     {
         --m_base;
-        Counter::remove(*m_base);
+        Counter::remove((unsigned char)*m_base);
         return *this;
     }
     utf8_iterator operator--(int)
@@ -320,7 +321,7 @@ void utf8_next(It& it, size_t n, const Sentinel& end)
 {
     while (it != end)
     {
-        if (unsigned char c = *it; (c & 0xc0) == 0x80)
+        if (const auto c = *it; (c & 0xc0) == 0x80)
         {
             ++it;
             continue;
@@ -341,7 +342,7 @@ void utf8_prev(It& it, size_t n, const Sentinel& begin)
     while (it != begin)
     {
         --it;
-        if (unsigned char c = *it; (c & 0xc0) == 0x80)
+        if (const auto c = *it; (c & 0xc0) == 0x80)
             continue;
         --n;
         if (n == 0)

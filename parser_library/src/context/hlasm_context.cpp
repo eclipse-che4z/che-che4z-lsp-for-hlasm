@@ -32,6 +32,7 @@
 #include "ordinary_assembly/location_counter.h"
 #include "using.h"
 #include "utils/factory.h"
+#include "utils/intconv.h"
 #include "utils/projectors.h"
 #include "utils/string_operations.h"
 #include "utils/time.h"
@@ -153,9 +154,9 @@ auto time_sysvars(utils::timestamp now)
         std::string date_val;
         std::string systime;
     } result = {
-        std::format("{:04}{:02}{:02}", now.year(), now.month(), now.day()),
-        std::format("{:02}/{:02}/{:02}", now.month(), now.day(), now.year() % 100),
-        std::format("{:02}.{:02}", now.hour(), now.minute()),
+        std::format("{:04}{:02}{:02}", (unsigned)now.year, (unsigned)now.month, (unsigned)now.day),
+        std::format("{:02}/{:02}/{:02}", (unsigned)now.month, (unsigned)now.day, (unsigned)now.year % 100),
+        std::format("{:02}.{:02}", (unsigned)now.hour, (unsigned)now.minute),
     };
     return result;
 }
@@ -220,14 +221,15 @@ void hlasm_context::add_global_system_variables(system_variable_map& sysvars)
         id_index("SYSM_HSEV"), create_dynamic_var([this]() { return std::format("{:03}", mnote_max); }), true));
 }
 
-void hlasm_context::add_scoped_system_variables(system_variable_map& sysvars, size_t skip_last, bool globals_only)
+void hlasm_context::add_scoped_system_variables(
+    system_variable_map& sysvars, std::ptrdiff_t skip_last, bool globals_only)
 {
     struct view_t
     {
         hlasm_context& ctx;
-        size_t skip;
+        std::ptrdiff_t skip;
 
-        auto size() const noexcept { return ctx.scope_stack_.size() - skip; }
+        auto size() const noexcept { return ctx.scope_stack_.size() - utils::to_unsigned(skip); }
         auto rbegin() const noexcept { return ctx.scope_stack_.rbegin() + skip; }
         auto rend() const noexcept { return ctx.scope_stack_.rend(); }
         const auto& top() const noexcept { return *rbegin(); }
@@ -318,10 +320,10 @@ void hlasm_context::add_scoped_system_variables(system_variable_map& sysvars, si
         // gets value of the idx-th value, when exceeds size of data, returns default value
         const macro_param_data_component* get_ith(A_t idx) const override
         {
-            if (idx < 0 || idx >= view.size())
+            if (idx < 0 || utils::to_unsigned(idx) >= view.size())
                 return dummy.get();
 
-            return view.dyn_ptrs()[view.size() - 1 - idx].get();
+            return view.dyn_ptrs()[view.size() - 1 - utils::to_unsigned(idx)].get();
         }
 
         std::optional<std::pair<A_t, A_t>> index_range() const override
@@ -353,7 +355,7 @@ hlasm_context::hlasm_context(
     , m_statements_remaining(asm_options_.statement_count_limit)
     , ord_ctx(*this)
 {
-    scope_stack_.emplace_back().time = utils::timestamp::now().value_or(utils::timestamp(1900, 1, 1));
+    scope_stack_.emplace_back().time = utils::timestamp::now().value_or(utils::timestamp { 1900, 1, 1 });
 
     init_instruction_map(opcode_mnemo_, *ids_, asm_options_.instr_set);
 
@@ -885,7 +887,7 @@ std::pair<const macro_invocation*, bool> hlasm_context::enter_macro(
     auto* const result = invo.get();
 
     auto& new_scope = scope_stack_.emplace_back(std::move(invo));
-    new_scope.time = utils::timestamp::now().value_or(utils::timestamp(1900, 1, 1));
+    new_scope.time = utils::timestamp::now().value_or(utils::timestamp { 1900, 1, 1 });
     new_scope.sysndx = SYSNDX_;
     if (auto sect = ord_ctx.current_section(); sect)
         new_scope.loctr = &sect->current_location_counter();

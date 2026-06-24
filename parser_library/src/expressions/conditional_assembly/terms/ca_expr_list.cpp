@@ -80,35 +80,32 @@ context::SET_t ca_expr_list::evaluate(const evaluation_context& eval_ctx) const
 
 void ca_expr_list::unknown_functions_to_operators()
 {
-    for (int idx = (int)expr_list.size() - 1; idx >= 0; --idx)
+    for (auto idx = std::ssize(expr_list) - 1; idx != -1; --idx)
     {
-        if (auto expr_func = dynamic_cast<ca_function*>(expr_list[idx].get());
-            expr_func && expr_func->function == ca_expr_funcs::UNKNOWN && expr_func->parameters.size() == 1)
+        const auto cur = expr_list.begin() + idx;
+        const auto expr_func = dynamic_cast<ca_function*>(cur->get());
+        if (!expr_func || expr_func->function != ca_expr_funcs::UNKNOWN || expr_func->parameters.size() != 1)
+            continue;
+        if (expr_func->duplication_factor)
         {
-            auto holder = std::move(expr_list[idx]);
-            auto& true_func = dynamic_cast<ca_function&>(*holder);
-            if (true_func.duplication_factor)
-            {
-                auto expr_r = true_func.duplication_factor->expr_range;
-                expr_list[idx] = std::make_unique<ca_par_operator>(std::move(true_func.duplication_factor), expr_r);
+            ca_expr_ptr to_insert[] = {
+                std::make_unique<ca_symbol>(expr_func->function_name, expr_func->expr_range),
+                std::make_unique<ca_par_operator>(
+                    std::move(expr_func->parameters.front()), expr_func->parameters.front()->expr_range),
+            };
 
-                expr_r = true_func.parameters.front()->expr_range;
-                expr_list.insert(expr_list.begin() + idx + 1,
-                    std::make_unique<ca_par_operator>(std::move(true_func.parameters.front()), expr_r));
+            *cur = std::make_unique<ca_par_operator>(
+                std::move(expr_func->duplication_factor), expr_func->duplication_factor->expr_range);
+            expr_list.insert(
+                cur + 1, std::make_move_iterator(std::begin(to_insert)), std::make_move_iterator(std::end(to_insert)));
+        }
+        else
+        {
+            auto to_insert = std::make_unique<ca_par_operator>(
+                std::move(expr_func->parameters.front()), expr_func->parameters.front()->expr_range);
 
-                expr_r = true_func.expr_range;
-                expr_list.insert(
-                    expr_list.begin() + idx + 1, std::make_unique<ca_symbol>(true_func.function_name, expr_r));
-            }
-            else
-            {
-                auto expr_r = true_func.expr_range;
-                expr_list[idx] = std::make_unique<ca_symbol>(true_func.function_name, expr_r);
-
-                expr_r = true_func.parameters.front()->expr_range;
-                expr_list.insert(expr_list.begin() + idx + 1,
-                    std::make_unique<ca_par_operator>(std::move(true_func.parameters.front()), expr_r));
-            }
+            *cur = std::make_unique<ca_symbol>(expr_func->function_name, expr_func->expr_range);
+            expr_list.insert(cur + 1, std::move(to_insert));
         }
     }
 }
@@ -203,7 +200,7 @@ struct resolve_stacks
     {
         auto op = std::move(op_stack.top());
         op_stack.pop();
-        if (terms.size() < 1 + op.binary)
+        if (terms.size() < 1u + op.binary)
         {
             diags.add_diagnostic(diagnostic_op::error_CE003(
                 range(terms.size() < static_cast<size_t>(op.binary) ? op.r.start : op.r.end)));

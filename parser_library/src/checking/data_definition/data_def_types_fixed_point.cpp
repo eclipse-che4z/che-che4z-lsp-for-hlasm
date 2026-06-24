@@ -133,7 +133,7 @@ constinit const as_needed::impl_t P_nominal_extras { get_P_nominal_length, get_P
 uint64_t get_Z_nominal_length(std::string_view op) noexcept
 {
     // each digit is assembled as one byte
-    return std::ranges::count_if(op, &is_digit);
+    return utils::to_unsigned(std::ranges::count_if(op, &is_digit));
 }
 
 uint32_t get_Z_nominal_length_attribute(std::string_view op) noexcept

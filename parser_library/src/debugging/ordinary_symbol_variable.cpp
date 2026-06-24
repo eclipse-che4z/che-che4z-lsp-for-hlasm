@@ -53,6 +53,7 @@ variable generate_ordinary_symbol_variable(const context::symbol& symbol)
     variable result = {
         .name = symbol.name().to_string(),
         .value = get_string_value(symbol),
+        .values = {},
     };
 
     if (const auto& attr = symbol.attributes();

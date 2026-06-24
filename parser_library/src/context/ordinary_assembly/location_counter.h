@@ -102,7 +102,6 @@ private:
     const location_counter_data& curr_data() const;
 
     void check_available_value();
-    bool check_if_higher_value(size_t idx) const;
 };
 
 } // namespace hlasm_plugin::parser_library::context

@@ -146,12 +146,12 @@ struct diagnostic_op
 
     static diagnostic_op error_A004_data_def_expected(const range& range);
 
-    static diagnostic_op error_A010_minimum(std::string_view instr_name, size_t min_params, const range& range);
+    static diagnostic_op error_A010_minimum(std::string_view instr_name, int min_params, const range& range);
 
-    static diagnostic_op error_A011_exact(std::string_view instr_name, size_t number_of_params, const range& range);
+    static diagnostic_op error_A011_exact(std::string_view instr_name, int number_of_params, const range& range);
 
     static diagnostic_op error_A012_from_to(
-        std::string_view instr_name, size_t number_from, size_t number_to, const range& range);
+        std::string_view instr_name, int number_from, int number_to, const range& range);
 
     static diagnostic_op error_A013_either(
         std::string_view instr_name, int option_one, int option_two, const range& range);

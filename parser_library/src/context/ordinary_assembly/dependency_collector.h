@@ -82,9 +82,9 @@ struct dependency_collector
 
     dependency_collector();
     dependency_collector(error);
-    dependency_collector(id_index undefined_symbol);
-    dependency_collector(address unresolved_address);
-    dependency_collector(attr_ref attribute_reference);
+    explicit dependency_collector(id_index undefined_symbol);
+    explicit dependency_collector(address unresolved_address);
+    explicit dependency_collector(attr_ref attribute_reference);
 
     dependency_collector& operator+=(const dependency_collector& holder);
     dependency_collector& operator-=(const dependency_collector& holder);

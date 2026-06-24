@@ -25,23 +25,23 @@ TEST(ebcdic_encoding, unicode)
 {
     std::string u8;
 
-    u8.insert(u8.end(), (unsigned char)0xf0);
-    u8.insert(u8.end(), (unsigned char)0x90);
-    u8.insert(u8.end(), (unsigned char)0x80);
-    u8.insert(u8.end(), (unsigned char)0x80);
+    u8.insert(u8.end(), (char)0xF0U);
+    u8.insert(u8.end(), (char)0x90U);
+    u8.insert(u8.end(), (char)0x80U);
+    u8.insert(u8.end(), (char)0x80U);
 
-    u8.insert(u8.end(), (unsigned char)0xEA);
-    u8.insert(u8.end(), (unsigned char)0x84);
-    u8.insert(u8.end(), (unsigned char)0xA3);
+    u8.insert(u8.end(), (char)0xEAU);
+    u8.insert(u8.end(), (char)0x84U);
+    u8.insert(u8.end(), (char)0xA3U);
 
-    u8.insert(u8.end(), (unsigned char)0xC5);
-    u8.insert(u8.end(), (unsigned char)0x80);
+    u8.insert(u8.end(), (char)0xC5U);
+    u8.insert(u8.end(), (char)0x80U);
 
-    u8.insert(u8.end(), (unsigned char)0x41);
+    u8.insert(u8.end(), (char)0x41U);
 
     // ä
-    u8.insert(u8.end(), (unsigned char)0xC3);
-    u8.insert(u8.end(), (unsigned char)0xA4);
+    u8.insert(u8.end(), (char)0xC3U);
+    u8.insert(u8.end(), (char)0xA4U);
 
     auto begin = u8.c_str();
     const auto end = std::to_address(u8.end());
@@ -55,10 +55,10 @@ TEST(ebcdic_encoding, unicode)
     EXPECT_EQ(ebcdic_encoding::to_ebcdic(begin, end), std::pair(ebcdic_encoding::EBCDIC_SUB, begin + 2));
     begin += 2;
 
-    EXPECT_EQ(ebcdic_encoding::to_ebcdic(begin, end), std::pair((unsigned char)0xC1, begin + 1));
+    EXPECT_EQ(ebcdic_encoding::to_ebcdic(begin, end), std::pair((unsigned char)0xC1U, begin + 1));
     begin += 1;
 
-    EXPECT_EQ(ebcdic_encoding::to_ebcdic(begin, end), std::pair((unsigned char)0x43, begin + 2));
+    EXPECT_EQ(ebcdic_encoding::to_ebcdic(begin, end), std::pair((unsigned char)0x43U, begin + 2));
     begin += 2;
 
     EXPECT_EQ(begin, std::to_address(u8.end()));

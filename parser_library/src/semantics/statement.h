@@ -73,7 +73,7 @@ struct preproc_details
     struct instr
     {
         name_range nr;
-        std::optional<range> preproc_specific_r;
+        std::optional<range> preproc_specific_r = {};
     };
 
     range stmt_r;

@@ -168,7 +168,7 @@ context::integer_type data_definition::get_integer_attribute() const noexcept
         return context::integer_type::undefined;
 }
 
-context::symbol_attributes::program_type data_definition::get_program_attribute(
+context::program_type data_definition::get_program_attribute(
     context::dependency_solver& info, diagnostic_op_consumer& diags) const
 {
     if (!program_type)
@@ -176,7 +176,7 @@ context::symbol_attributes::program_type data_definition::get_program_attribute(
     const auto p = program_type->evaluate(info, diags);
     if (p.value_kind() != context::symbol_value_kind::ABS)
         return {};
-    return context::symbol_attributes::program_type((std::uint32_t)p.get_abs());
+    return context::program_type((std::uint32_t)p.get_abs());
 }
 
 context::symbol_attributes data_definition::get_symbol_attributes(
@@ -200,7 +200,7 @@ checking::data_def_field<int32_t> set_data_def_field(
     {
         field.rng = e->get_range();
 
-        if (field.present = !e->get_dependencies(info).contains_dependencies())
+        if ((field.present = !e->get_dependencies(info).contains_dependencies()))
         {
             auto ret = e->evaluate(info, diags);
 
@@ -317,8 +317,8 @@ size_t data_definition::hash() const
     using utils::hashers::hash_combine;
 
     auto ret = (size_t)0x65b40f329f97f6c9;
-    ret = hash_combine(ret, type);
-    ret = hash_combine(ret, extension);
+    ret = hash_combine(ret, utils::to_unsigned(type));
+    ret = hash_combine(ret, utils::to_unsigned(extension));
     if (length)
         ret = hash_combine(ret, length->hash());
 

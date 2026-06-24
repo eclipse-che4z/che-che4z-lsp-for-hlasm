@@ -28,14 +28,14 @@ size_t index_from_position(std::string_view text, const std::vector<size_t>& lin
 
     while (utf16_counter < end && i < text.size())
     {
-        if (unsigned char c = text[i]; utils::utf8_one_byte_begin(c)) [[likely]]
+        if (const char c = text[i]; utils::utf8_one_byte_begin(c)) [[likely]]
         {
             ++i;
             ++utf16_counter;
         }
         else
         {
-            const auto cs = utils::utf8_prefix_sizes[c];
+            const auto cs = utils::utf8_prefix_sizes[static_cast<unsigned char>(c)];
 
             if (!cs.utf8)
                 throw std::runtime_error("The text of the file is not in utf-8."); // WRONG UTF-8 input
@@ -112,7 +112,7 @@ void apply_text_diff(std::string& text, std::vector<size_t>& lines, range r, std
             lines[i] = lines[i + diff] + char_diff;
         }
 
-        lines.erase(lines.end() - diff, lines.end());
+        lines.resize(lines.size() - diff);
     }
 
 

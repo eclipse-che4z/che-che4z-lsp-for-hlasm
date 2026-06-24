@@ -117,7 +117,7 @@ private:
     // map of active instructions in HLASM
     static void init_instruction_map(opcode_map& opcodes, id_storage& ids, instruction_set_version active_instr_set);
     void add_global_system_variables(system_variable_map& sysvars);
-    void add_scoped_system_variables(system_variable_map& sysvars, size_t skip_last, bool globals_only);
+    void add_scoped_system_variables(system_variable_map& sysvars, std::ptrdiff_t skip_last, bool globals_only);
 
     std::vector<macro_data_ptr>& ensure_dynamic_ptrs_count();
     std::vector<macro_data_ptr> dynamic_ptrs_vector;

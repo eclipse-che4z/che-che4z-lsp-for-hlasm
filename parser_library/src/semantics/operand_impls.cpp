@@ -74,16 +74,16 @@ machine_operand::machine_operand(expressions::mach_expr_ptr displacement,
 bool machine_operand::has_dependencies(
     context::dependency_solver& info, std::vector<context::id_index>* missing_symbols) const
 {
-    return displacement && displacement->has_dependencies(info, missing_symbols)
-        || first_par && first_par->has_dependencies(info, missing_symbols)
-        || second_par && second_par->has_dependencies(info, missing_symbols);
+    return (displacement && displacement->has_dependencies(info, missing_symbols))
+        || (first_par && first_par->has_dependencies(info, missing_symbols))
+        || (second_par && second_par->has_dependencies(info, missing_symbols));
 }
 
 bool machine_operand::has_error(context::dependency_solver& info) const
 {
-    return displacement && displacement->get_dependencies(info).has_error
-        || first_par && first_par->get_dependencies(info).has_error
-        || second_par && second_par->get_dependencies(info).has_error;
+    return (displacement && displacement->get_dependencies(info).has_error)
+        || (first_par && first_par->get_dependencies(info).has_error)
+        || (second_par && second_par->get_dependencies(info).has_error);
 }
 
 void machine_operand::apply(operand_visitor& visitor) const { visitor.visit(*this); }

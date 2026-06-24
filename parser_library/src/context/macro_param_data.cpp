@@ -17,6 +17,8 @@
 #include <cassert>
 #include <limits>
 
+#include "utils/intconv.h"
+
 namespace hlasm_plugin::parser_library::context {
 
 macro_param_data_component::~macro_param_data_component() = default;
@@ -57,8 +59,8 @@ C_t macro_param_data_composite::get_value() const { return value_; }
 
 const macro_param_data_component* macro_param_data_composite::get_ith(A_t idx) const
 {
-    if (0 < idx && idx <= data_.size())
-        return data_[idx - 1].get();
+    if (0 < idx && utils::to_unsigned(idx) <= data_.size())
+        return data_[utils::to_unsigned(idx) - 1].get();
     return macro_param_data_component::dummy.get();
 }
 
@@ -91,8 +93,8 @@ C_t macro_param_data_zero_based::get_value() const { return value_; }
 
 const macro_param_data_component* macro_param_data_zero_based::get_ith(A_t idx) const
 {
-    if (0 <= idx && idx < data_.size())
-        return data_[idx].get();
+    if (0 <= idx && utils::to_unsigned(idx) < data_.size())
+        return data_[utils::to_unsigned(idx)].get();
     return macro_param_data_component::dummy.get();
 }
 

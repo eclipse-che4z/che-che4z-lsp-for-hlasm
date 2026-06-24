@@ -195,7 +195,7 @@ class workspace_manager_impl final : public workspace_manager,
 
         work_item_type request_type;
 
-        std::vector<std::pair<unsigned long long, std::function<void()>>> pending_requests;
+        std::vector<std::pair<unsigned long long, std::function<void()>>> pending_requests = {};
 
         bool workspace_removed = false;
 

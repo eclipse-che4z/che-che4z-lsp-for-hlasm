@@ -905,7 +905,7 @@ TEST(macro, operand_string_substitution)
 
 TEST(macro, operand_string_substitution_continuation)
 {
-    for (int i = 0; i < 256; ++i)
+    for (unsigned int i = 0; i < 256; ++i)
     {
         std::string input = R"(
         MACRO
@@ -937,7 +937,7 @@ TEST(macro, operand_string_substitution_continuation)
 
 TEST(macro, operand_sublist_continuation)
 {
-    for (int i = 0; i < 256; ++i)
+    for (unsigned int i = 0; i < 256; ++i)
     {
         std::string input = R"(
         MACRO

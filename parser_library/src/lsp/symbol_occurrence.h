@@ -73,8 +73,9 @@ struct symbol_occurrence
     bool is_similar(const symbol_occurrence& occ) const
     {
         using enum occurrence_kind;
-        return kind == occ.kind && name == occ.name && opcode == occ.opcode
-            || name == occ.name && (kind == INSTR_LIKE && occ.kind == INSTR || kind == INSTR && occ.kind == INSTR_LIKE);
+        return (kind == occ.kind && name == occ.name && opcode == occ.opcode)
+            || (name == occ.name
+                && ((kind == INSTR_LIKE && occ.kind == INSTR) || (kind == INSTR && occ.kind == INSTR_LIKE)));
     }
 
     bool operator==(const symbol_occurrence&) const noexcept = default;

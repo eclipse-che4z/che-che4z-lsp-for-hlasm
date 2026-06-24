@@ -103,7 +103,7 @@ context::SET_t ca_string::evaluate(const evaluation_context& eval_ctx) const
             // when zero-length substring is requested, validation of the first parameter seems suppressed
             return context::object_traits<context::C_t>::default_v();
         }
-        else if (start <= 0 || substring.count && count < 0)
+        else if (start <= 0 || (substring.count && count < 0))
         {
             eval_ctx.diags.add_diagnostic(diagnostic_op::error_CE008(substring.substring_range));
             return context::object_traits<context::C_t>::default_v();
@@ -114,8 +114,8 @@ context::SET_t ca_string::evaluate(const evaluation_context& eval_ctx) const
 
     if (start > 0)
     {
-        auto substr = utils::utf8_substr<false>(str, start - 1, (size_t)count);
-        if (!substr.offset_valid || substring.count && substr.str.empty())
+        auto substr = utils::utf8_substr<false>(str, static_cast<size_t>(start - 1), (size_t)count);
+        if (!substr.offset_valid || (substring.count && substr.str.empty()))
         {
             eval_ctx.diags.add_diagnostic(diagnostic_op::error_CE009(substring.start->expr_range));
             return context::object_traits<context::C_t>::default_v();
@@ -158,10 +158,10 @@ std::string ca_string::duplicate(
     if (dupl <= 0 || value.empty())
         return {};
 
-    const auto len = get_utf32_length_if_too_long(value, dupl);
+    const auto len = get_utf32_length_if_too_long(value, utils::to_unsigned(dupl));
     if (!len)
     {
-        repeat_string(value, dupl);
+        repeat_string(value, utils::to_unsigned(dupl));
         return value;
     }
 

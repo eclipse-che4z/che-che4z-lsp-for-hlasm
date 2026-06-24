@@ -37,7 +37,7 @@ TEST_P(logical_line_iterator_fixture, general_behavior)
     test_logical_line line;
     const auto& parm = GetParam();
     std::ranges::transform(parm, std::back_inserter(line.segments), [](const auto& c) {
-        return test_logical_line_segment { c.begin(), c.begin(), c.end(), c.end(), c.end() };
+        return test_logical_line_segment { c.begin(), c.begin(), c.end(), c.end(), c.end(), false, false, {} };
     });
 
     std::string concat_parm;

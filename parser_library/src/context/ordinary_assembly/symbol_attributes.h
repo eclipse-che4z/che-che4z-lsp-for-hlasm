@@ -62,7 +62,7 @@ struct program_type
     {
         for (int i = 3; i != -1; --i)
         {
-            ebcdic_value[i] = v & 0b1111'1111U;
+            ebcdic_value[i] = static_cast<char>(v & 0b1111'1111U);
             v >>= 8;
         }
     }
@@ -107,8 +107,6 @@ struct symbol_attributes
     using type_attr = uint16_t;
     using len_attr = int32_t;
     using scale_attr = int16_t;
-    using program_type = program_type;
-    using assembler_type = assembler_type;
 
     // static field describing undefined states of attributes
     static constexpr type_attr undef_type = 0xe4;

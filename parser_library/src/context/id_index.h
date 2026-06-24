@@ -44,7 +44,7 @@ class id_index
             std::ranges::copy(s, m_buffer);
         else
             std::memcpy(m_buffer, s.data(), s.size());
-        m_buffer[buffer_size - 1] = (char)s.size();
+        m_buffer[buffer_size - 1] = (unsigned char)s.size();
     }
 
     friend class id_storage;

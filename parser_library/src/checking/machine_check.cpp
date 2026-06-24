@@ -96,9 +96,10 @@ diagnostic_op get_simple_operand_expected(
             return diagnostic_op::error_M114(instr_name, operand_range);
         case RELOC_IMM: // RI
             return diagnostic_op::error_M113(instr_name, operand_range);
+        default:
+            assert(false);
+            return diagnostic_op::error_I999(instr_name, operand_range);
     }
-    assert(false);
-    return diagnostic_op::error_I999(instr_name, operand_range);
 }
 
 } // namespace
@@ -228,7 +229,7 @@ machine_operand* evaluate_operands(machine_operand* out,
         if (!first_v.has_value() && fmt->first.type == instructions::machine_operand_type::LENGTH)
         {
             first_op_derived = true;
-            first_v = mop->displacement->derive_length(mi.size_in_bits() / 8, solver);
+            first_v = mop->displacement->derive_length(static_cast<int>(mi.size_in_bits() / 8u), solver);
         }
 
         if (d.value_kind() == context::symbol_value_kind::ABS)
@@ -326,14 +327,14 @@ machine_operand* apply_transforms(machine_operand* out,
                     arg -= op.displacement;
                     break;
                 case complement:
-                    arg = 1 + ~(unsigned)op.displacement & (1u << arg) - 1;
+                    arg = static_cast<int>((1u + ~(unsigned)op.displacement) & ((1u << arg) - 1u));
                     break;
             }
             *out++ = {
                 .displacement = arg,
                 .first_op = 0,
                 .second_op = 0,
-                .valid = op.valid || !transform.has_source() && transform.insert,
+                .valid = op.valid || (!transform.has_source() && transform.insert),
                 .first_op_derived = false,
                 .source = transform.source,
             };
@@ -451,7 +452,7 @@ void check_machine_instruction_operands(const instructions::machine_instruction&
     if (!op_end)
         return;
 
-    const std::span evaluated_operands(mach_operands.data(), op_end - mach_operands.data());
+    const std::span evaluated_operands(mach_operands.data(), op_end);
 
     check_operands(evaluated_operands, formats, mi_name, ops, diags);
 }
@@ -480,12 +481,12 @@ void check_mnemonic_code_operands(const instructions::mnemonic_code& mn,
     if (!op_end)
         return;
 
-    const std::span evaluated_operands(mach_operands.data(), op_end - mach_operands.data());
+    const std::span evaluated_operands(mach_operands.data(), op_end);
 
     std::array<machine_operand, instructions::machine_instruction::max_operand_count> final_operands;
 
     const auto* t_end = apply_transforms(final_operands.data(), evaluated_operands, formats.size(), transforms);
-    const std::span transformed_operands(final_operands.data(), t_end - final_operands.data());
+    const std::span transformed_operands(final_operands.data(), t_end);
 
     check_operands(transformed_operands, formats, mi_name, ops, diags);
 }

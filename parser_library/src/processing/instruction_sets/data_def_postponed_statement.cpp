@@ -77,7 +77,7 @@ int32_t data_def_dependency<instr_type>::get_operands_length(const semantics::op
         if (len < 0)
             return 0;
 
-        solver.operands_bit_length += len;
+        solver.operands_bit_length += utils::to_unsigned(len);
     }
 
     // align to whole byte

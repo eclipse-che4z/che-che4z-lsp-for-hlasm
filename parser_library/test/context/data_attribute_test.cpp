@@ -374,7 +374,7 @@ TEST(data_attributes, T_macro_direct)
     GBLC R
     MAC  )";
 
-    for (const auto [param, expected] : {
+    for (const auto& [param, expected] : {
              std::pair { "A", "U" },
              std::pair { "1", "N" },
              std::pair { "(1)", "N" },
@@ -408,7 +408,7 @@ TEST(data_attributes, T_macro_stringified)
     GBLC R
     MAC  )";
 
-    for (const auto [param, expected] : { std::pair { "A", "U" }, std::pair { "1", "N" }, std::pair { "(1)", "U" } })
+    for (const auto& [param, expected] : { std::pair { "A", "U" }, std::pair { "1", "N" }, std::pair { "(1)", "U" } })
     {
         const auto input = base + param;
         analyzer a(input);

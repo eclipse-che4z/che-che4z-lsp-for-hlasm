@@ -77,9 +77,9 @@ TEST(apply_text_diff, text_synchronization_rn)
 
 
     std::string utf8test = "onexxxWASSPECIAL"; // one你WASSPECIAL
-    utf8test[3] = (unsigned char)0xE4; // 你 has 2 byte representation in utf-16 (one code unit)
-    utf8test[4] = (unsigned char)0xBD;
-    utf8test[5] = (unsigned char)0xA0;
+    utf8test[3] = static_cast<char>(0xE4U); // 你 has 2 byte representation in utf-16 (one code unit)
+    utf8test[4] = static_cast<char>(0xBDU);
+    utf8test[5] = static_cast<char>(0xA0U);
 
     std::string expected = "one";
     expected.replace(0, 0, utf8test); // after: one你WASSPECIALone
@@ -91,10 +91,10 @@ TEST(apply_text_diff, text_synchronization_rn)
     EXPECT_EQ(text_rn, expected);
 
     std::string four_byte = "xxxx"; // U+1700A
-    four_byte[0] = static_cast<unsigned char>(0xF0);
-    four_byte[1] = (unsigned char)0x97; // U+1700A has 4 byte representation in utf-16 (two code units)
-    four_byte[2] = (unsigned char)0x80;
-    four_byte[3] = (unsigned char)0x8A;
+    four_byte[0] = static_cast<char>(0xF0U);
+    four_byte[1] = static_cast<char>(0x97U); // U+1700A has 4 byte representation in utf-16 (two code units)
+    four_byte[2] = static_cast<char>(0x80U);
+    four_byte[3] = static_cast<char>(0x8AU);
 
     expected.replace(10, 6, four_byte); // after: one你WASS𗀊WASSPECIALPECIALone
     apply_text_diff(text_rn, text_rn_lines, { { 0, 8 }, { 0, 12 } }, four_byte);

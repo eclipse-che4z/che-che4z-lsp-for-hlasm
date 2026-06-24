@@ -49,7 +49,7 @@ diagnostic_op diagnostic_op::error_A004_data_def_expected(const range& range)
     return diagnostic_op(diagnostic_severity::error, "A004", "Data definition operand expected", range);
 }
 
-diagnostic_op diagnostic_op::error_A010_minimum(std::string_view instr_name, size_t min_params, const range& range)
+diagnostic_op diagnostic_op::error_A010_minimum(std::string_view instr_name, int min_params, const range& range)
 {
     return diagnostic_op(diagnostic_severity::error,
         "A010",
@@ -57,7 +57,7 @@ diagnostic_op diagnostic_op::error_A010_minimum(std::string_view instr_name, siz
         range);
 }
 
-diagnostic_op diagnostic_op::error_A011_exact(std::string_view instr_name, size_t number_of_params, const range& range)
+diagnostic_op diagnostic_op::error_A011_exact(std::string_view instr_name, int number_of_params, const range& range)
 {
     return diagnostic_op(diagnostic_severity::error,
         "A011",
@@ -66,7 +66,7 @@ diagnostic_op diagnostic_op::error_A011_exact(std::string_view instr_name, size_
 }
 
 diagnostic_op diagnostic_op::error_A012_from_to(
-    std::string_view instr_name, size_t number_from, size_t number_to, const range& range)
+    std::string_view instr_name, int number_from, int number_to, const range& range)
 {
     return diagnostic_op(diagnostic_severity::error,
         "A012",

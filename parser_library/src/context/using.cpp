@@ -100,7 +100,7 @@ size_t using_collection::using_entry::compute_context_drop(register_t d)
     {
         if (e.label.empty())
         {
-            invalidated += std::ranges::count(e.regs, d);
+            invalidated += utils::to_unsigned(std::ranges::count(e.regs, d));
             std::ranges::replace(e.regs, d, invalid_register);
         }
     }
@@ -123,7 +123,7 @@ auto using_collection::using_drop_definition::abs_or_reloc(
     if (value.value_kind() == symbol_value_kind::ABS)
     {
         auto v = value.get_abs();
-        if (abs_is_register && (v < 0 || v >= reg_set_size))
+        if (abs_is_register && (v < 0 || utils::to_unsigned(v) >= reg_set_size))
         {
             return { std::nullopt, rng };
         }
@@ -153,7 +153,7 @@ auto using_collection::using_drop_definition::reg_or_label(const using_collectio
 
     if (expr.value.value_kind() == symbol_value_kind::ABS)
     {
-        if (auto v = expr.value.get_abs(); v >= 0 && v < reg_set_size)
+        if (auto v = expr.value.get_abs(); v >= 0 && utils::to_unsigned(v) < reg_set_size)
             return { (register_t)v, rng };
     }
 
@@ -202,7 +202,8 @@ using_collection::resolved_entry using_collection::using_drop_definition::resolv
 
     std::array<std::pair<std::optional<qualified_address>, range>, reg_set_size> bases_;
     std::ranges::transform(m_base, bases_.begin(), [&coll](auto base) { return abs_or_reloc(coll, base, true); });
-    const auto bases = std::span(bases_).first(std::ranges::find(m_base, index_t<mach_expression>()) - m_base.begin());
+    const auto used = utils::to_unsigned(std::ranges::find(m_base, index_t<mach_expression>()) - m_base.begin());
+    const auto bases = std::span(bases_).first(used);
 
     std::optional<offset_t> len;
     if (e.has_value())
@@ -246,15 +247,16 @@ using_collection::resolved_entry using_collection::using_drop_definition::resolv
     std::bitset<reg_set_size> test_regs;
     for (size_t i = 0; i < reg_set.size(); ++i)
     {
-        auto r = reg_set[i];
+        const auto r = reg_set[i];
         if (r == invalid_register)
             continue;
-        if (test_regs.test(r))
+        const auto r_val = utils::to_unsigned(r);
+        if (test_regs.test(r_val))
         {
             diag.add_diagnostic(diagnostic_op::error_U006_duplicate_base_specified(bases[i].second));
             break;
         }
-        test_regs.set(r);
+        test_regs.set(r_val);
     }
 
     return using_entry_resolved(m_parent, m_label, b->sect, b->offset, len.value_or(0x1000 * bases.size()), reg_set, 0);
@@ -266,7 +268,7 @@ using_collection::resolved_entry using_collection::using_drop_definition::resolv
     struct
     {
         diagnostic_consumer_t<diagnostic_op>& diag;
-        std::vector<std::pair<std::variant<id_index, register_t>, range>> args;
+        std::vector<std::pair<std::variant<id_index, register_t>, range>> args = {};
 
         void operator()(std::monostate, range rng)
         {
@@ -478,7 +480,7 @@ auto using_collection::using_context::evaluate(id_index label,
 
         bool is_better_candidate(long long new_abs_dist, register_t new_reg) const
         {
-            return new_abs_dist < min_dist_abs || new_abs_dist == min_dist_abs && new_reg > min_dist_reg;
+            return new_abs_dist < min_dist_abs || (new_abs_dist == min_dist_abs && new_reg > min_dist_reg);
         }
     };
     struct result_candidate
@@ -504,7 +506,7 @@ auto using_collection::using_context::evaluate(id_index label,
             }(),
             0,
         };
-        (offset >= 0 ? positive : negative) = result_candidate { &zero_entry, 0, std::abs(offset), offset, 0 };
+        (offset >= 0 ? positive : negative) = result_candidate { { &zero_entry, 0, std::abs(offset), offset, 0 }, {} };
     }
 
     for (const auto& s : m_state)

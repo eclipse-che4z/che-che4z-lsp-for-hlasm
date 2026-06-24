@@ -360,8 +360,8 @@ void lsp_analyzer::collect_occurrence(
     else if (instruction.type == semantics::instruction_si_type::ORD
         && any(collector.collector_kind & lsp::occurrence_kind::INSTR_LIKE))
     {
-        if (const auto& op = std::get<context::id_index>(instruction.value); !op.empty())
-            collector.occurrences.emplace_back(lsp::occurrence_kind::INSTR_LIKE, op, instruction.field_range, false);
+        if (const auto& opval = std::get<context::id_index>(instruction.value); !opval.empty())
+            collector.occurrences.emplace_back(lsp::occurrence_kind::INSTR_LIKE, opval, instruction.field_range, false);
     }
 }
 
@@ -491,7 +491,7 @@ lsp_analyzer::collection_info_t lsp_analyzer::get_active_collection(
     const utils::resource::resource_location& loc, bool evaluated_model)
 {
     auto& [stmt_occurrences, stmt_ranges] = in_macro_ ? macro_occurrences_[loc] : opencode_occurrences_[loc];
-    return { &stmt_occurrences, stmt_occurrences.size(), &stmt_ranges, evaluated_model };
+    return { &stmt_occurrences, std::ssize(stmt_occurrences), &stmt_ranges, evaluated_model };
 }
 
 namespace {
@@ -620,7 +620,7 @@ void lsp_analyzer::collect_branch_info(
 {
     const auto& opencode_loc = hlasm_ctx_.opencode_location();
     auto& [stmt_occurrences, stmt_ranges] = opencode_occurrences_[opencode_loc];
-    const collection_info_t ci { &stmt_occurrences, stmt_occurrences.size(), &stmt_ranges, true };
+    const collection_info_t ci { &stmt_occurrences, std::ssize(stmt_occurrences), &stmt_ranges, true };
 
     for (const auto& [stmt, dep_ctx] : stmts)
     {
@@ -641,8 +641,8 @@ void lsp_analyzer::collect_branch_info(
         const auto& [target, condition] = *transfer;
         const auto& ops = rs->operands_ref().value;
 
-        if (condition >= 0 && condition < ops.size()
-            && symbol_value_zerolike(*ops[condition], hlasm_ctx_.ord_ctx, dep_ctx, li))
+        if (condition >= 0 && utils::to_unsigned(condition) < ops.size()
+            && symbol_value_zerolike(*ops[utils::to_unsigned(condition)], hlasm_ctx_.ord_ctx, dep_ctx, li))
             continue;
 
         if (!dep_ctx.loctr_address || !dep_ctx.loctr_address->is_simple())
@@ -654,9 +654,9 @@ void lsp_analyzer::collect_branch_info(
 
         auto& ld = line_details(range(pos), ci);
         bool branch_somewhere = true;
-        if (target >= 0 && target < ops.size())
+        if (target >= 0 && utils::to_unsigned(target) < ops.size())
         {
-            const auto symbol_pos = extract_symbol_position(*ops[target], hlasm_ctx_.ord_ctx);
+            const auto symbol_pos = extract_symbol_position(*ops[utils::to_unsigned(target)], hlasm_ctx_.ord_ctx);
             if (symbol_pos.has_value())
             {
                 branch_somewhere = false;

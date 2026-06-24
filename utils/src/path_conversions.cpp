@@ -166,11 +166,11 @@ constexpr auto path_eq_type = subdelim_type | char_type::end_extra; // '?' not i
 constexpr auto query_type = subdelim_type | char_type::end_extra;
 constexpr auto fragment_type = query_type;
 
-bool is_valid(unsigned char c, char_type ct)
+bool is_valid(char c, char_type ct)
 {
     static_assert((unsigned char)-1 < char_types.size());
 
-    return (char_types[c] & ct) != char_type {};
+    return (char_types[static_cast<unsigned char>(c)] & ct) != char_type {};
 }
 
 enum class pct : bool
@@ -183,7 +183,7 @@ bool is_valid(std::string_view s, char_type type, pct allow_pct)
 {
     for (size_t i = 0; i < s.size(); ++i)
     {
-        unsigned char c = s[i];
+        const char c = s[i];
         if (is_valid(c, type))
             continue;
         if (allow_pct == pct::no || c != (unsigned char)'%')

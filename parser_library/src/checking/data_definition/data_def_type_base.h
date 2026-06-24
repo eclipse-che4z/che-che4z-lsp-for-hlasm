@@ -23,6 +23,7 @@
 
 #include "context/ordinary_assembly/alignment.h"
 #include "data_def_fields.h"
+#include "utils/intconv.h"
 
 namespace hlasm_plugin::parser_library {
 class diagnostic_collector;
@@ -70,7 +71,10 @@ public:
         // C++23: for (unsigned i : l) m_allowed.set(i);
     }
 
-    bool allowed(int32_t i) const noexcept { return i >= 0 && (uint32_t)i < m_allowed.size() && m_allowed.test(i); }
+    bool allowed(int32_t i) const noexcept
+    {
+        return i >= 0 && utils::to_unsigned(i) < m_allowed.size() && m_allowed.test(utils::to_unsigned(i));
+    }
 
     std::string to_diag_list() const;
 

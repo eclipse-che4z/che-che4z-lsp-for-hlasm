@@ -12,7 +12,6 @@
  *   Broadcom, Inc. - initial API and implementation
  */
 
-#include <algorithm>
 #include <initializer_list>
 #include <regex>
 #include <string>
@@ -67,7 +66,7 @@ struct test_params
 {
     std::vector<std::string> text_to_insert;
     std::vector<fade_message> expected_fade_messages;
-    std::vector<std::string> diag_message_codes;
+    std::vector<std::string> diag_message_codes = {};
 };
 
 class fade_fixture_base : public ::testing::TestWithParam<test_params>

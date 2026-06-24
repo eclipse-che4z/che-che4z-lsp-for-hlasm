@@ -28,7 +28,7 @@ struct program_mapping
 {
     std::string program;
     std::string pgroup;
-    assembler_options opts;
+    assembler_options opts = {};
 };
 void to_json(nlohmann::json& j, const program_mapping& p);
 void from_json(const nlohmann::json& j, program_mapping& p);
@@ -36,8 +36,8 @@ void from_json(const nlohmann::json& j, program_mapping& p);
 struct pgm_conf
 {
     std::vector<program_mapping> pgms;
-    std::vector<std::string> always_recognize;
-    std::optional<unsigned> diagnostics_suppress_limit;
+    std::vector<std::string> always_recognize = {};
+    std::optional<unsigned> diagnostics_suppress_limit = {};
 };
 void to_json(nlohmann::json& j, const pgm_conf& p);
 void from_json(const nlohmann::json& j, pgm_conf& p);

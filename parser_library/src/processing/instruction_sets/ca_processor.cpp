@@ -557,9 +557,9 @@ void ca_processor::process_AREAD(const processing::resolved_statement& stmt)
     constexpr auto since_midnight = []() -> std::chrono::nanoseconds {
         using namespace std::chrono;
 
-        const auto now = utils::timestamp::now().value_or(utils::timestamp());
+        const auto now = utils::timestamp::now().value_or(utils::timestamp {});
 
-        return hours(now.hour()) + minutes(now.minute()) + seconds(now.second()) + microseconds(now.microsecond());
+        return hours(now.hour) + minutes(now.minute) + seconds(now.second) + microseconds(now.microsecond);
     };
 
     std::string value_to_set;
@@ -587,6 +587,9 @@ void ca_processor::process_AREAD(const processing::resolved_statement& stmt)
         case aread_variant::clockd:
             value_to_set = time_to_clockd(since_midnight());
             break;
+        case aread_variant::invalid:
+            // unreachable
+            break;
     }
     set_symbol->access_set_symbol<context::C_t>()->set_value(std::move(value_to_set), index);
 }
@@ -612,13 +615,13 @@ void ca_processor::process_SET(const processing::resolved_statement& stmt)
         return;
     }
 
-    for (context::A_t i = 0; i < m_set_work.size(); ++i)
+    for (const auto* value : m_set_work)
     {
         // first obtain a place to put the result in
-        auto& val = set_symbol->template access_set_symbol<T>()->reserve_value(index + i);
+        auto& val = set_symbol->template access_set_symbol<T>()->reserve_value(index++);
         // then evaluate the new value and save it unless the operand is empty
-        if (m_set_work[i])
-            val = m_set_work[i]->template evaluate<T>(eval_ctx);
+        if (value)
+            val = value->template evaluate<T>(eval_ctx);
     }
 }
 
@@ -678,7 +681,7 @@ void ca_processor::process_MHELP(const processing::resolved_statement& stmt)
     if (!ca_op)
         return;
 
-    uint32_t value = 0;
+    context::A_t value = 0;
     if (ca_op->kind == semantics::ca_kind::EXPR)
     {
         value = ca_op->access_expr()->expression->evaluate<context::A_t>(eval_ctx);
@@ -694,9 +697,9 @@ void ca_processor::process_MHELP(const processing::resolved_statement& stmt)
         static constexpr std::string_view expected[] = { "arithmetic expression", "arithmetic variable" };
         add_diagnostic(diagnostic_op::error_E015(expected, ca_op->operand_range));
     }
-    value &= ~0xffUL; // ignore the option part
-    if (value & 0xff00UL) // rest is considered only when byte 3 is non-zero
-        hlasm_ctx.sysndx_limit(std::min((unsigned long)value, context::hlasm_context::sysndx_limit_max()));
+    const auto limit = utils::to_unsigned(value) & ~0xffUL; // ignore the option part
+    if (limit & 0xff00UL) // rest is considered only when byte 3 is non-zero
+        hlasm_ctx.sysndx_limit(std::min(limit, context::hlasm_context::sysndx_limit_max()));
 }
 
 std::pair<const external_function*, std::string> ca_processor::find_external_function(

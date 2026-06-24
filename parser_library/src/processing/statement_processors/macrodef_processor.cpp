@@ -587,7 +587,7 @@ void macrodef_processor::add_correct_copy_nest()
     if (copy_nest_limit.front() < current_copy_stack.size())
         result_.used_copy_members.insert(current_copy_stack.back().copy_member_definition);
 
-    const bool in_inner_macro = copy_nest_limit.size() > 1 + bumped_macro_nest;
+    const bool in_inner_macro = copy_nest_limit.size() > 1u + bumped_macro_nest;
     auto& [scope, start_new_slice] = result_.file_scopes[current_nest.back().loc.resource_loc];
 
     const context::statement_id current_statement_id = { result_.definition.size() - 1 };

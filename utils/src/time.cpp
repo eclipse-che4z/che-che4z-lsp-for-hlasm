@@ -37,14 +37,24 @@ struct tm* localtime_r(const auto* timer, struct tm* buf)
     }
     return nullptr;
 }
+
+template<int bits>
+const unsigned int bit_mask = (1u << bits) - 1;
+
 } // namespace
 
 namespace hlasm_plugin::utils {
 
 std::string timestamp::to_string() const
 {
-    return std::format(
-        "{:04}-{:02}-{:02} {:02}:{:02}:{:02}.{:06}", year(), month(), day(), hour(), minute(), second(), microsecond());
+    return std::format("{:04}-{:02}-{:02} {:02}:{:02}:{:02}.{:06}",
+        (unsigned)year,
+        (unsigned)month,
+        (unsigned)day,
+        (unsigned)hour,
+        (unsigned)minute,
+        (unsigned)second,
+        (unsigned)microsecond);
 }
 
 std::optional<timestamp> timestamp::now()
@@ -89,7 +99,7 @@ std::optional<timestamp> timestamp::now()
     auto month = shift_out(v, 4) + 1;
     auto year = v;
 
-    return timestamp(year, month, day, hour, minute, second, microseconds);
+    return timestamp { year, month, day, hour, minute, second, microseconds };
 #else
     using namespace std::chrono;
     const auto now = system_clock::now();
@@ -109,13 +119,15 @@ std::optional<timestamp> timestamp::now()
 
     const auto subsecond = now - floor<seconds>(now);
 
-    return timestamp(tm_buf.tm_year + 1900,
-        tm_buf.tm_mon + 1,
-        tm_buf.tm_mday,
-        tm_buf.tm_hour,
-        tm_buf.tm_min,
-        tm_buf.tm_sec,
-        static_cast<unsigned>(std::chrono::nanoseconds(subsecond).count() / 1000));
+    return timestamp {
+        static_cast<unsigned>(tm_buf.tm_year + 1900) & bit_mask<18>,
+        static_cast<unsigned>(tm_buf.tm_mon + 1) & bit_mask<4>,
+        static_cast<unsigned>(tm_buf.tm_mday) & bit_mask<5>,
+        static_cast<unsigned>(tm_buf.tm_hour) & bit_mask<5>,
+        static_cast<unsigned>(tm_buf.tm_min) & bit_mask<6>,
+        static_cast<unsigned>(tm_buf.tm_sec) & bit_mask<6>,
+        static_cast<unsigned>(std::chrono::nanoseconds(subsecond).count() / 1000) & bit_mask<20>,
+    };
 #endif
 }
 

@@ -49,7 +49,7 @@ nlohmann::json progress_notification::make_progress_notification(long token, pro
         {
             "value",
             {
-                { "kind", progress_kind_text[static_cast<int>(kind)] },
+                { "kind", progress_kind_text[static_cast<unsigned>(kind)] },
             },
         },
     };

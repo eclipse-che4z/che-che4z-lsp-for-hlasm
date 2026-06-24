@@ -77,7 +77,7 @@ position extract_position(const nlohmann::json& j)
     if (line == pos->end() || character == pos->end() || !line->is_number() || !character->is_number())
         return {};
 
-    return position(line->get<int>(), character->get<int>());
+    return position(line->get<unsigned>(), character->get<unsigned>());
 }
 
 auto extract_trigger(const nlohmann::json& j, const utils::text_convertor* tc)
@@ -160,9 +160,9 @@ std::string decorate_suggestion(std::string_view s)
 {
     std::string result;
 
-    for (unsigned char c : s)
+    for (char c : s)
     {
-        if (c < 0x80)
+        if (static_cast<unsigned char>(c) < 0x80)
             result.append(2, '#');
         result.append(1, c);
     }

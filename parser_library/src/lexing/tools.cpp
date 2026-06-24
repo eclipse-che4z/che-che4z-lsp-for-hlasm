@@ -37,11 +37,12 @@ bool is_valid_symbol_name(std::string_view s, bool extended_names_allowed)
     }();
     if (s.empty())
         return false;
-    if (s.size() > 63 || !extended_names_allowed && s.size() > 8)
+    if (s.size() > 63 || (!extended_names_allowed && s.size() > 8))
         return false;
     if (s.front() >= '0' && s.front() <= '9')
         return false;
-    return std::ranges::all_of(s, [](unsigned char c) { return c < allowed_symbols.size() && allowed_symbols[c]; });
+    static_assert((unsigned char)-1 < allowed_symbols.size());
+    return std::ranges::all_of(s, [](char c) { return allowed_symbols[static_cast<unsigned char>(c)]; });
 }
 
 bool is_ord_symbol(std::string_view s) { return is_valid_symbol_name(s, true); }

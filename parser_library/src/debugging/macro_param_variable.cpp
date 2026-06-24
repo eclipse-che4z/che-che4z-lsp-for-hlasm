@@ -14,6 +14,7 @@
 
 #include "context/variables/macro_param.h"
 #include "debug_types.h"
+#include "utils/intconv.h"
 #include "variable.h"
 
 namespace hlasm_plugin::parser_library::debugging {
@@ -24,6 +25,7 @@ variable generate_macro_param_variable(const context::macro_param_base& param, s
         .name = index.empty() ? "&" + param.id.to_string() : std::to_string(index.back()),
         .value = index.empty() ? param.macro_param_base::get_value() : param.get_value(index),
         .type = set_type::C_TYPE,
+        .values = {},
     };
 
     if (const auto index_range = param.index_range(index); index_range)
@@ -36,7 +38,7 @@ variable generate_macro_param_variable(const context::macro_param_base& param, s
                   auto child_index = index;
                   child_index.push_back(0);
 
-                  vars.reserve(r.second - r.first);
+                  vars.reserve(utils::to_unsigned(r.second - r.first));
                   for (long long i = r.first; i <= r.second; ++i)
                   {
                       child_index.back() = (context::A_t)i;

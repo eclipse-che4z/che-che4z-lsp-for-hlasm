@@ -1379,7 +1379,7 @@ std::pair<int, std::string> test_cics_miniparser(const std::vector<std::string_v
     lexing::logical_line<std::string_view::iterator> ll;
     std::ranges::transform(list, std::back_inserter(ll.segments), [](std::string_view s) {
         return lexing::logical_line_segment<std::string_view::iterator> {
-            s.begin(), s.begin(), s.end(), s.end(), s.end()
+            s.begin(), s.begin(), s.end(), s.end(), s.end(), false, false, {}
         };
     });
 

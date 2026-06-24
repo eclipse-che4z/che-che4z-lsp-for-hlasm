@@ -175,9 +175,9 @@ void asm_processor::process_sect(rebuilt_statement&& stmt, const context::sectio
         return false;
     };
 
-    if (!sect_name.empty() && hlasm_ctx.ord_ctx.symbol_defined(sect_name)
-            && !hlasm_ctx.ord_ctx.section_defined(sect_name, kind)
-        || sect_name.empty() && kind != section_kind::DUMMY && do_other_private_sections_exist(sect_name, kind))
+    if ((!sect_name.empty() && hlasm_ctx.ord_ctx.symbol_defined(sect_name)
+            && !hlasm_ctx.ord_ctx.section_defined(sect_name, kind))
+        || (sect_name.empty() && kind != section_kind::DUMMY && do_other_private_sections_exist(sect_name, kind)))
     {
         add_diagnostic(diagnostic_op::error_E031("symbol", stmt.label_ref().field_range));
     }
@@ -265,19 +265,19 @@ void asm_processor::process_EQU(rebuilt_statement&& stmt)
     const auto [value, length, type, prog_type, asm_type] = extract_asm_operands<5>(ops);
 
     // assembler type attribute
-    const symbol_attributes::assembler_type a_attr = assembler_type_from_op(asm_type);
-    if (asm_type && a_attr == symbol_attributes::assembler_type::NONE)
+    const context::assembler_type a_attr = assembler_type_from_op(asm_type);
+    if (asm_type && a_attr == context::assembler_type::NONE)
         add_diagnostic(diagnostic_op::error_A135_EQU_asm_type_val_format(asm_type->operand_range));
 
     // program type attribute
-    symbol_attributes::program_type p_attr {};
+    context::program_type p_attr {};
     if (prog_type)
     {
         const auto p_value = try_get_abs_value(prog_type, dep_solver_override);
         if (!p_value)
             add_diagnostic(diagnostic_op::error_A174_EQU_prog_type_val_format(prog_type->operand_range));
         else
-            p_attr = symbol_attributes::program_type((std::uint32_t)*p_value);
+            p_attr = context::program_type((std::uint32_t)*p_value);
     }
 
     // type attribute operand
@@ -384,7 +384,7 @@ void asm_processor::process_data_instruction(rebuilt_statement&& stmt)
             context::symbol_attributes::type_attr type =
                 ebcdic_encoding::to_ebcdic((unsigned char)data_op->value->get_type_attribute());
 
-            context::symbol_attributes::program_type prog_type {};
+            context::program_type prog_type {};
             if (data_op->value->program_type
                 && !data_op->value->program_type->get_dependencies(dep_solver).contains_dependencies())
             {
@@ -477,8 +477,9 @@ void asm_processor::process_data_instruction(rebuilt_statement&& stmt)
         }
         else
         {
+            // TODO: get_operands_length always returns non-negative value, but as int32_t
             auto length = data_def_dependency<instr_type>::get_operands_length(b, e, op_solver, drop_diagnostic_op);
-            hlasm_ctx.ord_ctx.reserve_storage_area(length, context::no_align);
+            hlasm_ctx.ord_ctx.reserve_storage_area(utils::to_unsigned(length), context::no_align);
         }
     }
 
@@ -1002,7 +1003,10 @@ void asm_processor::process_START(rebuilt_statement&& stmt)
     size_t start_section_alignment = hlasm_ctx.section_alignment().boundary;
     size_t start_section_alignment_mask = start_section_alignment - 1;
 
-    uint32_t offset = initial_offset.value();
+    // TODO: This actually seems to be GOFF dependent,
+    // limit of 16M or 2G seems to be imposed in addition to the alignment
+    // sometimes with error diagnostic
+    size_t offset = utils::to_unsigned(initial_offset.value());
     if (offset & start_section_alignment_mask)
     {
         // TODO: generate informational message?
@@ -1309,12 +1313,13 @@ void asm_processor::process_MNOTE(rebuilt_statement&& stmt)
     sanitized.reserve(text.size());
     utils::append_utf8_sanitized(sanitized, text);
 
+    const auto level_val = static_cast<unsigned char>(level.value());
     if (output)
-        output->mnote(level.value(), sanitized);
+        output->mnote(level_val, sanitized);
 
-    add_diagnostic(diagnostic_op::mnote_diagnostic(level.value(), sanitized, r));
+    add_diagnostic(diagnostic_op::mnote_diagnostic(level_val, sanitized, r));
 
-    hlasm_ctx.update_mnote_max((unsigned)level.value());
+    hlasm_ctx.update_mnote_max(level_val);
 }
 
 void asm_processor::process_CXD(rebuilt_statement&& stmt)
@@ -1487,12 +1492,12 @@ void asm_processor::handle_cattr_ops(context::id_index class_name,
         if (can_switch_into_section(class_name_sect->kind))
             hlasm_ctx.ord_ctx.set_section(*class_name_sect);
 
-        if (!class_name_sect->goff || part_name.empty() && class_name_sect->goff->partitioned)
+        if (!class_name_sect->goff || (part_name.empty() && class_name_sect->goff->partitioned))
         {
             add_diagnostic(diagnostic_op::error_A170_section_type_mismatch(stmt.label_ref().field_range));
             return;
         }
-        else if (!part_name.empty() && !class_name_sect->goff->partitioned || op_count > !part_name.empty())
+        else if ((!part_name.empty() && !class_name_sect->goff->partitioned) || op_count > !part_name.empty())
         {
             add_diagnostic(diagnostic_op::warn_A171_operands_ignored(stmt.operands_ref().field_range));
             return;

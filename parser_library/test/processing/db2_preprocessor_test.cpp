@@ -16,7 +16,6 @@
 #include <array>
 #include <memory>
 #include <string_view>
-#include <unordered_map>
 #include <utility>
 
 #include "../common_testing.h"
@@ -67,7 +66,6 @@ protected:
 TEST_F(db2_preprocessor_test, first_line)
 {
     auto p = create_preprocessor(db2_preprocessor_options {}, empty_library_fetcher, nullptr);
-    std::string_view text = "";
 
     auto result = p->generate_replacement(document()).run().value();
 
@@ -1106,7 +1104,6 @@ RO_LEN  EQU *-RO
 TEST_F(db2_preprocessor_test, conditional)
 {
     auto p = create_preprocessor(db2_preprocessor_options("", true), empty_library_fetcher, nullptr);
-    std::string_view text = "";
 
     auto result = p->generate_replacement(document()).run().value();
 

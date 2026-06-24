@@ -56,7 +56,7 @@ const mach_expression* mach_expr_constant::leftmost_term() const { return this; 
 
 void mach_expr_constant::apply(mach_expr_visitor& visitor) const { visitor.visit(*this); }
 
-size_t mach_expr_constant::hash() const { return hash_combine((size_t)0x38402610af574281, value_); }
+size_t mach_expr_constant::hash() const { return hash_combine((size_t)0x38402610af574281, utils::to_unsigned(value_)); }
 
 mach_expr_ptr mach_expr_constant::clone() const { return std::make_unique<mach_expr_constant>(value_, get_range()); }
 
@@ -72,7 +72,7 @@ context::dependency_collector mach_expr_symbol::get_dependencies(context::depend
     auto symbol = solver.get_symbol(value);
 
     if (symbol == nullptr || symbol->kind() == context::symbol_value_kind::UNDEF)
-        return value;
+        return context::dependency_collector(value);
     else if (symbol->kind() == context::symbol_value_kind::ABS && !qualifier.empty())
     {
         return context::dependency_collector::error();
@@ -86,9 +86,10 @@ context::dependency_collector mach_expr_symbol::get_dependencies(context::depend
                 return context::dependency_collector::error();
             auto bp = std::make_shared<context::address::base_entry>(reloc_value.bases().front());
             bp->qualifier = qualifier;
-            return std::move(reloc_value).with_base_list(context::address::base_list(std::move(bp)));
+            return context::dependency_collector(
+                std::move(reloc_value).with_base_list(context::address::base_list(std::move(bp))));
         }
-        return std::move(reloc_value);
+        return context::dependency_collector(std::move(reloc_value));
     }
     else
         return context::dependency_collector();
@@ -277,7 +278,7 @@ mach_expression::value_t mach_expr_data_attr::evaluate(
     {
         auto result = solver.get_opcode_attr(value);
         assert(result.size() == 1);
-        return ebcdic_encoding::to_ebcdic(result.front());
+        return ebcdic_encoding::to_ebcdic(static_cast<unsigned char>(result.front()));
     }
 
     const context::symbol* symbol = nullptr;
@@ -315,7 +316,7 @@ mach_expression::value_t mach_expr_data_attr::equ_evaluate(context::dependency_s
     {
         auto result = solver.get_opcode_attr(value);
         assert(result.size() == 1);
-        return ebcdic_encoding::to_ebcdic(result.front());
+        return ebcdic_encoding::to_ebcdic(static_cast<unsigned char>(result.front()));
     }
 
     const context::symbol* symbol = nullptr;
@@ -463,9 +464,9 @@ context::dependency_collector mach_expr_literal::get_dependencies(context::depen
         auto symbol = solver.get_symbol(symbol_id);
 
         if (symbol == nullptr || symbol->kind() == context::symbol_value_kind::UNDEF)
-            return symbol_id;
+            return context::dependency_collector(symbol_id);
         else if (symbol->kind() == context::symbol_value_kind::RELOC)
-            return symbol->value().get_reloc();
+            return context::dependency_collector(symbol->value().get_reloc());
         else
             return context::dependency_collector();
     }

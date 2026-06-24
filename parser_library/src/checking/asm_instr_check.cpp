@@ -255,12 +255,7 @@ bool rmode::check(std::span<const asm_operand* const> to_check,
 punch::punch(const std::vector<label_types>& allowed_types, std::string_view name_of_instruction)
     : assembler_instruction(allowed_types, name_of_instruction, 1, 1) {};
 
-bool punch::check(std::span<const asm_operand* const> to_check,
-    const range& stmt_range,
-    const diagnostic_collector& add_diagnostic) const
-{
-    return true;
-}
+bool punch::check(std::span<const asm_operand* const>, const range&, const diagnostic_collector&) const { return true; }
 
 print::print(const std::vector<label_types>& allowed_types, std::string_view name_of_instruction)
     : assembler_instruction(allowed_types, name_of_instruction, 1, -1) {};

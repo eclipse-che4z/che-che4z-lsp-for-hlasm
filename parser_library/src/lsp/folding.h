@@ -27,7 +27,7 @@ struct line_entry
 {
     size_t lineno;
     size_t end_lineno;
-    signed char comment_offset;
+    unsigned char comment_offset;
     signed char indent;
     bool comment : 1;
     bool blank : 1;

@@ -20,6 +20,7 @@
 #include <stdexcept>
 
 #include "../../ebcdic_encoding.h"
+#include "utils/string_operations.h"
 
 namespace hlasm_plugin::parser_library::context {
 
@@ -32,7 +33,7 @@ assembler_type assembler_type_from_string(std::string_view s) noexcept
     const auto it = std::ranges::find(assembler_type_values, s);
     if (it == std::ranges::end(assembler_type_values))
         return {};
-    return (symbol_attributes::assembler_type)std::ranges::distance(std::ranges::begin(assembler_type_values), it);
+    return (assembler_type)std::ranges::distance(std::ranges::begin(assembler_type_values), it);
 }
 
 std::string_view assembler_type_to_string(assembler_type t) noexcept
@@ -72,8 +73,7 @@ symbol_attributes hlasm_plugin::parser_library::context::symbol_attributes::make
 
 data_attr_kind symbol_attributes::transform_attr(unsigned char c)
 {
-    c = (char)std::toupper(c);
-    switch (c)
+    switch (utils::upper_cased[c])
     {
         case 'D':
             return data_attr_kind::D;

@@ -30,7 +30,7 @@ struct concatenation_point_evaluator
     std::string& result;
     const expressions::evaluation_context& eval_ctx;
     bool was_var = false;
-    std::vector<std::pair<std::pair<size_t, bool>, range>> ranges;
+    std::vector<std::pair<std::pair<size_t, bool>, range>> ranges = {};
     size_t utf16_offset = 0;
 
     void operator()(const char_str_conc& v)
@@ -123,7 +123,7 @@ concatenation_point::evaluate_with_range_map(concat_chain::const_iterator begin,
 {
     std::string ret;
     concatenation_point_evaluator<true> evaluator { ret, eval_ctx };
-    evaluator.ranges.reserve(std::ranges::distance(begin, end));
+    evaluator.ranges.reserve(utils::to_unsigned(std::ranges::distance(begin, end)));
 
     for (auto it = begin; it != end; ++it)
         std::visit(evaluator, it->value);

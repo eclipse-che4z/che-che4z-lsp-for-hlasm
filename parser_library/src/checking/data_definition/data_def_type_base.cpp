@@ -107,7 +107,8 @@ int16_t data_def_type::get_implicit_scale(const reduced_nominal_value_t& op) con
                 else if (do_count)
                     ++count;
             }
-            return count;
+            assert(count < 0x8000u); // TODO: I don't think the input is validated for this to hold
+            return utils::to_signed(count);
         }
 
         default:
@@ -137,7 +138,7 @@ size_t data_def_type::get_number_of_values_in_nominal(const reduced_nominal_valu
     if (type() == data_definition_type::C || type() == data_definition_type::G)
         return 1; // C and G do not support multiple nominal values
     else if (std::holds_alternative<std::string_view>(nom))
-        return std::ranges::count(std::get<std::string_view>(nom), ',') + 1;
+        return utils::to_unsigned(std::ranges::count(std::get<std::string_view>(nom), ',')) + 1;
     else if (std::holds_alternative<size_t>(nom))
         return std::get<size_t>(nom);
     else
@@ -152,7 +153,7 @@ uint64_t data_def_type::get_length(
     if (length >= 0)
     {
         uint64_t val_count = get_number_of_values_in_nominal(rnv);
-        len_in_bits = val_count * length;
+        len_in_bits = val_count * utils::to_unsigned(length);
 
         if (!length_in_bits)
             len_in_bits *= 8;
@@ -183,11 +184,11 @@ uint32_t data_def_type::get_length_attribute(const data_def_length_t& length, co
 {
     if (length.present)
     {
-        uint32_t len_attr;
-        len_attr = length.value;
+        // TODO: It not clear that value >= 0
+        auto len_attr = utils::to_unsigned(length.value);
         if (length.len_type == data_def_length_t::BIT)
         {
-            len_attr = round_up(length.value, 8);
+            len_attr = round_up(len_attr, 8u);
             len_attr /= 8;
         }
         return len_attr;

@@ -341,7 +341,7 @@ TEST(task, then)
     EXPECT_CALL(func, Call(1));
     v1.run();
 
-    task v2 = []() -> value_task<int> { co_return 2; }().then([&stdfunc](int v) -> task {
+    task v2 = []() -> value_task<int> { co_return 2; }().then([&stdfunc](int) -> task {
         stdfunc(2);
         co_return;
     });

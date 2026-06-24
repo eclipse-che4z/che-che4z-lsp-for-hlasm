@@ -32,6 +32,7 @@
 #include "nlohmann/json.hpp"
 #include "server_streams.h"
 #include "telemetry_broker.h"
+#include "utils/intconv.h"
 #include "utils/scope_exit.h"
 #include "virtual_file_provider.h"
 #include "workspace_manager.h"
@@ -177,7 +178,7 @@ auto separate_arguments(int argc, char** argv)
     else
         ++first;
 
-    return std::span<const char* const>(first, last - first);
+    return std::span<const char* const>(first, last);
 }
 
 void log_options(server_options opts)
@@ -208,7 +209,7 @@ int main(int argc, char** argv)
         return 1;
 
     if (opts->log_level >= 0)
-        logger::instance.level(opts->log_level);
+        logger::instance.level(hlasm_plugin::utils::to_unsigned(opts->log_level));
 
     log_options(*opts);
 

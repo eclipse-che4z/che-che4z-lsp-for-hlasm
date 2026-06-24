@@ -21,64 +21,36 @@
 
 namespace hlasm_plugin::utils {
 
-class timestamp
+struct timestamp
 {
-    unsigned long long m_year : 18 = 0;
-    unsigned long long m_month : 4 = 0;
-    unsigned long long m_day : 5 = 0;
-    unsigned long long m_hour : 5 = 0;
-    unsigned long long m_minute : 6 = 0;
-    unsigned long long m_second : 6 = 0;
-    unsigned long long m_microsecond : 20 = 0;
+    unsigned long long year : 18 = 0;
+    unsigned long long month : 4 = 0;
+    unsigned long long day : 5 = 0;
+    unsigned long long hour : 5 = 0;
+    unsigned long long minute : 6 = 0;
+    unsigned long long second : 6 = 0;
+    unsigned long long microsecond : 20 = 0;
 
 #if !defined(_MSC_VER) || defined(__clang__)
     unsigned long long as_ull() const noexcept
     {
-        auto v = (unsigned long long)m_year;
+        auto v = (unsigned long long)year;
         v <<= 4;
-        v |= (unsigned long long)m_month;
+        v |= (unsigned long long)month;
         v <<= 5;
-        v |= (unsigned long long)m_day;
+        v |= (unsigned long long)day;
         v <<= 5;
-        v |= (unsigned long long)m_hour;
+        v |= (unsigned long long)hour;
         v <<= 6;
-        v |= (unsigned long long)m_minute;
+        v |= (unsigned long long)minute;
         v <<= 6;
-        v |= (unsigned long long)m_second;
+        v |= (unsigned long long)second;
         v <<= 20;
-        v |= (unsigned long long)m_microsecond;
+        v |= (unsigned long long)microsecond;
 
         return v;
     }
 #endif
-
-public:
-    timestamp() = default;
-    timestamp(unsigned year,
-        unsigned month,
-        unsigned day,
-        unsigned hour,
-        unsigned minute,
-        unsigned second,
-        unsigned microsecond) noexcept
-        : m_year(year)
-        , m_month(month)
-        , m_day(day)
-        , m_hour(hour)
-        , m_minute(minute)
-        , m_second(second)
-        , m_microsecond(microsecond)
-    {}
-    timestamp(unsigned year, unsigned month, unsigned day) noexcept
-        : timestamp(year, month, day, 0, 0, 0, 0)
-    {}
-    unsigned year() const noexcept { return m_year; }
-    unsigned month() const noexcept { return m_month; }
-    unsigned day() const noexcept { return m_day; }
-    unsigned hour() const noexcept { return m_hour; }
-    unsigned minute() const noexcept { return m_minute; }
-    unsigned second() const noexcept { return m_second; }
-    unsigned microsecond() const noexcept { return m_microsecond; }
 
 #if defined(_MSC_VER) && !defined(__clang__)
     auto operator<=>(const timestamp&) const noexcept = default;

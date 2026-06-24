@@ -28,8 +28,6 @@
 
 #include "instr_operand.h"
 
-#pragma warning(push)
-#pragma warning(disable : 4505)
 namespace hlasm_plugin::parser_library::checking {
 
 inline const one_operand* get_simple_operand(const asm_operand* to_check_operand)
@@ -218,7 +216,5 @@ inline bool check_exponent(std::string_view nominal, size_t& i)
     return found_digit;
 }
 } // namespace hlasm_plugin::parser_library::checking
-
-#pragma warning(pop)
 
 #endif // !HLASMPLUGIN_PARSERLIBRRY_CHECKER_HELPER_H

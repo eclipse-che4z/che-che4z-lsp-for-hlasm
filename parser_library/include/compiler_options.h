@@ -24,8 +24,8 @@
 namespace hlasm_plugin::parser_library {
 struct asm_option
 {
-    std::string sysparm;
-    std::string profile;
+    std::string sysparm = {};
+    std::string profile = {};
 
     static constexpr instruction_set_version instr_set_default = instruction_set_version::UNI;
     instruction_set_version instr_set = instr_set_default;
@@ -41,8 +41,8 @@ struct asm_option
 
     long long statement_count_limit = 10'000'000;
 
-    std::string sysin_dsn;
-    std::string sysin_member;
+    std::string sysin_dsn = {};
+    std::string sysin_member = {};
 
     bool operator==(const asm_option&) const = default;
 };

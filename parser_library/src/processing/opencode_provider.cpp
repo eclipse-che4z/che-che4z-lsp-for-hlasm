@@ -291,8 +291,8 @@ bool operands_relevant_in_lookahead(bool has_label, const processing_status& sta
     const auto form = status.first.form;
     const auto& instr = status.second.value;
 
-    return form == ASM_GENERIC_TEXT && instr == COPY || form == ASM_GENERIC_ORD && instr == EQU && has_label
-        || form == DAT && has_label;
+    return (form == ASM_GENERIC_TEXT && instr == COPY) || (form == ASM_GENERIC_ORD && instr == EQU && has_label)
+        || (form == DAT && has_label);
 }
 } // namespace
 
@@ -326,6 +326,8 @@ std::shared_ptr<const context::hlasm_statement> opencode_provider::process_looka
                 break;
             case processing_form::DAT:
                 h.lookahead_operands_and_remarks_dat();
+                break;
+            default:
                 break;
         }
 
@@ -505,7 +507,7 @@ utils::task opencode_provider::run_preprocessor()
     m_next_line_index -= skipped;
 
     std::string preprocessor_text;
-    auto it = m_input_document.begin() + m_next_line_index;
+    auto it = m_input_document.begin() + utils::to_signed(m_next_line_index);
     for (; it != m_input_document.end() && !it->is_original(); ++it)
     {
         const auto text = it->text();
@@ -514,7 +516,7 @@ utils::task opencode_provider::run_preprocessor()
             preprocessor_text.push_back('\n');
     }
     const size_t stop_line = it != m_input_document.end() ? it->lineno().value() : current_line;
-    const auto last_index = it - m_input_document.begin();
+    const auto last_index = utils::to_unsigned(it - m_input_document.begin());
 
     auto virtual_file_name = m_ctx.hlasm_ctx->add_id(std::format("PREPROCESSOR_{}", current_line));
 

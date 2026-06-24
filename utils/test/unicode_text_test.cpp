@@ -12,7 +12,6 @@
  *   Broadcom, Inc. - initial API and implementation
  */
 
-#include <optional>
 #include <tuple>
 
 #include "gtest/gtest.h"
@@ -58,7 +57,7 @@ TEST(utf8, substr_with_validate)
 
 TEST(utf8, multibyte_validation)
 {
-    for (const auto [f, s, e] : std::initializer_list<std::tuple<unsigned char, unsigned char, bool>> {
+    for (const auto& [f, s, e] : std::initializer_list<std::tuple<unsigned char, unsigned char, bool>> {
              { 0, 0, false },
              { 0x7f, 0, false },
              { 0xa0, 0x80, false },
@@ -166,7 +165,7 @@ TEST(utf8, iterator)
 }
 
 const std::string_view unicode_utf8 = (const char*)u8"\U00010000\U0000a123\U00000140\U00000041";
-const std::u32string_view unicode_utf32 = U"\U00010000\U0000a123\U00000140\U00000041";
+[[maybe_unused]] const std::u32string_view unicode_utf32 = U"\U00010000\U0000a123\U00000140\U00000041";
 
 TEST(replace_non_utf8_chars, no_change)
 {
@@ -177,7 +176,7 @@ TEST(replace_non_utf8_chars, last_char)
 {
     std::string common_str = "this is some common string";
     std::string u8 = common_str;
-    u8.push_back((uint8_t)0xAF);
+    u8.push_back((char)0xAFU);
 
     std::string res = hlasm_plugin::utils::replace_non_utf8_chars(u8);
 
