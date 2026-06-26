@@ -2,6 +2,9 @@
 
 ## ****Unreleased****
 
+#### Fixed
+- The language server produces diagnostics in an invalid format
+
 ## [1.23.0](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/compare/1.22.1...1.23.0) (2026-06-23)
 
 #### Added

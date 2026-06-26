@@ -365,12 +365,12 @@ void server::show_message(std::string_view message, parser_library::message_type
     notify("window/showMessage", std::move(m));
 }
 
-nlohmann::json diagnostic_related_info_to_json(const parser_library::diagnostic& diag)
+nlohmann::json diagnostic_related_info_to_json(std::span<const parser_library::diagnostic_related_info> rel)
 {
-    nlohmann::json related;
-    for (const auto& rel : diag.related)
-    {
-        related.push_back(nlohmann::json {
+    auto related = nlohmann::json::array();
+
+    std::ranges::transform(rel, std::back_inserter(related), [](const auto& rel) {
+        return nlohmann::json {
             {
                 "location",
                 {
@@ -379,8 +379,9 @@ nlohmann::json diagnostic_related_info_to_json(const parser_library::diagnostic&
                 },
             },
             { "message", rel.message },
-        });
-    }
+        };
+    });
+
     return related;
 }
 
@@ -397,7 +398,7 @@ nlohmann::json create_diag_json(const parser_library::range& r,
     std::string_view code,
     std::string_view source,
     std::string_view message,
-    std::optional<nlohmann::json> diag_related_info,
+    std::span<const parser_library::diagnostic_related_info> diag_related_info,
     parser_library::diagnostic_severity severity,
     parser_library::diagnostic_tag tags)
 {
@@ -408,8 +409,8 @@ nlohmann::json create_diag_json(const parser_library::range& r,
         { "message", replace_empty_by_space(message) },
     };
 
-    if (diag_related_info.has_value())
-        one_json["relatedInformation"] = std::move(*diag_related_info);
+    if (!diag_related_info.empty())
+        one_json["relatedInformation"] = diagnostic_related_info_to_json(diag_related_info);
 
     if (severity != parser_library::diagnostic_severity::unspecified)
         one_json["severity"] = static_cast<int>(severity);
@@ -436,13 +437,8 @@ void server::consume_diagnostics(std::span<const parser_library::diagnostic> dia
 
     for (const auto& d : diagnostics)
     {
-        diag_jsons[d.file_uri].emplace_back(create_diag_json(d.diag_range,
-            d.code,
-            d.source,
-            tc.convert_to(d.message),
-            diagnostic_related_info_to_json(d),
-            d.severity,
-            d.tag));
+        diag_jsons[d.file_uri].emplace_back(
+            create_diag_json(d.diag_range, d.code, d.source, tc.convert_to(d.message), d.related, d.severity, d.tag));
     }
 
     for (const auto& fm : fade_messages)
@@ -451,7 +447,7 @@ void server::consume_diagnostics(std::span<const parser_library::diagnostic> dia
             fm.code,
             fm.source,
             tc.convert_to(fm.message),
-            std::nullopt,
+            {},
             parser_library::diagnostic_severity::hint,
             parser_library::diagnostic_tag::unnecessary));
     }
