@@ -496,6 +496,11 @@
             "native",
             "tcp",
             "wasm"
+          ],
+          "enumDescriptions": [
+            "",
+            "Only use on a single-user machine",
+            ""
           ]
         },
         "hlasm.pseudoCharset": {
