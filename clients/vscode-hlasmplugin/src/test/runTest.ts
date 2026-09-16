@@ -20,6 +20,7 @@ import * as fs from 'fs'
 
 async function main() {
     try {
+        const wasm = process.argv.indexOf('--wasm') != -1;
         // prepare development and tests paths
         const extensionDevelopmentPath = path.join(__dirname, '../../../');
         const extensionTestsPath = path.join(__dirname, './suite/index');
@@ -44,6 +45,7 @@ async function main() {
             "update.mode": "none",
             "extensions.autoUpdate": "off",
             "extensions.autoCheckUpdates": false,
+            ...wasm ? { "hlasm.serverVariant": "wasm" } : {},
         }));
         const vscodeExecutablePath = process.argv.length > 2 && process.argv[2] == 'insiders' && await downloadAndUnzipVSCode('insiders') || undefined;
 
