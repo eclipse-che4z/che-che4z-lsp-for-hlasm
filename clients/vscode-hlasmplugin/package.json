@@ -492,6 +492,7 @@
           "type": "string",
           "default": "native",
           "description": "Select language server variant - native, wasm, tcp. Not applicable in Web environment",
+          "scope": "machine",
           "enum": [
             "native",
             "tcp",
