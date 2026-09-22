@@ -167,10 +167,45 @@ std::string replace_non_utf8_chars(std::string_view text)
 }
 
 
+constexpr auto nonvalidating_utf8_extra_skip = []() {
+    unsigned long v = 0;
+    for (int i = 15; i != -1; --i)
+    {
+        v <<= 2;
+        if (i < 0b1100)
+            continue;
+        else if (i < 0b1110)
+            v |= 1;
+        else if (i < 0b1111)
+            v |= 2;
+        else
+            v |= 3;
+    }
+
+    return v;
+}();
+
+constexpr auto nonvalidating_utf8_utf16_sizes = []() {
+    unsigned long v = 0;
+    for (int i = 15; i != -1; --i)
+    {
+        v <<= 2;
+        if (i < 0xF)
+            v |= 1;
+        else
+            v |= 2;
+    }
+
+    return v;
+}();
+
 template<bool validate>
-std::pair<size_t, size_t> substr_step(std::string_view& s, size_t& chars) noexcept(!validate)
+std::pair<size_t, size_t> substr_step(std::string_view& s_, size_t& chars_) noexcept(!validate)
 {
     std::pair<size_t, size_t> result = { 0, 0 };
+
+    auto s = s_;
+    auto chars = chars_;
 
     while (chars)
     {
@@ -180,27 +215,36 @@ std::pair<size_t, size_t> substr_step(std::string_view& s, size_t& chars) noexce
         ++result.first;
 
         const auto c = static_cast<unsigned char>(s.front());
-        if (c < 0x80)
+        if (c < 0x80) [[likely]]
         {
             ++result.second;
             s.remove_prefix(1);
             continue;
         }
 
-        const auto cs = utf8_prefix_sizes[c];
         if constexpr (validate)
         {
+            const auto cs = utf8_prefix_sizes[c];
             if (cs.utf8 < 2 || s.size() < cs.utf8
                 || !utf8_valid_multibyte_prefix(static_cast<unsigned char>(s[0]), static_cast<unsigned char>(s[1])))
                 throw utf8_error();
             for (const auto* p = s.data() + 2; p != s.data() + cs.utf8; ++p)
                 if ((*p & 0xc0) != 0x80)
                     throw utf8_error();
+            result.second += cs.utf16;
+            s.remove_prefix(cs.utf8);
         }
-
-        result.second += cs.utf16;
-        s.remove_prefix(cs.utf8);
+        else
+        {
+            const auto shift = c >> 4 << 1;
+            result.second += nonvalidating_utf8_utf16_sizes >> shift & 0b11u;
+            const auto utf8_skip = static_cast<size_t>(1u + (nonvalidating_utf8_extra_skip >> shift & 0b11u));
+            s.remove_prefix(std::min(utf8_skip, s.size()));
+        }
     }
+
+    s_ = s;
+    chars_ = chars;
 
     return result;
 }
