@@ -2,8 +2,12 @@
 
 ## ****Unreleased****
 
+#### Added
+- Neovim support for reading virtual HLASM files
+
 #### Fixed
 - The language server produces diagnostics in an invalid format
+- Miscellaneous bug fixes
 
 ## [1.23.0](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/compare/1.22.1...1.23.0) (2026-06-23)
 
