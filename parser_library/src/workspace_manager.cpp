@@ -453,8 +453,7 @@ class workspace_manager_impl final : public workspace_manager,
                     return m_ws.did_open_file(std::move(document_loc), *open_result);
 
                 return ows->config.parse_configuration_file(std::move(document_loc)).then([this](auto r) {
-                    if (r == workspaces::parse_config_file_result::parsed)
-                        m_ws.mark_all_opened_files();
+                    handle_config_reparse(r);
                 });
             }),
             {},
@@ -510,8 +509,7 @@ class workspace_manager_impl final : public workspace_manager,
                         return m_ws.mark_file_for_parsing(document_loc, file_content_status);
 
                     return ows->config.parse_configuration_file(std::move(document_loc)).then([this](auto result) {
-                        if (result == workspaces::parse_config_file_result::parsed)
-                            m_ws.mark_all_opened_files();
+                        handle_config_reparse(result);
                     });
                 }),
             {},
@@ -724,9 +722,21 @@ class workspace_manager_impl final : public workspace_manager,
         if (!ows.config.settings_updated())
             co_return;
         const auto res = co_await ows.config.parse_configuration_file();
+        handle_config_reparse(res);
+        notify_diagnostics_consumers();
+    }
+
+    void handle_config_reparse(workspaces::parse_config_file_result res)
+    {
+        m_active_task = {};
         if (res == workspaces::parse_config_file_result::parsed)
             m_ws.mark_all_opened_files();
-        notify_diagnostics_consumers();
+    }
+
+    void mark_all_opened_files()
+    {
+        m_active_task = {};
+        m_ws.mark_all_opened_files();
     }
 
     void change_implicit_group_base(std::string_view uri) override
@@ -1062,7 +1072,7 @@ class workspace_manager_impl final : public workspace_manager,
                 return ows.config.parse_configuration_file().then([this](auto) {
                     notify_diagnostics_consumers();
                     invalidate_external_configuration({});
-                    m_ws.mark_all_opened_files();
+                    mark_all_opened_files();
                 });
             }),
             {},
@@ -1090,7 +1100,7 @@ class workspace_manager_impl final : public workspace_manager,
                 invalidate_external_configuration({});
                 notify_diagnostics_consumers();
 
-                m_ws.mark_all_opened_files();
+                mark_all_opened_files();
             }),
             {},
             work_item_type::workspace_close,
