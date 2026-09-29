@@ -1,3 +1,26 @@
+## [1.23.1](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/compare/1.23.0...1.23.1) (2026-09-29)
+
+### Fixes
+
+* Abandon active parsing task on configuration file change ([f525ddc](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/f525ddcb5c1a6f28592a0fbd45fecab8a0136f11))
+* Improve dependency download confirmation dialog ([ac400df](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/ac400df6f0164edb9ac08ef166739faad662ba77))
+* Improve variable replacement in the download dependencies command ([19c0d53](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/19c0d53948ab926cf02c2822c29de9019e836de4))
+* Improve workspace folder matching ([897dd74](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/897dd74557f4104bf751256f584be1ea0ebd6d3a))
+* Introduce statement number limit in the listing parser ([ef51aff](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/ef51affc1450ccd6bbfb9b68231a624e498d27b4))
+* JSON parsing expection not caught ([bde85f1](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/bde85f11724a475fd52b3efea3737720ffa2a194))
+* Restrict server variant configuration option to user ([23ba1e7](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/23ba1e7c100ffdf8d5e0a0eaf5672cf182c5f9a4))
+* Temporary fix for division by -1 ([506d77b](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/506d77b6c1779439fb0d83e7c5f94365d31d4094))
+* The language server produces diagnostics in an invalid format ([1d29f11](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/1d29f110bf16c6638cfcbc92e791ddb218dd8b21))
+* Update neovim client code ([4ed43c5](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/4ed43c53a7d38c9bbdeb9f9d0c60dc717738b64c))
+* UTF8 substr improvements ([eb0f5a4](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/eb0f5a4da537096eb39039be1b185e6626cb6911))
+
+### Other changes
+
+* Bump theia image ([c083476](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/c083476819bec0d3267309972db18118e4e84253))
+* Cleanup range provider ([921f3e1](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/921f3e1b300a039cbef9d4386d3fef0c85c42c4b))
+* Disable VSCode features in tests ([7be865a](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/7be865ab4cf1c154c26e4cd4e5c85566bd8fb427))
+* Pass release notes safely ([8380ae8](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/8380ae86c0645f9f12d05a822add9e769bbce755))
+* Update changelog ([9c2b05a](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/commit/9c2b05a9c697bf1c6e709b14b35c28bbf048d69f))
 ## [1.23.0](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/compare/1.22.1...1.23.0) (2026-06-23)
 
 ### Features
