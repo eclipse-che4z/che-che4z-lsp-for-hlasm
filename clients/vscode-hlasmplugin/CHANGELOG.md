@@ -1,5 +1,7 @@
 # Changelog
 
+## ****Unreleased****
+
 ## [1.23.1](https://github.com/eclipse-che4z/che-che4z-lsp-for-hlasm/compare/1.23.0...1.23.1) (2026-09-29)
 
 #### Added
