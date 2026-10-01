@@ -12,7 +12,7 @@
 
 add_executable(hlasm_utils_test)
 
-target_compile_features(hlasm_utils_test PRIVATE cxx_std_20)
+target_compile_features(hlasm_utils_test PRIVATE cxx_std_23)
 target_compile_options(hlasm_utils_test PRIVATE ${HLASM_EXTRA_FLAGS})
 set_target_properties(hlasm_utils_test PROPERTIES CXX_EXTENSIONS OFF)
 
