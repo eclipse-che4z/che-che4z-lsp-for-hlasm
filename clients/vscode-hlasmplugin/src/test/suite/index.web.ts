@@ -12,7 +12,6 @@
  *   Broadcom, Inc. - initial API and implementation
  */
 
-import { default as Mocha } from 'mocha/mocha';
 import * as vscode from 'vscode';
 import { popWaitRequestResolver } from './testHelper';
 import { activate } from '../../extension';
@@ -95,7 +94,8 @@ async function registerTestImplementations(): Promise<vscode.Disposable[]> {
 export async function run(): Promise<void> {
     const toDispose = await registerTestImplementations();
 
-    const mocha = Mocha.setup({ ui: 'tdd', color: false, reporter: null });
+    await import('mocha/mocha.js');
+    const mocha = (globalThis as any).mocha.setup({ ui: 'tdd', color: false, reporter: null });
 
     await Promise.all([
         import('./asyncMutex.test.js'),
