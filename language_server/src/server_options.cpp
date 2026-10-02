@@ -14,6 +14,7 @@
 
 #include "server_options.h"
 
+#include <algorithm>
 #include <charconv>
 
 #include "logger.h"

@@ -26,27 +26,27 @@ concat_chain create_chain()
     auto vs = std::make_unique<variable_symbol>(id_index("N"), std::vector<ca_expr_ptr>(), range());
 
     concat_chain created_name;
-    created_name.emplace_back(char_str_conc("n", range()));
+    created_name.emplace_back(std::in_place_type<char_str_conc>, "n", range());
 
     auto vsc = std::make_unique<variable_symbol>(std::move(created_name), std::vector<ca_expr_ptr>(), range());
 
     concat_chain chain;
 
-    chain.emplace_back(char_str_conc("ada", range()));
-    chain.emplace_back(var_sym_conc(std::move(vs)));
-    chain.emplace_back(dot_conc(range()));
-    chain.emplace_back(equals_conc(range()));
+    chain.emplace_back(std::in_place_type<char_str_conc>, "ada", range());
+    chain.emplace_back(std::in_place_type<var_sym_conc>, std::move(vs));
+    chain.emplace_back(std::in_place_type<dot_conc>, range());
+    chain.emplace_back(std::in_place_type<equals_conc>, range());
 
     std::vector<concat_chain> list;
     concat_chain elem;
-    elem.emplace_back(char_str_conc("ada", range()));
+    elem.emplace_back(std::in_place_type<char_str_conc>, "ada", range());
     list.push_back(std::move(elem));
-    elem.emplace_back(char_str_conc("ada", range()));
+    elem.emplace_back(std::in_place_type<char_str_conc>, "ada", range());
     list.push_back(std::move(elem));
-    elem.emplace_back(var_sym_conc(std::move(vsc)));
+    elem.emplace_back(std::in_place_type<var_sym_conc>, std::move(vsc));
     list.push_back(std::move(elem));
 
-    chain.emplace_back(sublist_conc(std::move(list)));
+    chain.emplace_back(std::in_place_type<sublist_conc>, std::move(list));
 
     return chain;
 }

@@ -21,6 +21,7 @@
 #include <vector>
 
 #include "diagnostic.h"
+#include "fade_messages.h"
 #include "nlohmann/json.hpp"
 #include "protocol.h"
 #include "utils/projectors.h"

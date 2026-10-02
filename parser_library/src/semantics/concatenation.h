@@ -58,9 +58,7 @@ struct char_str_conc
 // concatenation point representing variable symbol
 struct var_sym_conc
 {
-    explicit var_sym_conc(vs_ptr s)
-        : symbol(std::move(s))
-    {}
+    explicit var_sym_conc(vs_ptr s);
 
     vs_ptr symbol;
 
@@ -120,36 +118,11 @@ struct concatenation_point
         const concat_chain& chain,
         const expressions::evaluation_context& eval_ctx);
 
-    explicit concatenation_point(char_str_conc v)
-        : value(std::move(v))
-    {}
-    explicit concatenation_point(var_sym_conc v)
-        : value(std::move(v))
-    {}
-    explicit concatenation_point(dot_conc v)
-        : value(std::move(v))
-    {}
-    explicit concatenation_point(sublist_conc v)
-        : value(std::move(v))
-    {}
-    explicit concatenation_point(equals_conc v)
-        : value(std::move(v))
-    {}
-    explicit concatenation_point(std::in_place_type_t<char_str_conc> t, std::string value, const range& conc_range)
-        : value(t, std::move(value), conc_range)
-    {}
-    explicit concatenation_point(std::in_place_type_t<var_sym_conc> t, vs_ptr v)
-        : value(t, std::move(v))
-    {}
-    explicit concatenation_point(std::in_place_type_t<dot_conc> t, const range& r)
-        : value(t, r)
-    {}
-    explicit concatenation_point(std::in_place_type_t<sublist_conc> t, std::vector<concat_chain> list)
-        : value(t, std::move(list))
-    {}
-    explicit concatenation_point(std::in_place_type_t<equals_conc> t, const range& r)
-        : value(t, r)
-    {}
+    explicit concatenation_point(std::in_place_type_t<char_str_conc> t, std::string value, const range& conc_range);
+    explicit concatenation_point(std::in_place_type_t<var_sym_conc> t, vs_ptr v);
+    explicit concatenation_point(std::in_place_type_t<dot_conc> t, const range& r);
+    explicit concatenation_point(std::in_place_type_t<sublist_conc> t, std::vector<concat_chain> list);
+    explicit concatenation_point(std::in_place_type_t<equals_conc> t, const range& r);
 
     static std::string evaluate(const concat_chain& chain, const expressions::evaluation_context& eval_ctx);
     static std::string evaluate(concat_chain::const_iterator begin,
@@ -189,11 +162,6 @@ template<typename... Ts>
 constexpr concat_chain_matcher<true, Ts...> concat_chain_matches;
 template<typename... Ts>
 constexpr concat_chain_matcher<false, Ts...> concat_chain_starts_with;
-
-
-inline sublist_conc::sublist_conc(std::vector<concat_chain> list)
-    : list(std::move(list))
-{}
 
 } // namespace hlasm_plugin::parser_library::semantics
 

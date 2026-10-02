@@ -16,6 +16,7 @@
 #define HLASMPLUGIN_PARSERLIBRARY_INSTR_OPERAND_H
 
 #include <assert.h>
+#include <cstdint>
 #include <memory>
 #include <string>
 #include <vector>

@@ -33,7 +33,7 @@ TEST(ca_string, undefined_attributes)
     evaluation_context eval_ctx { ctx, library_info_transitional::empty, diags };
 
     concat_chain value;
-    value.emplace_back(char_str_conc("gfds", range()));
+    value.emplace_back(std::in_place_type<char_str_conc>, "gfds", range());
 
     ca_expr_ptr dupl = std::make_unique<ca_constant>(1, range());
 
@@ -78,7 +78,7 @@ INSTANTIATE_TEST_SUITE_P(param_suite,
 TEST(ca_string, test)
 {
     concat_chain value;
-    value.emplace_back(char_str_conc("gfds", range()));
+    value.emplace_back(std::in_place_type<char_str_conc>, "gfds", range());
 
     ca_expr_ptr dupl = std::make_unique<ca_constant>(0, range());
 
@@ -98,7 +98,7 @@ TEST(ca_string, test)
 TEST_P(ca_string_suite, dupl)
 {
     concat_chain value;
-    value.emplace_back(char_str_conc(GetParam().value, range()));
+    value.emplace_back(std::in_place_type<char_str_conc>, GetParam().value, range());
 
     ca_expr_ptr dupl = std::make_unique<ca_constant>(GetParam().factor, range());
 
