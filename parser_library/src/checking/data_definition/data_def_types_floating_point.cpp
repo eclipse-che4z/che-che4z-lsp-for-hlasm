@@ -184,8 +184,7 @@ nominal_diag_func check_nominal_E_D_L(std::string_view nom, char extension) noex
             }
 
             if (round_mode_s.size() > round_mode::max_length
-                || std::ranges::find(allowed_round_modes, round_mode(extension, round_mode_s))
-                    == std::ranges::end(allowed_round_modes))
+                || !std::ranges::contains(allowed_round_modes, round_mode(extension, round_mode_s)))
                 return [](const range& r, std::string_view) { return diagnostic_op::error_D026(r); };
         }
         if (i < nom.size() && nom[i] != ',')

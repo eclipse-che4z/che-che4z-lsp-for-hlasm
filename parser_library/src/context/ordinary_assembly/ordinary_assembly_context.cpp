@@ -156,7 +156,7 @@ section* ordinary_assembly_context::set_section(id_index name, section_kind kind
 section* ordinary_assembly_context::create_and_set_class(
     id_index name, const library_info& li, section* base, bool partitioned)
 {
-    assert(std::ranges::find(sections_, name, &section::name) == sections_.end());
+    assert(!std::ranges::contains(sections_, name, &section::name));
     assert(symbol_can_be_assigned(symbols_, name));
 
     auto* s = set_section(*create_section(name,
@@ -299,9 +299,9 @@ bool ordinary_assembly_context::symbol_defined(id_index name) const
 
 bool ordinary_assembly_context::section_defined(id_index name, section_kind kind) const
 {
-    return std::ranges::find_if(sections_, [name, kind](const auto& sect) {
+    return std::ranges::any_of(sections_, [name, kind](const auto& sect) { //
         return sect->name == name && sect->kind == kind;
-    }) != sections_.end();
+    });
 }
 
 bool ordinary_assembly_context::counter_defined(id_index name)

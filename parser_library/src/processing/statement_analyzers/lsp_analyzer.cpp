@@ -460,7 +460,7 @@ void lsp_analyzer::add_var_def(const semantics::variable_symbol* var, context::S
     if (!n)
         return;
 
-    if (std::ranges::find(opencode_var_defs_, *n, &lsp::variable_symbol_definition::name) != opencode_var_defs_.end())
+    if (std::ranges::contains(opencode_var_defs_, *n, &lsp::variable_symbol_definition::name))
         return;
 
     opencode_var_defs_.emplace_back(*n, type, global, hlasm_ctx_.current_statement_source(), var->symbol_range.start);

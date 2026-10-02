@@ -242,7 +242,7 @@ TEST(processor_group, opcode_suggestions)
     EXPECT_CALL(*lib, list_files).WillRepeatedly(Return(files));
     EXPECT_CALL(*lib, has_file)
         .WillRepeatedly([&files](std::string_view file, hlasm_plugin::utils::resource::resource_location* url) {
-            bool result = std::ranges::find(files, file) != files.end();
+            const bool result = std::ranges::contains(files, file);
             if (result && url)
                 *url = hlasm_plugin::utils::resource::resource_location(file);
             return result;

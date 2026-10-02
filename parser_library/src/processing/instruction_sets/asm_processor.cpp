@@ -356,7 +356,7 @@ template<checking::data_instr_type instr_type>
 void asm_processor::process_data_instruction(rebuilt_statement&& stmt)
 {
     const auto& ops = stmt.operands_ref().value;
-    if (ops.empty() || std::ranges::find(ops, semantics::operand_type::EMPTY, &semantics::operand::type) != ops.end())
+    if (ops.empty() || std::ranges::contains(ops, semantics::operand_type::EMPTY, &semantics::operand::type))
     {
         add_postponed(std::move(stmt));
         return;
@@ -831,8 +831,7 @@ bool asm_processor::common_copy_postprocess(
         return false;
     }
 
-    if (auto whole_copy_stack = hlasm_ctx.whole_copy_stack();
-        std::ranges::find(whole_copy_stack, data.name) != whole_copy_stack.end())
+    if (std::ranges::contains(hlasm_ctx.whole_copy_stack(), data.name))
     {
         if (diagnoser)
             diagnoser->add_diagnostic(diagnostic_op::error_E062(data.statement));

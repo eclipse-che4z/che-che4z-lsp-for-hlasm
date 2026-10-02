@@ -130,8 +130,7 @@ bool instr_set_equivalent_valid(
 {
     utils::to_upper(instr_set_name);
 
-    return instr_set_name.size() == 0
-        || std::ranges::find(equivalents, instr_set_name, utils::first_element) != equivalents.end();
+    return instr_set_name.size() == 0 || std::ranges::contains(equivalents, instr_set_name, utils::first_element);
 }
 } // namespace
 

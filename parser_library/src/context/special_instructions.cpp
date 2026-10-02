@@ -45,7 +45,7 @@ bool instruction_resolved_during_macro_parsing(id_index name)
         well_known::ANOP,
     };
 
-    return std::ranges::find(cached_instr, name) != std::end(cached_instr);
+    return std::ranges::contains(cached_instr, name);
 }
 
 } // namespace hlasm_plugin::parser_library::context

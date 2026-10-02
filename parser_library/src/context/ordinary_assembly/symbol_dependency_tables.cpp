@@ -37,7 +37,7 @@ bool symbol_dependency_tables::has_cycle(dependant target, std::vector<dependant
     if (dependencies.empty())
         return false;
 
-    if (std::ranges::find(dependencies, target) != dependencies.end()) // dependencies contain target itself
+    if (std::ranges::contains(dependencies, target)) // dependencies contain target itself
     {
         resolve_dependant_default(target);
         return true;
@@ -169,8 +169,7 @@ struct resolve_dependant_visitor
 
         const auto& addr = sym_val.get_reloc();
 
-        if (auto [spaces, _] = addr.normalized_spaces();
-            std::ranges::find(spaces, sp, utils::first_element) != spaces.end())
+        if (const auto [spaces, _] = addr.normalized_spaces(); std::ranges::contains(spaces, sp, utils::first_element))
             add_diagnostic(diagnostic_op::error_E033);
 
         auto& tmp_loctr_name = sym_ctx.current_section()->current_location_counter();

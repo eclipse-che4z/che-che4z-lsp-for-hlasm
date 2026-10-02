@@ -439,7 +439,7 @@ std::vector<context::macro_arg> macro_processor::get_operand_args(const resolved
                 continue;
             }
 
-            if (std::ranges::find(keyword_params, arg_name) != keyword_params.end())
+            if (std::ranges::contains(keyword_params, arg_name))
                 add_diags(diagnostic_op::error_E011, "Keyword");
             else
                 keyword_params.push_back(arg_name);

@@ -27,7 +27,7 @@ namespace hlasm_plugin::parser_library::checking {
 bool assembler_instruction::is_param_in_vector(
     std::string_view parameter, const std::vector<std::string_view>& options) const
 {
-    return std::ranges::find(options, parameter) != options.cend();
+    return std::ranges::contains(options, parameter);
 }
 
 bool assembler_instruction::operands_size_corresponding(std::span<const asm_operand* const> to_check,
@@ -179,7 +179,7 @@ bool assembler_instruction::check_optable_operands(const std::vector<std::unique
     if (input.size() == 2)
         second = get_simple_operand(input[1].get());
     // check first parameter
-    if (first == nullptr || std::ranges::find(optable_array, first->operand_identifier) == optable_array.end())
+    if (first == nullptr || !std::ranges::contains(optable_array, first->operand_identifier))
     {
         // first parameter was wrong
         add_diagnostic(diagnostic_op::error_A212_OPTABLE_first_op(instr_name, input[0]->operand_range));

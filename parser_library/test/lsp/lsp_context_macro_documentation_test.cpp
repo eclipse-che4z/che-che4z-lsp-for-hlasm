@@ -90,8 +90,7 @@ TEST_F(lsp_context_macro_documentation, completion)
     const auto& res = std::get<completion_list_instructions>(res_v);
 
     ASSERT_TRUE(res.macros);
-    EXPECT_NE(std::ranges::find(*res.macros, "MAC", [](const auto& m) { return m.first->id.to_string_view(); }),
-        res.macros->end());
+    EXPECT_TRUE(std::ranges::contains(*res.macros, "MAC", [](const auto& m) { return m.first->id.to_string_view(); }));
 }
 
 TEST(lsp_context_macro_documentation_incomplete, incomplete_macro)
