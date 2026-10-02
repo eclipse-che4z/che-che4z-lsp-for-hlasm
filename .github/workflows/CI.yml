@@ -280,9 +280,6 @@ jobs:
           - os: windows-11-arm
             native: win32_arm64
             chmod: false
-          - os: macos-14
-            native: darwin_arm64
-            chmod: true
           - os: macos-15
             native: darwin_arm64
             chmod: true
