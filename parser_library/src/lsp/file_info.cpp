@@ -228,7 +228,7 @@ auto source_line(
     const auto it = std::ranges::find(copy_nest | std::views::reverse, file, resloc);
     // TODO: This is a workaround for what is obviously a bug
     if (it == copy_nest.rend())
-        return (size_t)0;
+        return 0uz;
     assert(it != copy_nest.rend());
     return it->loc.pos.line;
 }

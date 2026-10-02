@@ -139,7 +139,7 @@ TEST(var_subs, instruction_substitution_space_at_end)
     analyzer a(input);
     a.analyze();
 
-    EXPECT_EQ(a.diags().size(), (size_t)0);
+    EXPECT_EQ(a.diags().size(), 0uz);
 }
 
 TEST(var_subs, instruction_substitution_space_in_middle)
@@ -515,7 +515,7 @@ TEST(SET, conversions_valid)
     analyzer a(input);
     a.analyze();
 
-    EXPECT_EQ(a.diags().size(), (size_t)0);
+    EXPECT_EQ(a.diags().size(), 0uz);
 }
 
 TEST(SET, conversions_invalid)

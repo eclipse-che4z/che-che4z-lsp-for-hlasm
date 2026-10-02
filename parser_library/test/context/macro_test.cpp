@@ -49,15 +49,15 @@ TEST(macro, macro_def)
 
     auto op = id_index("OP");
 
-    EXPECT_EQ(m->named_params().find(op)->second->access_positional_param()->position, (size_t)1);
+    EXPECT_EQ(m->named_params().find(op)->second->access_positional_param()->position, 1uz);
 
     auto op2 = id_index("OP2");
 
-    EXPECT_EQ(m->named_params().find(op2)->second->access_positional_param()->position, (size_t)2);
+    EXPECT_EQ(m->named_params().find(op2)->second->access_positional_param()->position, 2uz);
 
     auto l = id_index("L");
 
-    EXPECT_EQ(m->named_params().find(l)->second->access_positional_param()->position, (size_t)0);
+    EXPECT_EQ(m->named_params().find(l)->second->access_positional_param()->position, 0uz);
 
     auto k = id_index("K");
 
@@ -67,7 +67,7 @@ TEST(macro, macro_def)
 
     EXPECT_EQ(m->named_params().find(k2)->second->access_keyword_param()->get_value(), "(1,2,3)");
 
-    EXPECT_EQ(m->cached_definition.size(), (size_t)4);
+    EXPECT_EQ(m->cached_definition.size(), 4uz);
 }
 
 TEST(macro, macro_def_count)
@@ -92,7 +92,7 @@ TEST(macro, macro_def_count)
     analyzer a(input);
     a.analyze();
 
-    ASSERT_EQ(a.hlasm_ctx().macros().size(), (size_t)2);
+    ASSERT_EQ(a.hlasm_ctx().macros().size(), 2uz);
 
     id_index id;
 
@@ -128,7 +128,7 @@ TEST(macro, macro_def_count_inner)
     analyzer a(input);
     a.analyze();
 
-    ASSERT_EQ(a.hlasm_ctx().macros().size(), (size_t)3);
+    ASSERT_EQ(a.hlasm_ctx().macros().size(), 3uz);
 
     id_index id;
 
@@ -163,7 +163,7 @@ TEST(macro, macro_lookahead_pass)
     analyzer a(input);
     a.analyze();
 
-    ASSERT_EQ(a.hlasm_ctx().macros().size(), (size_t)1);
+    ASSERT_EQ(a.hlasm_ctx().macros().size(), 1uz);
 
     id_index id;
 
@@ -192,7 +192,7 @@ TEST(macro, macro_lookahead_fail)
     analyzer a(input);
     a.analyze();
 
-    ASSERT_EQ(a.hlasm_ctx().macros().size(), (size_t)2);
+    ASSERT_EQ(a.hlasm_ctx().macros().size(), 2uz);
 
     id_index id;
 
@@ -218,7 +218,7 @@ TEST(macro, macro_positional_param_subs)
 )";
     analyzer a(input);
     a.analyze();
-    EXPECT_EQ(a.diags().size(), (size_t)1);
+    EXPECT_EQ(a.diags().size(), 1uz);
 }
 
 TEST(macro, macro_keyword_param)
@@ -234,7 +234,7 @@ TEST(macro, macro_keyword_param)
 )";
     analyzer a(input);
     a.analyze();
-    EXPECT_EQ(a.diags().size(), (size_t)1);
+    EXPECT_EQ(a.diags().size(), 1uz);
 }
 
 TEST(macro, macro_undefined_keyword_param)
@@ -269,7 +269,7 @@ TEST(macro, macro_param_expr)
 )";
     analyzer a(input);
     a.analyze();
-    EXPECT_EQ(a.diags().size(), (size_t)2);
+    EXPECT_EQ(a.diags().size(), 2uz);
 }
 
 TEST(macro, macro_composite_param_no_err)
@@ -284,7 +284,7 @@ TEST(macro, macro_composite_param_no_err)
 )";
     analyzer a(input);
     a.analyze();
-    EXPECT_EQ(a.diags().size(), (size_t)0);
+    EXPECT_EQ(a.diags().size(), 0uz);
 }
 
 TEST(macro, macro_composite_param_err)
@@ -299,7 +299,7 @@ TEST(macro, macro_composite_param_err)
 )";
     analyzer a(input);
     a.analyze();
-    EXPECT_EQ(a.diags().size(), (size_t)1);
+    EXPECT_EQ(a.diags().size(), 1uz);
 }
 
 
@@ -315,7 +315,7 @@ TEST(macro, macro_name_param)
 )";
     analyzer a(input);
     a.analyze();
-    EXPECT_EQ(a.diags().size(), (size_t)0);
+    EXPECT_EQ(a.diags().size(), 0uz);
 }
 
 TEST(macro, macro_name_param_repetition)
@@ -340,7 +340,7 @@ TEST(macro, macro_name_param_repetition)
 )";
     analyzer a(input);
     a.analyze();
-    EXPECT_EQ(a.diags().size(), (size_t)3);
+    EXPECT_EQ(a.diags().size(), 3uz);
 
     auto& m1 = *a.hlasm_ctx().find_macro(id_index("M1"));
     auto& m2 = *a.hlasm_ctx().find_macro(id_index("M2"));
@@ -400,7 +400,7 @@ TEST(macro, MEXIT)
 )";
     analyzer a(input);
     a.analyze();
-    EXPECT_EQ(a.diags().size(), (size_t)1);
+    EXPECT_EQ(a.diags().size(), 1uz);
 }
 
 TEST(macro, cyclic_call_infinite)
@@ -417,7 +417,7 @@ TEST(macro, cyclic_call_infinite)
 )";
     analyzer a(input);
     a.analyze();
-    EXPECT_EQ(a.diags().size(), (size_t)1);
+    EXPECT_EQ(a.diags().size(), 1uz);
 }
 
 TEST(macro, cyclic_call_finite)
@@ -437,7 +437,7 @@ TEST(macro, cyclic_call_finite)
 )";
     analyzer a(input);
     a.analyze();
-    EXPECT_EQ(a.diags().size(), (size_t)10);
+    EXPECT_EQ(a.diags().size(), 10uz);
 }
 
 TEST(macro, arguments_concatenation)
@@ -459,7 +459,7 @@ TEST(macro, arguments_concatenation)
 
     EXPECT_EQ(get_global_var_value<C_t>(a.hlasm_ctx(), "V"), "(B-C)+(A-D)");
 
-    EXPECT_EQ(a.diags().size(), (size_t)0);
+    EXPECT_EQ(a.diags().size(), 0uz);
 }
 
 TEST(macro, arguments_continuation)
@@ -483,7 +483,7 @@ TEST(macro, arguments_continuation)
     EXPECT_EQ(get_global_var_value<C_t>(a.hlasm_ctx(), "Q"), "X");
     EXPECT_EQ(get_global_var_value<C_t>(a.hlasm_ctx(), "W"), "Y");
 
-    EXPECT_EQ(a.diags().size(), (size_t)0);
+    EXPECT_EQ(a.diags().size(), 0uz);
 }
 TEST(external_macro, bad_name)
 {
@@ -596,7 +596,7 @@ TEST(variable_argument_passing, positive_sublist)
     auto data = macro_processor::string_to_macrodata("(a,b,c)", diags);
 
     ASSERT_TRUE(dynamic_cast<macro_param_data_composite*>(data.get()));
-    ASSERT_EQ(data->number(), (size_t)3);
+    ASSERT_EQ(data->number(), 3uz);
     EXPECT_EQ(data->get_ith(1)->get_value(), "a");
     EXPECT_EQ(data->get_ith(2)->get_value(), "b");
     EXPECT_EQ(data->get_ith(3)->get_value(), "c");
@@ -605,7 +605,7 @@ TEST(variable_argument_passing, positive_sublist)
 
     ASSERT_TRUE(dynamic_cast<macro_param_data_composite*>(data.get()));
     ASSERT_EQ(data->get_value(), "(a,(b,1),((c),1))");
-    ASSERT_EQ(data->number(), (size_t)3);
+    ASSERT_EQ(data->number(), 3uz);
     EXPECT_EQ(data->get_ith(1)->get_value(), "a");
     EXPECT_EQ(data->get_ith(2)->get_value(), "(b,1)");
     EXPECT_EQ(data->get_ith(2)->get_value(), "(b,1)");
@@ -615,7 +615,7 @@ TEST(variable_argument_passing, positive_sublist)
     data = macro_processor::string_to_macrodata("(a(1),(1,(1))b,()c())", diags);
 
     ASSERT_TRUE(dynamic_cast<macro_param_data_composite*>(data.get()));
-    ASSERT_EQ(data->number(), (size_t)3);
+    ASSERT_EQ(data->number(), 3uz);
     EXPECT_EQ(data->get_ith(1)->get_value(), "a(1)");
     EXPECT_TRUE(dynamic_cast<const macro_param_data_single*>(data->get_ith(1)));
     EXPECT_EQ(data->get_ith(2)->get_value(), "(1,(1))b");
@@ -626,7 +626,7 @@ TEST(variable_argument_passing, positive_sublist)
     data = macro_processor::string_to_macrodata("(0(R2),E,C')',CLI)", diags);
 
     ASSERT_TRUE(dynamic_cast<macro_param_data_composite*>(data.get()));
-    ASSERT_EQ(data->number(), (size_t)4);
+    ASSERT_EQ(data->number(), 4uz);
     EXPECT_EQ(data->get_ith(1)->get_value(), "0(R2)");
     EXPECT_TRUE(dynamic_cast<const macro_param_data_single*>(data->get_ith(1)));
     EXPECT_EQ(data->get_ith(2)->get_value(), "E");
@@ -639,7 +639,7 @@ TEST(variable_argument_passing, positive_sublist)
     data = macro_processor::string_to_macrodata("(DATA1,DATA2,I'DATA3,DATA4,L'DATA5,O'DATA6,S'DATA7,T'DATA8)", diags);
 
     ASSERT_TRUE(dynamic_cast<macro_param_data_composite*>(data.get()));
-    ASSERT_EQ(data->number(), (size_t)8);
+    ASSERT_EQ(data->number(), 8uz);
     EXPECT_EQ(data->get_ith(1)->get_value(), "DATA1");
     EXPECT_TRUE(dynamic_cast<const macro_param_data_single*>(data->get_ith(1)));
     EXPECT_EQ(data->get_ith(2)->get_value(), "DATA2");
@@ -664,7 +664,7 @@ TEST(variable_argument_passing, negative_sublist)
     auto data = macro_processor::string_to_macrodata("a,b,c", diags);
 
     ASSERT_TRUE(dynamic_cast<macro_param_data_single*>(data.get()));
-    ASSERT_EQ(data->number(), (size_t)1);
+    ASSERT_EQ(data->number(), 1uz);
     EXPECT_EQ(data->get_value(), "a,b,c");
 
     data = macro_processor::string_to_macrodata("(a,(b,1),((c),1)))", diags);
@@ -707,7 +707,7 @@ TEST(macro, parse_args)
     analyzer a(input);
     a.analyze();
 
-    EXPECT_EQ(a.diags().size(), (size_t)0);
+    EXPECT_EQ(a.diags().size(), 0uz);
 }
 
 TEST(macro, seq_numbers)
@@ -722,7 +722,7 @@ TEST(macro, seq_numbers)
     analyzer a(input);
     a.analyze();
 
-    EXPECT_EQ(a.diags().size(), (size_t)0);
+    EXPECT_EQ(a.diags().size(), 0uz);
 }
 
 TEST(macro, apostrophe_in_substitution)

@@ -49,7 +49,7 @@ B EQU A+A-10
 
     EXPECT_EQ(get_symbol_abs(a.hlasm_ctx(), "B"), -8);
 
-    EXPECT_EQ(a.diags().size(), (size_t)1);
+    EXPECT_EQ(a.diags().size(), 1uz);
 }
 
 TEST(EQU, length_explicit)
@@ -120,7 +120,7 @@ LEM EQU A+1,100000
     EXPECT_EQ(get_symbol(a.hlasm_ctx(), "LEN")->attributes().length(), (symbol_attributes::len_attr)1);
     EXPECT_EQ(get_symbol(a.hlasm_ctx(), "LEM")->attributes().length(), (symbol_attributes::len_attr)12);
 
-    EXPECT_EQ(a.diags().size(), (size_t)2);
+    EXPECT_EQ(a.diags().size(), 2uz);
 }
 
 TEST(EQU, type_explicit)
@@ -164,7 +164,7 @@ LEM EQU 11,1,300
     EXPECT_EQ(get_symbol(a.hlasm_ctx(), "LEN")->attributes().type(), symbol_attributes::undef_type);
     EXPECT_EQ(get_symbol(a.hlasm_ctx(), "LEM")->attributes().type(), symbol_attributes::undef_type);
 
-    EXPECT_EQ(a.diags().size(), (size_t)2);
+    EXPECT_EQ(a.diags().size(), 2uz);
 }
 
 TEST(EQU, loctr_use)

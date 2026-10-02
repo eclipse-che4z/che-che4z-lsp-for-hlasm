@@ -183,7 +183,7 @@ TEST(arithmetic_expressions, limits)
     analyzer a(input);
     a.analyze();
 
-    ASSERT_EQ(a.diags().size(), (size_t)3);
+    ASSERT_EQ(a.diags().size(), 3uz);
 }
 #endif
 

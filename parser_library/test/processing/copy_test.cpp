@@ -207,10 +207,10 @@ TEST(copy, copy_enter_fail)
     a.analyze();
 
 
-    EXPECT_EQ(a.hlasm_ctx().copy_members().size(), (size_t)0);
-    EXPECT_EQ(a.hlasm_ctx().whole_copy_stack().size(), (size_t)0);
+    EXPECT_EQ(a.hlasm_ctx().copy_members().size(), 0uz);
+    EXPECT_EQ(a.hlasm_ctx().whole_copy_stack().size(), 0uz);
 
-    EXPECT_EQ(a.diags().size(), (size_t)2);
+    EXPECT_EQ(a.diags().size(), 2uz);
 }
 
 TEST(copy, copy_enter_success)
@@ -223,13 +223,13 @@ TEST(copy, copy_enter_success)
     a.analyze();
 
 
-    EXPECT_EQ(a.hlasm_ctx().copy_members().size(), (size_t)1);
+    EXPECT_EQ(a.hlasm_ctx().copy_members().size(), 1uz);
 
-    EXPECT_EQ(a.hlasm_ctx().macros().size(), (size_t)1);
+    EXPECT_EQ(a.hlasm_ctx().macros().size(), 1uz);
 
     EXPECT_TRUE(a.hlasm_ctx().get_opencode_sequence_symbols().contains(id_index("A")));
 
-    EXPECT_EQ(a.diags().size(), (size_t)0);
+    EXPECT_EQ(a.diags().size(), 0uz);
 }
 
 TEST(copy, copy_enter_diag_test)
@@ -242,14 +242,14 @@ TEST(copy, copy_enter_diag_test)
     a.analyze();
 
 
-    EXPECT_EQ(a.hlasm_ctx().copy_members().size(), (size_t)1);
+    EXPECT_EQ(a.hlasm_ctx().copy_members().size(), 1uz);
 
-    ASSERT_EQ(a.diags().size(), (size_t)1);
+    ASSERT_EQ(a.diags().size(), 1uz);
 
     const auto& diag = a.diags()[0];
 
     check_diag(diag, 2, copyd);
-    EXPECT_EQ(diag.related.size(), (size_t)1);
+    EXPECT_EQ(diag.related.size(), 1uz);
     check_related_diag(diag.related[0], 1, start);
 }
 
@@ -266,9 +266,9 @@ TEST(copy, copy_jump)
     a.analyze();
 
 
-    EXPECT_EQ(a.hlasm_ctx().copy_members().size(), (size_t)2);
+    EXPECT_EQ(a.hlasm_ctx().copy_members().size(), 2uz);
 
-    EXPECT_EQ(a.diags().size(), (size_t)0);
+    EXPECT_EQ(a.diags().size(), 0uz);
 
     EXPECT_EQ(get_var_value<context::A_t>(a.hlasm_ctx(), "VAR"), 4);
     EXPECT_EQ(get_var_value<context::A_t>(a.hlasm_ctx(), "VARX"), 2);
@@ -285,9 +285,9 @@ TEST(copy, copy_unbalanced_macro)
     a.analyze();
 
 
-    EXPECT_EQ(a.hlasm_ctx().copy_members().size(), (size_t)1);
+    EXPECT_EQ(a.hlasm_ctx().copy_members().size(), 1uz);
 
-    EXPECT_EQ(a.diags().size(), (size_t)0);
+    EXPECT_EQ(a.diags().size(), 0uz);
 
     EXPECT_EQ(lib_provider.analyzers.count("COPYU"), 1U);
     EXPECT_EQ(lib_provider.analyzers["COPYU"]->diags().size(), 1U);
@@ -304,9 +304,9 @@ TEST(copy, copy_twice)
     a.analyze();
 
 
-    EXPECT_EQ(a.hlasm_ctx().copy_members().size(), (size_t)1);
+    EXPECT_EQ(a.hlasm_ctx().copy_members().size(), 1uz);
 
-    EXPECT_EQ(a.diags().size(), (size_t)2);
+    EXPECT_EQ(a.diags().size(), 2uz);
 }
 
 TEST(copy, macro_call_from_copy_enter)
@@ -321,11 +321,11 @@ TEST(copy, macro_call_from_copy_enter)
     a.analyze();
 
 
-    EXPECT_EQ(a.hlasm_ctx().copy_members().size(), (size_t)1);
+    EXPECT_EQ(a.hlasm_ctx().copy_members().size(), 1uz);
 
-    EXPECT_EQ(a.diags().size(), (size_t)0);
+    EXPECT_EQ(a.diags().size(), 0uz);
 
-    EXPECT_EQ(a.hlasm_ctx().macros().size(), (size_t)2);
+    EXPECT_EQ(a.hlasm_ctx().macros().size(), 2uz);
 }
 
 TEST(copy, copy_enter_from_macro_call)
@@ -345,9 +345,9 @@ TEST(copy, copy_enter_from_macro_call)
     a.analyze();
 
 
-    EXPECT_EQ(a.hlasm_ctx().copy_members().size(), (size_t)1);
+    EXPECT_EQ(a.hlasm_ctx().copy_members().size(), 1uz);
 
-    EXPECT_EQ(a.hlasm_ctx().macros().size(), (size_t)2);
+    EXPECT_EQ(a.hlasm_ctx().macros().size(), 2uz);
 
     auto mac = *a.hlasm_ctx().find_macro(id_index("M"));
     ASSERT_TRUE(mac);
@@ -358,10 +358,10 @@ TEST(copy, copy_enter_from_macro_call)
     ASSERT_EQ(mac->used_copy_members.size(), 1U);
     EXPECT_EQ(mac->used_copy_members.begin()->get()->name, id_index("COPYR"));
 
-    ASSERT_EQ(a.diags().size(), (size_t)1);
+    ASSERT_EQ(a.diags().size(), 1uz);
 
     check_diag(a.diags()[0], 16, copyr);
-    ASSERT_EQ(a.diags()[0].related.size(), (size_t)1);
+    ASSERT_EQ(a.diags()[0].related.size(), 1uz);
     check_related_diag(a.diags()[0].related[0], 5, start);
 }
 
@@ -380,7 +380,7 @@ TEST(copy, copy_enter_from_lookahead)
     a.analyze();
 
 
-    EXPECT_EQ(a.hlasm_ctx().copy_members().size(), (size_t)1);
+    EXPECT_EQ(a.hlasm_ctx().copy_members().size(), 1uz);
 
     EXPECT_EQ(get_var_value<context::A_t>(a.hlasm_ctx(), "V"), 1);
 
@@ -398,8 +398,8 @@ TEST(copy, nested_macro_copy_call)
     a.analyze();
 
 
-    EXPECT_EQ(a.hlasm_ctx().copy_members().size(), (size_t)2);
-    ASSERT_EQ(a.hlasm_ctx().macros().size(), (size_t)1);
+    EXPECT_EQ(a.hlasm_ctx().copy_members().size(), 2uz);
+    ASSERT_EQ(a.hlasm_ctx().macros().size(), 1uz);
     auto mac_ptr = a.hlasm_ctx().find_macro(id_index("MAC"));
     ASSERT_TRUE(mac_ptr);
     const auto& mac = *mac_ptr;
@@ -408,7 +408,7 @@ TEST(copy, nested_macro_copy_call)
 
     EXPECT_EQ(get_global_var_value<context::A_t>(a.hlasm_ctx(), "X"), 4);
 
-    EXPECT_EQ(a.diags().size(), (size_t)0);
+    EXPECT_EQ(a.diags().size(), 0uz);
 }
 
 TEST(copy, macro_from_copy_call)
@@ -423,14 +423,14 @@ TEST(copy, macro_from_copy_call)
     a.analyze();
 
 
-    EXPECT_EQ(a.hlasm_ctx().copy_members().size(), (size_t)1);
-    ASSERT_EQ(a.hlasm_ctx().macros().size(), (size_t)1);
+    EXPECT_EQ(a.hlasm_ctx().copy_members().size(), 1uz);
+    ASSERT_EQ(a.hlasm_ctx().macros().size(), 1uz);
     ASSERT_TRUE(a.hlasm_ctx().find_macro(id_index("M")));
 
-    ASSERT_EQ(a.diags().size(), (size_t)1);
+    ASSERT_EQ(a.diags().size(), 1uz);
 
     check_diag(a.diags()[0], 3, copybm);
-    ASSERT_EQ(a.diags()[0].related.size(), (size_t)1);
+    ASSERT_EQ(a.diags()[0].related.size(), 1uz);
     check_related_diag(a.diags()[0].related[0], 2, start);
 }
 
@@ -446,9 +446,9 @@ TEST(copy, inner_copy_jump)
     a.analyze();
 
 
-    EXPECT_EQ(a.hlasm_ctx().copy_members().size(), (size_t)1);
+    EXPECT_EQ(a.hlasm_ctx().copy_members().size(), 1uz);
 
-    EXPECT_EQ(a.diags().size(), (size_t)1);
+    EXPECT_EQ(a.diags().size(), 1uz);
 }
 
 TEST(copy, jump_from_copy_fail)
@@ -461,16 +461,16 @@ TEST(copy, jump_from_copy_fail)
     a.analyze();
 
 
-    EXPECT_EQ(a.hlasm_ctx().copy_members().size(), (size_t)1);
+    EXPECT_EQ(a.hlasm_ctx().copy_members().size(), 1uz);
 
-    EXPECT_EQ(a.diags().size(), (size_t)2);
+    EXPECT_EQ(a.diags().size(), 2uz);
 
     check_diag(a.diags()[1], 2, copyjf);
-    ASSERT_EQ(a.diags()[1].related.size(), (size_t)1);
+    ASSERT_EQ(a.diags()[1].related.size(), 1uz);
     check_related_diag(a.diags()[1].related[0], 1, start);
 
     check_diag(a.diags()[0], 1, copyjf);
-    ASSERT_EQ(a.diags()[0].related.size(), (size_t)1);
+    ASSERT_EQ(a.diags()[0].related.size(), 1uz);
     check_related_diag(a.diags()[0].related[0], 1, start);
 }
 
@@ -489,12 +489,12 @@ TEST(copy, jump_in_macro_from_copy_fail)
     a.analyze();
 
 
-    EXPECT_EQ(a.hlasm_ctx().copy_members().size(), (size_t)1);
+    EXPECT_EQ(a.hlasm_ctx().copy_members().size(), 1uz);
 
-    EXPECT_EQ(a.diags().size(), (size_t)2);
+    EXPECT_EQ(a.diags().size(), 2uz);
 
     check_diag(a.diags()[0], 1, copyjf);
-    ASSERT_EQ(a.diags()[0].related.size(), (size_t)2);
+    ASSERT_EQ(a.diags()[0].related.size(), 2uz);
     check_related_diag(a.diags()[0].related[0], 3, start);
     check_related_diag(a.diags()[1].related[1], 6, start);
 }
@@ -515,12 +515,12 @@ TEST(copy, macro_nested_diagnostics)
     a.analyze();
 
 
-    EXPECT_EQ(a.hlasm_ctx().copy_members().size(), (size_t)2);
+    EXPECT_EQ(a.hlasm_ctx().copy_members().size(), 2uz);
 
-    EXPECT_EQ(a.diags().size(), (size_t)1);
+    EXPECT_EQ(a.diags().size(), 1uz);
 
     check_diag(a.diags()[0], 4, copynd2);
-    ASSERT_EQ(a.diags()[0].related.size(), (size_t)3);
+    ASSERT_EQ(a.diags()[0].related.size(), 3uz);
     check_related_diag(a.diags()[0].related[0], 1, copynd1);
     check_related_diag(a.diags()[0].related[1], 3, start);
     check_related_diag(a.diags()[0].related[2], 7, start);
@@ -538,9 +538,9 @@ TEST(copy, copy_call_with_jump_before_comment)
     a.analyze();
 
 
-    EXPECT_EQ(a.hlasm_ctx().copy_members().size(), (size_t)1);
+    EXPECT_EQ(a.hlasm_ctx().copy_members().size(), 1uz);
 
-    EXPECT_EQ(a.diags().size(), (size_t)0);
+    EXPECT_EQ(a.diags().size(), 0uz);
 }
 
 TEST(copy, copy_empty_file)
@@ -561,9 +561,9 @@ TEST(copy, copy_empty_file)
     a.analyze();
 
 
-    EXPECT_EQ(a.hlasm_ctx().copy_members().size(), (size_t)2);
+    EXPECT_EQ(a.hlasm_ctx().copy_members().size(), 2uz);
 
-    EXPECT_EQ(a.hlasm_ctx().macros().size(), (size_t)2);
+    EXPECT_EQ(a.hlasm_ctx().macros().size(), 2uz);
 
     auto mac = a.hlasm_ctx().get_macro_definition(id_index("M"));
     ASSERT_TRUE(mac != nullptr);

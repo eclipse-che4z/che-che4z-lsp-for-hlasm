@@ -772,7 +772,7 @@ consteval mnemonic_code::mnemonic_code(std::string_view name,
     std::ranges::copy(transform, m_transform.begin());
     const auto insert_count = std::ranges::count_if(transform, [](auto t) { return t.insert; });
     [[maybe_unused]] const auto total = std::accumulate(
-        transform.begin(), transform.end(), (size_t)0, [](size_t res, auto t) { return res + t.skip + t.insert; });
+        transform.begin(), transform.end(), 0uz, [](size_t res, auto t) { return res + t.skip + t.insert; });
     utils::insist(total <= instr->m_operand_len);
 
     utils::insist(instr->m_operand_len - instr->m_optional_op_count >= insert_count);

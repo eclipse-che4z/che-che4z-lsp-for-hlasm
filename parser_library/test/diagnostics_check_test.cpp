@@ -292,7 +292,7 @@ TEST(diagnostics, parser_diagnostics_passing)
     analyzer a(input);
     a.analyze();
 
-    EXPECT_EQ(a.diags().size(), (size_t)1);
+    EXPECT_EQ(a.diags().size(), 1uz);
 }
 
 TEST(diagnostics, previously_defined_enum_operand)

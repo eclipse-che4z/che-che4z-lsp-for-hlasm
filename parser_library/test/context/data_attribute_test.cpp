@@ -285,7 +285,7 @@ TEST(data_attributes, K_var_syms_bad)
     analyzer a(input);
     a.analyze();
 
-    EXPECT_EQ(a.diags().size(), (size_t)1);
+    EXPECT_EQ(a.diags().size(), 1uz);
 }
 
 TEST(data_attributes, T_ord_syms)
@@ -769,7 +769,7 @@ A EQU L'Q
     analyzer a(input);
     a.analyze();
 
-    EXPECT_EQ(a.diags().size(), (size_t)1);
+    EXPECT_EQ(a.diags().size(), 1uz);
 }
 
 TEST(data_attributes, attr_cycle_ok)
@@ -825,7 +825,7 @@ V EQU I'C
     analyzer a(input);
     a.analyze();
 
-    EXPECT_EQ(a.diags().size(), (size_t)1);
+    EXPECT_EQ(a.diags().size(), 1uz);
 }
 
 TEST(data_attributes, loctr_length)

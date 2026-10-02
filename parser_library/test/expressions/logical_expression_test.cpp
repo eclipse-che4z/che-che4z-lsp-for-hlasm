@@ -210,7 +210,7 @@ TEST(logical_expressions, signs_in_arithmetic_expressions)
     analyzer a(input);
     a.analyze();
 
-    EXPECT_EQ(a.diags().size(), (size_t)0);
+    EXPECT_EQ(a.diags().size(), 0uz);
     EXPECT_EQ(get_var_value<context::B_t>(a.hlasm_ctx(), "A1"), 1);
     EXPECT_EQ(get_var_value<context::B_t>(a.hlasm_ctx(), "A2"), 1);
     EXPECT_EQ(get_var_value<context::B_t>(a.hlasm_ctx(), "A3"), 0);
@@ -324,7 +324,7 @@ TEST(logical_expressions, not_operator_valid)
     analyzer a(input);
     a.analyze();
 
-    EXPECT_EQ(a.diags().size(), (size_t)0);
+    EXPECT_EQ(a.diags().size(), 0uz);
     EXPECT_EQ(get_var_value<B_t>(a.hlasm_ctx(), "B1"), false);
     EXPECT_EQ(get_var_value<B_t>(a.hlasm_ctx(), "B2"), false);
     EXPECT_EQ(get_var_value<B_t>(a.hlasm_ctx(), "B3"), false);

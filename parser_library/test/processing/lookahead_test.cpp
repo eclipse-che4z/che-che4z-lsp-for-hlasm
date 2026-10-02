@@ -60,7 +60,7 @@ TEST(lookahead, forward_jump_to_continued)
 
     analyzer a(input);
     a.analyze();
-    EXPECT_EQ(a.diags().size(), (size_t)0);
+    EXPECT_EQ(a.diags().size(), 0uz);
 
     EXPECT_FALSE(a.hlasm_ctx().get_var_sym(id_index("BAD")));
     EXPECT_TRUE(a.hlasm_ctx().get_var_sym(id_index("GOOD")));
@@ -81,7 +81,7 @@ TEST(lookahead, forward_jump_from_continued)
 
     analyzer a(input);
     a.analyze();
-    EXPECT_EQ(a.diags().size(), (size_t)0);
+    EXPECT_EQ(a.diags().size(), 0uz);
 
     EXPECT_FALSE(a.hlasm_ctx().get_var_sym(id_index("BAD")));
     EXPECT_TRUE(a.hlasm_ctx().get_var_sym(id_index("GOOD")));
@@ -136,7 +136,7 @@ TEST(lookahead, rewinding_from_last_line)
     analyzer a(input);
     a.analyze();
 
-    EXPECT_EQ(a.diags().size(), (size_t)1);
+    EXPECT_EQ(a.diags().size(), 1uz);
 }
 
 TEST(lookahead, rewinding_from_one_from_last_line)
@@ -151,7 +151,7 @@ TEST(lookahead, rewinding_from_one_from_last_line)
     analyzer a(input);
     a.analyze();
 
-    EXPECT_EQ(a.diags().size(), (size_t)1);
+    EXPECT_EQ(a.diags().size(), 1uz);
 }
 
 TEST(lookahead, forward_jump_before_comment)
@@ -167,7 +167,7 @@ TEST(lookahead, forward_jump_before_comment)
     analyzer a(input);
     a.analyze();
 
-    EXPECT_EQ(a.diags().size(), (size_t)0);
+    EXPECT_EQ(a.diags().size(), 0uz);
 }
 
 TEST(lookahead, forward_jump_before_continued_comment)
@@ -184,7 +184,7 @@ TEST(lookahead, forward_jump_before_continued_comment)
     analyzer a(input);
     a.analyze();
 
-    EXPECT_EQ(a.diags().size(), (size_t)0);
+    EXPECT_EQ(a.diags().size(), 0uz);
 }
 
 TEST(lookahead, jump_to_incomplete_instruction)
@@ -216,9 +216,9 @@ TEST(attribute_lookahead, lookup_triggered)
 
     std::vector<context::id_index> references;
     EXPECT_TRUE(expr->get_undefined_attributed_symbols(references, eval_ctx));
-    EXPECT_EQ(references.size(), (size_t)1);
+    EXPECT_EQ(references.size(), 1uz);
 
-    EXPECT_EQ(diags.diags.size(), (size_t)0);
+    EXPECT_EQ(diags.diags.size(), 0uz);
 }
 
 TEST(attribute_lookahead, nested_lookup_triggered)
@@ -237,7 +237,7 @@ TEST(attribute_lookahead, nested_lookup_triggered)
 
     std::vector<context::id_index> references;
     EXPECT_TRUE(expr->get_undefined_attributed_symbols(references, eval_ctx));
-    EXPECT_EQ(references.size(), (size_t)1);
+    EXPECT_EQ(references.size(), 1uz);
     EXPECT_EQ(std::ranges::count(references, id_index("B")), 1);
 
     a.hlasm_ctx().ord_ctx.add_symbol_reference(id_index("B"),
@@ -246,10 +246,10 @@ TEST(attribute_lookahead, nested_lookup_triggered)
 
     references.clear();
     EXPECT_TRUE(expr->get_undefined_attributed_symbols(references, eval_ctx));
-    EXPECT_EQ(references.size(), (size_t)1);
+    EXPECT_EQ(references.size(), 1uz);
     EXPECT_EQ(std::ranges::count(references, id_index("A")), 1);
 
-    EXPECT_EQ(a.diags().size(), (size_t)0);
+    EXPECT_EQ(a.diags().size(), 0uz);
 }
 
 TEST(attribute_lookahead, lookup_not_triggered)
@@ -268,9 +268,9 @@ TEST(attribute_lookahead, lookup_not_triggered)
     // although length is undefined the actual symbol is defined so no lookup should happen
     std::vector<context::id_index> references;
     EXPECT_FALSE(expr->get_undefined_attributed_symbols(references, eval_ctx));
-    EXPECT_EQ(references.size(), (size_t)0);
+    EXPECT_EQ(references.size(), 0uz);
 
-    EXPECT_EQ(a.diags().size(), (size_t)0);
+    EXPECT_EQ(a.diags().size(), 0uz);
 }
 
 TEST(attribute_lookahead, lookup_of_two_refs)
@@ -284,9 +284,9 @@ TEST(attribute_lookahead, lookup_of_two_refs)
 
     std::vector<context::id_index> references;
     EXPECT_TRUE(expr->get_undefined_attributed_symbols(references, eval_ctx));
-    EXPECT_EQ(references.size(), (size_t)2);
+    EXPECT_EQ(references.size(), 2uz);
 
-    EXPECT_EQ(a.diags().size(), (size_t)0);
+    EXPECT_EQ(a.diags().size(), 0uz);
 }
 
 TEST(attribute_lookahead, lookup_of_two_refs_but_one_symbol)
@@ -300,9 +300,9 @@ TEST(attribute_lookahead, lookup_of_two_refs_but_one_symbol)
 
     std::vector<context::id_index> references;
     EXPECT_TRUE(expr->get_undefined_attributed_symbols(references, eval_ctx));
-    EXPECT_EQ(references.size(), (size_t)2);
+    EXPECT_EQ(references.size(), 2uz);
 
-    EXPECT_EQ(a.diags().size(), (size_t)0);
+    EXPECT_EQ(a.diags().size(), 0uz);
 }
 
 TEST(EQU_attribute_lookahead, correct_attribute_refereces)
@@ -323,7 +323,7 @@ Y EQU X+1
     EXPECT_EQ(get_var_value<A_t>(a.hlasm_ctx(), "B"), 10);
     EXPECT_EQ(get_var_value<A_t>(a.hlasm_ctx(), "C"), 10);
 
-    EXPECT_EQ(a.diags().size(), (size_t)0);
+    EXPECT_EQ(a.diags().size(), 0uz);
 }
 
 TEST(EQU_attribute_lookahead, incorrect_attribute_reference)
@@ -339,7 +339,7 @@ X EQU 1,10,C'T'
 
     EXPECT_EQ(get_var_value<A_t>(a.hlasm_ctx(), "A"), 0);
 
-    EXPECT_EQ(a.diags().size(), (size_t)1);
+    EXPECT_EQ(a.diags().size(), 1uz);
 }
 
 TEST(EQU_attribute_lookahead, unresolvable_attribute_reference)
@@ -355,8 +355,8 @@ X EQU 1,Y+11,C'T'
 
     EXPECT_EQ(get_var_value<A_t>(a.hlasm_ctx(), "A"), 1);
 
-    EXPECT_EQ(a.diags().size(), (size_t)1);
-    EXPECT_EQ(a.diags().front().diag_range.start.line, (size_t)2);
+    EXPECT_EQ(a.diags().size(), 1uz);
+    EXPECT_EQ(a.diags().front().diag_range.start.line, 2uz);
 }
 
 TEST(EQU_attribute_lookahead, empty_operand)
@@ -390,7 +390,7 @@ X EQU 1,2,**&
 
     EXPECT_EQ(get_var_value<A_t>(a.hlasm_ctx(), "A"), 2);
 
-    EXPECT_EQ(a.diags().size(), (size_t)0);
+    EXPECT_EQ(a.diags().size(), 0uz);
 }
 
 TEST(EQU_attribute_lookahead, errorous_but_resolable_statement_last_operand_model)
@@ -408,7 +408,7 @@ X EQU 1,2,&a
 
     EXPECT_EQ(get_var_value<A_t>(a.hlasm_ctx(), "A"), 2);
 
-    EXPECT_EQ(a.diags().size(), (size_t)0);
+    EXPECT_EQ(a.diags().size(), 0uz);
 }
 
 TEST(EQU_attribute_lookahead, errorous_but_unresolable_statement_first_operand_model)
@@ -426,7 +426,7 @@ X EQU &a,2
 
     EXPECT_EQ(get_var_value<A_t>(a.hlasm_ctx(), "A"), 1);
 
-    EXPECT_EQ(a.diags().size(), (size_t)1);
+    EXPECT_EQ(a.diags().size(), 1uz);
 }
 
 TEST(EQU_attribute_lookahead, errorous_but_unresolable_statement_first_operand_invalid)
@@ -444,7 +444,7 @@ X EQU =**)-,2
 
     EXPECT_EQ(get_var_value<A_t>(a.hlasm_ctx(), "A"), 1);
 
-    EXPECT_EQ(a.diags().size(), (size_t)1);
+    EXPECT_EQ(a.diags().size(), 1uz);
 }
 
 TEST(attribute_lookahead, lookup_to_copy)
@@ -471,7 +471,7 @@ X EQU 1,2,C'X'
     EXPECT_EQ(get_var_value<B_t>(a.hlasm_ctx(), "WAS_IN"), true);
     EXPECT_EQ(get_var_value<B_t>(a.hlasm_ctx(), "WAS_AFTER"), true);
 
-    EXPECT_EQ(a.diags().size(), (size_t)0);
+    EXPECT_EQ(a.diags().size(), 0uz);
 }
 
 TEST(attribute_lookahead, lookup_from_copy)
@@ -499,7 +499,7 @@ X EQU 1,2
     EXPECT_EQ(get_var_value<B_t>(a.hlasm_ctx(), "WAS_IN"), true);
     EXPECT_EQ(get_var_value<B_t>(a.hlasm_ctx(), "WAS_AFTER"), true);
 
-    EXPECT_EQ(a.diags().size(), (size_t)0);
+    EXPECT_EQ(a.diags().size(), 0uz);
 }
 
 TEST(attribute_lookahead, lookup_from_macro)
@@ -529,7 +529,7 @@ X EQU 1,2
     EXPECT_EQ(get_global_var_value<A_t>(a.hlasm_ctx(), "A"), 2);
     EXPECT_EQ(get_var_value<B_t>(a.hlasm_ctx(), "AFTER_MAC"), true);
 
-    EXPECT_EQ(a.diags().size(), (size_t)1);
+    EXPECT_EQ(a.diags().size(), 1uz);
 }
 
 TEST(attribute_lookahead, lookup_from_macro_last_line)
@@ -544,7 +544,7 @@ TEST(attribute_lookahead, lookup_from_macro_last_line)
     analyzer a(input);
     a.analyze();
 
-    EXPECT_EQ(a.diags().size(), (size_t)0);
+    EXPECT_EQ(a.diags().size(), 0uz);
 }
 
 TEST(attribute_lookahead, lookup_from_macro_one_to_last_line)
@@ -560,7 +560,7 @@ TEST(attribute_lookahead, lookup_from_macro_one_to_last_line)
     analyzer a(input);
     a.analyze();
 
-    EXPECT_EQ(a.diags().size(), (size_t)0);
+    EXPECT_EQ(a.diags().size(), 0uz);
 }
 
 TEST(attribute_lookahead, lookup_of_two_refs_evaluation)
@@ -577,7 +577,7 @@ Y EQU 2,11
 
     EXPECT_EQ(get_var_value<A_t>(a.hlasm_ctx(), "A"), 21);
 
-    EXPECT_EQ(a.diags().size(), (size_t)0);
+    EXPECT_EQ(a.diags().size(), 0uz);
 }
 
 TEST(attribute_lookahead, machine_label_lookahead)
@@ -595,7 +595,7 @@ X LR 1,1
     EXPECT_EQ(get_var_value<A_t>(a.hlasm_ctx(), "A"), 2);
     EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "B"), "I");
 
-    EXPECT_EQ(a.diags().size(), (size_t)0);
+    EXPECT_EQ(a.diags().size(), 0uz);
 }
 
 TEST(attribute_lookahead, section_label_lookahead)
@@ -613,7 +613,7 @@ X CSECT
     EXPECT_EQ(get_var_value<A_t>(a.hlasm_ctx(), "A"), 1);
     EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "B"), "J");
 
-    EXPECT_EQ(a.diags().size(), (size_t)0);
+    EXPECT_EQ(a.diags().size(), 0uz);
 }
 
 TEST(attribute_lookahead, concat_string)
@@ -649,7 +649,7 @@ X DC FS24'6'       remark
     EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "B"), "F");
     EXPECT_EQ(get_var_value<A_t>(a.hlasm_ctx(), "C"), 24);
 
-    EXPECT_EQ(a.diags().size(), (size_t)0);
+    EXPECT_EQ(a.diags().size(), 0uz);
 }
 
 TEST(data_def_attribute_lookahead, incorrect_attribute_reference)
@@ -665,7 +665,7 @@ X DC C'A'
 
     EXPECT_EQ(get_var_value<A_t>(a.hlasm_ctx(), "A"), 0);
 
-    EXPECT_EQ(a.diags().size(), (size_t)1);
+    EXPECT_EQ(a.diags().size(), 1uz);
 }
 
 TEST(attribute_lookahead, lookup_of_two_refs_but_one_symbol_evaluation)
@@ -682,7 +682,7 @@ Y EQU 2,11
 
     EXPECT_EQ(get_var_value<A_t>(a.hlasm_ctx(), "A"), 21);
 
-    EXPECT_EQ(a.diags().size(), (size_t)0);
+    EXPECT_EQ(a.diags().size(), 0uz);
 }
 
 TEST(attribute_lookahead, failed_lookup)
@@ -698,7 +698,7 @@ X EQU 1,10
 
     EXPECT_EQ(get_var_value<A_t>(a.hlasm_ctx(), "A"), 11);
 
-    EXPECT_EQ(a.diags().size(), (size_t)1);
+    EXPECT_EQ(a.diags().size(), 1uz);
 }
 
 TEST(attribute_lookahead, nested_lookup)
@@ -716,7 +716,7 @@ B EQU 2,22
 
     EXPECT_EQ(get_var_value<A_t>(a.hlasm_ctx(), "A"), 22);
 
-    EXPECT_EQ(a.diags().size(), (size_t)0);
+    EXPECT_EQ(a.diags().size(), 0uz);
 }
 
 TEST(attribute_lookahead, lookahead_from_macro_bad_following_statement)
@@ -738,7 +738,7 @@ A EQU 1,1,1
     analyzer a(input);
     a.analyze();
 
-    EXPECT_EQ(a.diags().size(), (size_t)0);
+    EXPECT_EQ(a.diags().size(), 0uz);
 }
 
 TEST(attribute_lookahead, lookahead_from_instruction_field)
@@ -753,7 +753,7 @@ A EQU 1,2,1
     analyzer a(input);
     a.analyze();
 
-    EXPECT_EQ(a.diags().size(), (size_t)0);
+    EXPECT_EQ(a.diags().size(), 0uz);
 }
 
 TEST(attribute_lookahead, lookahead_from_instruction_field_macro)
@@ -772,7 +772,7 @@ A EQU 1,2,1
     analyzer a(input);
     a.analyze();
 
-    EXPECT_EQ(a.diags().size(), (size_t)0);
+    EXPECT_EQ(a.diags().size(), 0uz);
 }
 
 TEST(attribute_lookahead, lookahead_from_var_sym_label_index)
@@ -786,7 +786,7 @@ C DC C'STH'
     analyzer a(input);
     a.analyze();
 
-    EXPECT_EQ(a.diags().size(), (size_t)0);
+    EXPECT_EQ(a.diags().size(), 0uz);
     auto var = a.context().hlasm_ctx->get_var_sym(id_index("VAR"));
     ASSERT_NE(var, nullptr);
     ASSERT_EQ(var->var_kind, variable_kind::SET_VAR_KIND);
@@ -828,7 +828,7 @@ C     DC C'STH'
     analyzer a(input);
     a.analyze();
 
-    EXPECT_EQ(a.diags().size(), (size_t)0);
+    EXPECT_EQ(a.diags().size(), 0uz);
 }
 
 TEST(attribute_lookahead, dc_in_copybook)

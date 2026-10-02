@@ -668,7 +668,7 @@ void lsp_analyzer::collect_branch_info(
         }
         if (branch_somewhere)
             ld.branches_somewhere = true;
-        ld.offset_to_jump_opcode = (unsigned char)std::min(pos.column, (size_t)80);
+        ld.offset_to_jump_opcode = (unsigned char)std::min(pos.column, 80uz);
     }
 }
 

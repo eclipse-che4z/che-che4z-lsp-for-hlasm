@@ -113,7 +113,7 @@ std::optional<std::string> substitute_home_directory(std::string p)
     if (homedir.empty())
         return std::nullopt;
 
-    const auto skip = (size_t)1 + (p.starts_with("~/") || p.starts_with("~\\"));
+    const auto skip = 1uz + (p.starts_with("~/") || p.starts_with("~\\"));
     return utils::path::join(homedir, std::move(p).substr(skip)).string();
 }
 

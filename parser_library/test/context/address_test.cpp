@@ -42,15 +42,15 @@ TEST(address, normalized_spaces)
 
     auto [normalized, __] = addr.normalized_spaces();
 
-    ASSERT_EQ(normalized.size(), (size_t)1);
+    ASSERT_EQ(normalized.size(), 1uz);
     EXPECT_EQ(normalized.front().first, sp2);
-    EXPECT_EQ(normalized.front().second, (size_t)2);
+    EXPECT_EQ(normalized.front().second, 2uz);
 
     auto [normalized_move, ___] = std::move(addr).normalized_spaces();
 
-    ASSERT_EQ(normalized_move.size(), (size_t)1);
+    ASSERT_EQ(normalized_move.size(), 1uz);
     EXPECT_EQ(normalized_move.front().first, sp2);
-    EXPECT_EQ(normalized_move.front().second, (size_t)2);
+    EXPECT_EQ(normalized_move.front().second, 2uz);
 }
 
 TEST(address, has_unresolved_spaces)

@@ -41,7 +41,7 @@ OP2 OPSYN OP1
     analyzer a(input);
     a.analyze();
 
-    EXPECT_EQ(a.diags().size(), (size_t)1);
+    EXPECT_EQ(a.diags().size(), 1uz);
 }
 
 TEST(OPSYN, undefined_name)
@@ -52,7 +52,7 @@ OP2 OPSYN
     analyzer a(input);
     a.analyze();
 
-    EXPECT_EQ(a.diags().size(), (size_t)1);
+    EXPECT_EQ(a.diags().size(), 1uz);
 }
 
 TEST(OPSYN, missing_name)
@@ -64,7 +64,7 @@ TEST(OPSYN, missing_name)
     analyzer a(input);
     a.analyze();
 
-    EXPECT_EQ(a.diags().size(), (size_t)1);
+    EXPECT_EQ(a.diags().size(), 1uz);
 }
 
 TEST(OPSYN, incorrect_operands)
@@ -75,7 +75,7 @@ LR OPSYN A,B
     analyzer a(input);
     a.analyze();
 
-    EXPECT_EQ(a.diags().size(), (size_t)1);
+    EXPECT_EQ(a.diags().size(), 1uz);
 }
 
 TEST(OPSYN, delete_opcode)
@@ -87,7 +87,7 @@ LR OPSYN
     analyzer a(input);
     a.analyze();
 
-    EXPECT_EQ(a.diags().size(), (size_t)1);
+    EXPECT_EQ(a.diags().size(), 1uz);
 }
 
 TEST(OPSYN, preserve_opcode)
@@ -148,7 +148,7 @@ OPSYN_THIS OPSYN SAM31
     analyzer a(input);
     a.analyze();
 
-    EXPECT_EQ(a.diags().size(), (size_t)1);
+    EXPECT_EQ(a.diags().size(), 1uz);
 }
 
 TEST(OPSYN, CA_instruction)
@@ -247,7 +247,7 @@ LRX OPSYN LR
     analyzer a(input);
     a.analyze();
 
-    EXPECT_EQ(a.diags().size(), (size_t)1);
+    EXPECT_EQ(a.diags().size(), 1uz);
 }
 
 TEST(OPSYN, removed_machine_instruction)
@@ -259,7 +259,7 @@ X OPSYN LR
     analyzer a(input);
     a.analyze();
 
-    EXPECT_EQ(a.diags().size(), (size_t)1);
+    EXPECT_EQ(a.diags().size(), 1uz);
 }
 
 TEST(OPSYN, macro_after_delete)

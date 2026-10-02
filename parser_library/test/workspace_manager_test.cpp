@@ -91,7 +91,7 @@ TEST(workspace_manager, did_change_file)
     ws_mngr->did_change_file("test/library/test_wks/new_file", 2, changes);
     ws_mngr->idle_handler();
 
-    EXPECT_EQ(consumer.diags.size(), (size_t)1);
+    EXPECT_EQ(consumer.diags.size(), 1uz);
 
     std::vector<document_change> changes1;
     std::string new_text1 = "";

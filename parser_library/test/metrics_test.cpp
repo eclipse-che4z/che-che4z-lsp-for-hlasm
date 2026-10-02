@@ -85,54 +85,54 @@ protected:
 TEST_F(benchmark_test, lines)
 {
     setUpAnalyzer("a\nb\nc\nd");
-    EXPECT_EQ(a->get_metrics().lines, (size_t)4);
+    EXPECT_EQ(a->get_metrics().lines, 4uz);
 
     setUpAnalyzer("\n\n");
     // also counts empty lines as lines
-    EXPECT_EQ(a->get_metrics().lines, (size_t)2);
+    EXPECT_EQ(a->get_metrics().lines, 2uz);
 
     setUpAnalyzer(" LR 1,1\n MAC 1\n COPY COPYFILE");
     // 3 open code + 2 copy + 4 macro
-    EXPECT_EQ(a->get_metrics().lines, (size_t)9);
+    EXPECT_EQ(a->get_metrics().lines, 9uz);
 }
 
 TEST_F(benchmark_test, macro_statements)
 {
     setUpAnalyzer(" MAC 1");
     // executed macro statements do not include MACRO at the beginning
-    EXPECT_EQ(a->get_metrics().macro_statements, (size_t)2);
+    EXPECT_EQ(a->get_metrics().macro_statements, 2uz);
     // macro def statement do
-    EXPECT_EQ(a->get_metrics().macro_def_statements, (size_t)4);
+    EXPECT_EQ(a->get_metrics().macro_def_statements, 4uz);
 
     setUpAnalyzer(" MAC 1\n MAC 2\n");
-    EXPECT_EQ(a->get_metrics().macro_statements, (size_t)4);
-    EXPECT_EQ(a->get_metrics().macro_def_statements, (size_t)4);
+    EXPECT_EQ(a->get_metrics().macro_statements, 4uz);
+    EXPECT_EQ(a->get_metrics().macro_def_statements, 4uz);
 
     setUpAnalyzer(" LR 1,1");
-    EXPECT_EQ(a->get_metrics().macro_statements, (size_t)0);
-    EXPECT_EQ(a->get_metrics().macro_def_statements, (size_t)0);
+    EXPECT_EQ(a->get_metrics().macro_statements, 0uz);
+    EXPECT_EQ(a->get_metrics().macro_def_statements, 0uz);
 }
 
 TEST_F(benchmark_test, copy_statements)
 {
     setUpAnalyzer(" COPY COPYFILE");
-    EXPECT_EQ(a->get_metrics().copy_statements, (size_t)2);
-    EXPECT_EQ(a->get_metrics().copy_def_statements, (size_t)2);
+    EXPECT_EQ(a->get_metrics().copy_statements, 2uz);
+    EXPECT_EQ(a->get_metrics().copy_def_statements, 2uz);
 
     setUpAnalyzer(" COPY COPYFILE\n COPY COPYFILE");
-    EXPECT_EQ(a->get_metrics().copy_statements, (size_t)4);
-    EXPECT_EQ(a->get_metrics().copy_def_statements, (size_t)2);
+    EXPECT_EQ(a->get_metrics().copy_statements, 4uz);
+    EXPECT_EQ(a->get_metrics().copy_def_statements, 2uz);
 
     setUpAnalyzer(" LR 1,1");
-    EXPECT_EQ(a->get_metrics().copy_statements, (size_t)0);
-    EXPECT_EQ(a->get_metrics().copy_def_statements, (size_t)0);
+    EXPECT_EQ(a->get_metrics().copy_statements, 0uz);
+    EXPECT_EQ(a->get_metrics().copy_def_statements, 0uz);
 }
 
 TEST_F(benchmark_test, open_code_statements)
 {
     setUpAnalyzer(" COPY COPYFILE\n LR 1,1\n\n");
     // 2 actual statements and 1 empty
-    EXPECT_EQ(a->get_metrics().open_code_statements, (size_t)3);
+    EXPECT_EQ(a->get_metrics().open_code_statements, 3uz);
 }
 
 TEST_F(benchmark_test, continued_statements)
@@ -141,24 +141,24 @@ TEST_F(benchmark_test, continued_statements)
                         second remark                                  X
                         third)");
     // only one long continued statement
-    EXPECT_EQ(a->get_metrics().continued_statements, (size_t)1);
-    EXPECT_EQ(a->get_metrics().non_continued_statements, (size_t)0);
+    EXPECT_EQ(a->get_metrics().continued_statements, 1uz);
+    EXPECT_EQ(a->get_metrics().non_continued_statements, 0uz);
 }
 
 TEST_F(benchmark_test, reparsed_statements)
 {
     setUpAnalyzer(" MAC\n");
     // 2 statements in MAC are reparsed
-    EXPECT_EQ(a->get_metrics().reparsed_statements, (size_t)2);
+    EXPECT_EQ(a->get_metrics().reparsed_statements, 2uz);
 
     setUpAnalyzer(" MAC\n COPY COPYFILE");
     // 2 statements in MAC + 2 statements in COPYFILE are reparsed
-    EXPECT_EQ(a->get_metrics().reparsed_statements, (size_t)4);
+    EXPECT_EQ(a->get_metrics().reparsed_statements, 4uz);
 }
 
 TEST_F(benchmark_test, lookahead_statements)
 {
     setUpAnalyzer(" AGO .HERE\n something\n something\n.HERE ANOP");
     // 2 lines skipped by lookahead + 1 which finds the symbol
-    EXPECT_EQ(a->get_metrics().lookahead_statements, (size_t)3);
+    EXPECT_EQ(a->get_metrics().lookahead_statements, 3uz);
 }

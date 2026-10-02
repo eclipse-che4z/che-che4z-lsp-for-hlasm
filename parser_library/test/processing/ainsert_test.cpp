@@ -181,7 +181,7 @@ TEST(ainsert, postponed_variable_evaluation)
 
     analyzer a(input);
     a.analyze();
-    EXPECT_EQ(a.diags().size(), (size_t)0);
+    EXPECT_EQ(a.diags().size(), 0uz);
 
     EXPECT_EQ(get_var_value<A_t>(a.hlasm_ctx(), "A"), 40);
     EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "C1"), "00000041");
@@ -214,7 +214,7 @@ TEST(ainsert, immediate_variable_evaluation)
 
     analyzer a(input);
     a.analyze();
-    EXPECT_EQ(a.diags().size(), (size_t)0);
+    EXPECT_EQ(a.diags().size(), 0uz);
 
     EXPECT_EQ(get_var_value<A_t>(a.hlasm_ctx(), "A"), 22);
     EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "C1"), "00000023");
@@ -244,7 +244,7 @@ TEST(ainsert, grammar_valid_01)
 
     analyzer a(input);
     a.analyze();
-    EXPECT_EQ(a.diags().size(), (size_t)0);
+    EXPECT_EQ(a.diags().size(), 0uz);
 
     EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "STR12"), "00000032");
     EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "C1"), "5");
@@ -276,7 +276,7 @@ TEST(ainsert, grammar_valid_02)
 
     analyzer a(input);
     a.analyze();
-    EXPECT_EQ(a.diags().size(), (size_t)0);
+    EXPECT_EQ(a.diags().size(), 0uz);
 
     EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "C1"), "9");
     EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "C2"), "C'9'");

@@ -46,7 +46,7 @@ struct levenshtein_distance_t
         auto* cur_b = workarea.data();
         auto* next_b = workarea.data() + (limit ? limit : r_size) + 1;
 
-        std::iota(cur_b, cur_b + r_size + 1, (size_t)0);
+        std::iota(cur_b, cur_b + r_size + 1, 0uz);
 
         for (const auto& l_e : l)
         {

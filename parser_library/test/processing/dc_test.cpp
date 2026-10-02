@@ -32,7 +32,7 @@ R EQU B-A
 
     analyzer a(input);
     a.analyze();
-    EXPECT_EQ(a.diags().size(), (size_t)1);
+    EXPECT_EQ(a.diags().size(), 1uz);
 }
 
 TEST(DC, non_previously_defined_length)
@@ -47,7 +47,7 @@ R EQU B-A
 
     analyzer a(input);
     a.analyze();
-    EXPECT_EQ(a.diags().size(), (size_t)0);
+    EXPECT_EQ(a.diags().size(), 0uz);
 
     EXPECT_EQ(get_symbol_abs(a.hlasm_ctx(), "R"), 2);
 }
@@ -65,7 +65,7 @@ R EQU C-B
 
     analyzer a(input);
     a.analyze();
-    EXPECT_EQ(a.diags().size(), (size_t)0);
+    EXPECT_EQ(a.diags().size(), 0uz);
 
     EXPECT_EQ(get_symbol_abs(a.hlasm_ctx(), "R"), 4);
 }
@@ -82,7 +82,7 @@ R EQU C-B
 
     analyzer a(input);
     a.analyze();
-    EXPECT_EQ(a.diags().size(), (size_t)0);
+    EXPECT_EQ(a.diags().size(), 0uz);
 
     EXPECT_EQ(get_symbol_abs(a.hlasm_ctx(), "R"), 4);
 }
@@ -113,7 +113,7 @@ B LR 1,1
 
     analyzer a(input);
     a.analyze();
-    EXPECT_EQ(a.diags().size(), (size_t)1);
+    EXPECT_EQ(a.diags().size(), 1uz);
 }
 
 TEST(DC, space_cycle)
@@ -127,7 +127,7 @@ D LR 1,1
 
     analyzer a(input);
     a.analyze();
-    EXPECT_EQ(a.diags().size(), (size_t)1);
+    EXPECT_EQ(a.diags().size(), 1uz);
 }
 
 TEST(DC, len_attr)
@@ -142,7 +142,7 @@ A DC CL(X+14)'A'
 
     EXPECT_EQ(get_symbol(a.hlasm_ctx(), "a")->attributes().length(), (symbol_attributes::len_attr)2);
 
-    EXPECT_EQ(a.diags().size(), (size_t)0);
+    EXPECT_EQ(a.diags().size(), 0uz);
 }
 
 TEST(DC, scale_attr)
@@ -157,7 +157,7 @@ A DC FS(X+14)'1'
 
     EXPECT_EQ(get_symbol(a.hlasm_ctx(), "a")->attributes().scale(), (symbol_attributes::scale_attr)36);
 
-    EXPECT_EQ(a.diags().size(), (size_t)0);
+    EXPECT_EQ(a.diags().size(), 0uz);
 }
 
 TEST(DC, scale_with_unary_op)
@@ -173,7 +173,7 @@ M DC FS-12'1'
     EXPECT_EQ(get_symbol(a.hlasm_ctx(), "P")->attributes().scale(), (symbol_attributes::scale_attr)12);
     EXPECT_EQ(get_symbol(a.hlasm_ctx(), "M")->attributes().scale(), (symbol_attributes::scale_attr)-12);
 
-    EXPECT_EQ(a.diags().size(), (size_t)0);
+    EXPECT_EQ(a.diags().size(), 0uz);
 }
 
 TEST(DC, cyclic_len_non_forward)
@@ -188,7 +188,7 @@ A EQU L'X
 
     EXPECT_EQ(get_symbol_abs(a.hlasm_ctx(), "A"), 0);
 
-    EXPECT_EQ(a.diags().size(), (size_t)1);
+    EXPECT_EQ(a.diags().size(), 1uz);
 }
 
 TEST(DC, cyclic_len_forward)
@@ -203,7 +203,7 @@ X DC CL(A+1)'X'
 
     EXPECT_EQ(get_symbol_abs(a.hlasm_ctx(), "A"), 1);
 
-    EXPECT_EQ(a.diags().size(), (size_t)1);
+    EXPECT_EQ(a.diags().size(), 1uz);
 }
 
 TEST(DC, valid_len_ref)
@@ -221,7 +221,7 @@ Y EQU L'A
     EXPECT_EQ(get_symbol(a.hlasm_ctx(), "X")->attributes().length(), (symbol_attributes::len_attr)1);
     EXPECT_EQ(get_symbol_abs(a.hlasm_ctx(), "Y"), 1);
 
-    EXPECT_EQ(a.diags().size(), (size_t)0);
+    EXPECT_EQ(a.diags().size(), 0uz);
 }
 
 TEST(DC, invalid_len_ref)
@@ -239,7 +239,7 @@ Y EQU A
     EXPECT_EQ(get_symbol(a.hlasm_ctx(), "X")->attributes().length(), (symbol_attributes::len_attr)1);
     EXPECT_EQ(get_symbol_abs(a.hlasm_ctx(), "Y"), 0);
 
-    EXPECT_EQ(a.diags().size(), (size_t)1);
+    EXPECT_EQ(a.diags().size(), 1uz);
 }
 
 TEST(DC, self_cycle)
@@ -251,7 +251,7 @@ X DC CL(L'X)'X'
     analyzer a(input);
     a.analyze();
 
-    EXPECT_EQ(a.diags().size(), (size_t)1);
+    EXPECT_EQ(a.diags().size(), 1uz);
 }
 
 TEST(DC, manual_alignment)

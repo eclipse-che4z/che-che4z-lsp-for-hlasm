@@ -343,7 +343,7 @@ class db2_preprocessor final : public preprocessor // TODO Take DBCS into accoun
     {
         assert(!m_version.empty());
 
-        constexpr auto version_chunk = (size_t)32;
+        constexpr auto version_chunk = 32uz;
         if (m_version.size() <= version_chunk)
         {
             m_result.emplace_back(replaced_line { "SQLVERSP DC    CL4'VER.' VERSION-ID PREFIX\n" });

@@ -994,12 +994,9 @@ template set_symbol_base* hlasm_context::create_local_variable<C_t>(id_index id,
 
 void hlasm_context::apply_source_snapshot(source_snapshot snapshot)
 {
-    assert(std::transform_reduce(source_stack_.begin(),
-               source_stack_.end(),
-               (size_t)0,
-               std::plus {},
-               [](const auto& source) { return source.proc_stack.size(); })
-        == 1);
+    assert(std::transform_reduce(source_stack_.begin(), source_stack_.end(), 0uz, std::plus {}, [](const auto& source) {
+        return source.proc_stack.size();
+    }) == 1);
 
     auto& last_source = source_stack_.back();
 
