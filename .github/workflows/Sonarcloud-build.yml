@@ -31,7 +31,7 @@ defaults:
 jobs:
   sonarcloud-build:
     name: SonarCloud build
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
 
     steps:
       - uses: actions/checkout@v6
@@ -49,10 +49,10 @@ jobs:
         run: LLVM_PROFILE_FILE="%c$(pwd)/../../build/bin/language.rawprof" xvfb-run -a npm exec c8 -- --reporter=lcovonly --allowExternal --exclude='**/.vscode-test/**' --exclude='**/test/**' --exclude='**/build/**' -- npm test
         working-directory: clients/vscode-hlasmplugin
       - name: Merge raw profiles
-        run: llvm-profdata-18 merge -o hlasm_profile language.rawprof library.rawprof server.rawprof utils.rawprof
+        run: llvm-profdata-22 merge -o hlasm_profile language.rawprof library.rawprof server.rawprof utils.rawprof
         working-directory: build/bin
       - name: Generate lcov coverage
-        run: llvm-cov-18 show -instr-profile hlasm_profile hlasm_language_server -object library_test -object server_test -object hlasm_utils_test > ../coverage.txt
+        run: llvm-cov-22 show -instr-profile hlasm_profile hlasm_language_server -object library_test -object server_test -object hlasm_utils_test > ../coverage.txt
         working-directory: build/bin
       - name: Pull request event info
         if: github.event_name == 'pull_request'
