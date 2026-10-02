@@ -23,7 +23,6 @@ on:
     branches:
       - development
       - master
-      - chore_enable_cxx23
 
 defaults:
   run:
