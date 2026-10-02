@@ -173,9 +173,8 @@ class workspace_manager_response : workspace_manager_response_base
         .release =
             +[](void* p) noexcept {
                 if (auto* ptr = static_cast<shared_data<U>*>(p);
-                    ptr->counter.fetch_sub(1, std::memory_order_release) == 1)
+                    ptr->counter.fetch_sub(1, std::memory_order_acq_rel) == 1)
                 {
-                    std::atomic_thread_fence(std::memory_order_acquire);
                     delete ptr;
                 }
             },
