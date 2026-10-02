@@ -305,4 +305,29 @@ void sublist_conc::resolve(diagnostic_op_consumer& diag) const
             e.resolve(diag);
 }
 
+concatenation_point::concatenation_point(
+    std::in_place_type_t<char_str_conc> t, std::string value, const range& conc_range)
+    : value(t, std::move(value), conc_range)
+{}
+concatenation_point::concatenation_point(std::in_place_type_t<var_sym_conc> t, vs_ptr v)
+    : value(t, std::move(v))
+{}
+concatenation_point::concatenation_point(std::in_place_type_t<dot_conc> t, const range& r)
+    : value(t, r)
+{}
+concatenation_point::concatenation_point(std::in_place_type_t<sublist_conc> t, std::vector<concat_chain> list)
+    : value(t, std::move(list))
+{}
+concatenation_point::concatenation_point(std::in_place_type_t<equals_conc> t, const range& r)
+    : value(t, r)
+{}
+
+var_sym_conc::var_sym_conc(vs_ptr s)
+    : symbol(std::move(s))
+{}
+
+sublist_conc::sublist_conc(std::vector<concat_chain> list)
+    : list(std::move(list))
+{}
+
 } // namespace hlasm_plugin::parser_library::semantics

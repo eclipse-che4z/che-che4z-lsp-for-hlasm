@@ -18,6 +18,7 @@
 #include <array>
 #include <cassert>
 #include <concepts>
+#include <cstdint>
 #include <limits>
 #include <memory>
 #include <stdexcept>

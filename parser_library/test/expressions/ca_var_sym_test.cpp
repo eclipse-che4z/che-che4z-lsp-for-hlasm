@@ -56,7 +56,7 @@ TEST(ca_var_sym_created, undefined_attributes)
     concat_chain created_name;
     std::vector<ca_expr_ptr> subscript;
 
-    created_name.emplace_back(char_str_conc("n", range()));
+    created_name.emplace_back(std::in_place_type<char_str_conc>, "n", range());
 
     subscript.push_back(std::make_unique<ca_constant>(1, range()));
 

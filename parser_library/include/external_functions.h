@@ -70,7 +70,7 @@ class external_function
     std::function<void(external_function_args&)> m_func;
 
 public:
-#if defined(_LIBCPP_VERSION) && _LIBCPP_VERSION < 210000
+#if defined(_LIBCPP_VERSION) && _LIBCPP_VERSION < 230000
     template<typename T>
 #else
     template<std::convertible_to<std::function<void(external_function_args&)>> T>

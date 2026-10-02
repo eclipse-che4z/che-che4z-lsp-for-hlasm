@@ -17,6 +17,8 @@
 
 #include "gmock/gmock.h"
 
+#include "completion_item.h"
+#include "document_symbol_item.h"
 #include "workspace_manager.h"
 #include "workspace_manager_response.h"
 

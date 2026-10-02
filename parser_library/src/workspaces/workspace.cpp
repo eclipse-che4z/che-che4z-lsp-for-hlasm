@@ -60,6 +60,22 @@ struct workspace::dependency_cache
     macro_cache cache;
 };
 
+struct parsing_results
+{
+    semantics::lines_info hl_info;
+    std::shared_ptr<lsp::lsp_context> lsp_context;
+    std::shared_ptr<const std::vector<fade_message>> fade_messages;
+    performance_metrics metrics;
+    std::vector<std::pair<virtual_file_handle, utils::resource::resource_location>> vf_handles;
+    processing::hit_count_map hc_opencode_map;
+    processing::hit_count_map hc_macro_map;
+
+    std::vector<diagnostic> opencode_diagnostics;
+    std::vector<diagnostic> macro_diagnostics;
+
+    std::vector<output_line> outputs;
+};
+
 struct workspace::processor_file_compoments
 {
     std::shared_ptr<file> m_file;
@@ -85,22 +101,6 @@ struct workspace::processor_file_compoments
     {}
 
     [[nodiscard]] utils::task update_source_if_needed(file_manager& fm);
-};
-
-struct parsing_results
-{
-    semantics::lines_info hl_info;
-    std::shared_ptr<lsp::lsp_context> lsp_context;
-    std::shared_ptr<const std::vector<fade_message>> fade_messages;
-    performance_metrics metrics;
-    std::vector<std::pair<virtual_file_handle, utils::resource::resource_location>> vf_handles;
-    processing::hit_count_map hc_opencode_map;
-    processing::hit_count_map hc_macro_map;
-
-    std::vector<diagnostic> opencode_diagnostics;
-    std::vector<diagnostic> macro_diagnostics;
-
-    std::vector<output_line> outputs;
 };
 
 [[nodiscard]] utils::value_task<parsing_results> parse_one_file(std::shared_ptr<context::id_storage> ids,

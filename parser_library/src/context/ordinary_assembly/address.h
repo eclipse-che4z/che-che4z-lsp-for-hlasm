@@ -16,6 +16,7 @@
 #define CONTEXT_ADDRESS_H
 
 #include <compare>
+#include <cstdint>
 #include <memory>
 #include <span>
 #include <utility>

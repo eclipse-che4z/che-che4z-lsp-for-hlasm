@@ -18,6 +18,7 @@
 
 #include "analyzer.h"
 #include "diagnostic.h"
+#include "fade_messages.h"
 #include "mock_parse_lib_provider.h"
 #include "workspace_manager.h"
 
