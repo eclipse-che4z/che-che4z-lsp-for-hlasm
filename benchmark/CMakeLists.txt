@@ -18,7 +18,6 @@ add_executable(benchmark
 
 target_compile_features(benchmark PRIVATE cxx_std_23)
 target_compile_options(benchmark PRIVATE ${HLASM_EXTRA_FLAGS})
-set_target_properties(benchmark PROPERTIES CXX_EXTENSIONS OFF)
 
 target_include_directories(benchmark
     PRIVATE

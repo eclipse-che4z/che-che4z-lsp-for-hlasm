@@ -14,7 +14,6 @@ add_executable(server_test)
 
 target_compile_features(server_test PRIVATE cxx_std_23)
 target_compile_options(server_test PRIVATE ${HLASM_EXTRA_FLAGS})
-set_target_properties(server_test PROPERTIES CXX_EXTENSIONS OFF)
 
 target_sources(server_test PRIVATE
     blocking_queue_test.cpp

@@ -19,7 +19,6 @@ add_library(hlasm_language_server_base OBJECT)
 
 target_compile_features(hlasm_language_server_base PUBLIC cxx_std_23)
 target_compile_options(hlasm_language_server_base PRIVATE ${HLASM_EXTRA_FLAGS})
-set_target_properties(hlasm_language_server_base PROPERTIES CXX_EXTENSIONS OFF)
 
 target_include_directories(hlasm_language_server_base PRIVATE src)
 
@@ -27,7 +26,6 @@ add_executable(hlasm_language_server)
 
 target_compile_features(hlasm_language_server PRIVATE cxx_std_23)
 target_compile_options(hlasm_language_server PRIVATE ${HLASM_EXTRA_FLAGS})
-set_target_properties(hlasm_language_server PROPERTIES CXX_EXTENSIONS OFF)
 
 add_subdirectory(src)
 

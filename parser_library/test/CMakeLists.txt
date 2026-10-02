@@ -14,7 +14,6 @@ add_executable(library_test)
 
 target_compile_features(library_test PRIVATE cxx_std_23)
 target_compile_options(library_test PRIVATE ${HLASM_EXTRA_FLAGS})
-set_target_properties(library_test PROPERTIES CXX_EXTENSIONS OFF)
 
 target_sources(library_test PRIVATE
     aread_time_test.cpp

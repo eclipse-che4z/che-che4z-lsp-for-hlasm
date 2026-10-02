@@ -22,7 +22,6 @@ endif()
 
 target_compile_features(library_fuzzer PRIVATE cxx_std_23)
 target_compile_options(library_fuzzer PRIVATE ${HLASM_EXTRA_FLAGS})
-set_target_properties(library_fuzzer PROPERTIES CXX_EXTENSIONS OFF)
 
 target_sources(library_fuzzer PRIVATE
     fuzzer.cpp
