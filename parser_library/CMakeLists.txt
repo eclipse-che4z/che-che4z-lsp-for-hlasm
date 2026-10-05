@@ -16,9 +16,8 @@ project(parser_library)
 
 add_library(parser_library STATIC)
 
-target_compile_features(parser_library PUBLIC cxx_std_20)
+target_compile_features(parser_library PUBLIC cxx_std_23)
 target_compile_options(parser_library PRIVATE ${HLASM_EXTRA_FLAGS})
-set_target_properties(parser_library PROPERTIES CXX_EXTENSIONS OFF)
 
 add_subdirectory(src)
 add_subdirectory(include)
