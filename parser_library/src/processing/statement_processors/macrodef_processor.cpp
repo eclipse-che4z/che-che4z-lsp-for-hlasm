@@ -385,7 +385,7 @@ const context::id_index* macrodef_processor::test_varsym_validity(const semantic
         return nullptr;
     }
 
-    if (std::ranges::find(param_names, *name) != param_names.end())
+    if (std::ranges::contains(param_names, *name))
     {
         add_diagnostic(diagnostic_op::error_E011("Symbolic parameter", op_range));
         if (add_empty)
@@ -514,8 +514,7 @@ void macrodef_processor::add_SET_sym_to_res(
     if (!name)
         return;
 
-    if (std::ranges::find(result_.variable_symbols, *name, &lsp::variable_symbol_definition::name)
-        != result_.variable_symbols.end())
+    if (std::ranges::contains(result_.variable_symbols, *name, &lsp::variable_symbol_definition::name))
         return;
 
     result_.variable_symbols.emplace_back(

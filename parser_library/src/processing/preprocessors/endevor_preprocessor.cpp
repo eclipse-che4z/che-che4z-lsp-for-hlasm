@@ -70,7 +70,7 @@ class endevor_preprocessor final : public preprocessor
     {
         std::string member_upper = utils::to_upper_copy(member);
 
-        if (std::ranges::find(stack, member_upper, &stack_entry::name) != stack.end())
+        if (std::ranges::contains(stack, member_upper, &stack_entry::name))
         {
             if (m_diags)
                 m_diags->add_diagnostic(diagnostic_op::error_END002(

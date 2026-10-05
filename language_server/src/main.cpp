@@ -170,8 +170,8 @@ public:
 
 auto separate_arguments(int argc, char** argv)
 {
-    auto first = std::find_if(argv + !!argc, argv + argc, [](std::string_view arg) { return arg == "--hlasm-start"; });
-    auto last = std::find_if(first, argv + argc, [](std::string_view arg) { return arg == "--hlasm-end"; });
+    auto first = std::find(argv + !!argc, argv + argc, std::string_view("--hlasm-start"));
+    auto last = std::find(first, argv + argc, std::string_view("--hlasm-end"));
 
     if (last == argv + argc)
         first = argv + !!argc;

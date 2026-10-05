@@ -84,8 +84,7 @@ void space::resolve(int length, std::vector<address::space_entry> unresolved)
         return;
 
     assert(kind == space_kind::LOCTR_UNKNOWN);
-    assert(std::ranges::find(unresolved, this, [](const auto& se) { return se.first.get(); })
-        == std::ranges::end(unresolved));
+    assert(!std::ranges::contains(unresolved, this, [](const auto& se) { return se.first.get(); }));
 
     resolved_length = length;
 

@@ -818,7 +818,7 @@ utils::task workspace::did_change_watched_files(std::vector<resource_location> f
             if (!comp.m_opened)
                 continue;
 
-            if (std::ranges::find(*changed_groups, comp.m_group_id) != changed_groups->end())
+            if (std::ranges::contains(*changed_groups, comp.m_group_id))
                 m_parsing_pending.emplace(comp.m_file->get_location());
         }
     }

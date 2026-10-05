@@ -56,7 +56,7 @@ location_counter& section::set_location_counter(id_index loctr_name)
 
 location_counter& section::set_location_counter(location_counter& l)
 {
-    assert(std::ranges::find(loctrs_, &l, &std::unique_ptr<location_counter>::get) != loctrs_.end());
+    assert(std::ranges::contains(loctrs_, &l, &std::unique_ptr<location_counter>::get));
     curr_loctr_ = &l;
     return l;
 }

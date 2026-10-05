@@ -251,7 +251,7 @@ bool ca_processor::prepare_GBL_LCL(const processing::resolved_statement& stmt, s
                 continue;
             }
 
-            if (std::ranges::find(info, id, &GLB_LCL_info::id) != info.end())
+            if (std::ranges::contains(info, id, &GLB_LCL_info::id))
                 add_diagnostic(diagnostic_op::error_E051(id.to_string_view(), ca_op->operand_range));
             else
                 info.emplace_back(id, subscript.empty(), ca_op->operand_range);
