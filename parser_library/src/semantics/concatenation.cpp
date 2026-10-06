@@ -279,12 +279,16 @@ void char_str_conc::resolve(diagnostic_op_consumer&) const {}
 
 void var_sym_conc::resolve(diagnostic_op_consumer& diag) const { symbol->resolve(context::SET_t_enum::A_TYPE, diag); }
 
+namespace {
+unsigned unsigned_abs(int v) { return v >= 0 ? static_cast<unsigned>(v) : -static_cast<unsigned>(v); }
+} // namespace
+
 std::string var_sym_conc::evaluate(context::SET_t varsym_value)
 {
     switch (varsym_value.type())
     {
         case context::SET_t_enum::A_TYPE:
-            return std::to_string(std::abs(varsym_value.access_a()));
+            return std::to_string(unsigned_abs(varsym_value.access_a()));
         case context::SET_t_enum::B_TYPE:
             return varsym_value.access_b() ? "1" : "0";
         case context::SET_t_enum::C_TYPE:
