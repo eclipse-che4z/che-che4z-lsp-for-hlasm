@@ -167,9 +167,7 @@ TEST(arithmetic_expressions, binary_space_separated_operator)
     EXPECT_EQ(get_var_value<context::A_t>(a.hlasm_ctx(), "A"), 2);
 }
 
-// requires proper lexer token that recognises number with minus sign
-#if 0
-TEST(arithmetic_expressions, limits)
+TEST(arithmetic_expressions, limits2)
 {
     std::string input =
         R"(
@@ -185,7 +183,6 @@ TEST(arithmetic_expressions, limits)
 
     ASSERT_EQ(a.diags().size(), 3uz);
 }
-#endif
 
 TEST(arithmetic_expressions, division)
 {
