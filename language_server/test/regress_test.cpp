@@ -73,13 +73,13 @@ TEST(regress_test, behaviour_error)
     s.message_received(notf);
     ws_mngr->idle_handler();
 
-    ASSERT_EQ(mess_p.notfs.size(), (size_t)3); // diags+open+parsing
+    ASSERT_EQ(mess_p.notfs.size(), 3uz); // diags+open+parsing
     auto publish_notif = std::ranges::find_if(
         mess_p.notfs, [](const auto& notif) { return notif["method"] == "textDocument/publishDiagnostics"; });
     ASSERT_NE(publish_notif, mess_p.notfs.end());
     ASSERT_EQ((*publish_notif)["method"], "textDocument/publishDiagnostics");
     auto diagnostics = (*publish_notif)["params"]["diagnostics"];
-    ASSERT_EQ(diagnostics.size(), (size_t)1);
+    ASSERT_EQ(diagnostics.size(), 1uz);
     EXPECT_EQ(diagnostics[0]["code"].get<std::string>(), "M120");
 
     mess_p.notfs.clear();
@@ -89,9 +89,9 @@ TEST(regress_test, behaviour_error)
     s.message_received(notf);
     ws_mngr->idle_handler();
 
-    ASSERT_EQ(mess_p.notfs.size(), (size_t)1);
+    ASSERT_EQ(mess_p.notfs.size(), 1uz);
     ASSERT_EQ(mess_p.notfs[0]["method"], "textDocument/publishDiagnostics");
-    EXPECT_EQ(mess_p.notfs[0]["params"]["diagnostics"].size(), (size_t)0);
+    EXPECT_EQ(mess_p.notfs[0]["params"]["diagnostics"].size(), 0uz);
 
     mess_p.notfs.clear();
 
@@ -100,10 +100,10 @@ TEST(regress_test, behaviour_error)
     s.message_received(notf);
     ws_mngr->idle_handler();
 
-    ASSERT_EQ(mess_p.notfs.size(), (size_t)1);
+    ASSERT_EQ(mess_p.notfs.size(), 1uz);
     ASSERT_EQ(mess_p.notfs[0]["method"], "textDocument/publishDiagnostics");
     diagnostics = mess_p.notfs[0]["params"]["diagnostics"];
-    ASSERT_EQ(diagnostics.size(), (size_t)1);
+    ASSERT_EQ(diagnostics.size(), 1uz);
     EXPECT_EQ(diagnostics[0]["code"].get<std::string>(), "S0003");
 
     mess_p.notfs.clear();
@@ -116,7 +116,7 @@ TEST(regress_test, behaviour_error)
     auto notfs_it = std::ranges::find_if(
         mess_p.notfs, [](const auto& msg) { return msg["method"] == "textDocument/publishDiagnostics"; });
     ASSERT_NE(notfs_it, mess_p.notfs.end());
-    EXPECT_EQ((*notfs_it)["params"]["diagnostics"].size(), (size_t)0);
+    EXPECT_EQ((*notfs_it)["params"]["diagnostics"].size(), 0uz);
 
     mess_p.notfs.clear();
 }
@@ -639,17 +639,17 @@ TEST(regress_test, check_diagnostic_tags)
     s.message_received(notf);
     ws_mngr->idle_handler();
 
-    ASSERT_EQ(mess_p.notfs.size(), (size_t)4); // diags+open+parsing+output
+    ASSERT_EQ(mess_p.notfs.size(), 4uz); // diags+open+parsing+output
     auto publish_notif = std::ranges::find_if(
         mess_p.notfs, [](const auto& msg) { return msg["method"] == "textDocument/publishDiagnostics"; });
     ASSERT_NE(publish_notif, mess_p.notfs.end());
     ASSERT_EQ((*publish_notif)["method"], "textDocument/publishDiagnostics");
     auto diagnostics = (*publish_notif)["params"]["diagnostics"];
-    ASSERT_EQ(diagnostics.size(), (size_t)1);
+    ASSERT_EQ(diagnostics.size(), 1uz);
     EXPECT_EQ(diagnostics[0]["code"].get<std::string>(), "MNOTE");
     ASSERT_GT(diagnostics[0].count("tags"), 0);
     ASSERT_TRUE(diagnostics[0]["tags"].is_array());
-    ASSERT_EQ(diagnostics[0]["tags"].size(), (size_t)1);
+    ASSERT_EQ(diagnostics[0]["tags"].size(), 1uz);
     ASSERT_EQ(diagnostics[0]["tags"][0], 1);
 
     mess_p.notfs.clear();

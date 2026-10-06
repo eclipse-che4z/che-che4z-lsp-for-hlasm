@@ -49,8 +49,8 @@ TEST(parser, parse_model)
         range r(position(0, 4), position(0, 10));
         auto [op, rem, lit] = parse_model("&var,1", r);
 
-        ASSERT_EQ(op.value.size(), (size_t)1);
-        ASSERT_EQ(rem.value.size(), (size_t)0);
+        ASSERT_EQ(op.value.size(), 1uz);
+        ASSERT_EQ(rem.value.size(), 0uz);
         EXPECT_TRUE(lit.empty());
 
         EXPECT_EQ(op.field_range, r);
@@ -60,8 +60,8 @@ TEST(parser, parse_model)
         range r(position(0, 4), position(0, 8));
         auto [op, rem, lit] = parse_model("&var", r);
 
-        ASSERT_EQ(op.value.size(), (size_t)1);
-        ASSERT_EQ(rem.value.size(), (size_t)0);
+        ASSERT_EQ(op.value.size(), 1uz);
+        ASSERT_EQ(rem.value.size(), 0uz);
         EXPECT_TRUE(lit.empty());
 
         EXPECT_EQ(op.field_range, r);
@@ -74,8 +74,8 @@ TEST(parser, parse_model_with_remark_alone)
     range r(position(0, 4), position(0, 18));
     auto [op, rem, lit] = parse_model("&var rem,. ???", r);
 
-    ASSERT_EQ(op.value.size(), (size_t)1);
-    ASSERT_EQ(rem.value.size(), (size_t)1);
+    ASSERT_EQ(op.value.size(), 1uz);
+    ASSERT_EQ(rem.value.size(), 1uz);
     EXPECT_TRUE(lit.empty());
 
     EXPECT_EQ(op.field_range, range(position(0, 4), position(0, 8)));
@@ -87,8 +87,8 @@ TEST(parser, parse_model_with_remark_before)
     range r(position(0, 4), position(0, 20));
     auto [op, rem, lit] = parse_model("1,&var rem,. ???", r);
 
-    ASSERT_EQ(op.value.size(), (size_t)1);
-    ASSERT_EQ(rem.value.size(), (size_t)1);
+    ASSERT_EQ(op.value.size(), 1uz);
+    ASSERT_EQ(rem.value.size(), 1uz);
     EXPECT_TRUE(lit.empty());
 
     EXPECT_EQ(op.field_range, range(position(0, 4), position(0, 10)));
@@ -100,8 +100,8 @@ TEST(parser, parse_model_with_remark_after)
     range r(position(0, 4), position(0, 20));
     auto [op, rem, lit] = parse_model("&var,1 rem,. ???", r);
 
-    ASSERT_EQ(op.value.size(), (size_t)1);
-    ASSERT_EQ(rem.value.size(), (size_t)1);
+    ASSERT_EQ(op.value.size(), 1uz);
+    ASSERT_EQ(rem.value.size(), 1uz);
     EXPECT_TRUE(lit.empty());
 
     EXPECT_EQ(op.field_range, range(position(0, 4), position(0, 10)));
@@ -113,8 +113,8 @@ TEST(parser, parse_model_with_remark_before_after)
     range r(position(0, 4), position(0, 26));
     auto [op, rem, lit] = parse_model("1,&var,'&v'4 rem,. ???", r);
 
-    ASSERT_EQ(op.value.size(), (size_t)1);
-    ASSERT_EQ(rem.value.size(), (size_t)1);
+    ASSERT_EQ(op.value.size(), 1uz);
+    ASSERT_EQ(rem.value.size(), 1uz);
     EXPECT_TRUE(lit.empty());
 
     EXPECT_EQ(op.field_range, range(position(0, 4), position(0, 16)));
@@ -126,8 +126,8 @@ TEST(parser, parse_model_with_remark_string)
     range r(position(0, 4), position(0, 26));
     auto [op, rem, lit] = parse_model("1,'&var',h,. rem,. ???", r);
 
-    ASSERT_EQ(op.value.size(), (size_t)1);
-    ASSERT_EQ(rem.value.size(), (size_t)1);
+    ASSERT_EQ(op.value.size(), 1uz);
+    ASSERT_EQ(rem.value.size(), 1uz);
     EXPECT_TRUE(lit.empty());
 
     EXPECT_EQ(op.field_range, range(position(0, 4), position(0, 16)));
@@ -139,8 +139,8 @@ TEST(parser, parse_model_with_apostrophe_escaping)
     range r(position(0, 4), position(0, 26));
     auto [op, rem, lit] = parse_model("*,'%GEN=''''&CFARG '''", r);
 
-    ASSERT_EQ(op.value.size(), (size_t)1);
-    ASSERT_EQ(rem.value.size(), (size_t)0);
+    ASSERT_EQ(op.value.size(), 1uz);
+    ASSERT_EQ(rem.value.size(), 0uz);
     EXPECT_TRUE(lit.empty());
 
     EXPECT_EQ(op.field_range, range(position(0, 4), position(0, 26)));

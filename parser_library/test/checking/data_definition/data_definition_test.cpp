@@ -370,7 +370,7 @@ TEST(data_definition, B_wrong_nominal_value)
     analyzer a(input);
     a.analyze();
 
-    EXPECT_EQ(a.diags().size(), (size_t)1);
+    EXPECT_EQ(a.diags().size(), 1uz);
 }
 
 TEST(data_definition, suppres_syntax_errors_in_macro)
@@ -525,7 +525,7 @@ TEST(data_definition, no_loctr_ref)
 
     auto parsed = parse_data_definition(a, &diags);
 
-    EXPECT_EQ(diags.diags.size(), (size_t)0);
+    EXPECT_EQ(diags.diags.size(), 0uz);
     EXPECT_FALSE(parsed.references_loctr);
 }
 
@@ -538,7 +538,7 @@ TEST(data_definition, loctr_ref)
 
         auto parsed = parse_data_definition(a, &diags);
 
-        EXPECT_EQ(diags.diags.size(), (size_t)0);
+        EXPECT_EQ(diags.diags.size(), 0uz);
         EXPECT_TRUE(parsed.references_loctr);
     }
 }

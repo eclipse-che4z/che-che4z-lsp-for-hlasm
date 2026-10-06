@@ -35,7 +35,7 @@ lbl lr 1,1
     EXPECT_TRUE(a.hlasm_ctx().ord_ctx.symbol_defined(context::id_index("LBL")));
     EXPECT_TRUE(a.hlasm_ctx().ord_ctx.symbol_defined(context::id_index("LCL")));
 
-    EXPECT_EQ(a.diags().size(), (size_t)1);
+    EXPECT_EQ(a.diags().size(), 1uz);
 }
 
 TEST(ordinary_symbols, section_continuation)
@@ -64,7 +64,7 @@ A DSECT
     a.analyze();
     EXPECT_TRUE(a.hlasm_ctx().ord_ctx.section_defined(context::id_index("A"), section_kind::EXECUTABLE));
 
-    EXPECT_EQ(a.diags().size(), (size_t)1);
+    EXPECT_EQ(a.diags().size(), 1uz);
 }
 
 TEST(ordinary_symbols, previously_defined_symbol_abs)
@@ -130,7 +130,7 @@ C EQU A
     EXPECT_TRUE(get_symbol(a.hlasm_ctx(), "B")->kind() == symbol_value_kind::ABS);
     EXPECT_TRUE(get_symbol(a.hlasm_ctx(), "C")->kind() == symbol_value_kind::ABS);
 
-    EXPECT_EQ(a.diags().size(), (size_t)1);
+    EXPECT_EQ(a.diags().size(), 1uz);
 }
 
 TEST(ordinary_symbols, previously_defined_mach_err)
@@ -149,7 +149,7 @@ B EQU 100
     EXPECT_EQ(get_symbol_abs(a.hlasm_ctx(), "A"), 101);
     EXPECT_EQ(get_symbol_abs(a.hlasm_ctx(), "B"), 100);
 
-    EXPECT_EQ(a.diags().size(), (size_t)1);
+    EXPECT_EQ(a.diags().size(), 1uz);
 }
 
 TEST(ordinary_symbols, relocatable_bad_place)
@@ -327,7 +327,7 @@ X    EQU  S2-S1
     analyzer a(input);
     a.analyze();
 
-    EXPECT_EQ(a.diags().size(), (size_t)1);
+    EXPECT_EQ(a.diags().size(), 1uz);
 }
 
 TEST(ordinary_symbols, no_alignment_cycle)
@@ -342,7 +342,7 @@ X    EQU  S2-S1
     analyzer a(input);
     a.analyze();
 
-    EXPECT_EQ(a.diags().size(), (size_t)0);
+    EXPECT_EQ(a.diags().size(), 0uz);
 }
 
 TEST(ordinary_symbols, space_valid_alignment)
@@ -363,7 +363,7 @@ X    EQU  *-B
 
     EXPECT_EQ(get_symbol_abs(a.hlasm_ctx(), "X"), 24);
 
-    EXPECT_EQ(a.diags().size(), (size_t)0);
+    EXPECT_EQ(a.diags().size(), 0uz);
 }
 
 TEST(ordinary_symbols, valid_alignment_resolution)
@@ -384,7 +384,7 @@ X    EQU    *-A
 
     EXPECT_EQ(get_symbol_abs(a.hlasm_ctx(), "X"), 24);
 
-    EXPECT_EQ(a.diags().size(), (size_t)0);
+    EXPECT_EQ(a.diags().size(), 0uz);
 }
 
 TEST(ordinary_symbols, relocatable_ca_invalid)
@@ -402,7 +402,7 @@ C EQU B-A
     analyzer a(input);
     a.analyze();
 
-    EXPECT_EQ(a.diags().size(), (size_t)1);
+    EXPECT_EQ(a.diags().size(), 1uz);
 }
 
 TEST(ordinary_symbols, relocatable_ca_valid)
@@ -420,7 +420,7 @@ C EQU B-A
     analyzer a(input);
     a.analyze();
 
-    EXPECT_EQ(a.diags().size(), (size_t)0);
+    EXPECT_EQ(a.diags().size(), 0uz);
 }
 
 TEST(ordinary_symbols, postponed_statement_in_macro)
@@ -459,7 +459,7 @@ TEST(ordinary_symbols, private_sections_valid)
         analyzer a(input);
         a.analyze();
 
-        EXPECT_EQ(a.diags().size(), (size_t)0) << sect_type;
+        EXPECT_EQ(a.diags().size(), 0uz) << sect_type;
     }
 }
 

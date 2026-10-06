@@ -121,7 +121,7 @@ TEST(system_variable, sysstmt)
 
     analyzer a(input);
     a.analyze();
-    EXPECT_EQ(a.diags().size(), (size_t)0);
+    EXPECT_EQ(a.diags().size(), 0uz);
 
     EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "STRING"), "00000003");
     EXPECT_EQ(get_var_value<A_t>(a.hlasm_ctx(), "VAR"), 4);
@@ -151,7 +151,7 @@ TEST(system_variable, sysstmt_macros)
 
     analyzer a(input);
     a.analyze();
-    EXPECT_EQ(a.diags().size(), (size_t)0);
+    EXPECT_EQ(a.diags().size(), 0uz);
 
     EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "VAR1"), "00000027");
     EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "VAR2"), "00000030");
@@ -185,7 +185,7 @@ TEST(system_variable, sysstmt_copy)
     mock_parse_lib_provider lib_prov_instance { { copy1_filename, copy1_source }, { copy2_filename, copy2_source } };
     analyzer a(input, analyzer_options { resource_location("input"), &lib_prov_instance });
     a.analyze();
-    EXPECT_EQ(a.diags().size(), (size_t)0);
+    EXPECT_EQ(a.diags().size(), 0uz);
 
     EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "VAR1"), "00000006");
     EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "VAR2"), "00000019");
@@ -207,7 +207,7 @@ TEST(system_variable, sysstmt_aread)
 
     analyzer a(input);
     a.analyze();
-    EXPECT_EQ(a.diags().size(), (size_t)0);
+    EXPECT_EQ(a.diags().size(), 0uz);
 
     EXPECT_EQ(get_var_value<A_t>(a.hlasm_ctx(), "A"), 13);
 }
@@ -229,7 +229,7 @@ MAIN    CSECT
 
     analyzer a(input);
     a.analyze();
-    EXPECT_EQ(a.diags().size(), (size_t)0);
+    EXPECT_EQ(a.diags().size(), 0uz);
 
     EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "VAR"), "CSECT");
 }
@@ -250,7 +250,7 @@ TEST(system_variable, sysstyp_empty)
 
     analyzer a(input);
     a.analyze();
-    EXPECT_EQ(a.diags().size(), (size_t)0);
+    EXPECT_EQ(a.diags().size(), 0uz);
 
     EXPECT_EQ(get_var_value<C_t>(a.hlasm_ctx(), "VAR"), "");
 }

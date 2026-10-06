@@ -454,7 +454,7 @@ void add_token(nlohmann::json& encoded_tokens,
     encoded_tokens.push_back(delta_char);
     encoded_tokens.push_back(length);
     encoded_tokens.push_back(static_cast<std::underlying_type_t<hl_scopes>>(current.scope));
-    encoded_tokens.push_back((size_t)0);
+    encoded_tokens.push_back(0uz);
 
     last_rng = current.token_range;
 }

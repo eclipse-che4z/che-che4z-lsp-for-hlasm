@@ -246,7 +246,7 @@ TEST(db2_preprocessor, sqlsect_available)
     analyzer a(input, analyzer_options { db2_preprocessor_options {} });
     a.analyze();
 
-    EXPECT_EQ(a.diags().size(), (size_t)0);
+    EXPECT_EQ(a.diags().size(), 0uz);
 }
 
 TEST(db2_preprocessor, instruction_not_recognized)
@@ -279,7 +279,7 @@ TEST(db2_preprocessor, aread_from_preprocessor)
     analyzer a(input, analyzer_options { db2_preprocessor_options {} });
     a.analyze();
 
-    EXPECT_EQ(a.diags().size(), (size_t)0);
+    EXPECT_EQ(a.diags().size(), 0uz);
     EXPECT_EQ(get_var_value<std::string>(a.hlasm_ctx(), "RES"), std::string("***$$$").append(74, ' '));
 }
 
@@ -317,7 +317,7 @@ TEST(db2_preprocessor, aread_from_two_preprocessor_outputs)
     for (auto& s : expected)
         s.resize(80, ' ');
 
-    EXPECT_EQ(a.diags().size(), (size_t)0);
+    EXPECT_EQ(a.diags().size(), 0uz);
     EXPECT_EQ(get_var_value<std::string>(a.hlasm_ctx(), "RES0"), expected[0]);
     EXPECT_EQ(get_var_value<std::string>(a.hlasm_ctx(), "RES1"), expected[1]);
     EXPECT_EQ(get_var_value<std::string>(a.hlasm_ctx(), "RES2"), expected[2]);
@@ -343,7 +343,7 @@ TEST(db2_preprocessor, ignore_comments)
     analyzer a(input, analyzer_options { db2_preprocessor_options {} });
     a.analyze();
 
-    EXPECT_EQ(a.diags().size(), (size_t)0);
+    EXPECT_EQ(a.diags().size(), 0uz);
 
     const auto RES = get_var_value<std::string>(a.hlasm_ctx(), "RES");
 
@@ -364,7 +364,7 @@ TEST(db2_preprocessor, continuation_in_buffer)
     analyzer a(input, analyzer_options { &libs, db2_preprocessor_options {} });
     a.analyze();
 
-    EXPECT_EQ(a.diags().size(), (size_t)0);
+    EXPECT_EQ(a.diags().size(), 0uz);
 
     EXPECT_EQ(get_var_value<A_t>(a.hlasm_ctx(), "A"), 1);
     EXPECT_NE(libs.get_stats("MEMBER").value_or(invalid_stats).content_requests, -1);
@@ -396,7 +396,7 @@ TEST(db2_preprocessor, include_valid)
         analyzer a(input, analyzer_options { &libs, db2_preprocessor_options {} });
         a.analyze();
 
-        EXPECT_EQ(a.diags().size(), (size_t)0);
+        EXPECT_EQ(a.diags().size(), 0uz);
 
         EXPECT_NE(libs.get_stats("MEMBER").value_or(invalid_stats).content_requests, -1);
     }
@@ -457,7 +457,7 @@ TEST(db2_preprocessor, include_insensitive)
     analyzer a(input, analyzer_options { &libs, db2_preprocessor_options {} });
     a.analyze();
 
-    EXPECT_EQ(a.diags().size(), (size_t)0);
+    EXPECT_EQ(a.diags().size(), 0uz);
     EXPECT_NE(libs.get_stats("MEMBER").value_or(invalid_stats).content_requests, -1);
 }
 
@@ -498,7 +498,7 @@ TEST(db2_preprocessor, ago_in_include)
     analyzer a(input, analyzer_options { &libs, db2_preprocessor_options {} });
     a.analyze();
 
-    EXPECT_EQ(a.diags().size(), (size_t)0);
+    EXPECT_EQ(a.diags().size(), 0uz);
 
     EXPECT_NE(libs.get_stats("MEMBER").value_or(invalid_stats).content_requests, -1);
     EXPECT_EQ(get_var_value<A_t>(a.hlasm_ctx(), "A"), 1);
@@ -521,7 +521,7 @@ TEST(db2_preprocessor, ago_into_include)
     analyzer a(input, analyzer_options { &libs, db2_preprocessor_options {} });
     a.analyze();
 
-    EXPECT_EQ(a.diags().size(), (size_t)0);
+    EXPECT_EQ(a.diags().size(), 0uz);
 
     EXPECT_NE(libs.get_stats("MEMBER").value_or(invalid_stats).content_requests, -1);
     EXPECT_EQ(get_var_value<A_t>(a.hlasm_ctx(), "A"), 1);
@@ -545,7 +545,7 @@ TEST(db2_preprocessor, ago_from_include)
     analyzer a(input, analyzer_options { &libs, db2_preprocessor_options {} });
     a.analyze();
 
-    EXPECT_EQ(a.diags().size(), (size_t)0);
+    EXPECT_EQ(a.diags().size(), 0uz);
 
     EXPECT_NE(libs.get_stats("MEMBER").value_or(invalid_stats).content_requests, -1);
     EXPECT_EQ(get_var_value<A_t>(a.hlasm_ctx(), "A"), 1);
@@ -573,7 +573,7 @@ TEST(db2_preprocessor, ago_around_include)
     analyzer a(input, analyzer_options { &libs, db2_preprocessor_options {} });
     a.analyze();
 
-    EXPECT_EQ(a.diags().size(), (size_t)0);
+    EXPECT_EQ(a.diags().size(), 0uz);
 
     EXPECT_NE(libs.get_stats("MEMBER").value_or(invalid_stats).content_requests, -1);
     EXPECT_EQ(get_var_value<A_t>(a.hlasm_ctx(), "A"), 2);
@@ -599,7 +599,7 @@ TEST(db2_preprocessor, copy_in_include)
     analyzer a(input, analyzer_options { &libs, db2_preprocessor_options {} });
     a.analyze();
 
-    EXPECT_EQ(a.diags().size(), (size_t)0);
+    EXPECT_EQ(a.diags().size(), 0uz);
 
     EXPECT_NE(libs.get_stats("COPY1").value_or(invalid_stats).content_requests, -1);
     EXPECT_NE(libs.get_stats("COPY2").value_or(invalid_stats).content_requests, -1);
@@ -731,7 +731,7 @@ TEST(db2_preprocessor, multiline_exec_sql)
     analyzer a(input, analyzer_options { db2_preprocessor_options {} });
     a.analyze();
 
-    EXPECT_EQ(a.diags().size(), (size_t)0);
+    EXPECT_EQ(a.diags().size(), 0uz);
 }
 
 TEST(db2_preprocessor, end_sqldsect_injection)
@@ -741,7 +741,7 @@ TEST(db2_preprocessor, end_sqldsect_injection)
     analyzer a(input, analyzer_options { db2_preprocessor_options {} });
     a.analyze();
 
-    EXPECT_EQ(a.diags().size(), (size_t)0);
+    EXPECT_EQ(a.diags().size(), 0uz);
 }
 
 TEST_F(db2_preprocessor_test, sql_types)

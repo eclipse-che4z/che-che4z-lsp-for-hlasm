@@ -108,17 +108,17 @@ TEST_F(lsp_features_test, refs)
 {
     // the same as go_to test but with references
     // reference MAC, should appear once in source and once in macro file
-    EXPECT_EQ((size_t)2, a.context().lsp_ctx->references(SOURCE_FILE, position(0, 4)).size());
+    EXPECT_EQ(2uz, a.context().lsp_ctx->references(SOURCE_FILE, position(0, 4)).size());
     // no reference
-    EXPECT_EQ((size_t)0, a.context().lsp_ctx->references(SOURCE_FILE, position(0, 8)).size());
+    EXPECT_EQ(0uz, a.context().lsp_ctx->references(SOURCE_FILE, position(0, 8)).size());
     // source code references for &VAR, appeared three times
-    EXPECT_EQ((size_t)3, a.context().lsp_ctx->references(SOURCE_FILE, position(2, 13)).size());
+    EXPECT_EQ(3uz, a.context().lsp_ctx->references(SOURCE_FILE, position(2, 13)).size());
     // source code references for .HERE, appeared twice
-    EXPECT_EQ((size_t)2, a.context().lsp_ctx->references(SOURCE_FILE, position(3, 13)).size());
+    EXPECT_EQ(2uz, a.context().lsp_ctx->references(SOURCE_FILE, position(3, 13)).size());
     // references inside macro def, seq symbol .HERE
-    EXPECT_EQ((size_t)2, a.context().lsp_ctx->references(SOURCE_FILE, position(12, 15)).size());
+    EXPECT_EQ(2uz, a.context().lsp_ctx->references(SOURCE_FILE, position(12, 15)).size());
     //  references inside macro def, var symbol &LABEL
-    EXPECT_EQ((size_t)2, a.context().lsp_ctx->references(SOURCE_FILE, position(11, 20)).size());
+    EXPECT_EQ(2uz, a.context().lsp_ctx->references(SOURCE_FILE, position(11, 20)).size());
     //  references inside macro def, var symbol &VAR
-    EXPECT_EQ((size_t)2, a.context().lsp_ctx->references(SOURCE_FILE, position(11, 15)).size());
+    EXPECT_EQ(2uz, a.context().lsp_ctx->references(SOURCE_FILE, position(11, 15)).size());
 }

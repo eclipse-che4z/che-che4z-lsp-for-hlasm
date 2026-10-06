@@ -312,7 +312,7 @@ TEST(context_macro, add_macro)
     // prototype->|&LBL        MAC        &KEY=,&OP1,,&OP3
     auto& m = *ctx.add_macro(idx, lbl, std::move(args), {}, {}, {}, {}, {}, false);
 
-    EXPECT_EQ(m.named_params().size(), (size_t)4);
+    EXPECT_EQ(m.named_params().size(), 4uz);
     EXPECT_NE(m.named_params().find(key), m.named_params().end());
     EXPECT_NE(m.named_params().find(op1), m.named_params().end());
     EXPECT_NE(m.named_params().find(op3), m.named_params().end());
@@ -366,10 +366,10 @@ TEST(context_macro, call_and_leave_macro)
     auto SYSLIST = m2->named_params.find(well_known::SYSLIST)->second->access_system_variable();
     ASSERT_TRUE(SYSLIST);
     // testing syslist
-    EXPECT_EQ(SYSLIST->get_value((size_t)0), "");
-    EXPECT_EQ(SYSLIST->get_value((size_t)1), "ada");
-    EXPECT_EQ(SYSLIST->get_value((size_t)2), "mko");
-    EXPECT_EQ(SYSLIST->get_value((size_t)3), "");
+    EXPECT_EQ(SYSLIST->get_value(0uz), "");
+    EXPECT_EQ(SYSLIST->get_value(1uz), "ada");
+    EXPECT_EQ(SYSLIST->get_value(2uz), "mko");
+    EXPECT_EQ(SYSLIST->get_value(3uz), "");
 
     // testing named params
     EXPECT_EQ(m2->named_params.find(op1)->second->get_value(), "ada");
@@ -704,7 +704,7 @@ TEST(context_system_variables, SYSNEST_SYSMAC)
     a.analyze();
 
 
-    EXPECT_EQ(a.diags().size(), (size_t)0);
+    EXPECT_EQ(a.diags().size(), 0uz);
 
     EXPECT_EQ(get_var_value<context::A_t>(a.hlasm_ctx(), "v1"), 2);
     EXPECT_EQ(get_var_value<context::C_t>(a.hlasm_ctx(), "v2"), "OPEN CODE");

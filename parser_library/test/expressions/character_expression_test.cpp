@@ -72,7 +72,7 @@ TEST(character_expression, invalid_substring_notation)
     analyzer a(input);
     a.analyze();
 
-    EXPECT_EQ(a.diags().size(), (size_t)3);
+    EXPECT_EQ(a.diags().size(), 3uz);
 }
 
 /*TODO uncomment when assembler options will be implemented
@@ -85,7 +85,7 @@ TEST(character_expression, exceeds_warning)
     analyzer a(input);
     a.analyze();
 
-    ASSERT_EQ(a.diags().size(), (size_t)1);
+    ASSERT_EQ(a.diags().size(), 1uz);
     EXPECT_EQ(a.diags().front().severity, diagnostic_severity::warning);
 }*/
 

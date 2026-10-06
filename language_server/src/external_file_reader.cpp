@@ -179,7 +179,7 @@ void external_file_reader::write(const nlohmann::json& msg)
     if (params == msg.end() || !params->is_object())
         return;
 
-    const auto id = params->value("id", (size_t)0);
+    const auto id = params->value("id", 0uz);
     const auto data = params->find("data");
     const auto error = params->find("error");
 

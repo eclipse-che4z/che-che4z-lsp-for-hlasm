@@ -46,7 +46,7 @@ Z EQU Y-X
 
     ASSERT_EQ(get_symbol_abs(a.hlasm_ctx(), "Z"), 16);
 
-    EXPECT_EQ(a.diags().size(), (size_t)2);
+    EXPECT_EQ(a.diags().size(), 2uz);
 }
 
 TEST(LOCTR, different_counter)

@@ -27,7 +27,7 @@ A ORG ,
     analyzer a(input);
     a.analyze();
 
-    EXPECT_EQ(a.diags().size(), (size_t)1);
+    EXPECT_EQ(a.diags().size(), 1uz);
 }
 
 TEST(org, non_reloc)
@@ -78,7 +78,7 @@ A  LOCTR
     analyzer a(input);
     a.analyze();
 
-    EXPECT_EQ(a.diags().size(), (size_t)1);
+    EXPECT_EQ(a.diags().size(), 1uz);
 }
 
 TEST(org, symbol_in_different_section)
@@ -93,7 +93,7 @@ B1 LR 1,1
     analyzer a(input);
     a.analyze();
 
-    EXPECT_EQ(a.diags().size(), (size_t)1);
+    EXPECT_EQ(a.diags().size(), 1uz);
 }
 
 TEST(org, section_underflow)
@@ -106,7 +106,7 @@ A  CSECT
     analyzer a(input);
     a.analyze();
 
-    EXPECT_EQ(a.diags().size(), (size_t)1);
+    EXPECT_EQ(a.diags().size(), 1uz);
 }
 
 TEST(org, loctr_underflow)
@@ -120,7 +120,7 @@ B LOCTR
     analyzer a(input);
     a.analyze();
 
-    EXPECT_EQ(a.diags().size(), (size_t)1);
+    EXPECT_EQ(a.diags().size(), 1uz);
 }
 
 TEST(org, subtract_from_asterisk)
@@ -152,7 +152,7 @@ B EQU *-A
 
     EXPECT_EQ(get_symbol_abs(a.hlasm_ctx(), "B"), 16);
 
-    EXPECT_EQ(a.diags().size(), (size_t)1);
+    EXPECT_EQ(a.diags().size(), 1uz);
 }
 
 TEST(org, jump_to_ord_sym)
@@ -231,7 +231,7 @@ X  EQU S-*
     analyzer a(input);
     a.analyze();
 
-    EXPECT_EQ(a.diags().size(), (size_t)1);
+    EXPECT_EQ(a.diags().size(), 1uz);
 }
 
 TEST(org, jump_after_last_space_and_back_ord_sym)
@@ -265,7 +265,7 @@ X  EQU *-S2
     analyzer a(input);
     a.analyze();
 
-    EXPECT_EQ(a.diags().size(), (size_t)1);
+    EXPECT_EQ(a.diags().size(), 1uz);
 }
 
 TEST(org, jump_before_space)
@@ -298,7 +298,7 @@ X EQU S-*
     analyzer a(input);
     a.analyze();
 
-    EXPECT_EQ(a.diags().size(), (size_t)1);
+    EXPECT_EQ(a.diags().size(), 1uz);
 }
 
 TEST(org, jump_before_alignment_space)
@@ -314,7 +314,7 @@ X      EQU D-*
     analyzer a(input);
     a.analyze();
 
-    EXPECT_EQ(a.diags().size(), (size_t)1);
+    EXPECT_EQ(a.diags().size(), 1uz);
 }
 
 TEST(org, second_param_invalid)
@@ -329,7 +329,7 @@ TEST(org, second_param_invalid)
     analyzer a(input);
     a.analyze();
 
-    EXPECT_EQ(a.diags().size(), (size_t)4);
+    EXPECT_EQ(a.diags().size(), 4uz);
 }
 
 TEST(org, second_param_use)
@@ -398,7 +398,7 @@ X  EQU *-B
     analyzer a(input);
     a.analyze();
 
-    EXPECT_EQ(a.diags().size(), (size_t)1);
+    EXPECT_EQ(a.diags().size(), 1uz);
 }
 
 TEST(org, third_param_invalid)
@@ -414,7 +414,7 @@ S EQU *+1
     analyzer a(input);
     a.analyze();
 
-    EXPECT_EQ(a.diags().size(), (size_t)3);
+    EXPECT_EQ(a.diags().size(), 3uz);
 }
 
 TEST(org, third_param_use)
@@ -441,7 +441,7 @@ A  DS  1C
     analyzer a(input);
     a.analyze();
 
-    EXPECT_EQ(a.diags().size(), (size_t)1);
+    EXPECT_EQ(a.diags().size(), 1uz);
 }
 
 TEST(org, third_param_use_ord_sym)
@@ -486,7 +486,7 @@ X  EQU A-*
     analyzer a(input);
     a.analyze();
 
-    EXPECT_EQ(a.diags().size(), (size_t)1);
+    EXPECT_EQ(a.diags().size(), 1uz);
 }
 
 TEST(org, available_empty_params)
@@ -554,7 +554,7 @@ X  EQU *-B
     analyzer a(input);
     a.analyze();
 
-    EXPECT_EQ(a.diags().size(), (size_t)1);
+    EXPECT_EQ(a.diags().size(), 1uz);
 }
 
 TEST(org, available_competing_simple)
@@ -696,7 +696,7 @@ Z EQU *-A
     analyzer a(input);
     a.analyze();
 
-    EXPECT_EQ(a.diags().size(), (size_t)1);
+    EXPECT_EQ(a.diags().size(), 1uz);
 }
 
 TEST(org, unknown_absolute_part_multiple_spaces)
@@ -959,7 +959,7 @@ X EQU 4
     analyzer a(input);
     a.analyze();
 
-    EXPECT_EQ(a.diags().size(), (size_t)3);
+    EXPECT_EQ(a.diags().size(), 3uz);
 }
 
 TEST(org, true_negative_check)

@@ -523,7 +523,7 @@ TEST_F(workspace_test, diagnostics_recollection)
     parse_all_files(ws);
 
     const auto original_diags_size = extract_diags(ws, ws_cfg).size();
-    EXPECT_GE(original_diags_size, (size_t)1);
+    EXPECT_GE(original_diags_size, 1uz);
 
     EXPECT_EQ(extract_diags(ws, ws_cfg).size(), original_diags_size);
 }

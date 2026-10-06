@@ -29,8 +29,8 @@ TEST(parser_get_op_rem, one_op)
 
     auto& op_rem = h.parser->analyzer.current_operands_and_remarks();
 
-    ASSERT_EQ(op_rem.operands.size(), (size_t)1);
-    ASSERT_EQ(op_rem.remarks.size(), (size_t)0);
+    ASSERT_EQ(op_rem.operands.size(), 1uz);
+    ASSERT_EQ(op_rem.remarks.size(), 0uz);
 
     EXPECT_EQ(hlasm_plugin::parser_library::semantics::symbol_range(0, 7, 0, 8), op_rem.operands[0]->range);
 
@@ -43,8 +43,8 @@ TEST(parser_get_op_rem, one_op_one_rem)
 
     auto& op_rem = h.parser->analyzer.current_operands_and_remarks();
 
-    ASSERT_EQ(op_rem.operands.size(), (size_t)1);
-    ASSERT_EQ(op_rem.remarks.size(), (size_t)1);
+    ASSERT_EQ(op_rem.operands.size(), 1uz);
+    ASSERT_EQ(op_rem.remarks.size(), 1uz);
 
     EXPECT_EQ(hlasm_plugin::parser_library::semantics::symbol_range(0, 7, 0, 8), op_rem.operands[0]->range);
     EXPECT_EQ(hlasm_plugin::parser_library::semantics::symbol_range(0, 10, 0, 13), op_rem.remarks[0]);
@@ -58,8 +58,8 @@ TEST(parser_get_op_rem, more_ops_one_rem)
 
     auto& op_rem = h.parser->analyzer.current_operands_and_remarks();
 
-    ASSERT_EQ(op_rem.operands.size(), (size_t)3);
-    ASSERT_EQ(op_rem.remarks.size(), (size_t)1);
+    ASSERT_EQ(op_rem.operands.size(), 3uz);
+    ASSERT_EQ(op_rem.remarks.size(), 1uz);
 
     EXPECT_EQ(hlasm_plugin::parser_library::semantics::symbol_range(0, 7, 0, 8), op_rem.operands[0]->range);
     EXPECT_EQ(hlasm_plugin::parser_library::semantics::symbol_range(0, 9, 0, 10), op_rem.operands[1]->range);
@@ -75,8 +75,8 @@ TEST(parser_get_op_rem, no_op)
 
     auto& op_rem = h.parser->analyzer.current_operands_and_remarks();
 
-    ASSERT_EQ(op_rem.operands.size(), (size_t)0);
-    ASSERT_EQ(op_rem.remarks.size(), (size_t)1);
+    ASSERT_EQ(op_rem.operands.size(), 0uz);
+    ASSERT_EQ(op_rem.remarks.size(), 1uz);
 
     EXPECT_EQ(hlasm_plugin::parser_library::semantics::symbol_range(0, 8, 0, 18), op_rem.remarks[0]);
 
@@ -89,8 +89,8 @@ TEST(parser_get_op_rem, alt_format_allowed)
 
     auto& op_rem = h.parser->analyzer.current_operands_and_remarks();
 
-    ASSERT_EQ(op_rem.operands.size(), (size_t)2);
-    ASSERT_EQ(op_rem.remarks.size(), (size_t)2);
+    ASSERT_EQ(op_rem.operands.size(), 2uz);
+    ASSERT_EQ(op_rem.remarks.size(), 2uz);
 
     EXPECT_EQ(hlasm_plugin::parser_library::semantics::symbol_range(0, 15, 0, 23), op_rem.operands[0]->range);
     EXPECT_EQ(hlasm_plugin::parser_library::semantics::symbol_range(1, 15, 1, 23), op_rem.operands[1]->range);
@@ -106,8 +106,8 @@ TEST(parser_get_op_rem, alt_format_not_allowed)
 
     auto& op_rem = h.parser->analyzer.current_operands_and_remarks();
 
-    ASSERT_EQ(op_rem.operands.size(), (size_t)2);
-    ASSERT_EQ(op_rem.remarks.size(), (size_t)1);
+    ASSERT_EQ(op_rem.operands.size(), 2uz);
+    ASSERT_EQ(op_rem.remarks.size(), 1uz);
 
     EXPECT_EQ(hlasm_plugin::parser_library::semantics::symbol_range(0, 15, 0, 23), op_rem.operands[0]->range);
     EXPECT_EQ(hlasm_plugin::parser_library::semantics::symbol_range(0, 24, 0, 24), op_rem.operands[1]->range);
@@ -122,8 +122,8 @@ TEST(parser_get_op_rem, cont_no_op)
 
     auto& op_rem = h.parser->analyzer.current_operands_and_remarks();
 
-    ASSERT_EQ(op_rem.operands.size(), (size_t)2);
-    ASSERT_EQ(op_rem.remarks.size(), (size_t)2);
+    ASSERT_EQ(op_rem.operands.size(), 2uz);
+    ASSERT_EQ(op_rem.remarks.size(), 2uz);
 
     EXPECT_EQ(hlasm_plugin::parser_library::semantics::symbol_range(0, 15, 0, 23), op_rem.operands[0]->range);
     EXPECT_EQ(hlasm_plugin::parser_library::semantics::symbol_range(1, 15, 1, 15), op_rem.operands[1]->range);
@@ -139,8 +139,8 @@ TEST(parser_get_op_rem, empty_op)
 
     auto& op_rem = h.parser->analyzer.current_operands_and_remarks();
 
-    ASSERT_EQ(op_rem.operands.size(), (size_t)3);
-    ASSERT_EQ(op_rem.remarks.size(), (size_t)0);
+    ASSERT_EQ(op_rem.operands.size(), 3uz);
+    ASSERT_EQ(op_rem.remarks.size(), 0uz);
 
     EXPECT_EQ(hlasm_plugin::parser_library::semantics::symbol_range(0, 4, 0, 5), op_rem.operands[0]->range);
     EXPECT_EQ(hlasm_plugin::parser_library::semantics::symbol_range(0, 6, 0, 6), op_rem.operands[1]->range);
@@ -155,8 +155,8 @@ TEST(parser_get_op_rem, all_empty_op)
 
     auto& op_rem = h.parser->analyzer.current_operands_and_remarks();
 
-    ASSERT_EQ(op_rem.operands.size(), (size_t)3);
-    ASSERT_EQ(op_rem.remarks.size(), (size_t)0);
+    ASSERT_EQ(op_rem.operands.size(), 3uz);
+    ASSERT_EQ(op_rem.remarks.size(), 0uz);
 
     EXPECT_EQ(hlasm_plugin::parser_library::semantics::symbol_range(0, 4, 0, 4), op_rem.operands[0]->range);
     EXPECT_EQ(hlasm_plugin::parser_library::semantics::symbol_range(0, 5, 0, 5), op_rem.operands[1]->range);
@@ -171,8 +171,8 @@ TEST(parser_get_op_rem, cont_empty_op)
 
     auto& op_rem = h.parser->analyzer.current_operands_and_remarks();
 
-    ASSERT_EQ(op_rem.operands.size(), (size_t)5);
-    ASSERT_EQ(op_rem.remarks.size(), (size_t)1);
+    ASSERT_EQ(op_rem.operands.size(), 5uz);
+    ASSERT_EQ(op_rem.remarks.size(), 1uz);
 
     EXPECT_EQ(hlasm_plugin::parser_library::semantics::symbol_range(0, 15, 0, 23), op_rem.operands[0]->range);
     EXPECT_EQ(hlasm_plugin::parser_library::semantics::symbol_range(0, 24, 0, 32), op_rem.operands[1]->range);
