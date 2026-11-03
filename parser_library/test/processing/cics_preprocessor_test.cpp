@@ -172,6 +172,15 @@ INSTANTIATE_TEST_SUITE_P(cics_preprocessor,
             },
         } },
         { {
+            { " LA 0,DFHVALUE(CFTABLE)\n", cics_preprocessor_options() },
+            {
+                "*LA 0,DFHVALUE(CFTABLE)",
+                "         LA   0,=F'833'",
+                "*DFH7041I W  NO END CARD FOUND - COPYBOOK ASSUMED.",
+                "         DFHEIMSG 4",
+            },
+        } },
+        { {
             { "A LA 0,DFHRESP(NORMAL)\n", cics_preprocessor_options() },
             {
                 "* LA 0,DFHRESP(NORMAL)",
@@ -336,6 +345,10 @@ INSTANTIATE_TEST_SUITE_P(cics_preprocessor,
         {
             { "DFHVALUE(FIRSTQUIESCE)" },
             { 1, "=F'182'" },
+        },
+        {
+            { "DFHVALUE(CFTABLE)" },
+            { 1, "=F'833'" },
         },
         {
             { "DFHRESP(NORMAL),DFHRESP(NORMAL)" },
@@ -529,6 +542,7 @@ TEST(cics_preprocessor, dfhvalue_substitution)
 {
     std::string input = R"(
          LARL 0,DFHVALUE(FIRSTQUIESCE)
+         LARL 0,DFHVALUE(CFTABLE)
          END
 )";
     analyzer a(input, analyzer_options(cics_preprocessor_options(false, false, false)));
