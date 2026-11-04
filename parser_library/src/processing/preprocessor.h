@@ -108,8 +108,6 @@ protected:
     void set_statement(std::shared_ptr<semantics::preprocessor_statement_si> stmt);
     void set_statements(std::vector<std::shared_ptr<semantics::preprocessor_statement_si>> stmts);
 
-    static bool is_continued(std::string_view s);
-
     virtual void do_highlighting(const semantics::preprocessor_statement_si& stmt,
         semantics::source_info_processor& src_proc,
         size_t continue_column = 15) const;

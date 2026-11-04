@@ -267,6 +267,49 @@ INSTANTIATE_TEST_SUITE_P(cics_preprocessor,
                 " END",
             },
         } },
+        { {
+            { R"(
+BODY     CSECT
+* COMMENT ----+----2----+----3----+----4----+----5----+----6----+----7*
+         EXEC CICS RETURN
+         END ,
+)",
+                cics_preprocessor_options() },
+            {
+                "",
+                "         DFHEIGBL ,,,NOLE          INSERTED BY TRANSLATOR",
+                "BODY     CSECT",
+                "         DFHEIENT                  INSERTED BY TRANSLATOR",
+                "* COMMENT ----+----2----+----3----+----4----+----5----+----6----+----7*",
+                "*        EXEC CICS RETURN",
+                "         DFHECALL =X'0E'",
+                "         DFHEIRET                  INSERTED BY TRANSLATOR",
+                "         DFHEISTG                  INSERTED BY TRANSLATOR",
+                "         DFHEIEND                  INSERTED BY TRANSLATOR",
+                "         END ,",
+            },
+        } },
+        { {
+            { R"(
+BODY     CSECT
+* COMMENT ----+----2----+----3----+----4----+----5----+----6----+----7*X
+         EXEC CICS RETURN
+         END ,
+)",
+                cics_preprocessor_options() },
+            {
+                "",
+                "         DFHEIGBL ,,,NOLE          INSERTED BY TRANSLATOR",
+                "BODY     CSECT",
+                "         DFHEIENT                  INSERTED BY TRANSLATOR",
+                "* COMMENT ----+----2----+----3----+----4----+----5----+----6----+----7*X",
+                "         EXEC CICS RETURN",
+                "         DFHEIRET                  INSERTED BY TRANSLATOR",
+                "         DFHEISTG                  INSERTED BY TRANSLATOR",
+                "         DFHEIEND                  INSERTED BY TRANSLATOR",
+                "         END ,",
+            },
+        } },
     }));
 
 class cics_preprocessor_dfh_fixture

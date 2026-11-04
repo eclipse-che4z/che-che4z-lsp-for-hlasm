@@ -13,5 +13,6 @@
 target_sources(library_test PRIVATE
     logical_line_iterator_test.cpp
     logical_line_test.cpp
+    tools_test.cpp
 )
 

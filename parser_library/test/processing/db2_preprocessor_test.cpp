@@ -110,6 +110,29 @@ TEST_F(db2_preprocessor_test, include)
 }
 
 namespace {
+constexpr auto starts_with(std::string_view s)
+{
+    return [s](std::string_view t) { return t.starts_with(s); };
+}
+} // namespace
+
+TEST_F(db2_preprocessor_test, line_71_chars_not_continued)
+{
+    auto p = create_preprocessor(db2_preprocessor_options {}, empty_library_fetcher, nullptr);
+    const std::string text = R"(
+BODY     CSECT
+* COMMENT ----+----2----+----3----+----4----+----5----+----6----+----7*
+         EXEC SQL COMMIT
+         END ,
+)";
+
+    const auto result = p->generate_replacement(document(text)).run().value();
+
+    EXPECT_EQ(std::ranges::count_if(result, starts_with("         EXEC SQL COMMIT"), &document_line::text), 0);
+    EXPECT_GT(std::ranges::count_if(result, starts_with("***$$$"), &document_line::text), 0);
+}
+
+namespace {
 struct library_fetcher_call_confirmer
 {
     bool called = false;

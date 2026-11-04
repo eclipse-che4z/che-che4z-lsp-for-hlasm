@@ -17,7 +17,6 @@
 
 #include <span>
 #include <string>
-#include <string_view>
 #include <vector>
 
 #include "completion_list_source.h"
@@ -55,7 +54,6 @@ std::string get_macro_documentation(
 std::string get_copy_preview(const text_data_view& copy_text, const utils::text_convertor* tc);
 std::string get_logical_line(const text_data_view& text, size_t definition_line, const utils::text_convertor* tc);
 std::string get_macro_signature(const context::macro_definition& m, const utils::text_convertor* tc);
-bool is_continued_line(std::string_view line);
 
 completion_item generate_completion_item(
     context::id_index name, const context::opencode_sequence_symbol&, const utils::text_convertor*);

@@ -27,6 +27,7 @@
 #include "document_symbol_item.h"
 #include "instructions/instruction.h"
 #include "item_convertors.h"
+#include "lexing/tools.h"
 #include "lsp/instruction_completions.h"
 #include "lsp/macro_info.h"
 #include "parse_lib_provider.h"
@@ -383,7 +384,7 @@ std::string lsp_context::hover(
 
 bool lsp_context::should_complete_instr(const text_data_view& text, position pos) const
 {
-    if (pos.line > 0 && is_continued_line(text.get_line(pos.line - 1)))
+    if (pos.line > 0 && lexing::is_continued_line(text.get_line(pos.line - 1)))
         return false;
 
     std::string_view line_so_far = text.get_line_beginning_at(pos);

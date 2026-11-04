@@ -21,6 +21,7 @@ namespace hlasm_plugin::parser_library::lexing {
 
 bool is_valid_symbol_name(std::string_view s, bool extended_names_allowed = true);
 bool is_ord_symbol(std::string_view s);
+bool is_continued_line(std::string_view line);
 
 } // namespace hlasm_plugin::parser_library::lexing
 #endif
