@@ -57,7 +57,7 @@ bool is_continued_line(std::string_view line)
     if (line.size() <= continuation_column)
         return false;
 
-    const auto c = utils::utf8_substr(line, continuation_column).str;
+    const auto c = utils::utf8_substr(line, continuation_column, 1).str;
     if (c.empty())
         return false;
 
