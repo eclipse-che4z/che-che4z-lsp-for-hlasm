@@ -1652,3 +1652,28 @@ TEST(macro, defines_seq_symbol_only_in_opencode)
 
     EXPECT_TRUE(matches_message_codes(a.diags(), { "E047" }));
 }
+
+TEST(macro, loctr_length_attributes)
+{
+    std::string input = R"(
+         MACRO
+&NAME    BC    &COND,&WHERE
+&NAME    BRC   &COND,&WHERE
+         MEND
+
+         MACRO
+&NAME    JUMP  &WHERE
+&NAME    J     &WHERE
+         MEND
+
+         CSECT
+         BRC   15,*+L'*+4
+         BC    8,*+L'*+4
+         JUMP  *+L'*
+         END ,
+)";
+    analyzer a(input);
+    a.analyze();
+
+    EXPECT_TRUE(a.diags().empty());
+}
