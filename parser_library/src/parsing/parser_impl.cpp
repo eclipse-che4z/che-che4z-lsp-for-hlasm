@@ -2581,7 +2581,7 @@ result_t<bool> parser2::lex_macro_operand_attr(concat_chain_builder& ccb)
         return false;
     }
 
-    if (char_is_ord_first(input.next[2]) || input.next[2] == u8'=')
+    if (char_is_ord_first(input.next[2]) || input.next[2] == u8'=' || input.next[2] == u8'*')
     {
         consume_into(ccb.last_text_value());
         consume_into(ccb.last_text_value());

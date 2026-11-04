@@ -73,7 +73,8 @@ bool is_attribute_consuming(char c)
 
 bool can_attribute_consume(char c)
 {
-    return (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') || c == '=' || c == '$' || c == '_' || c == '#' || c == '@';
+    return (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') || c == '=' || c == '$' || c == '_' || c == '#' || c == '@'
+        || c == '*';
 }
 
 bool is_valid_string(std::string_view s)
