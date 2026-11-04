@@ -34,6 +34,7 @@
 #include "document.h"
 #include "lexing/logical_line.h"
 #include "lexing/text_range.h"
+#include "lexing/tools.h"
 #include "parse_lib_provider.h"
 #include "preprocessor_options.h"
 #include "preprocessor_utils.h"
@@ -1047,7 +1048,7 @@ class db2_preprocessor final : public preprocessor // TODO Take DBCS into accoun
             if (skip_continuation)
             {
                 m_result.emplace_back(*it++);
-                skip_continuation = is_continued(text);
+                skip_continuation = lexing::is_continued_line(text);
                 continue;
             }
 
@@ -1057,7 +1058,7 @@ class db2_preprocessor final : public preprocessor // TODO Take DBCS into accoun
             if (instruction_type == line_type::ignore)
             {
                 m_result.emplace_back(*it++);
-                skip_continuation = is_continued(text);
+                skip_continuation = lexing::is_continued_line(text);
                 continue;
             }
 

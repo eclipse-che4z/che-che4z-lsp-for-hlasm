@@ -20,7 +20,6 @@
 #include "protocol.h"
 #include "semantics/source_info_processor.h"
 #include "semantics/statement.h"
-#include "utils/unicode_text.h"
 
 namespace hlasm_plugin::parser_library::processing {
 
@@ -41,12 +40,6 @@ preprocessor::line_iterator preprocessor::extract_nonempty_logical_line(
     finish_logical_line(out, opts);
 
     return it;
-}
-
-bool preprocessor::is_continued(std::string_view s)
-{
-    const auto cont = utils::utf8_substr(s, lexing::default_ictl_copy.end, 1).str;
-    return !cont.empty() && cont != " ";
 }
 
 void preprocessor::reset()

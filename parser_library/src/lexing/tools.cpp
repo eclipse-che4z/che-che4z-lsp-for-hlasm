@@ -17,6 +17,9 @@
 #include <algorithm>
 #include <array>
 
+#include "utils/string_operations.h"
+#include "utils/unicode_text.h"
+
 namespace hlasm_plugin::parser_library::lexing {
 
 bool is_valid_symbol_name(std::string_view s, bool extended_names_allowed)
@@ -46,5 +49,28 @@ bool is_valid_symbol_name(std::string_view s, bool extended_names_allowed)
 }
 
 bool is_ord_symbol(std::string_view s) { return is_valid_symbol_name(s, true); }
+
+constexpr size_t continuation_column = 71;
+
+bool is_continued_line(std::string_view line)
+{
+    if (line.size() <= continuation_column)
+        return false;
+
+    const auto c = utils::utf8_substr(line, continuation_column).str;
+    if (c.empty())
+        return false;
+
+    switch (static_cast<char8_t>(c.front()))
+    {
+        case u8' ':
+        case u8'\r':
+        case u8'\n':
+            return false;
+        default:
+            return true;
+    }
+}
+
 
 } // namespace hlasm_plugin::parser_library::lexing

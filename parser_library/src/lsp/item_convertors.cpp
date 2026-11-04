@@ -26,6 +26,7 @@
 #include "context/using.h"
 #include "ebcdic_encoding.h"
 #include "file_info.h"
+#include "lexing/tools.h"
 #include "lsp/instruction_completions.h"
 #include "lsp/lsp_context.h"
 #include "lsp/macro_info.h"
@@ -213,16 +214,6 @@ std::string hover_text(const variable_symbol_definition& sym)
     }
 }
 
-size_t constexpr continuation_column = 71;
-
-bool is_continued_line(std::string_view line)
-{
-    if (line.size() <= continuation_column)
-        return false;
-    auto c = utils::utf8_substr(line, continuation_column).str;
-    return !c.empty() && !utils::isblank32(static_cast<unsigned char>(c.front()));
-}
-
 namespace {
 bool is_comment(std::string_view line) { return line.substr(0, 1) == "*" || line.substr(0, 2) == ".*"; }
 
@@ -289,7 +280,7 @@ std::string get_macro_documentation(const text_data_view& text, size_t definitio
 
     // Find the end line of macro definition
     size_t macro_def_end_line = definition_line;
-    while (macro_def_end_line < text.get_number_of_lines() && is_continued_line(text.get_line(macro_def_end_line)))
+    while (lexing::is_continued_line(text.get_line(macro_def_end_line)))
         ++macro_def_end_line;
     ++macro_def_end_line;
 
@@ -352,7 +343,7 @@ std::string get_logical_line(const text_data_view& text, size_t definition_line,
     size_t end_line = definition_line;
     for (size_t doc_limit = 20; doc_limit && end_line < text.get_number_of_lines(); --doc_limit)
     {
-        if (!is_continued_line(text.get_line(end_line)))
+        if (!lexing::is_continued_line(text.get_line(end_line)))
             break;
         ++end_line;
     }
