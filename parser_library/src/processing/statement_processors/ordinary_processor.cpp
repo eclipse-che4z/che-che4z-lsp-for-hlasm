@@ -309,6 +309,7 @@ bool transform_asm(std::vector<checking::check_op_ptr>& result,
         }
 
         const auto* asm_op = op->access_asm();
+        assert(asm_op); // there should be nothing else
         if (!asm_op)
             return false;
 
