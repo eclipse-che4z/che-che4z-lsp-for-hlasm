@@ -4348,7 +4348,6 @@ result_t<std::unique_ptr<semantics::complex_assembler_operand::component_value_t
             return failure;
 
         const auto& [n, r] = v;
-        add_hl_symbol(r, hl_scopes::operand);
         return std::make_unique<semantics::complex_assembler_operand::int_value_t>(n, r);
     }
 
