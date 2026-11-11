@@ -748,11 +748,10 @@ public:
     {
         if (!last_text_state)
             return;
-        const auto end = p.cur_pos();
         if (highlighting && hl)
-            last_text_state->conc_range = p.add_hl_symbol(last_text_start, end, hl_scopes::operand);
+            last_text_state->conc_range = p.add_hl_symbol(last_text_start, hl_scopes::operand);
         else
-            last_text_state->conc_range = p.remap_range(last_text_start, end);
+            last_text_state->conc_range = p.range_from(last_text_start);
         last_text_state = nullptr;
     }
 
