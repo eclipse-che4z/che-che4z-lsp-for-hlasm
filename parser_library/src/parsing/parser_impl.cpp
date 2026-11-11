@@ -462,6 +462,8 @@ struct parser2
     void syntax_error_or_eof() const;
 
     void add_hl_symbol(const range& r, hl_scopes s);
+    range add_hl_symbol(parser_position start, hl_scopes s);
+    range add_hl_symbol(parser_position start, parser_position end, hl_scopes s);
 
     context::id_index parse_identifier(std::string value, range id_range) const;
 
@@ -849,7 +851,7 @@ void parser2::consume(hl_scopes s) noexcept
     const auto pos = cur_pos_adjusted();
     consume();
 
-    add_hl_symbol(range_from(pos), s);
+    add_hl_symbol(pos, s);
 }
 
 void parser2::consume_into(std::string& s)
@@ -875,7 +877,7 @@ void parser2::consume_into(std::string& s, hl_scopes scope)
     assert(!eof());
     const auto pos = cur_pos_adjusted();
     consume_into(s);
-    add_hl_symbol(range_from(pos), scope);
+    add_hl_symbol(pos, scope);
 }
 
 
@@ -936,6 +938,15 @@ void parser2::syntax_error_or_eof() const
 }
 
 void parser2::add_hl_symbol(const range& r, hl_scopes s) { holder->collector.add_hl_symbol(token_info(r, s)); }
+
+range parser2::add_hl_symbol(parser_position start, hl_scopes s) { return add_hl_symbol(start, cur_pos(), s); }
+
+range parser2::add_hl_symbol(parser_position start, parser_position end, hl_scopes s)
+{
+    const auto r = remap_range(start, end);
+    add_hl_symbol(r, s);
+    return r;
+}
 
 context::id_index parser2::parse_identifier(std::string value, range id_range) const
 {
@@ -1204,9 +1215,8 @@ result_t<semantics::concat_chain> parser2::lex_compound_variable()
                 {
                     consume_into(collected);
                 }
-                const auto r = range_from(start);
+                const auto r = add_hl_symbol(start, hl_scopes::var_symbol);
                 result.emplace_back(std::in_place_type<semantics::char_str_conc>, std::move(collected), r);
-                add_hl_symbol(r, hl_scopes::var_symbol);
                 break;
             }
         }
@@ -1226,8 +1236,7 @@ result_t<semantics::seq_sym> parser2::lex_seq_symbol()
     auto [error, id] = lex_id();
     if (error)
         return failure;
-    const auto r = range_from(start);
-    add_hl_symbol(r, hl_scopes::seq_symbol);
+    const auto r = add_hl_symbol(start, hl_scopes::seq_symbol);
     return { id, r };
 }
 
@@ -1244,8 +1253,7 @@ result_t<expressions::ca_expr_ptr> parser2::lex_expr_general()
         consume();
         consume();
         consume();
-        const auto r = range_from(start_not);
-        add_hl_symbol(r, hl_scopes::operand);
+        const auto r = add_hl_symbol(start_not, hl_scopes::operand);
         ca_exprs.push_back(std::make_unique<expressions::ca_symbol>(context::id_index("NOT"), r));
         lex_optional_space();
     } while (follows_NOT());
@@ -1670,8 +1678,7 @@ result_t<expressions::ca_expr_ptr> parser2::lex_attribute_reference()
             auto [error, id] = lex_id();
             if (error)
                 return failure;
-            const auto id_r = range_from(id_start);
-            add_hl_symbol(id_r, hl_scopes::ordinary_symbol);
+            const auto id_r = add_hl_symbol(id_start, hl_scopes::ordinary_symbol);
             return std::make_unique<expressions::ca_symbol_attribute>(id, attr, range_from(start), id_r);
         }
     }
@@ -1723,7 +1730,7 @@ result_t<expressions::ca_expr_ptr> parser2::lex_term()
                 return failure;
             else
             {
-                add_hl_symbol(range_from(start), hl_scopes::string);
+                add_hl_symbol(start, hl_scopes::string);
                 return std::move(s);
             }
 
@@ -1755,7 +1762,7 @@ result_t<expressions::ca_expr_ptr> parser2::lex_term()
                     return failure;
                 else
                 {
-                    add_hl_symbol(range_from(start), hl_scopes::string);
+                    add_hl_symbol(start, hl_scopes::string);
                     return std::move(s);
                 }
             }
@@ -1816,8 +1823,7 @@ result_t<expressions::ca_expr_ptr> parser2::lex_term()
                 && expressions::ca_common_expr_policy::get_function(id.to_string_view())
                     != expressions::ca_expr_funcs::UNKNOWN)
             {
-                const auto r = range_from(start);
-                add_hl_symbol(r, hl_scopes::operand);
+                const auto r = add_hl_symbol(start, hl_scopes::operand);
                 auto [error2, s] = lex_subscript_ne();
                 if (error2)
                     return failure;
@@ -1829,8 +1835,7 @@ result_t<expressions::ca_expr_ptr> parser2::lex_term()
             }
             else
             {
-                const auto r = range_from(start);
-                add_hl_symbol(r, hl_scopes::operand);
+                const auto r = add_hl_symbol(start, hl_scopes::operand);
                 return std::make_unique<expressions::ca_symbol>(id, r);
             }
     }
@@ -1857,8 +1862,7 @@ result_t<std::pair<std::string, range>> parser2::lex_number_as_string()
         consume_into(result);
     } while (is_num());
 
-    const auto r = range_from(start);
-    add_hl_symbol(r, hl_scopes::number);
+    const auto r = add_hl_symbol(start, hl_scopes::number);
 
     return { std::move(result), r };
 }
@@ -1974,8 +1978,7 @@ result_t<expressions::mach_expr_ptr> parser2::lex_mach_term()
                     auto [error, q_id] = lex_qualified_id();
                     if (error)
                         return failure;
-                    const auto r = range_from(start_value);
-                    add_hl_symbol(r, hl_scopes::ordinary_symbol);
+                    const auto r = add_hl_symbol(start_value, hl_scopes::ordinary_symbol);
                     return std::make_unique<expressions::mach_expr_data_attr>(
                         q_id.id, q_id.qual, attr, range_from(start), r);
                 }
@@ -1987,7 +1990,7 @@ result_t<expressions::mach_expr_ptr> parser2::lex_mach_term()
                 const char opt[2] = { static_cast<char>(input.next[0]), static_cast<char>(input.next[1]) };
                 consume();
                 consume();
-                add_hl_symbol(range_from(start), hl_scopes::self_def_type);
+                add_hl_symbol(start, hl_scopes::self_def_type);
                 auto [error, s] = lex_simple_string();
                 if (error)
                     return failure;
@@ -2012,8 +2015,7 @@ result_t<expressions::mach_expr_ptr> parser2::lex_mach_term()
                 return failure;
             else
             {
-                const auto r = range_from(start);
-                add_hl_symbol(r, hl_scopes::ordinary_symbol);
+                const auto r = add_hl_symbol(start, hl_scopes::ordinary_symbol);
                 return std::make_unique<expressions::mach_expr_symbol>(qual_id.id, qual_id.qual, r);
             }
     }
@@ -2038,7 +2040,7 @@ result_t<std::string> parser2::lex_simple_string()
         else if (follows<u8'\''>())
         {
             consume();
-            add_hl_symbol(range_from(start), hl_scopes::string);
+            add_hl_symbol(start, hl_scopes::string);
             return s;
         }
         else if (follows<u8'&'>())
@@ -2163,20 +2165,19 @@ result_t<std::pair<int32_t, range>> parser2::parse_number()
 
         result = result * 10 + digit_to_value(c);
     }
-    const auto r = range_from(start);
     if (!parsed_one)
     {
-        add_diagnostic(diagnostic_op::error_D002(r));
+        add_diagnostic(diagnostic_op::error_D002(range_from(start)));
         return failure;
     }
     if (negative)
         result = -result;
     if (result < min_l || result > max_l)
     {
-        add_diagnostic(diagnostic_op::error_D001(r));
+        add_diagnostic(diagnostic_op::error_D001(range_from(start)));
         return failure;
     }
-    add_hl_symbol(r, hl_scopes::number);
+    const auto r = add_hl_symbol(start, hl_scopes::number);
 
     return { (int32_t)result, r };
 }
@@ -2252,7 +2253,7 @@ result_t<expressions::data_definition> parser2::lex_data_def_base()
         consume();
         result.extension_range = range_from(ext_start);
     }
-    add_hl_symbol(range_from(type_start), hl_scopes::data_def_type);
+    add_hl_symbol(type_start, hl_scopes::data_def_type);
 
     // read_program
     if (try_consume<u8'P', u8'p'>(hl_scopes::data_def_modifier))
@@ -2864,7 +2865,7 @@ result_t<std::variant<context::id_index, semantics::concat_chain>> parser2::lex_
 {
     if (follows<u8'('>())
     {
-        add_hl_symbol(range_from(start), hl_scopes::var_symbol);
+        add_hl_symbol(start, hl_scopes::var_symbol);
         consume(hl_scopes::operator_symbol);
         auto [error, cc] = lex_compound_variable();
         if (error)
@@ -2883,7 +2884,7 @@ result_t<std::variant<context::id_index, semantics::concat_chain>> parser2::lex_
         auto [error, id] = lex_id();
         if (error)
             return failure;
-        add_hl_symbol(range_from(start), hl_scopes::var_symbol);
+        add_hl_symbol(start, hl_scopes::var_symbol);
         return id;
     }
 }
@@ -3098,10 +3099,9 @@ void parser2::lab_instr_process()
     for (size_t i = 0; i < PROCESS.size(); ++i)
         consume();
 
-    const auto r = range_from(start);
+    const auto r = add_hl_symbol(start, hl_scopes::instruction);
     holder->collector.set_label_field(r);
     holder->collector.set_instruction_field(context::id_index("*PROCESS"), r);
-    add_hl_symbol(r, hl_scopes::instruction);
 }
 
 parser_holder::op_data parser2::lab_instr_rest()
@@ -3625,7 +3625,7 @@ result_t<void> parser2::lex_deferred_string(std::vector<semantics::vs_ptr>& vs)
         {
             case EOF_SYMBOL:
                 syntax_error_or_eof();
-                add_hl_symbol(range_from(string_start), hl_scopes::string);
+                add_hl_symbol(string_start, hl_scopes::string);
                 return failure;
 
             case u8'\'':
@@ -3633,7 +3633,7 @@ result_t<void> parser2::lex_deferred_string(std::vector<semantics::vs_ptr>& vs)
                 {
                     consume();
 
-                    add_hl_symbol(range_from(string_start), hl_scopes::string);
+                    add_hl_symbol(string_start, hl_scopes::string);
                     return {};
                 }
                 consume();
@@ -3747,7 +3747,7 @@ void parser2::op_rem_body_deferred()
                     const auto p = cur_pos_adjusted();
                     consume();
                     consume();
-                    add_hl_symbol(range_from(p), hl_scopes::data_attr_type);
+                    add_hl_symbol(p, hl_scopes::data_attr_type);
                     next_char_special = false;
                     break;
                 }
@@ -3761,7 +3761,7 @@ void parser2::op_rem_body_deferred()
                     if (next_char_special)
                         break;
                 }
-                add_hl_symbol(range_from(substart), hl_scopes::operand);
+                add_hl_symbol(substart, hl_scopes::operand);
             }
         }
     }
@@ -3882,7 +3882,7 @@ result_t<parser2::before_model> parser2::model_before_variable()
                 }
                 if (!match<u8'\''>(diagnostic_op::error_S0005))
                     return failure;
-                add_hl_symbol(range_from(*in_string), hl_scopes::string);
+                add_hl_symbol(*in_string, hl_scopes::string);
                 in_string.reset();
                 break;
             }
@@ -3951,7 +3951,7 @@ result_t<std::optional<semantics::op_rem>> parser2::try_model_ops(parser_positio
     if (in_string)
     {
         auto [error] = lex_rest_of_model_string(ccb);
-        add_hl_symbol(range_from(*in_string), hl_scopes::string);
+        add_hl_symbol(*in_string, hl_scopes::string);
         if (error)
             return failure;
         in_string.reset();
@@ -3990,7 +3990,7 @@ result_t<std::optional<semantics::op_rem>> parser2::try_model_ops(parser_positio
                 const auto string_start = cur_pos_adjusted();
                 consume_into(ccb.last_text_value());
                 auto [error] = lex_rest_of_model_string(ccb);
-                add_hl_symbol(range_from(string_start), hl_scopes::string);
+                add_hl_symbol(string_start, hl_scopes::string);
                 if (error)
                     return failure;
                 break;
@@ -4204,8 +4204,7 @@ result_t<semantics::operand_ptr> parser2::alias_op()
     if (error)
         return failure;
 
-    const auto r = range_from(start);
-    add_hl_symbol(r, hl_scopes::self_def_type);
+    const auto r = add_hl_symbol(start, hl_scopes::self_def_type);
 
     return std::make_unique<semantics::text_assembler_operand>(capture_text(initial), context::id_index(), r);
 }
@@ -4218,29 +4217,33 @@ result_t<semantics::operand_ptr> parser2::end_op()
 
     std::string s1, s2, s3;
 
-    auto op_start = cur_pos_adjusted();
+    const auto op_start1 = cur_pos_adjusted();
     while (except<u8','>())
         consume_into(s1);
-    const auto r1 = range_from(op_start);
+    const auto op_end1 = cur_pos();
 
     if (!match<u8','>(hl_scopes::operator_symbol))
         return failure;
 
-    op_start = cur_pos_adjusted();
+    const auto op_start2 = cur_pos_adjusted();
     while (except<u8','>())
         consume_into(s2);
-    const auto r2 = range_from(op_start);
+    const auto op_end2 = cur_pos();
 
     if (!match<u8','>(hl_scopes::operator_symbol))
         return failure;
 
-    op_start = cur_pos_adjusted();
+    const auto op_start3 = cur_pos_adjusted();
     while (except<u8')'>())
         consume_into(s3);
-    const auto r3 = range_from(op_start);
+    const auto op_end3 = cur_pos();
 
     if (!match<u8')'>(hl_scopes::operator_symbol))
         return failure;
+
+    const auto r1 = add_hl_symbol(op_start1, op_end1, hl_scopes::operand);
+    const auto r2 = add_hl_symbol(op_start2, op_end2, hl_scopes::operand);
+    const auto r3 = add_hl_symbol(op_start3, op_end3, hl_scopes::operand);
 
     std::vector<std::unique_ptr<semantics::complex_assembler_operand::component_value_t>> language_triplet;
     language_triplet.push_back(
@@ -4249,10 +4252,6 @@ result_t<semantics::operand_ptr> parser2::end_op()
         std::make_unique<semantics::complex_assembler_operand::string_value_t>(std::move(s2), r2));
     language_triplet.push_back(
         std::make_unique<semantics::complex_assembler_operand::string_value_t>(std::move(s3), r3));
-    add_hl_symbol(r1, hl_scopes::operand);
-    add_hl_symbol(r2, hl_scopes::operand);
-    add_hl_symbol(r3, hl_scopes::operand);
-
     const auto r = range_from(start);
     return std::make_unique<semantics::complex_assembler_operand>("", std::move(language_triplet), r);
 }
@@ -4362,10 +4361,10 @@ result_t<std::unique_ptr<semantics::complex_assembler_operand::component_value_t
 
     auto id = lex_ord_upper();
 
-    add_hl_symbol(range_from(start), hl_scopes::operand);
+    const auto id_range = add_hl_symbol(start, hl_scopes::operand);
 
     if (!try_consume<u8'('>(hl_scopes::operator_symbol))
-        return std::make_unique<semantics::complex_assembler_operand::string_value_t>(std::move(id), range_from(start));
+        return std::make_unique<semantics::complex_assembler_operand::string_value_t>(std::move(id), id_range);
 
     auto [error, nested] = asm_op_comma_c();
     if (error)
@@ -4424,15 +4423,13 @@ result_t<semantics::operand_ptr> parser2::asm_op_text()
     {
         case complex_asm_op::ord_like: {
             auto id = lex_ord();
-            auto r = range_from(start);
-            add_hl_symbol(r, hl_scopes::operand);
+            auto r = add_hl_symbol(start, hl_scopes::operand);
             return std::make_unique<semantics::text_assembler_operand>(capture_text(initial), add_id(id), r);
         }
         case complex_asm_op::text: {
             while (except<u8' ', u8','>())
                 consume();
-            auto r = range_from(start);
-            add_hl_symbol(r, hl_scopes::operand);
+            auto r = add_hl_symbol(start, hl_scopes::operand);
             return std::make_unique<semantics::text_assembler_operand>(capture_text(initial), context::id_index(), r);
         }
         case complex_asm_op::complex:
@@ -4440,7 +4437,7 @@ result_t<semantics::operand_ptr> parser2::asm_op_text()
     }
 
     auto id = lex_ord_upper();
-    add_hl_symbol(range_from(start), hl_scopes::operand);
+    add_hl_symbol(start, hl_scopes::operand);
 
     if (!match<u8'('>(hl_scopes::operator_symbol))
         return failure;
