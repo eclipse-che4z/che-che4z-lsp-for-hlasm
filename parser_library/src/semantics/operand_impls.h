@@ -50,22 +50,6 @@ struct model_operand final : operand
     void apply(operand_visitor& visitor) const override;
 };
 
-// operands that can return value and have dependencies
-struct evaluable_operand : operand
-{
-    evaluable_operand(const operand_type type, const range& operand_range);
-
-    virtual bool has_dependencies(
-        context::dependency_solver& info, std::vector<context::id_index>* missing_symbols) const = 0;
-
-    virtual bool has_error(context::dependency_solver& info) const = 0;
-
-    virtual std::unique_ptr<checking::operand> get_operand_value(
-        context::dependency_solver& info, diagnostic_op_consumer& diags) const = 0;
-
-    virtual void apply_mach_visitor(expressions::mach_expr_visitor&) const = 0;
-};
-
 // machine instruction operand
 struct machine_operand final : operand
 {
@@ -106,10 +90,20 @@ struct string_assembler_operand;
 struct text_assembler_operand;
 
 // assembler instruction operand
-struct assembler_operand : evaluable_operand
+struct assembler_operand : operand
 {
     static constexpr operand_type type_id = operand_type::ASM;
     assembler_operand(const asm_kind kind, const range& r);
+
+    virtual bool has_dependencies(
+        context::dependency_solver& info, std::vector<context::id_index>* missing_symbols) const = 0;
+
+    virtual bool has_error(context::dependency_solver& info) const = 0;
+
+    virtual std::unique_ptr<checking::operand> get_operand_value(
+        context::dependency_solver& info, diagnostic_op_consumer& diags) const = 0;
+
+    virtual void apply_mach_visitor(expressions::mach_expr_visitor&) const = 0;
 
     expr_assembler_operand* access_expr() noexcept;
     using_instr_assembler_operand* access_base_end() noexcept;

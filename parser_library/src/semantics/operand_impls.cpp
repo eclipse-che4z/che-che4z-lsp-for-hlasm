@@ -49,10 +49,6 @@ model_operand::model_operand(concat_chain chain, std::vector<size_t> line_limits
 
 void model_operand::apply(operand_visitor& visitor) const { visitor.visit(*this); }
 
-evaluable_operand::evaluable_operand(const operand_type type, const range& operand_range)
-    : operand(type, operand_range)
-{}
-
 //***************** machine_operand *********************
 
 machine_operand::machine_operand(const range& r)
@@ -99,7 +95,7 @@ void machine_operand::apply_mach_visitor(expressions::mach_expr_visitor& v) cons
 }
 
 assembler_operand::assembler_operand(const asm_kind kind, const range& r)
-    : evaluable_operand(operand_type::ASM, r)
+    : operand(operand_type::ASM, r)
     , kind(kind)
 {}
 

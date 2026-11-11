@@ -270,31 +270,27 @@ std::optional<processing_status> ordinary_processor::get_instruction_processing_
     return std::visit(processing_status_visitor { code.opcode }, code.opcode_detail);
 }
 
-checking::check_op_ptr get_check_op(const semantics::operand* op,
+checking::check_op_ptr get_check_op(const semantics::assembler_operand& op,
     context::dependency_solver& dep_solver,
     const diagnostic_collector& add_diagnostic,
     const instructions::assembler_instruction& instr)
 {
     diagnostic_consumer_transform diags([&add_diagnostic](diagnostic_op d) { add_diagnostic(std::move(d)); });
 
-    const auto& ev_op = dynamic_cast<const semantics::evaluable_operand&>(*op);
-
-    const bool can_have_ord_syms = instr.has_ord_symbols();
-
-    std::vector<context::id_index> missing_symbols;
-    if (can_have_ord_syms && !instr.postpone_dependencies() && ev_op.has_dependencies(dep_solver, &missing_symbols))
+    if (std::vector<context::id_index> missing_symbols;
+        instr.has_ord_symbols() && !instr.postpone_dependencies() && op.has_dependencies(dep_solver, &missing_symbols))
     {
         for (const auto& symbol : missing_symbols)
-            add_diagnostic(diagnostic_op::error_E010("ordinary symbol", symbol.to_string_view(), ev_op.operand_range));
+            add_diagnostic(diagnostic_op::error_E010("ordinary symbol", symbol.to_string_view(), op.operand_range));
         if (missing_symbols.empty()) // this is a fallback message if somehow non-symbolic deps are not resolved
-            add_diagnostic(diagnostic_op::error_E016(ev_op.operand_range));
+            add_diagnostic(diagnostic_op::error_E016(op.operand_range));
         return nullptr;
     }
 
     checking::using_label_checker lc(dep_solver, diags);
-    ev_op.apply_mach_visitor(lc);
+    op.apply_mach_visitor(lc);
 
-    return ev_op.get_operand_value(dep_solver, diags);
+    return op.get_operand_value(dep_solver, diags);
 }
 
 bool transform_asm(std::vector<checking::check_op_ptr>& result,
@@ -312,7 +308,12 @@ bool transform_asm(std::vector<checking::check_op_ptr>& result,
             continue;
         }
 
-        auto uniq = get_check_op(op.get(), dep_solver, add_diagnostic, instr);
+        const auto* asm_op = op->access_asm();
+        assert(asm_op); // there should be nothing else
+        if (!asm_op)
+            return false;
+
+        auto uniq = get_check_op(*asm_op, dep_solver, add_diagnostic, instr);
 
         if (!uniq)
             return false; // contains dependencies
