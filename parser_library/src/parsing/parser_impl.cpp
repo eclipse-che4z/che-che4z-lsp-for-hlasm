@@ -712,6 +712,7 @@ class parser2::concat_chain_builder
     semantics::concat_chain& cc;
 
     semantics::char_str_conc* last_text_state = nullptr;
+    parser_position last_text_start {};
     bool highlighting = true;
 
     template<typename T, hl_scopes... s>
@@ -736,10 +737,9 @@ public:
     {
         if (last_text_state)
             return last_text_state->value;
+        last_text_start = p.cur_pos_adjusted();
         last_text_state = &std::get<semantics::char_str_conc>(
-            cc.emplace_back(
-                  std::in_place_type<semantics::char_str_conc>, std::string(), range(p.cur_pos_adjusted().pos))
-                .value);
+            cc.emplace_back(std::in_place_type<semantics::char_str_conc>, std::string(), range()).value);
         return last_text_state->value;
     }
 
@@ -748,9 +748,11 @@ public:
     {
         if (!last_text_state)
             return;
-        last_text_state->conc_range = p.remap_range(parser_position { last_text_state->conc_range.start }, p.cur_pos());
+        const auto end = p.cur_pos();
         if (highlighting && hl)
-            p.add_hl_symbol(last_text_state->conc_range, hl_scopes::operand);
+            last_text_state->conc_range = p.add_hl_symbol(last_text_start, end, hl_scopes::operand);
+        else
+            last_text_state->conc_range = p.remap_range(last_text_start, end);
         last_text_state = nullptr;
     }
 
