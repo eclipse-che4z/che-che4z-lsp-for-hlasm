@@ -1021,13 +1021,17 @@ void parser2::lex_last_remark()
 {
     consume_spaces();
 
-    const auto last_remark_start = cur_pos_adjusted();
+    auto last_remark_start = cur_pos_adjusted();
     while (!eof())
-        consume();
-    adjust_lines();
+    {
+        do
+        {
+            consume();
+        } while (!eof() && before_nl());
 
-    if (const auto last_remark_end = cur_pos(); last_remark_start != last_remark_end)
-        remarks.push_back(remap_range(last_remark_start, last_remark_end));
+        remarks.push_back(range_from(last_remark_start));
+        last_remark_start = cur_pos_adjusted();
+    }
 }
 
 void parser2::lex_line_remark()
@@ -3789,11 +3793,8 @@ void parser2::op_rem_body_noop()
     else
     {
         const auto start = cur_pos_adjusted();
-        while (!eof())
-            consume();
-
-        const auto r = range_from(start);
-        holder->collector.set_operand_remark_field(semantics::operand_list {}, semantics::remark_list { r }, r);
+        lex_last_remark();
+        holder->collector.set_operand_remark_field(semantics::operand_list {}, std::move(remarks), range_from(start));
     }
 }
 
