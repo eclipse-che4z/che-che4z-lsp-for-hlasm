@@ -448,12 +448,12 @@ struct parser2
     [[nodiscard]] parser_position cur_pos() const noexcept;
     [[nodiscard]] parser_position cur_pos_adjusted() noexcept;
     [[nodiscard]] range cur_pos_range() const noexcept;
-    [[nodiscard]] range range_from(parser_position start) const noexcept;
-    [[nodiscard]] range empty_range(parser_position start) const noexcept;
+    [[nodiscard]] range range_from(const parser_position& start) const noexcept;
+    [[nodiscard]] range empty_range(const parser_position& start) const noexcept;
 
     void consume_rest();
 
-    [[nodiscard]] range remap_range(parser_position s, parser_position e) const noexcept;
+    [[nodiscard]] range remap_range(const parser_position& s, const parser_position& e) const noexcept;
 
     void add_diagnostic(diagnostic_op d) const;
     void add_diagnostic(diagnostic_op (&d)(const range&)) const;
@@ -462,8 +462,8 @@ struct parser2
     void syntax_error_or_eof() const;
 
     void add_hl_symbol(const range& r, hl_scopes s);
-    range add_hl_symbol(parser_position start, hl_scopes s);
-    range add_hl_symbol(parser_position start, parser_position end, hl_scopes s);
+    range add_hl_symbol(const parser_position& start, hl_scopes s);
+    range add_hl_symbol(const parser_position& start, const parser_position& end, hl_scopes s);
 
     context::id_index parse_identifier(std::string value, range id_range) const;
 
@@ -895,13 +895,16 @@ void parser2::consume_into(std::string& s, hl_scopes scope)
 
 [[nodiscard]] range parser2::cur_pos_range() const noexcept { return empty_range(cur_pos()); }
 
-[[nodiscard]] range parser2::range_from(parser_position start) const noexcept
+[[nodiscard]] range parser2::range_from(const parser_position& start) const noexcept
 {
     const auto end = cur_pos();
     return remap_range(start, end);
 }
 
-[[nodiscard]] range parser2::empty_range(parser_position start) const noexcept { return remap_range(start, start); }
+[[nodiscard]] range parser2::empty_range(const parser_position& start) const noexcept
+{
+    return remap_range(start, start);
+}
 
 void parser2::consume_rest()
 {
@@ -912,7 +915,7 @@ void parser2::consume_rest()
         lex_last_remark();
 }
 
-[[nodiscard]] range parser2::remap_range(parser_position s, parser_position e) const noexcept
+[[nodiscard]] range parser2::remap_range(const parser_position& s, const parser_position& e) const noexcept
 {
     return holder->range_prov.adjust_range({ s.pos, e.pos });
 }
@@ -940,9 +943,9 @@ void parser2::syntax_error_or_eof() const
 
 void parser2::add_hl_symbol(const range& r, hl_scopes s) { holder->collector.add_hl_symbol(token_info(r, s)); }
 
-range parser2::add_hl_symbol(parser_position start, hl_scopes s) { return add_hl_symbol(start, cur_pos(), s); }
+range parser2::add_hl_symbol(const parser_position& start, hl_scopes s) { return add_hl_symbol(start, cur_pos(), s); }
 
-range parser2::add_hl_symbol(parser_position start, parser_position end, hl_scopes s)
+range parser2::add_hl_symbol(const parser_position& start, const parser_position& end, hl_scopes s)
 {
     const auto r = remap_range(start, end);
     add_hl_symbol(r, s);
