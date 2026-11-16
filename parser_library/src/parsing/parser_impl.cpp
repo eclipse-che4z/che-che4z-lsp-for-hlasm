@@ -1827,19 +1827,16 @@ result_t<expressions::ca_expr_ptr> parser2::lex_term()
 
             if (auto [error, id] = lex_id(); error)
                 return failure;
-            else if (follows<u8'('>()
-                && expressions::ca_common_expr_policy::get_function(id.to_string_view())
+            else if (expressions::ca_expr_funcs func; follows<u8'('>()
+                && (func = expressions::ca_common_expr_policy::get_function(id.to_string_view()))
                     != expressions::ca_expr_funcs::UNKNOWN)
             {
-                const auto r = add_hl_symbol(start, hl_scopes::operand);
+                add_hl_symbol(start, hl_scopes::operand);
                 auto [error2, s] = lex_subscript_ne();
                 if (error2)
                     return failure;
-                return std::make_unique<expressions::ca_function>(id,
-                    expressions::ca_common_expr_policy::get_function(id.to_string_view()),
-                    std::move(s),
-                    expressions::ca_expr_ptr(),
-                    range_from(start));
+                return std::make_unique<expressions::ca_function>(
+                    id, func, std::move(s), expressions::ca_expr_ptr(), range_from(start));
             }
             else
             {
