@@ -73,6 +73,63 @@ TEST(highlighting, mach_noop)
     EXPECT_EQ(tokens, expected);
 }
 
+TEST(highlighting, mach_noop_whitespace_only_operand_field)
+{
+    const std::string contents = " SAM31   ";
+    analyzer a(contents, analyzer_options { source_file_loc, collect_highlighting_info::yes });
+    a.analyze();
+
+    const auto& tokens = a.take_semantic_tokens();
+    semantics::lines_info expected = {
+        token_info({ { 0, 1 }, { 0, 6 } }, hl_scopes::instruction),
+    };
+
+    EXPECT_EQ(tokens, expected);
+}
+
+TEST(highlighting, mach_noop_remark_after_extra_spacing)
+{
+    const std::string contents = " SAM31      remark";
+    analyzer a(contents, analyzer_options { source_file_loc, collect_highlighting_info::yes });
+    a.analyze();
+
+    const auto& tokens = a.take_semantic_tokens();
+    semantics::lines_info expected = {
+        token_info({ { 0, 1 }, { 0, 6 } }, hl_scopes::instruction),
+        token_info({ { 0, 12 }, { 0, 18 } }, hl_scopes::remark),
+    };
+
+    EXPECT_EQ(tokens, expected);
+}
+
+TEST(highlighting, mach_noop_remark_only_on_continuation)
+{
+    const std::string contents = R"(
+ SAM31                                                                 X
+               remark                                                  X
+               remark2                                                 X
+               remark3
+)";
+    analyzer a(contents, analyzer_options { source_file_loc, collect_highlighting_info::yes });
+    a.analyze();
+
+    const auto& tokens = a.take_semantic_tokens();
+    semantics::lines_info expected = {
+        token_info({ { 1, 1 }, { 1, 6 } }, hl_scopes::instruction),
+        token_info({ { 1, 71 }, { 1, 72 } }, hl_scopes::continuation),
+        token_info({ { 2, 0 }, { 2, 15 } }, hl_scopes::ignored),
+        token_info({ { 2, 15 }, { 2, 71 } }, hl_scopes::remark),
+        token_info({ { 2, 71 }, { 2, 72 } }, hl_scopes::continuation),
+        token_info({ { 3, 0 }, { 3, 15 } }, hl_scopes::ignored),
+        token_info({ { 3, 15 }, { 3, 71 } }, hl_scopes::remark),
+        token_info({ { 3, 71 }, { 3, 72 } }, hl_scopes::continuation),
+        token_info({ { 4, 0 }, { 4, 15 } }, hl_scopes::ignored),
+        token_info({ { 4, 15 }, { 4, 22 } }, hl_scopes::remark),
+    };
+
+    EXPECT_EQ(tokens, expected);
+}
+
 TEST(highlighting, mach_noop_multiline)
 {
     const std::string contents = R"(
@@ -88,6 +145,55 @@ TEST(highlighting, mach_noop_multiline)
         token_info({ { 1, 71 }, { 1, 72 } }, hl_scopes::continuation),
         token_info({ { 2, 0 }, { 2, 15 } }, hl_scopes::ignored),
         token_info({ { 2, 15 }, { 2, 22 } }, hl_scopes::remark),
+    };
+
+    EXPECT_EQ(tokens, expected);
+}
+
+TEST(highlighting, deferred_operand_trailing_remark_continued)
+{
+    const std::string contents = R"(
+         MACRO
+         MAC
+FIELD    DS    XL8                                   remark that is on X
+               multiple lines
+         MEND
+)";
+    analyzer a(contents, analyzer_options { source_file_loc, collect_highlighting_info::yes });
+    a.analyze();
+
+    const auto& tokens = a.take_semantic_tokens();
+    semantics::lines_info expected = {
+        token_info({ { 1, 9 }, { 1, 14 } }, hl_scopes::instruction),
+        token_info({ { 2, 9 }, { 2, 12 } }, hl_scopes::instruction),
+        token_info({ { 3, 0 }, { 3, 5 } }, hl_scopes::label),
+        token_info({ { 3, 9 }, { 3, 11 } }, hl_scopes::instruction),
+        token_info({ { 3, 15 }, { 3, 18 } }, hl_scopes::operand),
+        token_info({ { 3, 53 }, { 3, 71 } }, hl_scopes::remark),
+        token_info({ { 3, 71 }, { 3, 72 } }, hl_scopes::continuation),
+        token_info({ { 4, 0 }, { 4, 15 } }, hl_scopes::ignored),
+        token_info({ { 4, 15 }, { 4, 29 } }, hl_scopes::remark),
+        token_info({ { 5, 9 }, { 5, 13 } }, hl_scopes::instruction),
+    };
+
+    EXPECT_EQ(tokens, expected);
+}
+
+TEST(highlighting, instruction_token_split_at_continuation)
+{
+    // TODO: Diagnose an instruction token that continues onto a continuation line.
+    const std::string contents = R"(
+                                                                      AX
+               B)";
+    analyzer a(contents, analyzer_options { source_file_loc, collect_highlighting_info::yes });
+    a.analyze();
+
+    const auto& tokens = a.take_semantic_tokens();
+    semantics::lines_info expected = {
+        token_info({ { 1, 70 }, { 1, 71 } }, hl_scopes::instruction),
+        token_info({ { 1, 71 }, { 1, 72 } }, hl_scopes::continuation),
+        token_info({ { 2, 0 }, { 2, 15 } }, hl_scopes::ignored),
+        token_info({ { 2, 15 }, { 2, 16 } }, hl_scopes::instruction),
     };
 
     EXPECT_EQ(tokens, expected);
@@ -109,6 +215,51 @@ TEST(highlighting, mach_expr)
         token_info({ { 0, 10 }, { 0, 11 } }, hl_scopes::data_attr_type),
         token_info({ { 0, 11 }, { 0, 12 } }, hl_scopes::operator_symbol),
         token_info({ { 0, 12 }, { 0, 13 } }, hl_scopes::ordinary_symbol) };
+
+    EXPECT_EQ(tokens, expected);
+}
+
+TEST(highlighting, mach_operand_trailing_remark_continued)
+{
+    const std::string contents = R"(
+ LR 1,2 remark                                                         X
+               continued)";
+    analyzer a(contents, analyzer_options { source_file_loc, collect_highlighting_info::yes });
+    a.analyze();
+
+    const auto& tokens = a.take_semantic_tokens();
+    semantics::lines_info expected = {
+        token_info({ { 1, 1 }, { 1, 3 } }, hl_scopes::instruction),
+        token_info({ { 1, 4 }, { 1, 5 } }, hl_scopes::number),
+        token_info({ { 1, 5 }, { 1, 6 } }, hl_scopes::operator_symbol),
+        token_info({ { 1, 6 }, { 1, 7 } }, hl_scopes::number),
+        token_info({ { 1, 8 }, { 1, 71 } }, hl_scopes::remark),
+        token_info({ { 1, 71 }, { 1, 72 } }, hl_scopes::continuation),
+        token_info({ { 2, 0 }, { 2, 15 } }, hl_scopes::ignored),
+        token_info({ { 2, 15 }, { 2, 24 } }, hl_scopes::remark),
+    };
+
+    EXPECT_EQ(tokens, expected);
+}
+
+TEST(highlighting, model_operand_trailing_remark)
+{
+    const std::string contents = R"(
+&V SETC 'VALUE'
+ PUNCH &V remark
+)";
+    analyzer a(contents, analyzer_options { source_file_loc, collect_highlighting_info::yes });
+    a.analyze();
+
+    const auto& tokens = a.take_semantic_tokens();
+    semantics::lines_info expected = {
+        token_info({ { 1, 0 }, { 1, 2 } }, hl_scopes::var_symbol),
+        token_info({ { 1, 3 }, { 1, 7 } }, hl_scopes::instruction),
+        token_info({ { 1, 8 }, { 1, 15 } }, hl_scopes::string),
+        token_info({ { 2, 1 }, { 2, 6 } }, hl_scopes::instruction),
+        token_info({ { 2, 7 }, { 2, 9 } }, hl_scopes::var_symbol),
+        token_info({ { 2, 10 }, { 2, 16 } }, hl_scopes::remark),
+    };
 
     EXPECT_EQ(tokens, expected);
 }
@@ -205,6 +356,46 @@ TEST(highlighting, asm_list_2)
         token_info({ { 0, 14 }, { 0, 15 } }, hl_scopes::operator_symbol),
         token_info({ { 0, 15 }, { 0, 18 } }, hl_scopes::operand),
         token_info({ { 0, 18 }, { 0, 19 } }, hl_scopes::operator_symbol) };
+
+    EXPECT_EQ(tokens, expected);
+}
+
+TEST(highlighting, complex_assembler_integer_keeps_number_scope)
+{
+    const std::string contents = " COPY FOO(123)";
+    analyzer a(contents, analyzer_options { source_file_loc, collect_highlighting_info::yes });
+    a.analyze();
+
+    const auto& tokens = a.take_semantic_tokens();
+    semantics::lines_info expected = {
+        token_info({ { 0, 1 }, { 0, 5 } }, hl_scopes::instruction),
+        token_info({ { 0, 6 }, { 0, 9 } }, hl_scopes::operand),
+        token_info({ { 0, 9 }, { 0, 10 } }, hl_scopes::operator_symbol),
+        token_info({ { 0, 10 }, { 0, 13 } }, hl_scopes::number),
+        token_info({ { 0, 13 }, { 0, 14 } }, hl_scopes::operator_symbol),
+    };
+
+    EXPECT_EQ(tokens, expected);
+}
+
+TEST(highlighting, end_language_components)
+{
+    const std::string contents = " END ,(MYCOMPILER,0101,00273)";
+    analyzer a(contents, analyzer_options { source_file_loc, collect_highlighting_info::yes });
+    a.analyze();
+
+    const auto& tokens = a.take_semantic_tokens();
+    semantics::lines_info expected = {
+        token_info({ { 0, 1 }, { 0, 4 } }, hl_scopes::instruction),
+        token_info({ { 0, 5 }, { 0, 6 } }, hl_scopes::operator_symbol),
+        token_info({ { 0, 6 }, { 0, 7 } }, hl_scopes::operator_symbol),
+        token_info({ { 0, 7 }, { 0, 17 } }, hl_scopes::operand),
+        token_info({ { 0, 17 }, { 0, 18 } }, hl_scopes::operator_symbol),
+        token_info({ { 0, 18 }, { 0, 22 } }, hl_scopes::operand),
+        token_info({ { 0, 22 }, { 0, 23 } }, hl_scopes::operator_symbol),
+        token_info({ { 0, 23 }, { 0, 28 } }, hl_scopes::operand),
+        token_info({ { 0, 28 }, { 0, 29 } }, hl_scopes::operator_symbol),
+    };
 
     EXPECT_EQ(tokens, expected);
 }
